@@ -28823,7 +28823,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   /* ─────────── CAMPAIGN WIZARD (6 steps) ─────────── */
   /* ═══════════ CAMPAIGN WIZARD (fully functional) ═══════════ */
-  const WIZ_STEPS = ['Basic details', 'Audience', 'Communication', 'Speed to Lead', 'Nurture sequence', 'Exit rules'];
+  const WIZ_STEPS = ['Basic details', 'Audience', 'Communication', 'Speed to Lead', 'Nurture sequence', 'Exit rules', 'Review & Publish'];
 
   const FIELD_DEFS = {
     'customer.lead_source': { module: 'Customer', label: 'Lead Source', type: 'multiselect', options: ['Angi', 'Thumbtack', 'Google LSA', 'Meta'] },
@@ -28852,6 +28852,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   const ANCHORS = [['last_message', 'after the previous step'], ['salesboard', 'after it hits the salesboard'], ['lead_created', 'after the lead is created']];
   const SNIPPETS = [['{{customer_first_name}}', 'Contact first name'], ['{{customer_last_name}}', 'Contact last name'], ['{{company.company_name}}', 'Company name'], ['{{company.company_phone}}', 'Company phone'], ['{{user_first_name}}', 'User first name']];
   const TASK_TYPES = ['Call back', 'Site visit', 'Send a quote', 'Inspection', 'General follow-up'];
+  const REPS = ['Assigned to me', 'Michael Richardson', 'Luke Marks', 'Eli Cohen', 'Monica Klein', 'Tyson Silva', 'Marcus Webb'];
   const NUMBERS = ['(+1) 650 206 1172', '(+1) 1145 626 7281'];
   const TZS = ['America/New_York (ET)', 'America/Chicago (CT)', 'America/Los_Angeles (PT)'];
   const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -28972,10 +28973,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {ch === 'email' && <input value={step.subject || ''} onChange={e => onChange({ ...step, subject: e.target.value })} placeholder="Subject" style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, fontWeight: 600, color: LH.ink, outline: 'none', marginBottom: 8 }} />}
       {ch === 'task' && <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <input value={step.title || ''} onChange={e => onChange({ ...step, title: e.target.value })} placeholder="Task title" style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none' }} />
-        <div style={{ width: 170 }}><Dropdown value={step.taskType} options={TASK_TYPES.map(t => ({ value: t, label: t }))} placeholder="Task type" onChange={v => onChange({ ...step, taskType: v })} /></div>
+        <div style={{ width: 150 }}><Dropdown value={step.taskType} options={TASK_TYPES.map(t => ({ value: t, label: t }))} placeholder="Task type" onChange={v => onChange({ ...step, taskType: v })} /></div>
+        <div style={{ width: 160 }}><Dropdown value={step.assignee} options={REPS.map(r => ({ value: r, label: r }))} placeholder="Assign to" onChange={v => onChange({ ...step, assignee: v })} /></div>
       </div>}
       {ch === 'call'
-        ? <div style={{ fontSize: 12, color: LH.muted, marginTop: 8, paddingLeft: 38 }}>Nova places this call using the qualification playbook from the Communication step.</div>
+        ? <div style={{ marginTop: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 12, color: LH.sub, width: 60 }}>Placed by</span><div style={{ width: 220 }}><Dropdown value={step.callBy || 'nova'} options={[{ value: 'nova', label: 'Nova — AI voice agent' }, { value: 'rep', label: 'Assign to a sales rep' }]} onChange={v => onChange({ ...step, callBy: v })} /></div>{(step.callBy || 'nova') === 'rep' && <div style={{ width: 160 }}><Dropdown value={step.assignee} options={REPS.map(r => ({ value: r, label: r }))} placeholder="Rep" onChange={v => onChange({ ...step, assignee: v })} /></div>}</div>
+          <div style={{ fontSize: 12, color: LH.muted, marginTop: 8 }}>{(step.callBy || 'nova') === 'rep' ? 'A call task is assigned to the selected rep.' : 'Nova places this call using the qualification playbook from the Communication step.'}</div>
+        </div>
         : <div style={{ marginTop: ch === 'sms' || ch === 'task' || ch === 'email' ? 0 : 8 }}>
           <textarea value={step.body || ''} onChange={e => onChange({ ...step, body: e.target.value })} placeholder={ch === 'task' ? 'Description' : 'Message'} style={{ width: '100%', height: 74, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 12.5, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
@@ -28998,6 +29003,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { id: wuid(), field: 'job.service_type', op: 'is any of', val: ['Roofing'] }
     ]);
     const [search, setSearch] = useState('');
+    const [removedIds, setRemovedIds] = useState(() => new Set());
+    const [status, setStatus] = useState('Draft');
     // Communication
     const [numIdx, setNumIdx] = useState(0);
     const [agent, setAgent] = useState('Nova — AI voice agent');
@@ -29034,11 +29041,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [exitConds, setExitConds] = useState([{ id: wuid(), field: 'job.current_status', op: 'is any of', val: ['Qualified', 'Dead'] }]);
 
     const matchCount = useMemo(() => filterContacts(conds, join).length, [conds, join]);
+    const enrolledCount = useMemo(() => filterContacts(conds, join).filter(c => !removedIds.has(c.id)).length, [conds, join, removedIds]);
     const matched = useMemo(() => {
       const list = filterContacts(conds, join);
       const q = search.trim().toLowerCase();
       return (q ? list.filter(c => (c.name + ' ' + c.email + ' ' + c.phone).toLowerCase().includes(q)) : list);
     }, [conds, join, search]);
+    const removeContact = id => setRemovedIds(s => { const n = new Set(s); n.add(id); return n; });
+    const restoreContact = id => setRemovedIds(s => { const n = new Set(s); n.delete(id); return n; });
+    const removedInMatch = useMemo(() => filterContacts(conds, join).filter(c => removedIds.has(c.id)).length, [conds, join, removedIds]);
 
     const dayList = []; for (let d = 1; d <= dayCount; d++) dayList.push(d);
     const dayObj = days[selDay] || { active: true, steps: [] };
@@ -29056,6 +29067,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Description</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>auto-written from your rules</span></div>
         <textarea value={desc} onChange={e => setDesc(e.target.value)} style={{ width: '100%', height: 88, borderRadius: 9, border: '1px solid ' + LH.border, padding: 12, fontSize: 13.5, color: LH.body, margin: '6px 0 10px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
         <Btn icon="refresh-cw" onClick={() => setDesc('Re-engages ' + (conds.find(c => c.field === 'customer.lead_source') ? (conds.find(c => c.field === 'customer.lead_source').val || []).join(' and ') : 'inbound') + ' leads over a ' + dayCount + '-day drip.')}>Regenerate from rules</Btn>
+        <div style={{ marginTop: 18 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign time zone <span style={{ color: LH.red }}>*</span></label>
+          <div style={{ marginTop: 6 }}><Dropdown value={tz} options={TZS.map(t => ({ value: t, label: t }))} onChange={setTz} /></div>
+          <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 6 }}>Governs launch-day hours, nurture send days, and every scheduled action — independent of workspace or customer time zones.</div>
+        </div>
       </div>;
       if (step === 1) return <div>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="filter" size={19} color={LH.primary} /></div>
@@ -29063,22 +29079,25 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 16px', maxWidth: 640 }}>Configure which customers qualify for this campaign. Customers are evaluated when they are created — matching customers are enrolled automatically.</div>
         <div style={{ background: LH.blueBg, border: '1px solid ' + LH.blueBd, borderRadius: 10, padding: '12px 14px', display: 'flex', gap: 10, marginBottom: 20 }}>
           <Ic name="info" size={16} color={LH.blue} />
-          <div><div style={{ fontSize: 13.5, fontWeight: 700, color: '#1e3a8a' }}>{matchCount} records match your current filters</div><div style={{ fontSize: 12, color: '#3b5b9e', marginTop: 2 }}>Records already enrolled in another active campaign will be excluded.</div></div>
+          <div><div style={{ fontSize: 13.5, fontWeight: 700, color: '#1e3a8a' }}>{matchCount} records match your current filters{removedInMatch > 0 ? ' · ' + removedInMatch + ' removed manually, ' + enrolledCount + ' will enrol' : ''}</div><div style={{ fontSize: 12, color: '#3b5b9e', marginTop: 2 }}>Records already enrolled in another active campaign will be excluded.</div></div>
         </div>
         <Conditions rows={conds} setRows={setConds} join={join} setJoin={setJoin} />
         <Card style={{ marginTop: 20, padding: 0, overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px', borderBottom: '1px solid ' + LH.borderSoft }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="user-plus" size={15} color={LH.sub} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Matching contacts ({matchCount})</span></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Ic name="user-plus" size={15} color={LH.sub} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Matching contacts ({matchCount})</span>{removedInMatch > 0 && <button onClick={() => setRemovedIds(new Set())} style={{ fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Restore all ({removedInMatch})</button>}</div>
             <div style={{ position: 'relative', width: 260 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 10, top: 9 }} /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, email, phone" style={{ width: '100%', height: 32, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px 0 30px', fontSize: 12.5, color: LH.ink, outline: 'none' }} /></div>
           </div>
           <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-            {matched.length ? matched.slice(0, 60).map(c => <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 15px', borderBottom: '1px solid ' + LH.borderSoft }}>
+            {matched.length ? matched.slice(0, 60).map(c => { const rm = removedIds.has(c.id); return <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 15px', borderBottom: '1px solid ' + LH.borderSoft, opacity: rm ? 0.5 : 1 }}>
               <div style={{ width: 30, height: 30, borderRadius: 999, background: LH.tint, color: LH.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{(c.first[0] + c.last[0])}</div>
-              <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{c.name}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.email}</div></div>
-              <span style={{ fontSize: 11.5, color: LH.sub, width: 90 }}>{c.source}</span>
+              <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink, textDecoration: rm ? 'line-through' : 'none' }}>{c.name}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.email}</div></div>
+              <span style={{ fontSize: 11.5, color: LH.sub, width: 80 }}>{c.source}</span>
               <Pill label={c.status} tone={c.status === 'Qualified' ? 'Qualified' : c.status === 'New Lead' ? 'New' : 'In drip'} />
-              <span style={{ fontSize: 11.5, color: LH.muted, width: 70, textAlign: 'right' }}>{c.service}</span>
-            </div>) : <div style={{ padding: 30, textAlign: 'center', fontSize: 13, color: LH.muted }}>No matching contact for that search.</div>}
+              <span style={{ fontSize: 11.5, color: LH.muted, width: 60, textAlign: 'right' }}>{c.service}</span>
+              {rm
+                ? <button onClick={() => restoreContact(c.id)} style={{ fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', width: 62, textAlign: 'right' }}>Restore</button>
+                : <button onClick={() => removeContact(c.id)} title="Remove from audience" style={{ background: 'none', border: 'none', cursor: 'pointer', width: 62, display: 'flex', justifyContent: 'flex-end' }}><Ic name="x" size={15} color={LH.muted} /></button>}
+            </div>; }) : <div style={{ padding: 30, textAlign: 'center', fontSize: 13, color: LH.muted }}>No matching contact for that search.</div>}
           </div>
           {matched.length > 60 && <div style={{ padding: '9px 15px', fontSize: 12, color: LH.muted, textAlign: 'center' }}>Showing 60 of {matched.length}</div>}
         </Card>
@@ -29145,18 +29164,56 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </Card>
         </div>
       </div>;
-      return <div style={{ maxWidth: 640, margin: '0 auto' }}>
+      if (step === 5) return <div style={{ maxWidth: 640, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="log-out" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>When should we stop reaching out?</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Records are unenrolled as soon as any of these becomes true.</div>
         <Conditions rows={exitConds} setRows={setExitConds} join={exitJoin} setJoin={setExitJoin} addLabel="Add exit condition" />
-        <div style={{ fontSize: 12.5, color: LH.body, marginTop: 16, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '11px 13px', display: 'flex', gap: 9 }}><Ic name="rotate-ccw" size={15} color={LH.sub} /><span><b style={{ color: LH.ink }}>Automatic stop.</b> Beyond the conditions above, the sequence ends on its own — after the final step on Day {dayCount}, the record is unenrolled.</span></div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, margin: '22px 0 10px' }}>Built-in stop conditions</div>
+        <div style={{ fontSize: 12, color: LH.sub, marginBottom: 12 }}>Always on for every campaign — no setup needed.</div>
+        {[
+          { icon: 'message-square-reply', t: 'Reply or engagement', d: 'A reply to any campaign SMS or email, or an answered call, exits the enrollment.' },
+          { icon: 'ban', t: 'Opt-out', d: 'Every SMS supports the STOP keyword and every email includes an unsubscribe link. Opting out exits and marks the customer Do Not Disturb.' },
+          { icon: 'phone-off', t: 'Nova DND', d: 'If the customer asks to stop during a call, Nova activates DND and the enrollment exits.' }
+        ].map(x => <Card key={x.t} style={{ padding: 13, marginBottom: 8, display: 'flex', gap: 11, alignItems: 'flex-start' }}>
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={x.icon} size={15} color={LH.sub} /></div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{x.t}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{x.d}</div></div>
+          <span style={{ fontSize: 10.5, fontWeight: 600, color: LH.green, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 999, padding: '2px 8px', flexShrink: 0 }}>Always on</span>
+        </Card>)}
+        <div style={{ fontSize: 12.5, color: LH.body, marginTop: 12, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '11px 13px', display: 'flex', gap: 9 }}><Ic name="rotate-ccw" size={15} color={LH.sub} /><span><b style={{ color: LH.ink }}>Automatic stop.</b> Beyond the conditions above, the sequence ends on its own — after the final step on Day {dayCount}, the record is unenrolled.</span></div>
+      </div>;
+      // Step 6 — Review & Publish
+      const activeDays = Object.keys(days).filter(d => (days[d].active !== false) && days[d].steps && days[d].steps.length).length;
+      const summary = [
+        { i: 0, icon: 'pencil', t: 'Basic details', lines: ['Name: ' + (name || '—'), 'Time zone: ' + tz, desc ? 'Description set' : 'No description'] },
+        { i: 1, icon: 'filter', t: 'Audience', lines: [conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', enrolledCount + ' of ' + CONTACTS.length + ' records will enrol', removedInMatch + ' removed manually'] },
+        { i: 2, icon: 'radio', t: 'Communication', lines: ['Number: ' + NUMBERS[numIdx], 'Voice agent: ' + agent, 'Playbook: ' + playbook.length + ' questions'] },
+        { i: 3, icon: 'zap', t: 'Speed to Lead', lines: [s2l.length + ' launch-day step' + (s2l.length !== 1 ? 's' : ''), 'Business hours: ' + (bizHours ? 'on' : 'any time'), 'Weekends: ' + ((weekend.sat || weekend.sun) ? [weekend.sat && 'Sat', weekend.sun && 'Sun'].filter(Boolean).join(', ') : 'off')] },
+        { i: 4, icon: 'headphones', t: 'Nurture sequence', lines: [dayCount + '-day sequence', activeDays + ' day' + (activeDays !== 1 ? 's' : '') + ' with steps', 'Send days: ' + sendDaysLabel] },
+        { i: 5, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'Built-in stops: reply, opt-out, Nova DND'] }
+      ];
+      const problems = []; if (!name.trim()) problems.push('Campaign name is required (Basic details).'); if (!tz) problems.push('Campaign time zone is required (Basic details).'); if (!conds.filter(c => c.field).length) problems.push('Add at least one audience condition.');
+      return <div style={{ maxWidth: 680, margin: '0 auto' }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="clipboard-check" size={19} color={LH.primary} /></div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Review & publish</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Check each section, then publish to make the campaign Active. Publishing enrolls newly created matching customers.</div>
+        {problems.length > 0 && <div style={{ background: LH.redBg, border: '1px solid ' + LH.redBd, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: LH.red, marginBottom: 4 }}>Resolve {problems.length} issue{problems.length > 1 ? 's' : ''} before publishing</div>
+          {problems.map((p, k) => <div key={k} style={{ fontSize: 12, color: '#a11', marginTop: 2 }}>• {p}</div>)}
+        </div>}
+        {summary.map(sec => <Card key={sec.t} style={{ padding: 14, marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={sec.icon} size={15} color={LH.primary} /></div>
+            <div style={{ flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{sec.t}</div>{sec.lines.map((l, k) => <div key={k} style={{ fontSize: 12, color: LH.sub, marginTop: 2 }}>{l}</div>)}</div>
+            <button onClick={() => setStep(sec.i)} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: '1px solid ' + LH.border, borderRadius: 8, padding: '5px 12px', cursor: 'pointer', flexShrink: 0 }}>Edit</button>
+          </div>
+        </Card>)}
       </div>;
     };
 
     const shell = <div style={{ width: '100%', height: '100%', background: '#fff', borderRadius: embed ? 0 : 16, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: embed ? 'none' : '0 24px 60px rgba(0,0,0,.3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="send" size={15} color={LH.primary} /></div><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>{name || 'New campaign'}</span><Pill label="Draft" /></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="send" size={15} color={LH.primary} /></div><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>{name || 'New campaign'}</span><div style={{ width: 118 }}><Dropdown value={status} height={28} options={['Draft', 'Active', 'Inactive'].map(s => ({ value: s, label: s }))} onChange={setStatus} /></div><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: LH.muted }}><Ic name="check" size={12} color={LH.green} />Auto-saved</span></div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
         </div>
         <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
@@ -29166,9 +29223,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <span style={{ fontSize: 12.5, fontWeight: step === i ? 600 : 500, color: step === i ? LH.ink : LH.sub }}>{s}</span>
             </div>)}</div>
             <div style={{ border: '1px solid ' + LH.border, borderRadius: 10, padding: 12, background: '#fff' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="users" size={15} color={LH.primary} /></div><div><div style={{ fontSize: 17, fontWeight: 700, color: LH.ink, lineHeight: 1 }}>{matchCount}</div><div style={{ fontSize: 11, color: LH.sub }}>records enrolled</div></div></div>
-              <div style={{ height: 4, borderRadius: 999, background: '#efe9de', marginTop: 10, overflow: 'hidden' }}><div style={{ width: Math.min(100, matchCount / CONTACTS.length * 100) + '%', height: '100%', background: LH.primary }} /></div>
-              <div style={{ fontSize: 10.5, color: LH.muted, marginTop: 6 }}>{matchCount} of {CONTACTS.length} records in scope</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="users" size={15} color={LH.primary} /></div><div><div style={{ fontSize: 17, fontWeight: 700, color: LH.ink, lineHeight: 1 }}>{enrolledCount}</div><div style={{ fontSize: 11, color: LH.sub }}>records enrolled</div></div></div>
+              <div style={{ height: 4, borderRadius: 999, background: '#efe9de', marginTop: 10, overflow: 'hidden' }}><div style={{ width: Math.min(100, enrolledCount / CONTACTS.length * 100) + '%', height: '100%', background: LH.primary }} /></div>
+              <div style={{ fontSize: 10.5, color: LH.muted, marginTop: 6 }}>{enrolledCount} of {CONTACTS.length} records in scope</div>
             </div>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '26px 30px' }}>{stepBody()}</div>
@@ -29179,7 +29236,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go back</Btn>}
             {step < WIZ_STEPS.length - 1
               ? <Btn kind="primary" onClick={() => { if (step === 0 && !name.trim()) return; setStep(step + 1); }}>Continue</Btn>
-              : <Btn kind="primary" icon="check" onClick={onCreate}>Create campaign</Btn>}
+              : <Btn kind="primary" icon="rocket" onClick={() => { if (!(name.trim() && tz && conds.some(c => c.field))) return; onCreate(); }} style={{ opacity: (name.trim() && tz && conds.some(c => c.field)) ? 1 : 0.5 }}>Publish campaign</Btn>}
           </div>
         </div>
       </div>;
