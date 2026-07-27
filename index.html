@@ -14268,6 +14268,26 @@ function App() {
     window.__editJob = () => setPage('editjob');
     return () => { delete window.__openCustomerDrawer; delete window.__editJob; };
   }, []);
+  if (page === 'lead-campaign-new') {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-col h-screen w-screen overflow-hidden",
+      style: { background: '#f8f5f0' }
+    }, /*#__PURE__*/React.createElement(TopNavBar, topBarProps), /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-1 overflow-hidden",
+      style: { background: '#f8f5f0', padding: '0 12px 12px 0' }
+    }, /*#__PURE__*/React.createElement(Sidebar, {
+      onNavigate: handleNavigate,
+      activeNav: navActive
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-col flex-1 overflow-hidden rounded-2xl",
+      style: { background: '#fdfdfc', border: '1px solid #ece4d3', overflow: 'hidden' }
+    }, window.LeadHubCampaignWizard
+      ? /*#__PURE__*/React.createElement(window.LeadHubCampaignWizard, { embed: true, onClose: () => setPage('lead-campaigns'), onCreate: () => { setPage('lead-campaigns'); showToast('Campaign created.'); } })
+      : /*#__PURE__*/React.createElement("div", { style: { padding: 40, color: '#8c7a5a', fontSize: 14 } }, "Loading…"))), toast && /*#__PURE__*/React.createElement(Toast, {
+      message: toast,
+      onClose: () => setToast(null)
+    }));
+  }
   if (isLeadPage) {
     const leadSection = page === 'lead-pipeline' ? 'pipeline' : page === 'lead-campaigns' ? 'campaigns' : page === 'lead-channels' ? 'channels' : page === 'lead-health' ? 'health' : 'overview';
     return /*#__PURE__*/React.createElement("div", {
@@ -28804,7 +28824,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   /* ─────────── CAMPAIGN WIZARD (6 steps) ─────────── */
   const WIZ_STEPS = ['Basic details', 'Audience', 'Communication', 'Speed to Lead', 'Nurture sequence', 'Exit rules'];
-  function CampaignWizard({ onClose, onCreate }) {
+  function CampaignWizard({ onClose, onCreate, embed }) {
     const [step, setStep] = useState(0);
     const [name, setName] = useState('Storm Season Re-engage');
     const [conds, setConds] = useState([{ f: 'Lead Source', op: 'is any of', v: 'Angi, Thumbtack' }]);
@@ -28928,8 +28948,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>;
     };
 
-    return <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(20,18,15,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div style={{ width: 'min(1040px,96vw)', height: 'min(700px,92vh)', background: '#fff', borderRadius: 16, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,.3)' }}>
+    const shell = <div style={{ width: '100%', height: '100%', background: '#fff', borderRadius: embed ? 0 : 16, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: embed ? 'none' : '0 24px 60px rgba(0,0,0,.3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="send" size={15} color={LH.primary} /></div><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>{name}</span><Pill label="Draft" /></div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
@@ -28952,8 +28971,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               : <Btn kind="primary" icon="check" onClick={onCreate}>Create campaign</Btn>}
           </div>
         </div>
-      </div>
-    </div>;
+      </div>;
+    if (embed) return shell;
+    return <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(20,18,15,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}><div style={{ width: 'min(1040px,96vw)', height: 'min(700px,92vh)' }}>{shell}</div></div>;
   }
 
   /* ─────────── CHANNELS ─────────── */
@@ -29026,7 +29046,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     };
     const [wizardOpen, setWizardOpen] = useState(false);
     const h = heads[section] || heads.overview;
-    const campaignsAction = <Btn kind="primary" icon="plus" onClick={() => setWizardOpen(true)}>New campaign</Btn>;
+    const campaignsAction = <Btn kind="primary" icon="plus" onClick={() => onNavigate('lead-campaign-new')}>New campaign</Btn>;
     return <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       <PageHead crumb={h.crumb} title={h.title} actions={section === 'campaigns' ? campaignsAction : h.actions} />
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 26px 34px', background: '#fdfdfc' }}>
@@ -29037,12 +29057,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {section === 'channels' && <ChannelsSection />}
         {section === 'health' && <HealthSection />}
       </div>
-      {section === 'campaigns' && wizardOpen && <CampaignWizard onClose={() => setWizardOpen(false)} onCreate={() => { setWizardOpen(false); showToast('Campaign created.'); }} />}
       {toast && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 300, background: LH.ink, color: '#fff', fontSize: 13, fontWeight: 500, padding: '11px 18px', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="check-circle" size={15} color="#4ade80" />{toast}</div>}
     </div>;
   }
 
   window.LeadHubShell = LeadHubShell;
+  window.LeadHubCampaignWizard = CampaignWizard;
 })();
 </script>
 <script>
