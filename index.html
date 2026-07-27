@@ -618,6 +618,7 @@ function Sidebar({
   const [showCustomizeNav, setShowCustomizeNav] = useState(false);
   const [showMorePopover, setShowMorePopover] = useState(false);
   const [showScheduleSubmenu, setShowScheduleSubmenu] = useState(false);
+  const [showLeadhubSubmenu, setShowLeadhubSubmenu] = useState(false);
   const [hoveredId, setHoveredId] = useState(null);
   const [appSettingsOpen, setAppSettingsOpen] = useState(false);
   const [jobTplOpen, setJobTplOpen] = useState(false);
@@ -626,6 +627,8 @@ function Sidebar({
   const moreItemRef = useRef(null);
   const scheduleItemRef = useRef(null);
   const scheduleHideTimer = useRef(null);
+  const leadhubItemRef = useRef(null);
+  const leadhubHideTimer = useRef(null);
   const defaultNavItems = [{
     id: 'dashboard',
     icon: 'chart-bar',
@@ -634,6 +637,10 @@ function Sidebar({
     id: 'sense',
     icon: 'squares-2x2',
     label: 'Sense'
+  }, {
+    id: 'leadhub',
+    icon: 'funnel',
+    label: 'Lead Hub'
   }, {
     id: 'work',
     icon: 'briefcase',
@@ -675,6 +682,7 @@ function Sidebar({
   const defaultNavState = {
     dashboard: true,
     sense: true,
+    leadhub: true,
     work: true,
     schedule: true,
     crm: true,
@@ -689,7 +697,7 @@ function Sidebar({
   const visibleItems = allNavItems.filter(it => navState[it.id] !== false);
   const customizeSections = [{
     title: 'Pinned',
-    itemIds: ['dashboard', 'sense', 'work', 'schedule', 'crm']
+    itemIds: ['dashboard', 'sense', 'leadhub', 'work', 'schedule', 'crm']
   }, {
     title: 'Workspace',
     itemIds: ['timesheets', 'inventory', 'finance', 'reporting', 'connect']
@@ -698,8 +706,10 @@ function Sidebar({
     const h = e => {
       const inMore = moreItemRef.current && moreItemRef.current.contains(e.target);
       const inSchedule = scheduleItemRef.current && scheduleItemRef.current.contains(e.target);
+      const inLeadhub = leadhubItemRef.current && leadhubItemRef.current.contains(e.target);
       if (!inMore) setShowMorePopover(false);
       if (!inSchedule) setShowScheduleSubmenu(false);
+      if (!inLeadhub) setShowLeadhubSubmenu(false);
     };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
@@ -759,6 +769,17 @@ function Sidebar({
     }), /*#__PURE__*/React.createElement("path", {
       d: "M18.5 14H15.5C14.6716 14 14 14.6716 14 15.5V18.5C14 19.3284 14.6716 20 15.5 20H18.5C19.3284 20 20 19.3284 20 18.5V15.5C20 14.6716 19.3284 14 18.5 14Z",
       fill: active ? '#5c4a1e' : '#8c7a5a'
+    })) : it.id === 'leadhub' ? /*#__PURE__*/React.createElement("svg", {
+      width: "16",
+      height: "16",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: active ? '#5c4a1e' : '#8c7a5a',
+      strokeWidth: active ? 2.4 : 2,
+      strokeLinecap: "round",
+      strokeLinejoin: "round"
+    }, /*#__PURE__*/React.createElement("path", {
+      d: "M22 3H2l8 9.46V19l4 2v-8.54L22 3z"
     })) : /*#__PURE__*/React.createElement(HI, {
       name: it.icon,
       size: 16,
@@ -880,6 +901,84 @@ function Sidebar({
           color: '#262626'
         }
       }, sub.label)))));
+    }
+    if (it.id === 'leadhub') {
+      const isActive = activeNav === 'leadhub';
+      const openSub = () => {
+        if (leadhubHideTimer.current) {
+          clearTimeout(leadhubHideTimer.current);
+          leadhubHideTimer.current = null;
+        }
+        setShowLeadhubSubmenu(true);
+      };
+      const closeSub = () => {
+        leadhubHideTimer.current = setTimeout(() => setShowLeadhubSubmenu(false), 150);
+      };
+      return /*#__PURE__*/React.createElement("div", {
+        key: it.id,
+        ref: leadhubItemRef,
+        className: "relative w-full",
+        onMouseEnter: openSub,
+        onMouseLeave: closeSub,
+        onClick: () => {
+          setShowLeadhubSubmenu(false);
+          onNavigate('leadhub');
+        }
+      }, renderItem(it, isActive || showLeadhubSubmenu), showLeadhubSubmenu && /*#__PURE__*/React.createElement("div", {
+        className: "absolute top-0 left-full ml-2 z-40 bg-white rounded-xl border py-2 min-w-[210px]",
+        style: {
+          borderColor: '#e5e5e5',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
+        },
+        onMouseEnter: openSub,
+        onMouseLeave: closeSub,
+        onClick: e => e.stopPropagation()
+      }, [{
+        id: 'leadhub',
+        icon: 'house',
+        label: 'Home',
+        sub: 'Overview'
+      }, {
+        id: 'lead-pipeline',
+        icon: 'filter',
+        label: 'Pipeline'
+      }, {
+        id: 'lead-campaigns',
+        icon: 'megaphone',
+        label: 'Campaigns'
+      }, {
+        id: 'lead-channels',
+        icon: 'radio',
+        label: 'Channels'
+      }, {
+        id: 'lead-health',
+        icon: 'activity',
+        label: 'Health'
+      }].map(s => /*#__PURE__*/React.createElement("div", {
+        key: s.id,
+        onClick: () => {
+          setShowLeadhubSubmenu(false);
+          onNavigate(s.id);
+        },
+        className: "flex items-center gap-3 px-3 py-2 mx-1 cursor-pointer hover:bg-black/[0.03] rounded-lg"
+      }, /*#__PURE__*/React.createElement(I, {
+        name: s.icon,
+        size: 17,
+        color: "#5c4a1e"
+      }), /*#__PURE__*/React.createElement("div", {
+        className: "flex flex-col"
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 14,
+          color: '#262626',
+          lineHeight: '16px'
+        }
+      }, s.label), s.sub && /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 11,
+          color: '#9c9b96'
+        }
+      }, s.sub))))));
     }
     const itemActive = it.id === activeNav || it.id === 'work' && (activeNav === 'work' || activeNav === 'detail');
     return /*#__PURE__*/React.createElement("div", {
@@ -14098,9 +14197,10 @@ function App() {
   const closeTopTab = id => { setTopTabs(t => t.filter(x => x.id !== id)); setActiveTop(a => a === id ? null : a); };
   const topBarProps = { extraTabs: topTabs, activeExtra: activeTop, onSelectExtra: setActiveTop, onCloseExtra: closeTopTab, onBaseSelect: () => setActiveTop(null) };
   const activeTopKind = (topTabs.find(t => t.id === activeTop) || {}).kind || null;
-  const navActive = page === 'calendar' ? 'calendar' : page === 'dispatch' ? 'dispatch' : page === 'maps' ? 'maps' : 'work';
+  const isLeadPage = page === 'leadhub' || page.indexOf('lead-') === 0;
+  const navActive = page === 'calendar' ? 'calendar' : page === 'dispatch' ? 'dispatch' : page === 'maps' ? 'maps' : isLeadPage ? 'leadhub' : 'work';
   const handleNavigate = id => {
-    if (id === 'work') setPage('list');else if (id === 'calendar') setPage('calendar');else if (id === 'dispatch') setPage('dispatch');else if (id === 'maps') setPage('maps');
+    if (id === 'work') setPage('list');else if (id === 'calendar') setPage('calendar');else if (id === 'dispatch') setPage('dispatch');else if (id === 'maps') setPage('maps');else if (id === 'leadhub' || id.indexOf('lead-') === 0) setPage(id);
   };
   const [isEditMode, setIsEditMode] = useState(false);
   const [changeCount, setChangeCount] = useState(0);
@@ -14168,6 +14268,27 @@ function App() {
     window.__editJob = () => setPage('editjob');
     return () => { delete window.__openCustomerDrawer; delete window.__editJob; };
   }, []);
+  if (isLeadPage) {
+    const leadSection = page === 'lead-pipeline' ? 'pipeline' : page === 'lead-campaigns' ? 'campaigns' : page === 'lead-channels' ? 'channels' : page === 'lead-health' ? 'health' : 'overview';
+    return /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-col h-screen w-screen overflow-hidden",
+      style: { background: '#f8f5f0' }
+    }, /*#__PURE__*/React.createElement(TopNavBar, topBarProps), /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-1 overflow-hidden",
+      style: { background: '#f8f5f0', padding: '0 12px 12px 0' }
+    }, /*#__PURE__*/React.createElement(Sidebar, {
+      onNavigate: handleNavigate,
+      activeNav: navActive
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-col flex-1 overflow-hidden rounded-2xl",
+      style: { background: '#fdfdfc', border: '1px solid #ece4d3', overflow: 'hidden' }
+    }, window.LeadHubShell
+      ? /*#__PURE__*/React.createElement(window.LeadHubShell, { section: leadSection, onNavigate: handleNavigate })
+      : /*#__PURE__*/React.createElement("div", { style: { padding: 40, color: '#8c7a5a', fontSize: 14 } }, "Loading Lead Hub…"))), toast && /*#__PURE__*/React.createElement(Toast, {
+      message: toast,
+      onClose: () => setToast(null)
+    }));
+  }
   if (page === 'list' || page === 'newjob' || page === 'recurringjob' || page === 'calendar' || page === 'dispatch' || page === 'maps') {
     return /*#__PURE__*/React.createElement("div", {
       className: "flex flex-col h-screen w-screen overflow-hidden",
@@ -15101,6 +15222,7 @@ function Sidebar() {
   const defaultNavState = {
     dashboard: true,
     sense: true,
+    leadhub: true,
     work: true,
     schedule: true,
     crm: true,
@@ -15115,7 +15237,7 @@ function Sidebar() {
   const visibleItems = allNavItems.filter(it => navState[it.id] !== false);
   const customizeSections = [{
     title: 'Pinned',
-    itemIds: ['dashboard', 'sense', 'work', 'schedule', 'crm']
+    itemIds: ['dashboard', 'sense', 'leadhub', 'work', 'schedule', 'crm']
   }, {
     title: 'Workspace',
     itemIds: ['timesheets', 'inventory', 'finance', 'reporting', 'connect']
@@ -15185,6 +15307,17 @@ function Sidebar() {
     }), /*#__PURE__*/React.createElement("path", {
       d: "M18.5 14H15.5C14.6716 14 14 14.6716 14 15.5V18.5C14 19.3284 14.6716 20 15.5 20H18.5C19.3284 20 20 19.3284 20 18.5V15.5C20 14.6716 19.3284 14 18.5 14Z",
       fill: active ? '#5c4a1e' : '#8c7a5a'
+    })) : it.id === 'leadhub' ? /*#__PURE__*/React.createElement("svg", {
+      width: "16",
+      height: "16",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: active ? '#5c4a1e' : '#8c7a5a',
+      strokeWidth: active ? 2.4 : 2,
+      strokeLinecap: "round",
+      strokeLinejoin: "round"
+    }, /*#__PURE__*/React.createElement("path", {
+      d: "M22 3H2l8 9.46V19l4 2v-8.54L22 3z"
     })) : /*#__PURE__*/React.createElement(HI, {
       name: it.icon,
       size: 16,
@@ -28338,4 +28471,593 @@ const items=useMemo(()=>{const emailItems=threads.filter(t=>t.folder==='inbox').
 const[smsNewOpen,setSmsNewOpen]=useState(false);const[toasts,setToasts]=useState([]);const pushToast=text=>{const t={id:'t'+Date.now()+Math.random(),text};setToasts(prev=>[...prev,t]);setTimeout(()=>setToasts(prev=>prev.filter(x=>x.id!==t.id)),4000);};// Mock real-time arrivals
 useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel Thompson (Beacon Hill HOA)');},8000);return()=>clearTimeout(t);},[]);const openCompose=(cfg={})=>setCompose({kind:cfg.kind||'email',mode:cfg.mode||'new',initial:cfg.initial||{}});const closeCompose=()=>setCompose(null);const sendEmail=payload=>{pushToast('Message sent.');setThreads(prev=>[{id:'em-'+Date.now(),folder:'sent',labels:[],starred:false,unread:false,archived:false,fromAddr:payload.from,linkedJob:null,subject:payload.subject,messages:[{id:'m-'+Date.now(),from:{name:'You',email:payload.fromLabel||'john.williams@summitroofing.com'},to:payload.to,cc:payload.cc,date:new Date().toISOString(),dateLabel:'Just now',body:payload.body,attachments:payload.attachments||[]}]},...prev]);setTimeout(()=>pushToast('Recipient opened your email.'),3000);setCompose(null);};const saveDraft=payload=>{pushToast('Draft saved.');setThreads(prev=>[{id:'dr-'+Date.now(),folder:'drafts',labels:[],starred:false,unread:false,archived:false,fromAddr:payload.from,linkedJob:null,subject:payload.subject||'(no subject)',messages:[{id:'mdr-'+Date.now(),from:{name:'You',email:'john.williams@summitroofing.com'},to:payload.to,cc:payload.cc,date:new Date().toISOString(),dateLabel:'Just now',body:payload.body,attachments:payload.attachments||[]}]},...prev]);setCompose(null);};const tabCounts={conversations:COMM_CONVERSATIONS.reduce((s,c)=>s+(c.unread||0),0),email:threads.filter(t=>t.unread&&t.folder==='inbox').length};return/*#__PURE__*/React.createElement("div",{className:"page-enter",style:{display:'flex',flexDirection:'column',flex:1,minHeight:0,overflow:'hidden',background:'#fff'}},/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 16px',borderBottom:'1px solid #e8e7e2',background:'#fff',flexShrink:0,gap:12}},/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',gap:4,padding:2,background:'#f5f4f0',borderRadius:8}},[{id:'conversations',label:'Conversations'},{id:'email',label:'Email'},{id:'calls',label:'Calls'}].map(t=>{const active=tab===t.id;const cnt=tabCounts[t.id]||0;return/*#__PURE__*/React.createElement("button",{key:t.id,onClick:()=>setTab(t.id),className:"btn-press",style:{padding:'5px 12px',borderRadius:6,border:'none',cursor:'pointer',fontSize:12.5,fontWeight:500,background:active?'#fff':'transparent',color:active?'#262626':'#737373',boxShadow:active?'0 1px 3px rgba(0,0,0,0.08)':'none',transition:'all 150ms ease'}},t.label,cnt>0&&/*#__PURE__*/React.createElement("span",{style:{fontSize:10,color:'#a3a3a3',marginLeft:4}},cnt));})),/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',gap:8}},tab!=='email'&&/*#__PURE__*/React.createElement("button",{className:"hover-lift",style:{display:'inline-flex',alignItems:'center',gap:6,height:28,padding:'0 10px',border:'1px solid #e8e7e2',borderRadius:8,background:'#fff',color:'#262626',fontSize:12,fontWeight:600,cursor:'pointer'}},/*#__PURE__*/React.createElement("svg",{width:"12",height:"12",viewBox:"0 0 24 24",fill:"none",stroke:"#737373",strokeWidth:"1.8",strokeLinecap:"round",strokeLinejoin:"round"},/*#__PURE__*/React.createElement("line",{x1:"6",y1:"20",x2:"6",y2:"12"}),/*#__PURE__*/React.createElement("line",{x1:"12",y1:"20",x2:"12",y2:"6"}),/*#__PURE__*/React.createElement("line",{x1:"18",y1:"20",x2:"18",y2:"14"})),"Analytics"),tab==='email'&&/*#__PURE__*/React.createElement("button",{onClick:()=>openCompose({kind:'email'}),className:"hover-dark",style:{display:'inline-flex',alignItems:'center',gap:6,height:28,padding:'0 14px',border:'none',borderRadius:8,background:'#1f1f1d',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}},/*#__PURE__*/React.createElement(PlusIcon,{size:14,color:"#fff"}),"New Email"),tab==='conversations'&&/*#__PURE__*/React.createElement("button",{onClick:()=>setSmsNewOpen(true),className:"hover-dark",style:{display:'inline-flex',alignItems:'center',gap:6,height:28,padding:'0 14px',border:'none',borderRadius:8,background:'#1f1f1d',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}},/*#__PURE__*/React.createElement(PlusIcon,{size:14,color:"#fff"}),"New Message"))),/*#__PURE__*/React.createElement("div",{style:{display:'flex',flex:1,minHeight:0,overflow:'hidden'}},tab==='all'?/*#__PURE__*/React.createElement(AllView,{threads:threads,setThreads:setThreads,labels:labels,onCompose:openCompose,pushToast:pushToast}):tab==='email'?/*#__PURE__*/React.createElement(EmailView,{threads:threads,setThreads:setThreads,labels:labels,setLabels:setLabels,onCompose:openCompose,pushToast:pushToast}):tab==='calls'?/*#__PURE__*/React.createElement(CallsView,null):/*#__PURE__*/React.createElement(ConversationsView,{composeNew:smsNewOpen,onCloseCompose:()=>setSmsNewOpen(false),pushToast:pushToast})),/*#__PURE__*/React.createElement(ComposeModal,{open:!!compose,mode:compose?.mode,initial:compose?.initial||{},onClose:closeCompose,onSend:sendEmail,onSaveDraft:saveDraft}),/*#__PURE__*/React.createElement(CommToast,{messages:toasts}));}/* ─── Customer Details Page (CRM) ─── */const CUSTOMER_TABS=[{id:'overview',label:'Overview'},{id:'jobs',label:'Jobs',count:1},{id:'quotes',label:'Quotes',count:1},{id:'invoices',label:'Invoices'},{id:'communication',label:'Communication'},{id:'activity',label:'Activity'},{id:'projects',label:'Projects'},{id:'requests',label:'Requests'},{id:'assets',label:'Assets'},{id:'contracts',label:'Contracts'},{id:'properties',label:'Properties',count:4}];const CUSTOMER_ACTIVITY=[{who:'Olivia Bennett',text:'updated billing address first name from Marc to Marcus',time:'2 weeks ago'},{who:'Olivia Bennett',text:'updated first name from Marc to Marcus',time:'2 weeks ago'},{who:'Olivia Bennett',text:'updated billing address first name from Marcus to Marc',time:'2 weeks ago'}];function CustomerDetailPage({onBack}){const[tab,setTab]=useState('overview');const[commAutoEmail,setCommAutoEmail]=useState(false);useEffect(()=>{if(tab!=='communication')setCommAutoEmail(false);},[tab]);const[rightPanel,setRightPanel]=useState('attach');const[custJobSheet,setCustJobSheet]=useState(null);const[rightExpandedOverride,setRightExpandedOverride]=useState(false);useEffect(()=>{setRightExpandedOverride(false);},[tab]);const rightCollapsed=false;const fields=[{label:'Organization',value:'-'},{label:'Category',value:'-'},{label:'Email',value:'marcus.reed@gmail.com'},{label:'Home',value:'+91984238372'},{label:'Work',value:'+918942383797'},{label:'Mobile',value:'+918942383742'},{label:'Tags',tags:['customer outs...','created tag']},{label:'Lead Source',value:'-'},{label:'Pricelist',value:'-'},{label:'Status',value:'Active'},{label:'Service Address',value:'Marcus Reed\n5388,U.S. 95,Amargosa Valley\nNye County, Nevada 89020'},{label:'Billing Address',value:'Marcus Reed\n5388,U.S. 95,Amargosa Valley\nNye County, Nevada 89020'},{label:'Portal Access',dot:'#dc2626',value:'Disabled'},{label:'Tax Preference',value:'Taxable'},{label:'Tax Group',value:'-'}];const iconBtn={width:32,height:32,border:'1px solid #e8e7e2',background:'#fff',borderRadius:8,cursor:'pointer',color:'#737373',display:'inline-flex',alignItems:'center',justifyContent:'center',flexShrink:0};const SectionHead=({icon,title,action})=>/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',gap:7,margin:'18px 0 8px'}},icon,/*#__PURE__*/React.createElement("span",{style:{fontSize:13,fontWeight:700,color:'#1f1f1d'}},title),/*#__PURE__*/React.createElement(ChevronRight,{size:13,color:"#c5c4bf"}),/*#__PURE__*/React.createElement("span",{style:{flex:1}}),action);const EmptyBox=()=>/*#__PURE__*/React.createElement("div",{style:{border:'1px solid #f0eeea',borderRadius:10,background:'#fafaf8',padding:'22px 14px',textAlign:'center',fontSize:12,color:'#9c9b96'}},"No Data Found");const Pill=({label,bg,fg})=>/*#__PURE__*/React.createElement("span",{style:{display:'inline-flex',alignItems:'center',height:20,padding:'0 9px',borderRadius:6,background:bg,color:fg,fontSize:11,fontWeight:600}},label);const Stat=({icon,label,value})=>/*#__PURE__*/React.createElement("div",{style:{flex:1,minWidth:150,border:'1px solid #e8e7e2',borderRadius:10,background:'#fff',padding:'12px 14px'}},/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',gap:6,fontSize:11.5,color:'#737373',marginBottom:6}},icon,label),/*#__PURE__*/React.createElement("div",{style:{fontSize:16,fontWeight:700,color:'#1f1f1d'}},value));return/*#__PURE__*/React.createElement(React.Fragment,null,/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 20px',borderBottom:'1px solid #e8e7e2',flexShrink:0,minHeight:44,background:'#fff'}},/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',gap:6,fontSize:13}},/*#__PURE__*/React.createElement("button",{onClick:onBack,className:"hover-subtle",style:{border:'none',background:'transparent',color:'#737373',fontSize:13,fontWeight:500,cursor:'pointer',padding:0}},"Customers"),/*#__PURE__*/React.createElement(ChevronRight,{size:13,color:"#c5c4bf"}),/*#__PURE__*/React.createElement("span",{style:{fontWeight:600,color:'#1f1f1d'}},"Marcus Reed")),/*#__PURE__*/React.createElement("button",{className:"hover-lift",style:{display:'inline-flex',alignItems:'center',gap:6,height:28,padding:'0 12px',border:'1px solid #d8d6cf',borderRadius:8,background:'#fff',color:'#262626',cursor:'pointer',fontSize:12,fontWeight:600}},"More Actions ",/*#__PURE__*/React.createElement(TiCaretDown,{size:10,color:"#737373"}))),/*#__PURE__*/React.createElement("div",{style:{display:'flex',flex:1,minHeight:0,overflow:'hidden'}},/*#__PURE__*/React.createElement("div",{style:{width:300,flexShrink:0,borderRight:'1px solid #e8e7e2',background:'#fff',display:'flex',flexDirection:'column',overflow:'hidden'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 16px 12px',borderBottom:'1px solid #f0eeea'}},/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',gap:10,marginBottom:10}},/*#__PURE__*/React.createElement(Avatar,{initial:"M",size:38,bg:"#ede9fe",color:"#7c3aed"}),/*#__PURE__*/React.createElement("div",{style:{minWidth:0}},/*#__PURE__*/React.createElement("div",{style:{fontSize:14,fontWeight:700,color:'#1f1f1d'}},"Marcus Reed"),/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',gap:4,fontSize:11,color:'#9c9b96',marginTop:2}},/*#__PURE__*/React.createElement(MapPin,{size:11,color:"#c5c4bf"}),"5388,U.S. 95,Amargosa Valley, Nye Coun..."))),/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',gap:6}},/*#__PURE__*/React.createElement("button",{className:"hover-lift",style:{display:'inline-flex',alignItems:'center',gap:5,height:30,padding:'0 12px',border:'1px solid #d8d6cf',borderRadius:8,background:'#fff',color:'#262626',cursor:'pointer',fontSize:12,fontWeight:600}},/*#__PURE__*/React.createElement(PlusIcon,{size:13}),"New"),/*#__PURE__*/React.createElement("button",{style:iconBtn,title:"Email"},/*#__PURE__*/React.createElement(TiMail,{size:14,color:"#737373"})),/*#__PURE__*/React.createElement("button",{style:iconBtn,title:"Link"},/*#__PURE__*/React.createElement(CILink,{color:"#737373"})),/*#__PURE__*/React.createElement("button",{style:iconBtn,title:"Note"},/*#__PURE__*/React.createElement(FileTextIcon,{size:14,color:"#737373"})),/*#__PURE__*/React.createElement("button",{style:iconBtn,title:"Reminder"},/*#__PURE__*/React.createElement(BellIcon,null)))),/*#__PURE__*/React.createElement("div",{className:"settings-scroll",style:{flex:1,overflowY:'auto',padding:'12px 16px 28px'}},/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',gap:6,marginBottom:6}},/*#__PURE__*/React.createElement(TiChevronDown,{size:13,color:"#404040"}),/*#__PURE__*/React.createElement("span",{style:{fontSize:12.5,fontWeight:700,color:'#1f1f1d'}},"Primary Details")),/*#__PURE__*/React.createElement("div",null,fields.map(f=>/*#__PURE__*/React.createElement("div",{key:f.label,style:{display:'flex',gap:10,padding:'7px 0',alignItems:'flex-start'}},/*#__PURE__*/React.createElement("span",{style:{width:92,flexShrink:0,fontSize:11.5,color:'#9c9b96'}},f.label),/*#__PURE__*/React.createElement("span",{style:{flex:1,minWidth:0,fontSize:12,color:'#1f1f1d'}},f.tags?/*#__PURE__*/React.createElement("span",{style:{display:'inline-flex',flexWrap:'wrap',gap:5}},f.tags.map(t=>/*#__PURE__*/React.createElement("span",{key:t,style:{display:'inline-flex',alignItems:'center',height:20,padding:'0 8px',borderRadius:999,background:'#f0eeea',fontSize:10.5,fontWeight:500,color:'#4a4a46'}},t))):f.dot?/*#__PURE__*/React.createElement("span",{style:{display:'inline-flex',alignItems:'center',gap:6}},/*#__PURE__*/React.createElement("span",{style:{width:7,height:7,borderRadius:'50%',background:f.dot}}),f.value):/*#__PURE__*/React.createElement("span",{style:{whiteSpace:'pre-line'}},f.value))))))),/*#__PURE__*/React.createElement("div",{style:{flex:1,minWidth:0,display:'flex',flexDirection:'column',overflow:'hidden',background:'#fdfdfc'}},/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',borderBottom:'1px solid #e8e7e2',padding:'0 12px',flexShrink:0,background:'#fff',overflowX:'auto'}},CUSTOMER_TABS.map(t=>{const active=tab===t.id;return/*#__PURE__*/React.createElement("button",{key:t.id,onClick:()=>setTab(t.id),style:{display:'inline-flex',alignItems:'center',gap:6,padding:'10px 12px',fontSize:12.5,fontWeight:active?600:400,color:active?'#1a1a18':'#8c8b86',background:'none',border:'none',borderBottom:active?'2px solid #1a1a18':'2px solid transparent',cursor:'pointer',marginBottom:-1,whiteSpace:'nowrap'}},t.label,t.count!=null&&/*#__PURE__*/React.createElement("span",{style:{display:'inline-flex',alignItems:'center',justifyContent:'center',minWidth:16,height:16,padding:'0 4px',borderRadius:999,background:active?'#1a1a18':'#e8e7e2',color:active?'#fff':'#737373',fontSize:10,fontWeight:700}},t.count));}),/*#__PURE__*/React.createElement("button",{style:{padding:'10px 12px',fontSize:12,fontWeight:500,color:'#b0afa9',background:'none',border:'none',cursor:'pointer',whiteSpace:'nowrap'}},"+4 More")),tab==='communication'?/*#__PURE__*/React.createElement(JobCommunicationTab,{scope:"customer",threads:CUSTOMER_EMAIL_THREADS,autoOpenEmail:commAutoEmail}):tab==='activity'?/*#__PURE__*/React.createElement(ActivityTab,{onOpenEmail:()=>{setCommAutoEmail(true);setTab('communication');},onOpenJob:jid=>setCustJobSheet(jid)}):/*#__PURE__*/React.createElement("div",{className:"settings-scroll",style:{flex:1,overflowY:'auto',padding:'16px 20px 40px'}},tab==='overview'?/*#__PURE__*/React.createElement(React.Fragment,null,/*#__PURE__*/React.createElement(SectionHead,{icon:/*#__PURE__*/React.createElement("svg",{width:"14",height:"14",viewBox:"0 0 24 24",fill:"none",stroke:"#737373",strokeWidth:"1.8",strokeLinecap:"round",strokeLinejoin:"round"},/*#__PURE__*/React.createElement("path",{d:"M3 3v18h18"}),/*#__PURE__*/React.createElement("path",{d:"M7 14l4-4 3 3 5-6"})),title:"Highlights"}),/*#__PURE__*/React.createElement("div",{style:{display:'flex',flexWrap:'wrap',gap:10}},/*#__PURE__*/React.createElement(Stat,{icon:/*#__PURE__*/React.createElement("svg",{width:"13",height:"13",viewBox:"0 0 24 24",fill:"none",stroke:"#737373",strokeWidth:"1.8",strokeLinecap:"round",strokeLinejoin:"round"},/*#__PURE__*/React.createElement("path",{d:"M4 4h16v16l-3-2-2 2-3-2-3 2-2-2-3 2z"}),/*#__PURE__*/React.createElement("path",{d:"M8 9h8M8 13h5"})),label:"Receivables",value:"$0.00"}),/*#__PURE__*/React.createElement(Stat,{icon:/*#__PURE__*/React.createElement("svg",{width:"13",height:"13",viewBox:"0 0 24 24",fill:"none",stroke:"#737373",strokeWidth:"1.8",strokeLinecap:"round",strokeLinejoin:"round"},/*#__PURE__*/React.createElement("circle",{cx:"12",cy:"12",r:"9"}),/*#__PURE__*/React.createElement("path",{d:"M12 7v10M9.5 9.5h4M9 14h4"})),label:"Credits",value:"$0.00"}),/*#__PURE__*/React.createElement(Stat,{icon:/*#__PURE__*/React.createElement("svg",{width:"13",height:"13",viewBox:"0 0 24 24",fill:"none",stroke:"#737373",strokeWidth:"1.8",strokeLinecap:"round",strokeLinejoin:"round"},/*#__PURE__*/React.createElement("rect",{x:"3",y:"5",width:"18",height:"14",rx:"2"}),/*#__PURE__*/React.createElement("path",{d:"M3 7l9 6 9-6"})),label:"Last Email",value:"11 Jul 2025"}),/*#__PURE__*/React.createElement(Stat,{icon:/*#__PURE__*/React.createElement("svg",{width:"13",height:"13",viewBox:"0 0 24 24",fill:"none",stroke:"#737373",strokeWidth:"1.8",strokeLinecap:"round",strokeLinejoin:"round"},/*#__PURE__*/React.createElement("path",{d:"M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"})),label:"Last Text Message",value:"12 May 2026"})),/*#__PURE__*/React.createElement(SectionHead,{icon:/*#__PURE__*/React.createElement("svg",{width:"14",height:"14",viewBox:"0 0 24 24",fill:"none",stroke:"#737373",strokeWidth:"1.8",strokeLinecap:"round",strokeLinejoin:"round"},/*#__PURE__*/React.createElement("path",{d:"M3 12a9 9 0 109-9"}),/*#__PURE__*/React.createElement("path",{d:"M3 3v6h6"}),/*#__PURE__*/React.createElement("path",{d:"M12 8v4l3 2"})),title:"Recent Activity"}),/*#__PURE__*/React.createElement("div",null,CUSTOMER_ACTIVITY.map((a,i)=>/*#__PURE__*/React.createElement("div",{key:i,style:{display:'flex',alignItems:'flex-start',gap:9,padding:'7px 0'}},/*#__PURE__*/React.createElement(Avatar,{initial:a.who[0],size:22,bg:"#e0e7ff",color:"#4338ca"}),/*#__PURE__*/React.createElement("div",{style:{flex:1,minWidth:0,fontSize:12,color:'#737373',lineHeight:1.5}},/*#__PURE__*/React.createElement("span",{style:{fontWeight:700,color:'#1f1f1d'}},a.who," "),a.text),/*#__PURE__*/React.createElement("span",{style:{fontSize:11,color:'#b0afa9',flexShrink:0}},a.time)))),/*#__PURE__*/React.createElement(SectionHead,{icon:/*#__PURE__*/React.createElement(CIBriefcase,{size:14,color:"#737373"}),title:"Recent Jobs"}),/*#__PURE__*/React.createElement("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,background:'#fff',padding:'10px 14px',display:'flex',alignItems:'center',gap:12}},/*#__PURE__*/React.createElement("span",{style:{flex:1,minWidth:0,fontSize:12.5,fontWeight:600,color:'#1f1f1d'}},"#pre106435 - asdsad"),/*#__PURE__*/React.createElement(Pill,{label:"New",bg:"#dcfce7",fg:"#16a34a"}),/*#__PURE__*/React.createElement("span",{style:{fontSize:11.5,color:'#9c9b96',flexShrink:0}},"05/30/2026")),/*#__PURE__*/React.createElement(SectionHead,{icon:/*#__PURE__*/React.createElement(CIBriefcase,{size:14,color:"#737373"}),title:"Recent Recurring Jobs"}),/*#__PURE__*/React.createElement(EmptyBox,null),/*#__PURE__*/React.createElement(SectionHead,{icon:/*#__PURE__*/React.createElement(FileTextIcon,{size:14,color:"#737373"}),title:"Recent Quotes"}),/*#__PURE__*/React.createElement("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,background:'#fff',padding:'10px 14px',display:'flex',alignItems:'center',gap:12}},/*#__PURE__*/React.createElement("span",{style:{flex:1,minWidth:0,fontSize:12.5,fontWeight:600,color:'#1f1f1d'}},"2022-03-171962"),/*#__PURE__*/React.createElement("span",{style:{fontSize:11.5,color:'#9c9b96'}},"04/17/2022"),/*#__PURE__*/React.createElement(Pill,{label:"Approved",bg:"#dcfce7",fg:"#16a34a"}),/*#__PURE__*/React.createElement("span",{style:{fontSize:12.5,fontWeight:700,color:'#1f1f1d',flexShrink:0}},"$39,784.60")),/*#__PURE__*/React.createElement(SectionHead,{icon:/*#__PURE__*/React.createElement(FileTextIcon,{size:14,color:"#737373"}),title:"Recent Invoices"}),/*#__PURE__*/React.createElement(EmptyBox,null),/*#__PURE__*/React.createElement(SectionHead,{icon:/*#__PURE__*/React.createElement("svg",{width:"14",height:"14",viewBox:"0 0 24 24",fill:"none",stroke:"#737373",strokeWidth:"1.8",strokeLinecap:"round",strokeLinejoin:"round"},/*#__PURE__*/React.createElement("rect",{x:"2",y:"5",width:"20",height:"14",rx:"2"}),/*#__PURE__*/React.createElement("path",{d:"M2 10h20"})),title:"Recent Payments"}),/*#__PURE__*/React.createElement(EmptyBox,null),/*#__PURE__*/React.createElement(SectionHead,{icon:/*#__PURE__*/React.createElement("svg",{width:"14",height:"14",viewBox:"0 0 24 24",fill:"none",stroke:"#737373",strokeWidth:"1.8",strokeLinecap:"round",strokeLinejoin:"round"},/*#__PURE__*/React.createElement("path",{d:"M3 7h18v13H3z"}),/*#__PURE__*/React.createElement("path",{d:"M8 7V4h8v3"})),title:"Recent Projects"}),/*#__PURE__*/React.createElement(EmptyBox,null)):/*#__PURE__*/React.createElement("div",{style:{padding:'60px 16px',textAlign:'center',color:'#9c9b96'}},/*#__PURE__*/React.createElement("div",{style:{fontSize:13,fontWeight:600,color:'#737373'}},"No ",CUSTOMER_TABS.find(t=>t.id===tab)?.label.toLowerCase()," yet")))),/*#__PURE__*/React.createElement("div",{style:{display:'flex',flexShrink:0,borderLeft:'1px solid #e5e5e5',height:'100%'}},!rightCollapsed&&/*#__PURE__*/React.createElement("div",{style:{width:300,minWidth:300,background:'#fff',borderRight:'1px solid #e5e5e5',display:'flex',flexDirection:'column',overflow:'hidden'}},/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 14px',height:48,borderBottom:'1px solid #f0eeea',flexShrink:0}},/*#__PURE__*/React.createElement("span",{style:{fontSize:13,fontWeight:600,color:'#262626'}},"Attachments"),/*#__PURE__*/React.createElement("button",{style:{width:26,height:26,border:'none',background:'transparent',borderRadius:6,cursor:'pointer',display:'inline-flex',alignItems:'center',justifyContent:'center',color:'#737373'}},/*#__PURE__*/React.createElement(PlusIcon,{size:15}))),/*#__PURE__*/React.createElement("div",{style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:10,padding:24,textAlign:'center'}},/*#__PURE__*/React.createElement("div",{style:{width:64,height:64,borderRadius:12,background:'linear-gradient(135deg, #f5f4f0 0%, #ece9e1 100%)',display:'flex',alignItems:'center',justifyContent:'center'}},/*#__PURE__*/React.createElement(CIPaperclip,{size:24,color:"#a08433"})),/*#__PURE__*/React.createElement("div",{style:{fontSize:13,fontWeight:600,color:'#262626'}},"No attachments added"),/*#__PURE__*/React.createElement("div",{style:{fontSize:11.5,color:'#9c9b96'}},"Drag & Drop to upload files"))),/*#__PURE__*/React.createElement("div",{style:{width:46,background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',paddingTop:12,gap:4,flexShrink:0}},[{id:'attach',Icon:CIPaperclip},{id:'phone',Icon:PhoneIcon},{id:'history',Icon:ClockIcon},{id:'chats',Icon:MessageIcon},{id:'sense',Icon:SparkleIcon}].map(p=>{const on=!rightCollapsed&&rightPanel===p.id;return/*#__PURE__*/React.createElement("button",{key:p.id,onClick:()=>{setRightPanel(p.id);setRightExpandedOverride(true);},style:{width:30,height:30,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',border:'none',cursor:'pointer',background:on?'#e4d9c8':'transparent'}},/*#__PURE__*/React.createElement(p.Icon,{size:14,color:on?'#5c4a1e':'#a3a3a3'}));})))),/*#__PURE__*/React.createElement(JobDetailSheet,{jobId:custJobSheet,onClose:()=>setCustJobSheet(null)}));}/* ─── Shell (3-pane layout) ─── */function Shell(){const[quotePage,setQuotePage]=useState(()=>parseHash());const[showSettings,setShowSettings]=useState(false);const[showComms,setShowComms]=useState(false);const[showCrm,setShowCrm]=useState(false);const[centerTab,setCenterTab]=useState('lineItems');const[devFlags,setDevFlags]=useState({hideDescription:false});const toggleDevFlag=id=>setDevFlags(p=>({...p,[id]:!p[id]}));const[linkedQuotes,setLinkedQuotes]=useState([]);const[linkedPos,setLinkedPos]=useState([]);const inheritanceValue=useMemo(()=>({linkedQuotes,linkedPos,setLinkedQuotes,setLinkedPos}),[linkedQuotes,linkedPos]);const skipHashSync=useRef(false);const navigateQuote=val=>{skipHashSync.current=true;if(val){const id=val.mode==='create'?'new':val.quote?.id;const prefix=val.mode==='create'?'quote':val.quote?.type||'quote';window.location.hash=id?`${prefix}/${id}`:'';}else{history.pushState(null,'',window.location.pathname+window.location.search);}setQuotePage(val);};useEffect(()=>{const onHash=()=>{if(skipHashSync.current){skipHashSync.current=false;return;}setQuotePage(parseHash());};window.addEventListener('hashchange',onHash);return()=>window.removeEventListener('hashchange',onHash);},[]);const providerValue={flags:devFlags,toggle:toggleDevFlag};const contentCardStyle={flex:1,minWidth:0,display:"flex",flexDirection:"column",overflow:"hidden",background:"#fff",borderRadius:"16px 16px 0 0",margin:"0 8px 0 0",border:"1px solid #e5e5e5",borderBottom:"none",boxShadow:"0 -1px 8px rgba(0,0,0,0.04), 0 2px 16px rgba(0,0,0,0.06)"};return/*#__PURE__*/React.createElement(DevFlagsContext.Provider,{value:providerValue},/*#__PURE__*/React.createElement(InheritanceContext.Provider,{value:inheritanceValue},/*#__PURE__*/React.createElement("div",{style:{display:"flex",flexDirection:"column",height:"100vh",overflow:"hidden",background:"#f8f5f0"}},/*#__PURE__*/React.createElement(TopNavBar,null),/*#__PURE__*/React.createElement("div",{style:{display:"flex",flex:1,overflow:"hidden"}},/*#__PURE__*/React.createElement(AppSidebar,{settingsActive:showSettings,onSettingsClick:()=>{setShowSettings(s=>!s);setShowComms(false);setShowCrm(false);},commsActive:showComms,onCommsClick:()=>{setShowComms(c=>!c);setShowSettings(false);setShowCrm(false);},crmActive:showCrm,onCrmClick:()=>{setShowCrm(c=>!c);setShowSettings(false);setShowComms(false);},onWorkClick:()=>{setShowComms(false);setShowSettings(false);setShowCrm(false);}}),/*#__PURE__*/React.createElement("div",{style:contentCardStyle},showSettings?/*#__PURE__*/React.createElement(SettingsPage,{onBack:()=>setShowSettings(false)}):showCrm?/*#__PURE__*/React.createElement(CustomerDetailPage,{onBack:()=>setShowCrm(false)}):showComms?/*#__PURE__*/React.createElement(CommunicationPage,{onBack:()=>setShowComms(false)}):quotePage?quotePage.mode==='edit'&&quotePage.quote?.type==='proposal'?/*#__PURE__*/React.createElement(ProposalPage,{key:`proposal-${quotePage.quote.id}`,proposal:quotePage.quote,onBack:()=>navigateQuote(null)}):/*#__PURE__*/React.createElement(QuotePage,{key:quotePage.mode==='edit'?`${quotePage.quote?.type}-${quotePage.quote?.id}`:'quote-new',quote:quotePage.mode==='edit'?quotePage.quote:null,onBack:()=>navigateQuote(null)}):/*#__PURE__*/React.createElement(React.Fragment,null,/*#__PURE__*/React.createElement(BreadcrumbHeader,null),/*#__PURE__*/React.createElement("div",{style:{display:"flex",flex:1,overflow:"hidden",position:"relative"}},/*#__PURE__*/React.createElement(LeftPane,null),/*#__PURE__*/React.createElement("div",{className:"shell-center",style:{display:'flex',flex:1,minWidth:0,minHeight:0,overflow:"hidden",height:"100%"}},/*#__PURE__*/React.createElement(CenterPane,{activeTab:centerTab,setActiveTab:setCenterTab,onOpenQuote:q=>navigateQuote({mode:'edit',quote:q}),onNewQuote:()=>navigateQuote({mode:'create'})})),/*#__PURE__*/React.createElement(RightPane,{collapsed:false}))))))));}window.UnifiedSettingsPage=SettingsPage;})();
 </script>
+
+<script type="text/plain" id="leadhub-jsx-src">
+/* ══════════════════════════════════════════════════════════════════════════
+   LEAD HUB — sidebar module (Overview · Pipeline · Campaigns · Channels · Health)
+   Design language: zuper-components. Campaign wizard: Lead Management Campaign Builder.
+   ════════════════════════════════════════════════════════════════════════ */
+(function () {
+  const { useState, useEffect, useRef, useMemo } = React;
+
+  const LH = {
+    primary: '#E44A19', primaryDark: '#b4441f', tint: '#FCEDE8',
+    ink: '#252A31', body: '#475569', sub: '#64748B', muted: '#94A3B8',
+    border: '#e7e2d8', borderSoft: '#efeae0', card: '#ffffff', bg: '#fbf9f5',
+    green: '#15803d', greenBg: '#e7f6ec', greenBd: '#c3e8ce',
+    amber: '#8a6410', amberBg: '#fff5e2', amberBd: '#f6e2ad',
+    red: '#dc2626', redBg: '#fdecec', redBd: '#f6cccc',
+    blue: '#2563eb', blueBg: '#eff4ff', blueBd: '#cfe0fb'
+  };
+
+  // Icon via lucide (reuse global lucide loaded by the shell)
+  function Ic({ name, size = 16, color = 'currentColor', sw = 2, style, className }) {
+    const ref = useRef(null);
+    useEffect(() => {
+      const el = ref.current;
+      if (!el || !window.lucide) return;
+      el.innerHTML = '';
+      const i = document.createElement('i');
+      i.setAttribute('data-lucide', name);
+      el.appendChild(i);
+      try { window.lucide.createIcons({ nodes: [i], attrs: { width: size, height: size, 'stroke-width': sw, stroke: color, fill: 'none' } }); } catch (e) {}
+    });
+    return <span ref={ref} className={className} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size, height: size, flexShrink: 0, ...style }} />;
+  }
+
+  const TONE = {
+    Live: { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd },
+    Active: { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd },
+    Qualified: { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd },
+    Resolved: { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd },
+    Pending: { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
+    'Action needed': { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
+    'Awaiting human': { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
+    'Not connected': { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' },
+    New: { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
+    Qualifying: { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
+    'In drip': { bg: '#f3eefe', fg: '#6d28d9', bd: '#ddd0f7' },
+    Draft: { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' }
+  };
+  function Pill({ label, tone }) {
+    const t = TONE[tone || label] || TONE.Draft;
+    return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 9px', borderRadius: 999, fontSize: 11.5, fontWeight: 600, background: t.bg, color: t.fg, border: '1px solid ' + t.bd, lineHeight: '16px', whiteSpace: 'nowrap' }}>
+      {label}
+    </span>;
+  }
+
+  function Btn({ children, kind = 'secondary', icon, onClick, style }) {
+    const base = { display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all .12s', whiteSpace: 'nowrap' };
+    const skin = kind === 'primary'
+      ? { background: LH.primary, color: '#fff', border: '1px solid ' + LH.primary, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }
+      : kind === 'ghost'
+        ? { background: 'transparent', color: LH.primary, border: '1px solid transparent' }
+        : { background: '#fff', color: LH.body, border: '1px solid ' + LH.border, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' };
+    return <button onClick={onClick} style={{ ...base, ...skin, ...style }}>
+      {icon && <Ic name={icon} size={15} color={kind === 'primary' ? '#fff' : (kind === 'ghost' ? LH.primary : LH.sub)} />}
+      {children}
+    </button>;
+  }
+
+  function Card({ children, style, onClick, hover }) {
+    const [h, setH] = useState(false);
+    return <div onClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+      style={{ background: LH.card, border: '1px solid ' + (hover && h ? '#d8cdb8' : LH.border), borderRadius: 12, transition: 'border-color .12s', ...(onClick ? { cursor: 'pointer' } : {}), ...style }}>
+      {children}
+    </div>;
+  }
+
+  function Hero() {
+    return <div style={{ borderRadius: 14, padding: '22px 26px', marginBottom: 22, background: 'linear-gradient(100deg,#1b1a18 0%,#221f1b 34%,#7a2e15 78%,#b4441f 100%)', color: '#fff', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.14em', color: 'rgba(255,255,255,.62)', marginBottom: 8 }}>GET THE WORK</div>
+      <div style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Lead Hub</div>
+      <div style={{ fontSize: 13.5, color: 'rgba(255,255,255,.8)', maxWidth: 620, lineHeight: 1.5 }}>Capture demand faster, qualify the right homeowners, and move hot leads into the sales motion without delay.</div>
+    </div>;
+  }
+
+  function PageHead({ crumb, title, actions }) {
+    return <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '18px 26px 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0, background: '#fdfdfc' }}>
+      <div>
+        <div style={{ fontSize: 12, color: LH.muted, marginBottom: 3 }}>{crumb}</div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: LH.ink, letterSpacing: '-.01em' }}>{title}</div>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>{actions}</div>
+    </div>;
+  }
+
+  function StatCard({ label, value, accent, sub }) {
+    return <Card style={{ padding: '14px 16px', flex: 1, minWidth: 0 }}>
+      <div style={{ fontSize: 29, fontWeight: 700, color: accent || LH.ink, lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 4 }}>{label}</div>
+      {sub && <div style={{ fontSize: 11, color: LH.muted, marginTop: 2 }}>{sub}</div>}
+    </Card>;
+  }
+
+  function Select({ label, value }) {
+    return <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, color: LH.body, cursor: 'pointer' }}>
+      <span style={{ color: LH.muted }}>{label}</span><span style={{ fontWeight: 600 }}>{value}</span>
+      <Ic name="chevron-down" size={13} color={LH.muted} />
+    </div>;
+  }
+
+  /* ─────────── data ─────────── */
+  const PIPE_LEADS = [
+    { id: 'l1', col: 'New lead', score: 34, name: 'Jordan Blake', note: 'Phone intake', src: 'Manual', age: '8d', status: 'New', fields: '1/9' },
+    { id: 'l2', col: 'Contacting', score: 76, name: 'Sarah Mitchell', note: 'Roof leak after rain', src: 'Thumbtack', age: '18m', status: 'Live with Nova', fields: '6/9' },
+    { id: 'l3', col: 'Qualifying', score: 81, name: 'Caleb Norris', note: 'Canvassing follow-up', src: 'SalesRabbit', age: '1d', status: 'Qualifying', fields: '5/9' },
+    { id: 'l4', col: 'Needs human', score: 68, name: 'Marcus Reed', note: 'Missing shingles', src: 'Google LSA', age: '4h', status: 'Awaiting human', fields: '6/9' },
+    { id: 'l5', col: 'In drip', score: 54, name: 'Erin Patel', note: 'Free roof inspection request', src: 'Meta Ads', age: '4d', status: 'In drip', fields: '3/9' },
+    { id: 'l6', col: 'Qualified', score: 89, name: 'Diane Walsh', note: 'Storm damage inspection', src: 'Angi', age: '2h', status: 'Qualified', fields: '9/9' }
+  ];
+  const PIPE_COLS = [
+    { key: 'New lead', hint: 'Captured from source' },
+    { key: 'Contacting', hint: 'Speed-to-lead active' },
+    { key: 'Qualifying', hint: 'Fields being captured' },
+    { key: 'Needs human', hint: 'CSR handoff required' },
+    { key: 'In drip', hint: 'Follow-up sequence' },
+    { key: 'Qualified', hint: 'Ready for Sales Hub' },
+    { key: 'Inspection job', hint: 'Converted handoff' }
+  ];
+  const STAGES = ['New', 'Contacting', 'Qualifying', 'Human', 'Drip', 'Qualified', 'Inspection'];
+  const DIANE_FIELDS = ['Property address', 'Roof type', 'Damage type', 'Insurance claim', 'Homeowner name', 'Best contact time', 'Urgency', 'Spouse decision', 'Previous estimates'];
+  const DIANE_ACT = [
+    { t: '2h ago', who: 'System', msg: 'Lead created from Angi storm lead form.' },
+    { t: '2h ago', who: 'Nova', msg: 'Speed-to-lead SMS sent in 28 seconds.' },
+    { t: '1h ago', who: 'Nova', msg: 'Call completed. Insurance claim and urgency captured.' },
+    { t: '32m ago', who: 'Nova', msg: 'All 9 qualification fields captured.' }
+  ];
+  const CHANNELS = [
+    { g: 'Marketplace', items: [
+      { k: 'A', n: 'Angi', s: '142 leads this month · 36 this week', st: 'Live', hook: 'hooks.zuper.com/lead/angi/hill-roofing', last: '4 min ago' },
+      { k: 'T', n: 'Thumbtack', s: '88 leads this month · 19 this week', st: 'Action needed', hook: 'hooks.zuper.com/lead/thumbtack/hill-roofing', last: '2h ago' },
+      { k: 'H', n: 'HomeAdvisor', s: 'Marketplace leads from HomeAdvisor Pro.', st: 'Not connected' }
+    ] },
+    { g: 'Paid Ads', items: [
+      { k: 'G', n: 'Google LSA', s: '64 leads this month · 14 this week', st: 'Live', hook: 'hooks.zuper.com/lead/google-lsa/hill-roofing', last: '18 min ago' },
+      { k: 'M', n: 'Meta Ads', s: '51 leads this month · 9 this week', st: 'Live', hook: 'hooks.zuper.com/lead/meta/hill-roofing', last: '1d ago' },
+      { k: 'G', n: 'Google Reserve', s: 'Booking requests and reservation inquiries.', st: 'Not connected' }
+    ] },
+    { g: 'Canvassing', items: [
+      { k: 'S', n: 'SalesRabbit', s: '37 leads this month · 11 this week', st: 'Live', hook: 'hooks.zuper.com/lead/salesrabbit/hill-roofing', last: '44 min ago' },
+      { k: 'R', n: 'RepCard', s: 'RepCard referral and canvassing leads.', st: 'Not connected' }
+    ] },
+    { g: 'Website & Booking', items: [
+      { k: 'W', n: 'Website Booking', s: '24 leads this month · 8 this week', st: 'Live', hook: 'hooks.zuper.com/lead/website/hill-roofing', last: '3h ago' },
+      { k: 'I', n: 'Instant Estimator', s: 'First-run lead gen estimator, shown contextually.', st: 'Not connected' }
+    ] },
+    { g: 'Custom', items: [
+      { k: 'C', n: 'Custom webhook', s: 'Bring in any source with a mapped webhook payload.', st: 'Not connected' }
+    ] }
+  ];
+  const HEALTH_CATS = [
+    { icon: 'webhook', name: 'Webhook issues', res: 2, pend: 1, detail: null },
+    { icon: 'git-compare', name: 'Field mapping conflicts', res: 0, pend: 1, detail: { date: 'Nov 16, 9:12am', title: 'Angi payload schema changed', src: 'Angi', st: 'Pending', what: 'Angi renamed phone to primary_phone, so twelve leads are missing phone numbers.', cause: 'Source payload changed after the integration was configured.', next: 'Update field mapping in Channels › Angi › Configure.' } },
+    { icon: 'bot', name: 'Nova handoff outcomes', res: 7, pend: 0, detail: null },
+    { icon: 'scale', name: 'Dispute outcomes', res: 4, pend: 2, detail: null }
+  ];
+  const SEQ_OUT = [
+    { ch: 'SMS', icon: 'message-square', t: '0s', body: 'Hi {name}, this is {company}. We just received your roofing inquiry.' },
+    { ch: 'Nova Call', icon: 'phone', t: '2 min', body: 'Objective: qualify. Playbook: default qualification.' },
+    { ch: 'SMS', icon: 'message-square', t: '1h', body: 'Quick question about your roof, {name}. What type of damage are you dealing with?' },
+    { ch: 'Voicemail Drop', icon: 'voicemail', t: '4h', body: 'Brief intro, callback number, and inspection offer.' },
+    { ch: 'SMS', icon: 'message-square', t: 'Day 2', body: 'Still happy to help with the roof issue at {address}.' },
+    { ch: 'Nova Call', icon: 'phone', t: 'Day 3', body: 'Objective: re-engage and qualify.' },
+    { ch: 'SMS', icon: 'message-square', t: 'Day 5', body: 'We can usually inspect storm damage within 48 hours.' },
+    { ch: 'Nova Call', icon: 'phone', t: 'Day 7', body: 'Objective: callback and objection handling.' },
+    { ch: 'SMS', icon: 'message-square', t: 'Day 9', body: 'Checking once more before we close out this request.' },
+    { ch: 'Voicemail Drop', icon: 'voicemail', t: 'Day 11', body: 'Soft callback reminder.' },
+    { ch: 'SMS', icon: 'message-square', t: 'Day 12', body: 'If now is not the right time, reply with a better day.' },
+    { ch: 'Nova Call', icon: 'phone', t: 'Day 13', body: 'Objective: final qualification attempt.' },
+    { ch: 'SMS', icon: 'message-square', t: 'Day 14', body: 'Final touch. We will archive this request unless you want help.' }
+  ];
+
+  /* ─────────── OVERVIEW ─────────── */
+  function OverviewSection({ onNavigate }) {
+    const kpis = [
+      { label: 'Received today', value: 28, accent: LH.ink },
+      { label: 'Qualified today', value: 7, accent: LH.green },
+      { label: 'In drip', value: 41, accent: '#6d28d9' },
+      { label: 'Awaiting human', value: 3, accent: LH.primary }
+    ];
+    const tiles = [
+      { id: 'lead-pipeline', icon: 'filter', title: 'Pipeline', desc: '6 active leads across 7 stages', accent: LH.blue },
+      { id: 'lead-campaigns', icon: 'megaphone', title: 'Campaigns', desc: '3 active nurture sequences', accent: LH.primary },
+      { id: 'lead-channels', icon: 'radio', title: 'Channels', desc: '6 of 11 sources connected', accent: LH.green },
+      { id: 'lead-health', icon: 'activity', title: 'Health', desc: '5 pending · 1 requires action', accent: LH.amber }
+    ];
+    return <div>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 22 }}>{kpis.map(k => <StatCard key={k.label} {...k} />)}</div>
+      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 10 }}>JUMP BACK IN</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12, marginBottom: 24 }}>
+        {tiles.map(t => <Card key={t.id} hover onClick={() => onNavigate(t.id)} style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={t.icon} size={19} color={LH.primary} /></div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14.5, fontWeight: 600, color: LH.ink }}>{t.title}</div>
+            <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>{t.desc}</div>
+          </div>
+          <Ic name="arrow-right" size={17} color={LH.muted} />
+        </Card>)}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 12 }}>
+        <Card style={{ padding: 18 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink, marginBottom: 14 }}>Recent activity</div>
+          {DIANE_ACT.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: i < DIANE_ACT.length - 1 ? 12 : 0, marginBottom: i < DIANE_ACT.length - 1 ? 12 : 0, borderBottom: i < DIANE_ACT.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+            <div style={{ width: 26, height: 26, borderRadius: 7, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={a.who === 'Nova' ? 'sparkles' : 'settings'} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.4 }}>{a.msg}</div>
+              <div style={{ fontSize: 11, color: LH.muted, marginTop: 2 }}>{a.who} · {a.t}</div>
+            </div>
+          </div>)}
+        </Card>
+        <Card style={{ padding: 18 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink, marginBottom: 14 }}>Active campaigns</div>
+          {['Speed-to-Lead Drip', 'Storm Season Re-engage', 'Estimate Follow-up'].map((c, i) => <div key={c} onClick={() => onNavigate('lead-campaigns')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: i < 2 ? '1px solid ' + LH.borderSoft : 'none', cursor: 'pointer' }}>
+            <span style={{ fontSize: 13, color: LH.body }}>{c}</span><Pill label="Active" />
+          </div>)}
+        </Card>
+      </div>
+    </div>;
+  }
+
+  /* ─────────── PIPELINE ─────────── */
+  function PipelineSection() {
+    const [selId, setSelId] = useState('l6');
+    const sel = PIPE_LEADS.find(l => l.id === selId) || PIPE_LEADS[5];
+    return <div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
+        <Select label="Source:" value="All" /><Select label="Status:" value="All" /><Select label="Assigned:" value="All" /><Select label="Score:" value="Any" /><Select label="Age:" value="Any" />
+        <button style={{ height: 32, padding: '0 11px', borderRadius: 8, border: '1px solid transparent', background: 'transparent', fontSize: 12.5, color: LH.primary, fontWeight: 600, cursor: 'pointer' }}>Clear filters</button>
+      </div>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
+        <StatCard label="Received today" value="28" /><StatCard label="Qualified today" value="7" /><StatCard label="In drip" value="41" /><StatCard label="Awaiting human" value="3" accent={LH.primary} />
+      </div>
+      <Card style={{ padding: 18, marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', color: LH.muted }}>SELECTED LEAD PROGRESS</div><div style={{ fontSize: 15, fontWeight: 600, color: LH.ink, marginTop: 2 }}>{sel.name} is at Qualified</div></div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: LH.primary }}>83%</div>
+        </div>
+        <div style={{ height: 6, borderRadius: 999, background: '#efe9de', overflow: 'hidden', marginBottom: 14 }}><div style={{ width: '83%', height: '100%', background: LH.primary }} /></div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {STAGES.map((s, i) => <div key={s} style={{ flex: 1, padding: '8px 6px', borderRadius: 9, textAlign: 'center', background: i < 6 ? LH.greenBg : (i === 6 ? LH.tint : '#f6f4ef'), border: '1px solid ' + (i === 6 ? '#f2d3c6' : 'transparent') }}>
+            <Ic name={i < 6 ? 'circle-check' : 'circle'} size={15} color={i < 6 ? LH.green : LH.muted} style={{ margin: '0 auto 3px' }} />
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: LH.ink }}>{s}</div>
+            <div style={{ fontSize: 10, color: LH.muted }}>{i === 6 ? '0 leads' : '1 lead'}</div>
+          </div>)}
+        </div>
+      </Card>
+      <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6 }}>
+          {PIPE_COLS.map(col => {
+            const leads = PIPE_LEADS.filter(l => l.col === col.key);
+            return <div key={col.key} style={{ width: 190, flexShrink: 0 }}>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>{col.key}</span><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 999, padding: '1px 7px' }}>{leads.length}</span></div>
+                <div style={{ fontSize: 10.5, color: LH.muted, marginTop: 1 }}>{col.hint}</div>
+              </div>
+              {leads.length ? leads.map(l => <Card key={l.id} hover onClick={() => setSelId(l.id)} style={{ padding: 11, marginBottom: 8, ...(selId === l.id ? { borderColor: LH.primary, boxShadow: '0 0 0 1px ' + LH.primary } : {}) }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 999, background: l.score >= 80 ? LH.greenBg : l.score >= 60 ? LH.amberBg : '#f1f0ec', color: l.score >= 80 ? LH.green : l.score >= 60 ? LH.amber : LH.sub, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{l.score}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.name}</div><div style={{ fontSize: 10.5, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.note}</div></div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><Pill label={l.src} tone="New" /><span style={{ fontSize: 10.5, color: LH.muted }}>{l.age}</span></div>
+                <div style={{ fontSize: 10.5, color: LH.sub, marginTop: 6 }}>{l.fields} fields</div>
+              </Card>) : <div style={{ fontSize: 11.5, color: LH.muted, padding: '14px 0', textAlign: 'center' }}>No leads here</div>}
+            </div>;
+          })}
+        </div>
+        <Card style={{ width: 300, flexShrink: 0, padding: 16, alignSelf: 'flex-start' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div><div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>{sel.name}</div><div style={{ display: 'flex', gap: 6, marginTop: 6 }}><Pill label={sel.src} tone="New" /><Pill label={sel.status} /></div></div>
+            <div style={{ width: 34, height: 34, borderRadius: 999, background: LH.primary, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>{sel.score}</div>
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, margin: '16px 0 8px' }}>{sel.fields === '9/9' ? '9 OF 9 FIELDS CAPTURED' : sel.fields.replace('/', ' OF ') + ' FIELDS CAPTURED'}</div>
+          {DIANE_FIELDS.map((f, i) => <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '5px 0' }}><Ic name="check" size={13} color={LH.green} /><span style={{ fontSize: 12.5, color: LH.body }}>{f}</span></div>)}
+          <div style={{ background: LH.tint, borderRadius: 9, padding: 11, margin: '14px 0' }}><div style={{ fontSize: 11, fontWeight: 700, color: LH.primaryDark, marginBottom: 3 }}>Suggested next step</div><div style={{ fontSize: 12, color: '#7a3a20', lineHeight: 1.4 }}>Ready to convert. Tap Convert to Inspection to move this to Sales Hub.</div></div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+            <Btn icon="phone" style={{ flex: 1, justifyContent: 'center', height: 32 }}>Call</Btn>
+            <Btn icon="message-square" style={{ flex: 1, justifyContent: 'center', height: 32 }}>Text</Btn>
+            <Btn icon="mail" style={{ flex: 1, justifyContent: 'center', height: 32 }}>Email</Btn>
+          </div>
+          <Btn kind="primary" icon="arrow-right-circle" style={{ width: '100%', justifyContent: 'center' }}>Convert to Inspection</Btn>
+        </Card>
+      </div>
+    </div>;
+  }
+
+  /* ─────────── CAMPAIGNS ─────────── */
+  function CampaignsSection({ onToast }) {
+    const [tab, setTab] = useState('out');
+    return <div>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        <Card style={{ width: 250, flexShrink: 0, padding: 16 }}>
+          <label style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub }}>Campaign name</label>
+          <div style={{ height: 34, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 13, color: LH.ink, fontWeight: 600, margin: '5px 0 14px' }}>Speed-to-Lead Drip</div>
+          <label style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub }}>Assigned sources</label>
+          <div style={{ minHeight: 34, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, padding: 6, margin: '5px 0 14px' }}>
+            {['Angi', 'Thumbtack', 'Google LSA'].map(s => <span key={s} style={{ fontSize: 11.5, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px', color: LH.body }}>{s}</span>)}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', marginBottom: 16 }}><span style={{ fontSize: 13, color: LH.body }}>Active</span><span style={{ fontSize: 12, fontWeight: 700, color: LH.green, display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 30, height: 17, borderRadius: 999, background: LH.green, position: 'relative', display: 'inline-block' }}><span style={{ position: 'absolute', top: 2, right: 2, width: 13, height: 13, borderRadius: 999, background: '#fff' }} /></span>On</span></div>
+          <Btn kind="primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 8 }} onClick={() => onToast('Campaign saved.')}>Save</Btn>
+          <button style={{ width: '100%', height: 34, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 13, color: LH.red, fontWeight: 600, cursor: 'pointer' }}>Delete campaign</button>
+        </Card>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid ' + LH.borderSoft, marginBottom: 16 }}>
+            {[['out', 'Outbound sequence'], ['in', 'Inbound handling']].map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ padding: '9px 14px', fontSize: 13.5, fontWeight: 600, color: tab === k ? LH.primary : LH.sub, background: 'transparent', border: 'none', borderBottom: '2px solid ' + (tab === k ? LH.primary : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{l}</button>)}
+          </div>
+          {tab === 'out' ? <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 12 }}>
+            {SEQ_OUT.map((s, i) => <Card key={i} style={{ padding: 14 }}>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 9 }}><Ic name={s.icon} size={15} color={LH.primary} /></div>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink }}>{s.ch}</div>
+              <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 8 }}>{s.t}</div>
+              <div style={{ fontSize: 12, color: LH.body, lineHeight: 1.45, minHeight: 34 }}>{s.body}</div>
+              <button style={{ marginTop: 10, fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>Edit</button>
+            </Card>)}
+          </div> : <Card style={{ padding: 40, textAlign: 'center' }}>
+            <Ic name="message-circle-reply" size={40} color="#d8cdb8" style={{ margin: '0 auto 12px', width: 40, height: 40 }} />
+            <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink }}>Inbound handling</div>
+            <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 4 }}>Nova replies to inbound texts and calls automatically, using the campaign playbook.</div>
+          </Card>}
+        </div>
+      </div>
+    </div>;
+  }
+
+  /* ─────────── CAMPAIGN WIZARD (6 steps) ─────────── */
+  const WIZ_STEPS = ['Basic details', 'Audience', 'Communication', 'Speed to Lead', 'Nurture sequence', 'Exit rules'];
+  function CampaignWizard({ onClose, onCreate }) {
+    const [step, setStep] = useState(0);
+    const [name, setName] = useState('Storm Season Re-engage');
+    const [conds, setConds] = useState([{ f: 'Lead Source', op: 'is any of', v: 'Angi, Thumbtack' }]);
+    const [playbook, setPlaybook] = useState([
+      { q: 'Is this for a home or a commercial property?', req: true },
+      { q: 'What is going on with the roof — leak, storm damage, or age?', req: true },
+      { q: 'How soon are you looking to get this done?', req: true },
+      { q: 'Have you had any other companies out to quote it?', req: false },
+      { q: 'What day and time works for a free inspection?', req: true }
+    ]);
+    const [steps4, setSteps4] = useState([
+      { ch: 'Send SMS', off: 'On arrival', body: 'Hi {customer_first_name}, this is {company.company_name}. We just got your roofing request.' },
+      { ch: 'Make a phone call', off: '+5 min', body: 'Nova qualification call.' }
+    ]);
+    const suggestions = ['Are you the homeowner or decision-maker?', 'Is an insurance claim involved?', 'Roughly how old is the current roof?', 'Has there been any interior water damage?', 'What is the best number to reach you on?'];
+    const CHOFF = ['On arrival', '+5 min', '+15 min', '+30 min', '+60 min', '+2 hrs'];
+
+    const contacts = [
+      { n: 'Daniel Thompson', e: 'daniel.t@gmail.com', src: 'Angi', st: 'New Lead', sv: 'Roofing', d: '2h ago' },
+      { n: 'Rosa Nguyen', e: 'rosa.n@outlook.com', src: 'Thumbtack', st: 'Nurture', sv: 'Roofing', d: '1d ago' },
+      { n: 'Kevin Alvarez', e: 'kalvarez@gmail.com', src: 'Angi', st: 'New Lead', sv: 'Gutter', d: '3d ago' }
+    ];
+
+    const stepBody = () => {
+      if (step === 0) return <div style={{ maxWidth: 560, margin: '0 auto' }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Add details to your campaign</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 22px' }}>Name it something your team will recognise in the campaign list.</div>
+        <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign name <span style={{ color: LH.red }}>*</span></label>
+        <input value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', height: 38, borderRadius: 9, border: '1px solid ' + LH.border, padding: '0 12px', fontSize: 14, color: LH.ink, margin: '6px 0 18px', outline: 'none' }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Description</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>auto-written from your rules</span></div>
+        <textarea defaultValue="Re-engages storm-season leads from Angi and Thumbtack with a 14-day drip." style={{ width: '100%', height: 88, borderRadius: 9, border: '1px solid ' + LH.border, padding: 12, fontSize: 13.5, color: LH.body, margin: '6px 0 10px', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} />
+        <Btn icon="refresh-cw">Regenerate from rules</Btn>
+      </div>;
+      if (step === 1) return <div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Audience</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Customers are evaluated when they are created — matching customers are enrolled automatically.</div>
+        <div style={{ display: 'flex', gap: 20 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Conditions ({conds.length})</div>
+            {conds.map((c, i) => <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 8, alignItems: 'center' }}>
+              <div style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12.5, color: LH.body }}>{c.f}</div>
+              <div style={{ width: 100, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12.5, color: LH.sub }}>{c.op}</div>
+              <div style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12.5, color: LH.ink, fontWeight: 600 }}>{c.v}</div>
+              <button onClick={() => setConds(conds.filter((_, j) => j !== i))} style={{ width: 34, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', color: LH.muted, cursor: 'pointer' }}>–</button>
+            </div>)}
+            <Btn icon="plus" onClick={() => setConds([...conds, { f: 'Current Status', op: 'is any of', v: 'New Lead' }])} style={{ marginTop: 4 }}>Add filter</Btn>
+            <div style={{ fontSize: 12, color: LH.sub, marginTop: 14, background: LH.blueBg, border: '1px solid ' + LH.blueBd, borderRadius: 8, padding: '9px 12px' }}>105 records match your current filters · 0 removed manually, 105 will enrol</div>
+          </div>
+          <div style={{ width: 300, flexShrink: 0 }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Matching contacts ({contacts.length})</div>
+            {contacts.map(c => <Card key={c.e} style={{ padding: 11, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                <div style={{ width: 30, height: 30, borderRadius: 999, background: LH.tint, color: LH.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{c.n.split(' ').map(w => w[0]).join('')}</div>
+                <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{c.n}</div><div style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.e}</div></div>
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginTop: 8 }}><Pill label={c.src} tone="New" /><Pill label={c.st} tone={c.st === 'New Lead' ? 'New' : 'In drip'} /></div>
+            </Card>)}
+          </div>
+        </div>
+      </div>;
+      if (step === 2) return <div style={{ maxWidth: 620, margin: '0 auto' }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>How this campaign reaches out</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px' }}>Nova places every call step. Emails send from your workspace sending domain.</div>
+        <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Outbound number</label><div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>{['Zuper Sunday · (+1) 650 206 1172', '(+1) 1145 626 7281'].map((o, i) => <label key={o} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: LH.body }}><span style={{ width: 16, height: 16, borderRadius: 999, border: '2px solid ' + (i === 0 ? LH.primary : LH.border), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i === 0 && <span style={{ width: 7, height: 7, borderRadius: 999, background: LH.primary }} />}</span>{o}</label>)}</div></Card>
+        <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Voice agent</label><div style={{ height: 36, borderRadius: 8, border: '1px solid ' + LH.border, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 11px', fontSize: 13, color: LH.ink, fontWeight: 600, marginTop: 8 }}>Nova — AI voice agent <Ic name="chevron-down" size={14} color={LH.muted} /></div></Card>
+        <Card style={{ padding: 15 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}><label style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Nova playbook ({playbook.length} questions)</label></div>
+          {playbook.map((p, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 0', borderBottom: i < playbook.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+            <span style={{ width: 20, height: 20, borderRadius: 999, background: '#f1f0ec', color: LH.sub, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
+            <span style={{ flex: 1, fontSize: 12.5, color: LH.body }}>{p.q}</span>
+            {p.req && <span style={{ fontSize: 10.5, color: LH.primary, fontWeight: 600 }}>required</span>}
+            <button onClick={() => setPlaybook(playbook.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', color: LH.muted, cursor: 'pointer' }}><Ic name="x" size={14} color={LH.muted} /></button>
+          </div>)}
+          <div style={{ fontSize: 11.5, color: LH.muted, margin: '12px 0 6px' }}>Suggested for roofing leads</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{suggestions.map(s => <button key={s} onClick={() => setPlaybook([...playbook, { q: s, req: false }])} style={{ fontSize: 11.5, border: '1px dashed ' + LH.border, borderRadius: 999, padding: '4px 10px', background: '#fff', color: LH.body, cursor: 'pointer' }}>+ {s}</button>)}</div>
+        </Card>
+      </div>;
+      if (step === 3) return <div style={{ maxWidth: 640, margin: '0 auto' }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Speed to Lead</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px' }}>Launch day. These steps fire the moment a lead is enrolled, each relative to the step before it.</div>
+        {steps4.map((s, i) => <Card key={i} style={{ padding: 14, marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 9 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={s.ch.includes('SMS') ? 'message-square' : s.ch.includes('call') ? 'phone' : s.ch.includes('email') ? 'mail' : 'check-square'} size={15} color={LH.primary} /></div>
+            <span style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink, flex: 1 }}>{s.ch}</span>
+            <div style={{ height: 30, borderRadius: 8, border: '1px solid ' + LH.border, display: 'flex', alignItems: 'center', gap: 5, padding: '0 9px', fontSize: 12, color: LH.body }}>{s.off} <Ic name="chevron-down" size={12} color={LH.muted} /></div>
+            <button onClick={() => setSteps4(steps4.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="trash-2" size={15} color={LH.muted} /></button>
+          </div>
+          {s.ch.includes('SMS') && <div><textarea defaultValue={s.body} style={{ width: '100%', height: 60, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 12.5, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} /><div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}><button style={{ fontSize: 11.5, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Insert snippet…</button><span style={{ fontSize: 11, color: LH.muted }}>{s.body.length} / 612 characters</span></div></div>}
+        </Card>)}
+        <Btn icon="plus" onClick={() => setSteps4([...steps4, { ch: 'Send SMS', off: '+15 min', body: '' }])}>Add a step</Btn>
+        <Card style={{ padding: 14, marginTop: 16 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Business hours for launch day</div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12.5, color: LH.body }}><Select label="Start" value="09:00" /><span style={{ color: LH.muted }}>to</span><Select label="End" value="20:00" /></div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: LH.body, marginTop: 12 }}><input type="checkbox" /> Run launch day on weekends?</label>
+        </Card>
+      </div>;
+      if (step === 4) return <div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Nurture sequence</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Day-by-day follow-ups after launch day. Pick a day on the left, edit its steps on the right.</div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}><Select label="Time zone" value="America/New_York (ET)" /><Select label="Sequence length" value="14 days" /></div>
+        <div style={{ display: 'flex', gap: 16 }}>
+          <div style={{ width: 170, flexShrink: 0 }}>{[1, 2, 3, 5, 7, 9, 11, 12, 13, 14].map((d, i) => <div key={d} style={{ padding: '10px 12px', borderRadius: 9, marginBottom: 6, border: '1px solid ' + (i === 0 ? LH.primary : LH.border), background: i === 0 ? LH.tint : '#fff', cursor: 'pointer' }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>Day {d}</div><div style={{ display: 'flex', gap: 4, marginTop: 4 }}><Ic name="message-square" size={12} color={LH.muted} />{d % 2 === 1 && <Ic name="phone" size={12} color={LH.muted} />}</div></div>)}</div>
+          <Card style={{ flex: 1, padding: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}><div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Day 1</div><div style={{ fontSize: 12, color: LH.sub }}>2 steps · SMS + Nova call</div></div><Pill label="Active" /></div>
+            {SEQ_OUT.slice(4, 6).map((s, i) => <Card key={i} style={{ padding: 12, marginBottom: 8 }}><div style={{ display: 'flex', alignItems: 'center', gap: 9 }}><Ic name={s.icon} size={15} color={LH.primary} /><span style={{ fontSize: 13, fontWeight: 600, color: LH.ink, flex: 1 }}>{s.ch}</span><span style={{ fontSize: 11.5, color: LH.muted }}>{s.t}</span></div><div style={{ fontSize: 12, color: LH.body, marginTop: 6 }}>{s.body}</div></Card>)}
+            <Btn icon="plus">Add a step</Btn>
+          </Card>
+        </div>
+      </div>;
+      return <div style={{ maxWidth: 560, margin: '0 auto' }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>When should we stop reaching out?</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Records are unenrolled as soon as any of these becomes true.</div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Exit conditions (2)</div>
+        {[{ f: 'Current Status', op: 'is any of', v: 'Qualified, Dead' }, { f: 'Replied to us', op: 'is', v: 'Yes' }].map((c, i) => <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+          <div style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12.5, color: LH.body }}>{c.f}</div>
+          <div style={{ width: 90, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12.5, color: LH.sub }}>{c.op}</div>
+          <div style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12.5, color: LH.ink, fontWeight: 600 }}>{c.v}</div>
+        </div>)}
+        <Btn icon="plus" style={{ marginTop: 4 }}>Add exit condition</Btn>
+        <div style={{ fontSize: 12, color: LH.sub, marginTop: 16, background: LH.amberBg, border: '1px solid ' + LH.amberBd, borderRadius: 8, padding: '9px 12px' }}>Automatic stop. After the final step on Day 14, the record is unenrolled.</div>
+      </div>;
+    };
+
+    return <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(20,18,15,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ width: 'min(1040px,96vw)', height: 'min(700px,92vh)', background: '#fff', borderRadius: 16, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,.3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="send" size={15} color={LH.primary} /></div><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>{name}</span><Pill label="Draft" /></div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
+        </div>
+        <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+          <div style={{ width: 220, flexShrink: 0, borderRight: '1px solid ' + LH.borderSoft, padding: 14, background: LH.bg }}>
+            {WIZ_STEPS.map((s, i) => <div key={s} onClick={() => setStep(i)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, marginBottom: 3, cursor: 'pointer', background: step === i ? '#fff' : 'transparent', border: '1px solid ' + (step === i ? LH.border : 'transparent') }}>
+              <span style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: i < step ? LH.green : (i === step ? LH.primary : '#f1f0ec'), color: i <= step ? '#fff' : LH.muted }}>{i < step ? '✓' : i + 1}</span>
+              <span style={{ fontSize: 12.5, fontWeight: step === i ? 600 : 500, color: step === i ? LH.ink : LH.sub }}>{s}</span>
+            </div>)}
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '26px 28px' }}>{stepBody()}</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: 5 }}>{WIZ_STEPS.map((_, i) => <span key={i} style={{ width: 22, height: 4, borderRadius: 999, background: i <= step ? LH.primary : '#e7e2d8' }} />)}</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go back</Btn>}
+            {step < WIZ_STEPS.length - 1
+              ? <Btn kind="primary" onClick={() => setStep(step + 1)}>Continue</Btn>
+              : <Btn kind="primary" icon="check" onClick={onCreate}>Create campaign</Btn>}
+          </div>
+        </div>
+      </div>
+    </div>;
+  }
+
+  /* ─────────── CHANNELS ─────────── */
+  function ChannelsSection() {
+    return <div>
+      {CHANNELS.map(grp => <div key={grp.g} style={{ marginBottom: 22 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 10 }}>{grp.g.toUpperCase()}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 12 }}>
+          {grp.items.map(it => <Card key={it.n} style={{ padding: 15 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 9, background: it.st === 'Not connected' ? '#f1f0ec' : LH.tint, color: it.st === 'Not connected' ? LH.sub : LH.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>{it.k}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}><span style={{ fontSize: 14, fontWeight: 600, color: LH.ink }}>{it.n}</span><Pill label={it.st} /></div>
+                <div style={{ fontSize: 12, color: LH.sub, marginTop: 3 }}>{it.s}</div>
+              </div>
+            </div>
+            {it.hook ? <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 11, color: LH.muted, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 7, padding: '6px 9px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'ui-monospace,monospace' }}>{it.hook}</div>
+              <div style={{ fontSize: 11, color: LH.muted, margin: '7px 0 10px' }}>Last lead: {it.last}</div>
+              <div style={{ display: 'flex', gap: 6 }}><Btn style={{ height: 30, fontSize: 12 }}>Configure</Btn><Btn kind="ghost" style={{ height: 30, fontSize: 12 }}>Test</Btn><Btn kind="ghost" style={{ height: 30, fontSize: 12 }}>View leads</Btn></div>
+            </div> : <div style={{ marginTop: 12 }}><Btn kind="primary" icon="plus" style={{ height: 30, fontSize: 12 }}>Connect</Btn></div>}
+          </Card>)}
+        </div>
+      </div>)}
+    </div>;
+  }
+
+  /* ─────────── HEALTH ─────────── */
+  function HealthSection() {
+    const [open, setOpen] = useState('Field mapping conflicts');
+    return <div>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+        <StatCard label="Total issues" value="18" /><StatCard label="Resolved" value="13" accent={LH.green} /><StatCard label="Pending" value="5" accent={LH.amber} /><StatCard label="Requires action" value="1" accent={LH.primary} />
+      </div>
+      {HEALTH_CATS.map(cat => {
+        const isOpen = open === cat.name;
+        return <Card key={cat.name} style={{ marginBottom: 10, overflow: 'hidden' }}>
+          <div onClick={() => setOpen(isOpen ? null : cat.name)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', cursor: 'pointer' }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: LH.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={cat.icon} size={16} color={LH.sub} /></div>
+            <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: LH.ink }}>{cat.name}</span>
+            <span style={{ fontSize: 12, color: LH.green, fontWeight: 600 }}>{cat.res} resolved</span>
+            <span style={{ fontSize: 12, color: cat.pend ? LH.amber : LH.muted, fontWeight: 600 }}>{cat.pend} pending</span>
+            <Ic name={isOpen ? 'chevron-up' : 'chevron-down'} size={16} color={LH.muted} />
+          </div>
+          {isOpen && cat.detail && <div style={{ borderTop: '1px solid ' + LH.borderSoft, padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 999, background: LH.amber }} />
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>{cat.detail.date}</span>
+              <span style={{ fontSize: 13, color: LH.body }}>{cat.detail.title}</span>
+              <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}><Pill label={cat.detail.src} tone="New" /><Pill label={cat.detail.st} /></span>
+            </div>
+            {[['WHAT HAPPENED', cat.detail.what], ['CAUSE', cat.detail.cause], ['NEXT STEP', cat.detail.next]].map(([h, b]) => <div key={h} style={{ marginBottom: 10 }}><div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 3 }}>{h}</div><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.45 }}>{b}</div></div>)}
+          </div>}
+          {isOpen && !cat.detail && <div style={{ borderTop: '1px solid ' + LH.borderSoft, padding: '14px 16px', fontSize: 12.5, color: LH.muted }}>No pending items in this category.</div>}
+        </Card>;
+      })}
+    </div>;
+  }
+
+  /* ─────────── SHELL ─────────── */
+  function LeadHubShell({ section, onNavigate }) {
+    const [toast, setToast] = useState(null);
+    const showToast = m => { setToast(m); setTimeout(() => setToast(null), 3200); };
+    const heads = {
+      overview: { crumb: 'Lead Hub', title: 'Overview', actions: <Btn icon="calendar">Today</Btn> },
+      pipeline: { crumb: 'Lead Hub', title: 'Pipeline', actions: <><Btn icon="calendar">Today</Btn><Btn icon="filter">Filter</Btn><Btn icon="layout-grid">Pipeline view</Btn></> },
+      campaigns: { crumb: 'Lead Hub · 3 active', title: 'Campaigns', actions: null },
+      channels: { crumb: 'Lead Hub · 6 sources connected', title: 'Channels', actions: <Btn kind="primary" icon="plus">Connect source</Btn> },
+      health: { crumb: 'Last 30 days · 18 issues surfaced · 13 resolved · 5 pending', title: 'Hub Health', actions: <><Btn icon="calendar">Last 30 days</Btn><Btn icon="download">Export log</Btn></> }
+    };
+    const [wizardOpen, setWizardOpen] = useState(false);
+    const h = heads[section] || heads.overview;
+    const campaignsAction = <Btn kind="primary" icon="plus" onClick={() => setWizardOpen(true)}>New campaign</Btn>;
+    return <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <PageHead crumb={h.crumb} title={h.title} actions={section === 'campaigns' ? campaignsAction : h.actions} />
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 26px 34px', background: '#fdfdfc' }}>
+        <Hero />
+        {section === 'overview' && <OverviewSection onNavigate={onNavigate} />}
+        {section === 'pipeline' && <PipelineSection />}
+        {section === 'campaigns' && <CampaignsSection onToast={showToast} />}
+        {section === 'channels' && <ChannelsSection />}
+        {section === 'health' && <HealthSection />}
+      </div>
+      {section === 'campaigns' && wizardOpen && <CampaignWizard onClose={() => setWizardOpen(false)} onCreate={() => { setWizardOpen(false); showToast('Campaign created.'); }} />}
+      {toast && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 300, background: LH.ink, color: '#fff', fontSize: 13, fontWeight: 500, padding: '11px 18px', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="check-circle" size={15} color="#4ade80" />{toast}</div>}
+    </div>;
+  }
+
+  window.LeadHubShell = LeadHubShell;
+})();
+</script>
+<script>
+/* Compile the Lead Hub JSX source (classic React.createElement runtime) once Babel is ready. */
+(function () {
+  function run() {
+    if (!window.Babel) { setTimeout(run, 30); return; }
+    try {
+      var src = document.getElementById('leadhub-jsx-src').textContent;
+      var out = window.Babel.transform(src, { presets: [['react', { runtime: 'classic' }]] }).code;
+      (0, eval)(out);
+    } catch (e) { console.error('LeadHub compile error', e); }
+  }
+  run();
+})();
+</script>
+
 </body><grammarly-desktop-integration data-grammarly-shadow-root="true"></grammarly-desktop-integration></html>
