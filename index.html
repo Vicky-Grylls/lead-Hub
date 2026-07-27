@@ -14187,7 +14187,7 @@ function App() {
     defaultTabItems,
     defaultTabState
   };
-  const [page, setPage] = useState('list');
+  const [page, setPage] = useState('leadhub');
   const [njVariant, setNjVariant] = useState('modal');
   const [topTabs, setTopTabs] = useState([]);
   const [activeTop, setActiveTop] = useState(null);
@@ -29318,7 +29318,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     return <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       <PageHead crumb={h.crumb} title={h.title} actions={section === 'campaigns' ? campaignsAction : h.actions} />
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 26px 34px', background: '#fdfdfc' }}>
-        <Hero />
+        {section === 'overview' && <Hero />}
         {section === 'overview' && <OverviewSection onNavigate={onNavigate} />}
         {section === 'pipeline' && <PipelineSection />}
         {section === 'campaigns' && <CampaignsSection onToast={showToast} />}
