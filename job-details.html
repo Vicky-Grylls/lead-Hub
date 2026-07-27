@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Details - Prelude FSM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','ui-sans-serif','system-ui']}}}}</script>
+<style>
+*{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;box-sizing:border-box}
+html,body,#root{width:100%;height:100%;margin:0;padding:0;overflow:hidden}
+.scr{overflow-y:auto;overflow-x:hidden}
+.scr::-webkit-scrollbar{width:3px}
+.scr::-webkit-scrollbar-track{background:transparent}
+.scr::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:2px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,Fragment}=React;
+
+/* ── Icon ── */
+function I({name,size=14,className='',color,sw}){
+  const r=useRef(null);
+  useEffect(()=>{if(!r.current)return;r.current.innerHTML='';const e=document.createElement('i');e.setAttribute('data-lucide',name);if(sw)e.setAttribute('data-lucide-stroke-width',sw);r.current.appendChild(e);lucide.createIcons({nodes:[e]});},[name,sw]);
+  return <span ref={r} className={`inline-flex items-center justify-center shrink-0 [&>svg]:w-full [&>svg]:h-full ${className}`} style={{width:size,height:size,color}}/>;
+}
+
+/* ── Dropdown ── */
+function Dropdown({label,options,width='auto'}){
+  const[open,setOpen]=useState(false);
+  const[val,setVal]=useState(null);
+  const ref=useRef(null);
+  useEffect(()=>{const h=e=>{if(ref.current&&!ref.current.contains(e.target))setOpen(false)};document.addEventListener('mousedown',h);return()=>document.removeEventListener('mousedown',h)},[]);
+  return(
+    <div ref={ref} className="relative" style={{width}}>
+      <button onClick={()=>setOpen(!open)} className="w-full border rounded-md px-2.5 py-[5px] flex items-center justify-between bg-white hover:bg-gray-50" style={{borderColor:'#d1d5db'}}>
+        <span style={{fontSize:12,color:val?'#262626':'#737373'}}>{val||label}</span>
+        <I name="chevron-down" size={14} color="#737373"/>
+      </button>
+      {open&&<div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 py-1" style={{borderColor:'#d1d5db'}}>
+        {options.map((o,i)=><div key={i} className="px-3 py-[6px] hover:bg-gray-50 cursor-pointer flex items-center gap-2" onClick={()=>{setVal(o.label||o);setOpen(false)}}>
+          {o.dot&&<div className="w-2 h-2 rounded-full shrink-0" style={{background:o.dot}}/>}
+          <span style={{fontSize:11,color:'#374151'}}>{o.label||o}</span>
+        </div>)}
+      </div>}
+    </div>
+  );
+}
+
+/* ══════════ TOP NAV BAR ══════════ */
+function TopNavBar(){
+  const tabs=['Invoice- #771233','Invoice- #771233','Invoice- #771233','Invoice- #771233','Invoice- #771233'];
+  return(
+    <div className="h-[48px] flex items-center justify-between shrink-0 px-[22px] pr-4" style={{background:'#f8f5f0'}}>
+      <div className="flex items-center gap-7">
+        <div className="w-7 h-7 rounded-[5px] flex items-center justify-center text-white font-semibold" style={{fontSize:14,background:'linear-gradient(135deg,#d97706,#b45309)'}}>Z</div>
+        <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 px-2.5 py-[6px] rounded-lg" style={{background:'#e4d9c8'}}>
+            <I name="briefcase" size={14} color="#404040"/>
+            <span className="font-medium whitespace-nowrap" style={{fontSize:11,color:'#404040'}}>Job -#JN-245678</span>
+          </div>
+          {tabs.map((t,i)=>(
+            <Fragment key={i}>
+              <div className="flex items-center gap-1 px-2 py-[6px] rounded-lg cursor-pointer hover:bg-[#f0ebe3]">
+                <I name="x" size={12} color="#a3a3a3"/>
+                <span className="whitespace-nowrap" style={{fontSize:11,color:'#737373',maxWidth:110,overflow:'hidden',textOverflow:'ellipsis'}}>{t}</span>
+              </div>
+              {i<tabs.length-1&&<div className="h-4 w-px bg-[#d4d4d4]"/>}
+            </Fragment>
+          ))}
+          <div className="flex items-center gap-1 px-2 py-[6px] cursor-pointer hover:bg-[#f0ebe3] rounded-lg">
+            <span className="font-medium whitespace-nowrap" style={{fontSize:11,color:'#404040'}}>All Tabs</span>
+            <I name="chevron-down" size={12} color="#404040"/>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-1">
+        {['smile','search','calendar','layout-grid','bell'].map(ic=>(
+          <div key={ic} className="w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-black/5"><I name={ic} size={16} color="#737373"/></div>
+        ))}
+        <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold ml-1" style={{fontSize:11,background:'#e4d9c8',color:'#404040'}}>RG</div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════ SIDEBAR ══════════ */
+function Sidebar(){
+  const items=[
+    {icon:'home',label:'Home'},
+    {icon:'sparkles',label:'Sense'},
+    'div',
+    {icon:'briefcase',label:'Work Orders',active:true},
+    {icon:'users',label:'CRM'},
+    {icon:'calculator',label:'Accounting'},
+    {icon:'truck',label:'Dispatch'},
+    {icon:'bar-chart-3',label:'Reports'},
+    {icon:'more-horizontal',label:'More'},
+  ];
+  return(
+    <div className="flex flex-col items-center justify-between shrink-0 py-3" style={{width:72,background:'#f8f5f0'}}>
+      <div className="flex flex-col items-center gap-1 w-full">
+        {items.map((it,i)=>{
+          if(it==='div')return <div key={i} className="w-8 h-px bg-[#c4c4c4] my-1"/>;
+          return(
+            <div key={i} className="flex flex-col items-center gap-[2px] cursor-pointer w-full py-[3px]" style={{background:it.active?'#e4d9c8':'transparent'}}>
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg">
+                <I name={it.icon} size={18} color={it.active?'#262626':'#737373'}/>
+              </div>
+              <span className="text-center whitespace-nowrap" style={{fontSize:9,fontWeight:it.active?500:400,color:it.active?'#262626':'#737373',lineHeight:'12px'}}>{it.label}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex flex-col items-center gap-[2px] cursor-pointer">
+        <div className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5"><I name="settings" size={18} color="#737373"/></div>
+        <span style={{fontSize:9,color:'#737373',lineHeight:'12px'}}>Settings</span>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════ MODULE HEADER ══════════ */
+function ModuleHeader(){
+  return(
+    <div className="h-[44px] flex items-center justify-between shrink-0 bg-white border-b px-6" style={{borderColor:'#e5e5e5'}}>
+      <div className="flex items-center gap-2">
+        <span className="font-medium" style={{fontSize:12,color:'#737373'}}>Jobs</span>
+        <I name="chevron-right" size={16} color="#a3a3a3"/>
+        <span className="font-medium whitespace-nowrap" style={{fontSize:12,color:'#262626'}}>#JN-245- Roof Replacement - Telnet</span>
+        <I name="more-horizontal" size={16} color="#a3a3a3" className="cursor-pointer ml-1"/>
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="font-medium" style={{fontSize:13,color:'#262626'}}>1/30</span>
+        <div className="flex items-center gap-1">
+          <div className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 cursor-pointer"><I name="chevron-up" size={16} color="#737373"/></div>
+          <div className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 cursor-pointer"><I name="chevron-down" size={16} color="#737373"/></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════ LEFT PANE ══════════ */
+function LeftPane(){
+  const[expanded,setExpanded]=useState(false);
+  const base=[
+    {l:'Status',t:'status'},{l:'Priority',t:'priority'},{l:'Assignees',t:'assign'},{l:'Sales Rep',t:'srep'},
+    {l:'Customer',v:'Craig Calzoni'},{l:'Due Date',v:'03/30/2026'},{l:'Lead Source',v:'Facebook'}
+  ];
+  const extra=[
+    {l:'Start Time',v:'03/30/2026 06:00 PM'},{l:'End Time',v:'04/04/2026 06:00 PM'},{l:'Category',v:'Roofing'},
+    {l:'Parent Job',v:'Set Parent Job',link:true},{l:'Job Type',v:'New'},{l:'Created by',v:'Tom Riddle'}
+  ];
+  function V(d){
+    if(d.t==='status')return <div className="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-full whitespace-nowrap" style={{background:'#eff2f5',border:'0.5px solid #bac7d5'}}><div className="w-[10px] h-[10px] rounded-full shrink-0" style={{background:'#4f5e71'}}/><span style={{fontSize:11,color:'#4f5e71'}}>New</span></div>;
+    if(d.t==='priority')return <div className="inline-flex items-center px-[8px] py-[3px] rounded-full whitespace-nowrap" style={{background:'#fef2f2',border:'0.5px solid #fca5a5'}}><span style={{fontSize:11,color:'#ef4444',fontWeight:500}}>High</span></div>;
+    if(d.t==='assign')return(
+      <div className="flex items-center gap-[4px] flex-wrap">
+        <div className="inline-flex items-center gap-[4px] pl-[2px] pr-[6px] py-[1px] rounded-full shrink-0" style={{background:'#fff7ed',border:'0.5px solid #fdba74'}}>
+          <div className="w-[18px] h-[18px] rounded-full bg-orange-400 flex items-center justify-center text-white shrink-0" style={{fontSize:7,fontWeight:600}}>JD</div>
+          <span className="whitespace-nowrap" style={{fontSize:11,color:'#262626'}}>John Davis</span>
+          <I name="star" size={12} color="#f59e0b"/>
+        </div>
+        <div className="w-[22px] h-[22px] rounded-full bg-blue-300 flex items-center justify-center text-white border-2 border-white shrink-0" style={{fontSize:7,fontWeight:600}}>AS</div>
+        <div className="w-[22px] h-[22px] rounded-full bg-gray-200 flex items-center justify-center border-2 border-white -ml-1.5 shrink-0" style={{fontSize:9,fontWeight:500,color:'#6b7280'}}>+2</div>
+      </div>
+    );
+    if(d.t==='srep')return <div className="flex items-center gap-2"><div className="w-[22px] h-[22px] rounded-full border border-dashed border-gray-300 flex items-center justify-center shrink-0"><I name="plus" size={12} color="#d1d5db"/></div><span style={{fontSize:11,color:'#737373'}}>Add Sales Rep</span></div>;
+    if(d.link)return <span className="whitespace-nowrap cursor-pointer" style={{fontSize:11,color:'#3b82f6'}}>{d.v}</span>;
+    return <span className="whitespace-nowrap" style={{fontSize:11,color:'rgba(0,0,0,0.72)'}}>{d.v}</span>;
+  }
+  return(
+    <div className="flex flex-col bg-white shrink-0 scr border-r" style={{width:330,borderColor:'#e5e5e5'}}>
+      {/* Cover Image */}
+      <div className="shrink-0 relative overflow-hidden" style={{height:140}}>
+        <img src="https://images.unsplash.com/photo-1613665813446-82a78c468a1d?w=660&h=280&fit=crop&crop=center" alt="Roof" className="w-full h-full object-cover"/>
+      </div>
+      {/* Title */}
+      <div className="px-5 pt-3 pb-2 flex flex-col gap-[3px]">
+        <span className="font-semibold" style={{fontSize:16,color:'#262626',lineHeight:'24px'}}>Roof Replacement - Telnet</span>
+        <div className="flex items-start gap-1.5">
+          <I name="map-pin" size={13} color="#a3a3a3" className="mt-[2px]"/>
+          <span style={{fontSize:11,color:'#a3a3a3',lineHeight:'16px'}}>2847 Boulevard, Los Angeles, CA 90026.</span>
+        </div>
+      </div>
+      {/* Actions */}
+      <div className="px-5 pb-2.5 flex items-center gap-2">
+        <button className="h-[30px] px-[10px] border rounded-lg hover:bg-gray-50 whitespace-nowrap" style={{fontSize:11,borderColor:'#e5e5e5',color:'#262626'}}>Update Status</button>
+        {['calendar','plus','bookmark','more-horizontal'].map(ic=>(
+          <button key={ic} className="w-[30px] h-[30px] border rounded-lg flex items-center justify-center hover:bg-gray-50 shrink-0" style={{borderColor:'#e5e5e5'}}><I name={ic} size={15} color="#737373"/></button>
+        ))}
+      </div>
+      <div className="h-px mx-5" style={{background:'#e5e5e5'}}/>
+      {/* Details */}
+      <div className="px-5 pt-2.5 pb-1">
+        <button className="flex items-center gap-[3px] mb-2" onClick={()=>setExpanded(!expanded)}>
+          <I name={expanded?"chevron-down":"chevron-right"} size={16} color="#262626"/>
+          <span className="font-semibold" style={{fontSize:12,color:'#262626'}}>Details</span>
+        </button>
+        <div className="flex flex-col">
+          {base.map((d,i)=><div key={i} className="flex items-center min-h-[28px] py-[2px]"><span className="shrink-0" style={{width:88,fontSize:11,color:'rgba(0,0,0,0.48)'}}>{d.l}</span>{V(d)}</div>)}
+          {expanded&&extra.map((d,i)=><div key={i} className="flex items-center min-h-[28px] py-[2px]"><span className="shrink-0" style={{width:88,fontSize:11,color:'rgba(0,0,0,0.48)'}}>{d.l}</span>{V(d)}</div>)}
+        </div>
+        <button className="flex items-center gap-[3px] py-1 mt-0.5 rounded hover:bg-gray-50 px-1" onClick={()=>setExpanded(!expanded)}>
+          <I name={expanded?"chevron-up":"chevron-down"} size={14} color="#262626"/>
+          <span className="font-medium" style={{fontSize:11,color:expanded?'#737373':'#262626'}}>{expanded?'Collapse':'Expand'}</span>
+        </button>
+      </div>
+      <div className="h-px mx-5" style={{background:'#e5e5e5'}}/>
+      {/* Upcoming Appointments */}
+      <div className="px-5 pt-3 pb-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="font-semibold" style={{fontSize:12,color:'#262626'}}>Upcoming Appointments</span>
+          <span className="cursor-pointer" style={{fontSize:11,color:'#3b82f6'}}>View all</span>
+        </div>
+        <div className="border rounded-xl p-3 flex items-center gap-3" style={{borderColor:'#e5e5e5'}}>
+          <div className="w-[44px] h-[44px] rounded-xl flex flex-col items-center justify-center shrink-0" style={{background:'#eff6ff'}}>
+            <span className="font-bold" style={{fontSize:16,color:'#3b82f6',lineHeight:'18px'}}>06</span>
+            <span style={{fontSize:9,color:'#3b82f6'}}>Mar</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className="font-medium block" style={{fontSize:12,color:'#262626'}}>Tear Off & Deck Prep</span>
+            <span style={{fontSize:11,color:'#737373'}}>Mar 20, 7 AM → 12 PM</span>
+          </div>
+          <div className="w-[32px] h-[32px] rounded-full bg-purple-200 flex items-center justify-center shrink-0" style={{fontSize:10,fontWeight:600,color:'#7c3aed'}}>JD</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════ CENTER PANE ══════════ */
+function CenterPane(){
+  const[tab,setTab]=useState('overview');
+  const tabs=[{id:'overview',label:'Overview'},{id:'notes',label:'Notes',count:2},{id:'tasks',label:'Tasks',count:19},{id:'quotes',label:'Quotes & Invoices'}];
+  return(
+    <div className="flex flex-col flex-1 overflow-hidden" style={{background:'#fdfdfc'}}>
+      {/* Tab Bar */}
+      <div className="shrink-0 border-b pl-6 pr-3 flex items-center justify-between" style={{borderColor:'#e8e0d4',height:48}}>
+        <div className="flex items-center">
+          {tabs.map((t,i)=>(
+            <button key={t.id} onClick={()=>setTab(t.id)} className="flex items-center gap-[5px] px-3 py-[13px] border-b-2 transition-colors" style={{borderColor:tab===t.id?'#333':'transparent',color:tab===t.id?'#262626':'#737373',fontSize:13,fontWeight:500}}>
+              {t.label}
+              {t.count!=null&&<span className="px-[6px] py-[1px] rounded-full" style={{fontSize:11,background:'#e4d9c8',color:'#262626',fontWeight:500}}>{t.count}</span>}
+            </button>
+          ))}
+          <button className="flex items-center gap-[3px] px-3 py-[13px]" style={{fontSize:13,fontWeight:500,color:'#737373'}}>+6 More <I name="chevron-down" size={14} color="#737373"/></button>
+        </div>
+        <div className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 cursor-pointer"><I name="settings" size={16} color="#737373"/></div>
+      </div>
+      {/* Content */}
+      <div className="flex-1 overflow-hidden">
+        {tab==='overview'&&<OverviewTab/>}
+        {tab==='notes'&&<EmptyState icon="notebook-pen" title="No notes yet" desc="Create your first note to keep track of important details" btn="Add Note"/>}
+        {tab==='tasks'&&<TasksTab/>}
+        {tab==='quotes'&&<EmptyState icon="file-text" title="No quotes or invoices" desc="Create a quote or invoice to get started" btn="Create"/>}
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({icon,title,desc,btn}){
+  return(<div className="h-full flex flex-col items-center justify-center gap-3"><I name={icon} size={40} color="#d1d5db"/><span className="font-semibold" style={{fontSize:14,color:'#262626'}}>{title}</span><span style={{fontSize:12,color:'#737373',maxWidth:260,textAlign:'center'}}>{desc}</span><button className="mt-1 px-4 py-[7px] rounded-lg text-white font-medium" style={{fontSize:12,background:'#5046e5'}}>{btn}</button></div>);
+}
+
+/* ── Overview Tab ── */
+function OverviewTab(){
+  return(
+    <div className="scr h-full px-6 pt-6 pb-8 flex flex-col gap-6">
+      {/* Highlights */}
+      <Section icon="bar-chart-2" title="Highlights" extra={<I name="sliders-horizontal" size={16} color="#a3a3a3" className="cursor-pointer"/>}>
+        <div className="flex gap-4">
+          {[{icon:'calendar',label:'Job Due Date',val:'23 Oct 2025'},{icon:'dollar-sign',label:'Job Value',val:'$ 10000'},{icon:'list-checks',label:'Tasks',val:'2/8'},{icon:'trending-up',label:'Job Profit',val:'$ 1000'}].map((c,i)=>(
+            <div key={i} className="flex-1 border rounded-xl p-3 flex flex-col justify-between" style={{borderColor:'#e5e5e5',height:72}}>
+              <div className="flex items-center gap-2"><I name={c.icon} size={15} color="#6b7280"/><span style={{fontSize:12,color:'#6b7280'}}>{c.label}</span></div>
+              <span className="font-semibold" style={{fontSize:13,color:'#111827'}}>{c.val}</span>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* AI Summary */}
+      <Section icon="sparkles" title="AI Job Summary" chevron>
+        <div className="rounded-[10px] p-[14px] flex flex-col gap-3" style={{background:'linear-gradient(169deg,#faf5ff 0%,#eff6ff 100%)',border:'1px solid #e9d4ff'}}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-[6px]"><span style={{fontSize:10,color:'#6b7280'}}>Generated Dec 31, 2025</span><I name="copy" size={14} color="#a3a3a3" className="cursor-pointer"/></div>
+            <button className="flex items-center gap-[6px] px-[9px] py-[6px] bg-white border rounded-[6px] hover:bg-gray-50" style={{borderColor:'#dab2ff'}}><I name="sparkles" size={12} color="#7c3aed"/><span style={{fontSize:10,color:'#7c3aed',fontWeight:500}}>Ask a question</span></button>
+          </div>
+          <p style={{fontSize:12,color:'#374151',lineHeight:'18px'}}>Residential roof replacement project for a 2,450 sq ft asphalt shingle roof with 6/12 slope. The job involves removing 2 layers of old shingles and installing new charcoal gray shingles with a 25-year warranty.</p>
+          <div className="flex items-center gap-[6px]">
+            {['thumbs-up','thumbs-down','copy'].map(ic=><div key={ic} className="w-[22px] h-[22px] rounded flex items-center justify-center hover:bg-white/60 cursor-pointer"><I name={ic} size={14} color="#9ca3af"/></div>)}
+          </div>
+        </div>
+      </Section>
+
+      {/* Job Description */}
+      <Section icon="align-left" title="Job description">
+        <div className="border rounded-xl p-[14px]" style={{borderColor:'#e5e5e5'}}>
+          <p style={{fontSize:12,color:'rgba(0,0,0,0.72)',lineHeight:'20px'}}>Build, manage and optimize with new ISP infrastructure. Ensure seamless connectivity for the client, troubleshoot network issues, and collaborate with cross-functional teams to enhance service delivery.</p>
+        </div>
+      </Section>
+
+      {/* Addresses */}
+      <Section icon="map-pin" title="Addresses">
+        <div className="border rounded-xl overflow-hidden flex" style={{borderColor:'#e5e5e5',height:130}}>
+          <div className="flex flex-1">
+            <div className="flex-1 p-[14px] flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <span style={{fontSize:12,color:'#737373',fontWeight:500}}>Service Address</span>
+                <div style={{fontSize:12,color:'#262626',lineHeight:'17px'}}>45 Maple Avenue, London, UK,<br/>England - SW1A 1AA</div>
+              </div>
+              <div className="inline-flex items-center gap-[6px] px-[8px] py-[5px] rounded-full self-start" style={{background:'#fce7f3'}}>
+                <I name="map-pin" size={14} color="#db2777"/>
+                <span style={{fontSize:12,color:'#db2777',fontWeight:500}}>San Jose Territory</span>
+              </div>
+            </div>
+            <div className="flex-1 p-[14px] flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <span style={{fontSize:12,color:'#737373',fontWeight:500}}>Billing Address</span>
+                <div style={{fontSize:12,color:'#262626',lineHeight:'17px'}}>123 Maple Avenue, Sunnyvale,<br/>CA, USA, California - 94086</div>
+              </div>
+              <button className="inline-flex items-center gap-[6px] px-[8px] py-[5px] border rounded-lg self-start hover:bg-gray-50" style={{borderColor:'#d1d5db'}}>
+                <I name="external-link" size={16} color="#374151"/>
+                <span style={{fontSize:12,color:'#374151',fontWeight:500}}>Maps</span>
+              </button>
+            </div>
+          </div>
+          <div className="w-[155px] shrink-0 relative overflow-hidden" style={{background:'#e8f0fe'}}>
+            <svg viewBox="0 0 155 130" width="155" height="130" xmlns="http://www.w3.org/2000/svg">
+              <rect width="155" height="130" fill="#e8f0fe"/>
+              <line x1="0" y1="30" x2="155" y2="30" stroke="#ccc" strokeWidth="0.5"/>
+              <line x1="0" y1="60" x2="155" y2="60" stroke="#d4d4d4" strokeWidth="0.5"/>
+              <line x1="0" y1="90" x2="155" y2="90" stroke="#ccc" strokeWidth="0.5"/>
+              <line x1="40" y1="0" x2="40" y2="130" stroke="#ccc" strokeWidth="0.5"/>
+              <line x1="80" y1="0" x2="80" y2="130" stroke="#d4d4d4" strokeWidth="0.5"/>
+              <line x1="120" y1="0" x2="120" y2="130" stroke="#ccc" strokeWidth="0.5"/>
+              <rect x="45" y="35" width="30" height="20" rx="2" fill="#d1d5db" opacity="0.5"/>
+              <rect x="85" y="15" width="25" height="25" rx="2" fill="#d1d5db" opacity="0.5"/>
+              <rect x="55" y="70" width="35" height="15" rx="2" fill="#d1d5db" opacity="0.4"/>
+              <circle cx="90" cy="55" r="10" fill="#ef4444"/>
+              <circle cx="90" cy="55" r="4" fill="white"/>
+              <path d="M90 42 C96 42,98 50,98 55 C98 62,90 70,90 70 C90 70,82 62,82 55 C82 50,84 42,90 42Z" fill="#ef4444"/>
+              <circle cx="90" cy="53" r="3.5" fill="white"/>
+            </svg>
+            <div className="absolute inset-0" style={{background:'linear-gradient(90deg,white 0%,transparent 40%)'}}/>
+          </div>
+        </div>
+      </Section>
+
+      {/* Tasks Preview */}
+      <Section icon="list-checks" title="Tasks (10)" chevron>
+        <div className="border rounded-xl overflow-hidden" style={{borderColor:'#e5e7eb'}}>
+          {[{name:'Explain infra to client',status:'todo',sub:'Check for leaks'},{name:'Explain roofing options',status:'ongoing',sub:'Install flashing'},{name:'Tear off old roof',status:'ongoing',sub:'Install flashing'},{name:'Apply underlayment',status:'progress',sub:'Check for leaks'}].map((t,i)=>(
+            <div key={i} className="flex items-center gap-[6px] px-4 py-[10px] border-b hover:bg-gray-50" style={{borderColor:'#e5e7eb'}}>
+              <div className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center" style={{background:t.status==='todo'?'#f3f4f6':t.status==='ongoing'?'#dcfce7':'#fef3c7',border:t.status==='todo'?'2px solid #d1d5db':'none'}}>
+                {t.status!=='todo'&&<I name={t.status==='ongoing'?'play':'loader'} size={12} color={t.status==='ongoing'?'#16a34a':'#f59e0b'}/>}
+              </div>
+              <span className="flex-1 min-w-0 truncate" style={{fontSize:12,color:'#1f2937'}}>{t.name}</span>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-[5px] border rounded-full px-[7px] py-[3px]" style={{borderColor:'#e5e5e5'}}><I name="clock" size={14} color="#a3a3a3"/><span style={{fontSize:12,color:'#737373'}}>35 min</span></div>
+                <div className="flex items-center gap-[5px] border rounded-full px-[7px] py-[3px]" style={{borderColor:'#e5e5e5'}}><I name="file-text" size={14} color="#a3a3a3"/><span style={{fontSize:12,color:'#737373'}}>{t.sub}</span></div>
+                <div className="w-6 h-6 rounded-full bg-gray-300 shrink-0"/>
+                <I name="more-vertical" size={16} color="#a3a3a3" className="cursor-pointer"/>
+              </div>
+            </div>
+          ))}
+          <div className="flex items-center justify-center py-[10px] cursor-pointer hover:bg-gray-50">
+            <span style={{fontSize:12,color:'#3b82f6'}}>View All</span>
+            <I name="chevron-down" size={14} color="#3b82f6"/>
+          </div>
+        </div>
+      </Section>
+
+      {/* Custom Fields */}
+      <Section icon="layout-grid" title="Other details(Custom Fields)">
+        <div className="border rounded-xl p-[14px]" style={{borderColor:'#e5e5e5'}}>
+          <div className="flex gap-6">
+            {[{l:'Remarks',v:'Additional 50m CAT-6 cables and 10m optic fiber cable required.'},{l:'Additional information',v:'Implement CGNAT for this as client has not opted for static IP package.'},{l:'Package instructions',v:'FUP bandwidth required 5TB / month.'}].map((f,i)=>(
+              <div key={i} className="flex-1 flex flex-col gap-[10px]">
+                <span style={{fontSize:12,color:'#737373',fontWeight:500}}>{f.l}</span>
+                <span style={{fontSize:13,color:'#262626',lineHeight:'20px'}}>{f.v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Section>
+    </div>
+  );
+}
+
+function Section({icon,title,children,chevron,extra}){
+  return(
+    <div className="flex flex-col gap-2" style={{opacity:0.85}}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <I name={icon} size={18} color="#737373"/>
+          <div className="flex items-center gap-1">
+            <span style={{fontSize:13,color:'#262626',fontWeight:500,letterSpacing:-0.23}}>{title}</span>
+            {chevron&&<I name="chevron-right" size={16} color="#a3a3a3" className="cursor-pointer"/>}
+          </div>
+        </div>
+        {extra}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/* ── Tasks Tab ── */
+function TasksTab(){
+  const tasks=[
+    {name:'Explain roofing options',sub:'Check for leaks',status:'ongoing'},
+    {name:'Explain roofing options',sub:'Check for leaks',status:'ongoing'},
+    {name:'Explain roofing options',sub:'Check for leaks',status:'ongoing'},
+    {name:'Tear off old roof',sub:'Get materials',status:'ongoing'},
+    {name:'Apply underlayment',sub:'Install flashing',status:'progress'},
+    {name:'Final walkthrough',sub:'Install flashing',status:'progress'},
+    {name:'Apply underlayment',sub:'Install flashing',status:'progress'},
+    {name:'Apply underlayment',sub:'Install flashing',status:'progress'},
+    {name:'Apply underlayment',sub:'Install flashing',status:'ongoing'},
+    {name:'Final walkthrough',sub:'Check for leaks',status:'ongoing'},
+  ];
+  return(
+    <div className="flex flex-col h-full">
+      <div className="shrink-0 flex items-center gap-3 px-6 py-3 border-b" style={{borderColor:'#e5e5e5'}}>
+        <Dropdown label="Type" options={['All Types','Inspection','Installation','Repair']} width={120}/>
+        <Dropdown label="User" options={['All Users','John Davis','Anna Smith','Mike Chen']} width={120}/>
+        <div className="flex-1"/>
+        <button className="flex items-center gap-2 px-3 py-[6px] border rounded-lg hover:bg-gray-50" style={{borderColor:'#e5e5e5'}}><I name="plus" size={14} color="#262626"/><span style={{fontSize:12,color:'#262626',fontWeight:500}}>Create</span></button>
+        <I name="more-vertical" size={16} color="#a3a3a3" className="cursor-pointer"/>
+      </div>
+      <div className="flex-1 scr">
+        {tasks.map((t,i)=>(
+          <div key={i} className="flex items-center gap-3 px-6 py-[10px] border-b hover:bg-gray-50 cursor-pointer" style={{borderColor:'#e5e7eb'}}>
+            <div className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center" style={{background:t.status==='ongoing'?'#dcfce7':'#fef3c7'}}>
+              <I name={t.status==='ongoing'?'play':'loader'} size={12} color={t.status==='ongoing'?'#16a34a':'#f59e0b'}/>
+            </div>
+            <span className="flex-1 min-w-0 truncate" style={{fontSize:12,color:'#1f2937'}}>{t.name}</span>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-[5px] border rounded-full px-[7px] py-[3px]" style={{borderColor:'#e5e5e5'}}><I name="clock" size={14} color="#a3a3a3"/><span style={{fontSize:12,color:'#737373'}}>35 min</span></div>
+              <div className="flex items-center gap-[5px] border rounded-full px-[7px] py-[3px]" style={{borderColor:'#e5e5e5'}}><I name="file-text" size={14} color="#a3a3a3"/><span style={{fontSize:12,color:'#737373'}}>{t.sub}</span></div>
+              <div className="w-6 h-6 rounded-full bg-gray-300 shrink-0"/>
+              <I name="more-vertical" size={16} color="#a3a3a3"/>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════ RIGHT PANE ══════════ */
+function RightPaneArea(){
+  const[panel,setPanel]=useState('history');
+  const icons=[
+    {id:'history',icon:'clock',label:'Status History'},
+    {id:'assoc',icon:'link',label:'Associations'},
+    {id:'connect',icon:'phone',label:'Zuper Connect'},
+    {id:'chats',icon:'message-circle',label:'Chats'},
+    {id:'sense',icon:'sparkles',label:'Sense AI'},
+  ];
+  return(
+    <div className="flex shrink-0">
+      {/* Panel */}
+      <div className="bg-white border-l border-r flex flex-col" style={{width:330,borderColor:'#e5e5e5'}}>
+        {panel==='history'&&<StatusHistoryPanel/>}
+        {panel==='assoc'&&<AssociationsPanel/>}
+        {panel==='connect'&&<ZuperConnectPanel/>}
+        {panel==='chats'&&<ChatsPanel/>}
+        {panel==='sense'&&<SensePanel/>}
+      </div>
+      {/* Mini Sidebar */}
+      <div className="bg-white flex flex-col items-center justify-between py-3 shrink-0" style={{width:46}}>
+        <div className="flex flex-col items-center">
+          {icons.map((ic,i)=>(
+            <Fragment key={ic.id}>
+              {i===1&&<div className="w-6 h-px bg-gray-200 my-1"/>}
+              <button onClick={()=>setPanel(ic.id)} className="w-[30px] h-[30px] rounded flex items-center justify-center my-[2px] transition-colors" style={{background:panel===ic.id?'#f8f5f0':'transparent'}} title={ic.label}>
+                <I name={ic.icon} size={16} color={panel===ic.id?'#262626':'#a3a3a3'}/>
+              </button>
+              {i===0&&<div className="w-6 h-px bg-gray-200 my-1"/>}
+            </Fragment>
+          ))}
+        </div>
+        <button className="w-[30px] h-[30px] rounded flex items-center justify-center hover:bg-gray-100"><I name="panel-right-close" size={16} color="#a3a3a3"/></button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Status History ── */
+function StatusHistoryPanel(){
+  const statuses=[
+    {name:'On Going',color:'#075985',dot:'#38bdf8',bg:'#f0f9ff',border:'#bae6fd',user:'Andy Sam',initials:'AS',avatarBg:'#93c5fd',desc:'Job has been initiated and collected initial reports. Awaiting further instructions from dispatcher.',date:'Mar 15, 2025',time:'10:30 AM',travel:'10 mins',checklist:true,current:true,durationInStatus:'2d 14h'},
+    {name:'Scheduled',color:'#5b21b6',dot:'#a78bfa',bg:'#f5f3ff',border:'#ddd6fe',user:'Andy Sam',initials:'AS',avatarBg:'#c4b5fd',desc:'Assigned respective team and scheduled date - customer has approved.',date:'Mar 13, 2025',time:'10:00 AM',quote:true,durationInStatus:'2d 0h 30m'},
+    {name:'New',color:'#0f766e',dot:'#2dd4bf',bg:'#f0fdfa',border:'#99f6e4',user:'Andy Sam',initials:'AS',avatarBg:'#5eead4',date:'Mar 12, 2025',time:'12:34 PM',checklist:true,durationInStatus:'21h 26m'},
+  ];
+  const totalHrs=2*24+14+2*24+0.5+21.43;// rough total for bar widths
+  const durationHrs=[62,48.5,21.43];
+  const[expandedIdx,setExpandedIdx]=useState(0);
+  return(
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="shrink-0 flex items-center justify-between px-4 h-[48px] border-b" style={{borderColor:'#e5e7eb'}}>
+        <span className="font-semibold" style={{fontSize:13,color:'#374151'}}>Status history</span>
+        <div className="flex items-center gap-2">
+          <I name="arrow-up-down" size={15} color="#a3a3a3" className="cursor-pointer hover:opacity-70"/>
+        </div>
+      </div>
+
+      <div className="flex-1 scr">
+        {/* Update Status - clean top action */}
+        <div className="px-4 pt-4 pb-2">
+          <Dropdown label="Update status..." options={[
+            {label:'New',dot:'#2dd4bf'},{label:'Scheduled',dot:'#a78bfa'},{label:'On Going',dot:'#38bdf8'},
+            {label:'In Progress',dot:'#fbbf24'},{label:'Completed',dot:'#34d399'},{label:'Cancelled',dot:'#f87171'}
+          ]}/>
+        </div>
+
+        {/* Timeline */}
+        <div className="px-4 pb-4">
+          {statuses.map((s,i)=>{
+            const isExpanded=expandedIdx===i;
+            const isLast=i===statuses.length-1;
+            return(
+              <div key={i} className="flex gap-3" style={{minHeight:isExpanded?'auto':60}}>
+                {/* Timeline rail */}
+                <div className="flex flex-col items-center shrink-0" style={{width:20}}>
+                  {/* Dot */}
+                  <div className="shrink-0 mt-[2px] relative flex items-center justify-center">
+                    {s.current&&<div className="absolute w-[18px] h-[18px] rounded-full animate-ping" style={{background:s.dot,opacity:0.2}}/>}
+                    <div className="w-[10px] h-[10px] rounded-full shrink-0 relative z-10" style={{background:s.dot,boxShadow:s.current?`0 0 0 3px ${s.bg}`:'none'}}/>
+                  </div>
+                  {/* Connector line + duration chip */}
+                  {!isLast&&<div className="flex-1 flex flex-col items-center relative" style={{minHeight:12}}>
+                    <div className="w-px flex-1" style={{background:'#e5e7eb'}}/>
+                  </div>}
+                </div>
+
+                {/* Content card */}
+                <div className="flex-1 pb-3" style={{marginTop:-2}}>
+                  <div
+                    className="rounded-lg p-3 cursor-pointer transition-all"
+                    style={{
+                      background:isExpanded?s.bg:'transparent',
+                      border:isExpanded?`1px solid ${s.border}`:'1px solid transparent',
+                    }}
+                    onClick={()=>setExpandedIdx(isExpanded?-1:i)}
+                  >
+                    {/* Row 1: Status + duration badge */}
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-[6px]">
+                        <div className="w-[8px] h-[8px] rounded-full shrink-0" style={{background:s.dot}}/>
+                        <span style={{fontSize:12,color:s.color,fontWeight:600}}>{s.name}</span>
+                        {s.current&&<span className="px-[6px] py-[1px] rounded text-white" style={{fontSize:9,fontWeight:600,background:s.dot,letterSpacing:0.3}}>CURRENT</span>}
+                      </div>
+                      <span className="font-mono px-[6px] py-[1px] rounded" style={{fontSize:10,color:'#6b7280',background:isExpanded?'rgba(255,255,255,0.7)':'#f3f4f6',fontWeight:500}}>{s.durationInStatus}</span>
+                    </div>
+
+                    {/* Row 2: Who + When */}
+                    <div className="flex items-center gap-[6px] mb-[2px]">
+                      <div className="w-[16px] h-[16px] rounded-full flex items-center justify-center shrink-0" style={{background:s.avatarBg}}>
+                        <span className="text-white" style={{fontSize:7,fontWeight:600}}>{s.initials}</span>
+                      </div>
+                      <span style={{fontSize:11,color:'#374151',fontWeight:500}}>{s.user}</span>
+                      <span style={{fontSize:10,color:'#9ca3af'}}>·</span>
+                      <span style={{fontSize:10,color:'#9ca3af'}}>{s.date}, {s.time}</span>
+                    </div>
+
+                    {/* Duration bar - visual representation */}
+                    <div className="mt-[6px] mb-[4px] w-full h-[3px] rounded-full overflow-hidden" style={{background:'#e5e7eb'}}>
+                      <div className="h-full rounded-full" style={{background:s.dot,width:`${(durationHrs[i]/totalHrs)*100}%`,opacity:0.7}}/>
+                    </div>
+
+                    {/* Expanded content */}
+                    {isExpanded&&<div className="mt-2 flex flex-col gap-2">
+                      {s.desc&&<p style={{fontSize:11,color:'#4b5563',lineHeight:'17px'}}>{s.desc}</p>}
+                      {s.quote&&<div className="flex items-start gap-[6px] pl-2" style={{borderLeft:'2px solid #d1d5db'}}>
+                        <span style={{fontSize:11,color:'#6b7280',fontStyle:'italic'}}>Pre defined text used for status note</span>
+                      </div>}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {s.travel&&<div className="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-full bg-white" style={{border:'1px solid #e5e7eb'}}>
+                          <I name="truck" size={11} color="#6b7280"/>
+                          <span style={{fontSize:10,color:'#6b7280',fontWeight:500}}>Travel: {s.travel}</span>
+                        </div>}
+                        {s.checklist&&<div className="inline-flex items-center gap-[4px] px-[8px] py-[3px] rounded-full bg-white cursor-pointer hover:bg-gray-50" style={{border:'1px solid #e5e7eb'}}>
+                          <I name="clipboard-check" size={11} color="#5046e5"/>
+                          <span style={{fontSize:10,color:'#5046e5',fontWeight:500}}>View checklist</span>
+                        </div>}
+                      </div>
+                    </div>}
+                  </div>
+
+                  {/* Duration between statuses - shown on the gap */}
+                  {!isLast&&<div className="flex items-center gap-[6px] pl-1 pt-[6px]">
+                    <I name="arrow-down" size={10} color="#d1d5db"/>
+                    <span style={{fontSize:9,color:'#9ca3af',fontWeight:500,letterSpacing:0.3}}>TRANSITION</span>
+                  </div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Associations ── */
+function AssociationsPanel(){
+  const[open,setOpen]=useState({users:true,timelog:false,property:false,org:false,customers:false});
+  const toggle=k=>setOpen(p=>({...p,[k]:!p[k]}));
+  return(
+    <div className="flex flex-col h-full">
+      <div className="shrink-0 flex items-center justify-between px-3 h-[48px] border-b" style={{borderColor:'#e5e7eb'}}>
+        <span className="font-semibold" style={{fontSize:13,color:'#374151'}}>Associations</span>
+        <I name="pencil" size={14} color="#a3a3a3" className="cursor-pointer"/>
+      </div>
+      <div className="flex-1 scr">
+        {/* User/Team */}
+        <CollapseSection title="User/Team Assigned (5)" open={open.users} onToggle={()=>toggle('users')}>
+          <div className="flex items-center gap-3 p-3 border rounded-lg" style={{borderColor:'#e5e7eb'}}>
+            <div className="w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center shrink-0" style={{fontSize:11,fontWeight:600,color:'#4f46e5'}}>M</div>
+            <div className="flex-1"><span className="block" style={{fontSize:12,color:'#262626',fontWeight:500}}>Mathew Hayden</span><span style={{fontSize:11,color:'#737373'}}>Team Name</span></div>
+          </div>
+        </CollapseSection>
+        {/* Timelog */}
+        <CollapseSection title="Timelog Summary" open={open.timelog} onToggle={()=>toggle('timelog')}>
+          <div className="border rounded-lg overflow-hidden" style={{borderColor:'#e5e7eb'}}>
+            {[{icon:'clock',label:'Labour Time',val:'1 hr 30 mins',color:'#16a34a'},{icon:'coffee',label:'Break Time',val:'1 hr 30 mins',color:'#f59e0b'},{icon:'truck',label:'Travel Time',val:'1 hr 30 mins',color:'#3b82f6'}].map((r,i)=>(
+              <div key={i} className="flex items-center justify-between px-3 py-2 border-b last:border-b-0" style={{borderColor:'#e5e7eb'}}>
+                <div className="flex items-center gap-2"><I name={r.icon} size={14} color={r.color}/><span style={{fontSize:12,color:'#262626'}}>{r.label}</span></div>
+                <span style={{fontSize:12,color:'#262626',fontWeight:500}}>{r.val}</span>
+              </div>
+            ))}
+          </div>
+        </CollapseSection>
+        {/* Property */}
+        <CollapseSection title="Property" open={open.property} onToggle={()=>toggle('property')}>
+          <div className="border rounded-lg p-3 flex flex-col gap-2" style={{borderColor:'#e5e7eb'}}>
+            <div className="flex items-center justify-between"><span style={{fontSize:11,color:'#737373'}}>#3922</span><span className="px-2 py-[2px] rounded text-white" style={{fontSize:10,background:'#6366f1'}}>Badge</span></div>
+            <span style={{fontSize:13,color:'#262626',fontWeight:500}}>Roof Replacement Project</span>
+            <div className="flex items-center gap-2"><I name="calendar" size={13} color="#a3a3a3"/><span style={{fontSize:12,color:'#262626'}}>01/02/2026, Thursday</span></div>
+            <div className="flex items-center gap-2"><I name="wrench" size={13} color="#a3a3a3"/><span style={{fontSize:12,color:'#262626'}}>Installation</span></div>
+            <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full" style={{background:'#ef4444'}}/><span style={{fontSize:12,color:'#262626'}}>High Priority</span></div>
+          </div>
+        </CollapseSection>
+        {/* Org */}
+        <CollapseSection title="Organization" open={open.org} onToggle={()=>toggle('org')}>
+          <div className="flex items-center gap-3 p-3 border rounded-lg" style={{borderColor:'#e5e7eb'}}>
+            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0" style={{fontSize:11,fontWeight:600,color:'#6b7280'}}>M</div>
+            <div className="flex-1"><span className="block" style={{fontSize:12,color:'#262626',fontWeight:500}}>Maven Roofing</span><span style={{fontSize:11,color:'#737373'}}>2 Customer</span></div>
+            <I name="mail" size={14} color="#a3a3a3" className="cursor-pointer"/>
+          </div>
+        </CollapseSection>
+        {/* Collapsed sections */}
+        {['Hubspot','Child Jobs','Material Requests (1)'].map(s=>(
+          <CollapseSection key={s} title={s} open={false} onToggle={()=>{}}/>
+        ))}
+        {/* Customers */}
+        <CollapseSection title="Customers" open={open.customers} onToggle={()=>toggle('customers')}>
+          <div className="flex items-center gap-3 p-3 border rounded-lg" style={{borderColor:'#e5e7eb'}}>
+            <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center shrink-0" style={{fontSize:11,fontWeight:600,color:'#2563eb'}}>R</div>
+            <div className="flex-1"><span className="block" style={{fontSize:12,color:'#262626',fontWeight:500}}>Richard Mathew</span><span style={{fontSize:11,color:'#737373'}}>Maven Roofing</span></div>
+            <div className="flex items-center gap-2">
+              <I name="phone" size={14} color="#a3a3a3" className="cursor-pointer"/>
+              <I name="mail" size={14} color="#a3a3a3" className="cursor-pointer"/>
+              <I name="external-link" size={14} color="#a3a3a3" className="cursor-pointer"/>
+            </div>
+          </div>
+        </CollapseSection>
+      </div>
+    </div>
+  );
+}
+function CollapseSection({title,open,onToggle,children}){
+  return(
+    <div className="border-b" style={{borderColor:'#e5e7eb'}}>
+      <button onClick={onToggle} className="w-full px-3 py-3 flex items-center gap-2 hover:bg-gray-50">
+        <I name={open?"chevron-down":"chevron-right"} size={14} color="#737373"/>
+        <span style={{fontSize:12,color:'#262626',fontWeight:600}}>{title}</span>
+      </button>
+      {open&&children&&<div className="px-3 pb-3">{children}</div>}
+    </div>
+  );
+}
+
+/* ── Zuper Connect ── */
+function ZuperConnectPanel(){
+  return(
+    <div className="flex flex-col h-full">
+      <div className="shrink-0 flex items-center justify-between px-3 h-[48px] border-b" style={{borderColor:'#e5e7eb'}}>
+        <div className="flex items-center gap-2">
+          <span style={{fontSize:13,color:'#262626',fontWeight:600}}>Charles</span>
+          <I name="x" size={14} color="#a3a3a3" className="cursor-pointer"/>
+        </div>
+        <span className="px-2 py-[2px] rounded-md text-white" style={{fontSize:10,background:'#16a34a',fontWeight:500}}>Sales</span>
+      </div>
+      <div className="flex-1 scr p-4 flex flex-col gap-4">
+        {/* Timestamp */}
+        <div className="flex items-center gap-2"><span style={{fontSize:11,color:'#262626',fontWeight:500}}>Charles</span><span style={{fontSize:11,color:'#a3a3a3'}}>3:20 PM</span></div>
+        {/* Missed Call */}
+        <div className="flex items-center gap-2 p-2 rounded-lg" style={{background:'#fef2f2'}}>
+          <I name="phone-missed" size={16} color="#ef4444"/><span style={{fontSize:12,color:'#ef4444',fontWeight:500}}>Missed Call</span>
+          <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center ml-auto"><span className="text-white" style={{fontSize:8,fontWeight:700}}>f</span></div>
+        </div>
+        {/* Text */}
+        <div><div className="flex items-center gap-2 mb-1"><span style={{fontSize:11,color:'#262626',fontWeight:500}}>Charles</span><span style={{fontSize:11,color:'#a3a3a3'}}>3:20 PM</span></div>
+        <p style={{fontSize:12,color:'#262626'}}>Can you please update me?</p></div>
+        {/* Outgoing */}
+        <div className="flex justify-end"><div className="flex items-center gap-2 mb-1"><span style={{fontSize:11,color:'#a3a3a3'}}>3:20 PM</span><span style={{fontSize:11,color:'#262626',fontWeight:500}}>Henry</span></div></div>
+        <div className="bg-blue-600 text-white rounded-xl rounded-tr-none p-3 ml-auto max-w-[85%]" style={{fontSize:12,lineHeight:'18px'}}>Hey Mason, Please let me know your availability for Scheduling your Job?</div>
+        {/* Completed call */}
+        <div><div className="flex items-center gap-2 mb-1"><span style={{fontSize:11,color:'#262626',fontWeight:500}}>Charles</span><span style={{fontSize:11,color:'#a3a3a3'}}>3:20 PM</span></div>
+        <div className="border rounded-xl p-3 flex flex-col gap-2" style={{borderColor:'#e5e7eb'}}>
+          <div className="flex items-center gap-2"><I name="check-circle" size={14} color="#16a34a"/><span style={{fontSize:12,color:'#262626',fontWeight:500}}>Completed</span></div>
+          <span style={{fontSize:11,color:'#737373'}}>Henry answered · 4:32</span>
+          <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-2">
+            <I name="play" size={14} color="#262626"/>
+            <div className="flex-1 h-1 bg-gray-200 rounded-full"><div className="h-full w-1/3 bg-gray-400 rounded-full"/></div>
+            <span style={{fontSize:11,color:'#737373'}}>0:53</span>
+            <I name="volume-2" size={14} color="#a3a3a3"/>
+            <span style={{fontSize:10,color:'#737373'}}>1x</span>
+          </div>
+          <div className="flex items-center gap-1"><span>👍</span><span>🔥 1</span><span>😊</span></div>
+        </div></div>
+        {/* Tags */}
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-[2px] rounded" style={{fontSize:11,background:'#fef2f2',color:'#ef4444'}}>Spam</span>
+          <span className="px-2 py-[2px] rounded" style={{fontSize:11,background:'#eff6ff',color:'#3b82f6'}}>Marketing</span>
+          <span className="px-2 py-[2px] rounded" style={{fontSize:11,background:'#f3f4f6',color:'#737373'}}>+1</span>
+        </div>
+        {/* Call Summary */}
+        <div className="rounded-xl p-3 flex flex-col gap-2" style={{background:'linear-gradient(169deg,#faf5ff,#eff6ff)',border:'1px solid #e9d4ff'}}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1"><I name="sparkles" size={14} color="#7c3aed"/><span style={{fontSize:12,color:'#262626',fontWeight:600}}>Call Summary</span></div>
+            <span className="cursor-pointer" style={{fontSize:11,color:'#3b82f6'}}>View Transcript</span>
+          </div>
+          <p style={{fontSize:12,color:'#374151',lineHeight:'17px'}}>• Jason from CoralX Solutions confirmed the HVAC maintenance appointment with the customer.</p>
+          <div><span style={{fontSize:12,color:'#262626',fontWeight:600}}>Next Steps</span><p style={{fontSize:12,color:'#374151',lineHeight:'17px'}}>• Visit scheduled for Fri, April 12th | 9:00 AM - 11:00 AM</p></div>
+        </div>
+        {/* Bot */}
+        <div className="p-3 rounded-lg" style={{background:'#f3f4f6'}}>
+          <div className="flex gap-2"><span style={{fontSize:11,color:'#a3a3a3'}}>3:20 PM</span><span style={{fontSize:11,color:'#262626',fontWeight:500}}>Zuper</span></div>
+          <p style={{fontSize:12,color:'#374151',lineHeight:'18px',marginTop:4}}>Sorry we missed your call! We'll get back to you shortly. <b>For faster service</b>, leave your request now at...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Chats ── */
+function ChatsPanel(){
+  const[subTab,setSubTab]=useState('messages');
+  return(
+    <div className="flex flex-col h-full">
+      <div className="shrink-0 px-3 pt-3 border-b" style={{borderColor:'#e5e7eb'}}>
+        <span className="font-semibold" style={{fontSize:13,color:'#262626'}}>Chats</span>
+        <div className="flex items-center gap-4 mt-2">
+          {['Messages','Files','Pinned'].map(t=>(
+            <button key={t} onClick={()=>setSubTab(t.toLowerCase())} className="pb-2 border-b-2 transition-colors" style={{fontSize:12,fontWeight:500,borderColor:subTab===t.toLowerCase()?'#333':'transparent',color:subTab===t.toLowerCase()?'#262626':'#737373'}}>{t}</button>
+          ))}
+        </div>
+      </div>
+      <div className="flex-1 scr p-4 flex flex-col gap-3">
+        {subTab==='messages'&&<>
+          {/* Outgoing */}
+          <div className="flex justify-end"><div className="bg-blue-600 text-white rounded-xl rounded-tr-none p-3 max-w-[85%]" style={{fontSize:12,lineHeight:'18px'}}>Morning Mason! Just checking in did the shingles get delivered to the Pine Street site?</div></div>
+          <div className="flex justify-end"><span style={{fontSize:10,color:'#a3a3a3'}}>3:00PM</span></div>
+          {/* Incoming */}
+          <div className="flex gap-2">
+            <div className="w-6 h-6 rounded-full bg-gray-300 shrink-0 mt-1"/>
+            <div className="bg-gray-100 rounded-xl rounded-tl-none p-3 max-w-[85%]" style={{fontSize:12,color:'#262626',lineHeight:'18px'}}>Yep, the delivery arrived around 8:15 AM. But we're missing 10 bundles of the WeatherGuard shingles.</div>
+          </div>
+          <div className="flex items-center gap-1"><span style={{fontSize:10,color:'#a3a3a3'}}>3:00PM</span><I name="check-check" size={12} color="#3b82f6"/></div>
+          {/* Divider */}
+          <div className="flex items-center gap-2 my-1"><div className="flex-1 h-px bg-gray-200"/><span style={{fontSize:10,color:'#a3a3a3'}}>Today</span><div className="flex-1 h-px bg-gray-200"/></div>
+          {/* More messages */}
+          <div className="flex gap-2">
+            <div className="w-6 h-6 rounded-full bg-gray-300 shrink-0 mt-1"/>
+            <div className="bg-gray-100 rounded-xl rounded-tl-none p-3 max-w-[85%]" style={{fontSize:12,color:'#262626',lineHeight:'18px'}}>Ah no, not again. I'll follow up with the supplier right away. Can you manage today's work without those?</div>
+          </div>
+          <div className="flex gap-2">
+            <div className="w-6 h-6 rounded-full bg-gray-300 shrink-0 mt-1"/>
+            <div className="flex flex-col gap-2 max-w-[85%]">
+              <div className="bg-gray-100 rounded-xl rounded-tl-none p-3" style={{fontSize:12,color:'#262626',lineHeight:'18px'}}>We can finish the underlayment and start with the back slope. Shouldn't slow us down too much unless the delay goes past tomorrow.</div>
+              <div className="flex gap-2 rounded-xl overflow-hidden">
+                <div className="w-24 h-20 bg-amber-200 rounded-lg"/>
+                <div className="w-24 h-20 bg-stone-300 rounded-lg"/>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end mt-2"><button className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg" style={{fontSize:11,fontWeight:500}}>Report</button></div>
+        </>}
+        {subTab==='files'&&<div className="flex-1 flex items-center justify-center"><span style={{fontSize:12,color:'#a3a3a3'}}>No files shared yet</span></div>}
+        {subTab==='pinned'&&<div className="flex-1 flex items-center justify-center"><span style={{fontSize:12,color:'#a3a3a3'}}>No pinned messages</span></div>}
+      </div>
+    </div>
+  );
+}
+
+/* ── Sense AI ── */
+function SensePanel(){
+  return(
+    <div className="flex flex-col h-full">
+      <div className="shrink-0 flex items-center px-3 h-[48px] border-b" style={{borderColor:'#e5e7eb'}}>
+        <span className="font-semibold" style={{fontSize:13,color:'#374151'}}>Sense AI</span>
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6">
+        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{background:'linear-gradient(135deg,#faf5ff,#eff6ff)'}}><I name="sparkles" size={24} color="#7c3aed"/></div>
+        <span className="font-semibold" style={{fontSize:14,color:'#262626'}}>Ask Sense about this job</span>
+        <span className="text-center" style={{fontSize:12,color:'#737373',maxWidth:220}}>Get instant AI-powered answers about job details, history, and recommendations.</span>
+        <div className="w-full mt-3 flex items-center gap-2 bg-gray-50 border rounded-xl p-3" style={{borderColor:'#e5e7eb'}}>
+          <I name="sparkles" size={14} color="#a3a3a3"/>
+          <input type="text" placeholder="Ask a question..." className="flex-1 bg-transparent outline-none" style={{fontSize:12,color:'#262626'}}/>
+          <I name="send" size={14} color="#7c3aed" className="cursor-pointer"/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════ APP ══════════ */
+function App(){
+  return(
+    <div className="flex flex-col h-screen w-screen overflow-hidden">
+      <TopNavBar/>
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar/>
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <ModuleHeader/>
+          <div className="flex flex-1 overflow-hidden">
+            <LeftPane/>
+            <CenterPane/>
+            <RightPaneArea/>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
