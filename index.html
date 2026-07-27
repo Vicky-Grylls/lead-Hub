@@ -28822,151 +28822,363 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
 
   /* ─────────── CAMPAIGN WIZARD (6 steps) ─────────── */
+  /* ═══════════ CAMPAIGN WIZARD (fully functional) ═══════════ */
   const WIZ_STEPS = ['Basic details', 'Audience', 'Communication', 'Speed to Lead', 'Nurture sequence', 'Exit rules'];
+
+  const FIELD_DEFS = {
+    'customer.lead_source': { module: 'Customer', label: 'Lead Source', type: 'multiselect', options: ['Angi', 'Thumbtack', 'Google LSA', 'Meta'] },
+    'customer.first_name': { module: 'Customer', label: 'First Name', type: 'text' },
+    'customer.email': { module: 'Customer', label: 'Email', type: 'text' },
+    'customer.created_date': { module: 'Customer', label: 'Created Date', type: 'date' },
+    'customer.replied': { module: 'Customer', label: 'Replied to us', type: 'bool', options: ['Yes', 'No'] },
+    'job.current_status': { module: 'Job', label: 'Current Status', type: 'multiselect', options: ['New Lead', 'Nurture', 'Qualified', 'Not Qualified', 'Dead'] },
+    'job.service_type': { module: 'Job', label: 'Service Type', type: 'multiselect', options: ['Roofing', 'Gutter', 'Siding', 'Windows', 'Door'] },
+    'job.created_date': { module: 'Job', label: 'Created Date', type: 'date' },
+    'job.attempts': { module: 'Job', label: 'Campaign Attempts', type: 'number' }
+  };
+  const FIELD_GROUPS = [
+    { title: 'Customer', items: Object.keys(FIELD_DEFS).filter(k => FIELD_DEFS[k].module === 'Customer').map(k => ({ value: k, label: FIELD_DEFS[k].label })) },
+    { title: 'Job', items: Object.keys(FIELD_DEFS).filter(k => FIELD_DEFS[k].module === 'Job').map(k => ({ value: k, label: FIELD_DEFS[k].label })) }
+  ];
+  const OPS = { multiselect: ['is any of', 'is none of'], text: ['is', 'is not', 'contains'], date: ['between', 'before', 'after'], number: ['more than', 'less than', 'equals'], bool: ['is'] };
+  const SOURCE_SIZE = { Angi: 64, Thumbtack: 41, 'Google LSA': 28, Meta: 33 };
+  const STATUS_FRAC = { 'New Lead': 0.55, Nurture: 0.34, Qualified: 0.18, 'Not Qualified': 0.12, Dead: 0.08 };
+  const SERVICE_FRAC = { Roofing: 0.6, Gutter: 0.22, Siding: 0.3, Windows: 0.25, Door: 0.15 };
+  const FIRST = ['Marcus', 'Danielle', 'Priya', 'Owen', 'Sofia', 'Trevor', 'Amara', 'Grant', 'Leah', 'Diego', 'Nina', 'Colton', 'Rosa', 'Jared', 'Imani', 'Blake', 'Hana', 'Miles', 'Yara', 'Dean', 'Camille', 'Ravi', 'Tessa', 'Nolan', 'Selena'];
+  const LAST = ['Thompson', 'Nguyen', 'Alvarez', 'Patel', 'Walsh', 'Reed', 'Norris', 'Mitchell', 'Blake', 'Cohen', 'Marks', 'Silva', 'Webb', 'Klein', 'Perkins', 'Hart', 'Whitfield', 'Fisher', 'Dawson', 'Bryant'];
+  const CH_LIST = [['sms', 'Send SMS'], ['email', 'Send email'], ['call', 'Make a phone call'], ['task', 'Add a task']];
+  const CH_ICON = { sms: 'message-square', email: 'mail', call: 'phone', task: 'check-square' };
+  const OFFSETS = [['launch', 'On arrival'], ['5', '+5 min'], ['15', '+15 min'], ['30', '+30 min'], ['60', '+60 min'], ['120', '+2 hrs']];
+  const ANCHORS = [['last_message', 'after the previous step'], ['salesboard', 'after it hits the salesboard'], ['lead_created', 'after the lead is created']];
+  const SNIPPETS = [['{{customer_first_name}}', 'Contact first name'], ['{{customer_last_name}}', 'Contact last name'], ['{{company.company_name}}', 'Company name'], ['{{company.company_phone}}', 'Company phone'], ['{{user_first_name}}', 'User first name']];
+  const TASK_TYPES = ['Call back', 'Site visit', 'Send a quote', 'Inspection', 'General follow-up'];
+  const NUMBERS = ['(+1) 650 206 1172', '(+1) 1145 626 7281'];
+  const TZS = ['America/New_York (ET)', 'America/Chicago (CT)', 'America/Los_Angeles (PT)'];
+  const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const TIMES = (() => { const o = []; for (let h = 8; h <= 21; h++) for (const m of [0, 30]) { const hr = ((h + 11) % 12) + 1, ap = h < 12 ? 'am' : 'pm'; o.push(hr + ':' + String(m).padStart(2, '0') + ' ' + ap); } return o; })();
+
+  const CONTACTS = (() => {
+    let s = 20260726;
+    const rnd = () => { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296; };
+    const weighted = obj => { const e = Object.entries(obj), total = e.reduce((a, [, w]) => a + w, 0); let x = rnd() * total; for (const [k, w] of e) { if ((x -= w) <= 0) return k; } return e[e.length - 1][0]; };
+    const pad = (n, l) => String(n).padStart(l, '0');
+    const out = [];
+    Object.entries(SOURCE_SIZE).forEach(([source, count]) => {
+      for (let i = 0; i < count; i++) {
+        const first = FIRST[Math.floor(rnd() * FIRST.length)], last = LAST[Math.floor(rnd() * LAST.length)];
+        const day = Math.floor(rnd() * 133);
+        out.push({
+          id: 'c' + out.length, first, last, name: first + ' ' + last,
+          email: (first + '.' + last).toLowerCase() + '@' + ['gmail.com', 'outlook.com', 'yahoo.com', 'proton.me'][Math.floor(rnd() * 4)],
+          phone: '(+1) ' + (200 + Math.floor(rnd() * 699)) + ' ' + pad(Math.floor(rnd() * 1000), 3) + ' ' + pad(Math.floor(rnd() * 10000), 4),
+          source, status: weighted(STATUS_FRAC), service: weighted(SERVICE_FRAC),
+          replied: rnd() < 0.4, attempts: Math.floor(rnd() * 5), createdDay: day
+        });
+      }
+    });
+    return out;
+  })();
+  const fieldValue = (c, key) => ({ 'customer.lead_source': c.source, 'customer.first_name': c.first, 'customer.email': c.email, 'customer.replied': c.replied, 'job.current_status': c.status, 'job.service_type': c.service, 'job.attempts': c.attempts })[key];
+  const matchRow = (c, r) => {
+    const f = FIELD_DEFS[r.field]; if (!f) return true;
+    const v = fieldValue(c, r.field);
+    if (f.type === 'multiselect') { const sel = r.val || []; if (!sel.length) return true; return r.op === 'is none of' ? !sel.includes(v) : sel.includes(v); }
+    if (f.type === 'bool') { const sel = r.val || []; if (!sel.length) return true; return (sel[0] === 'Yes') === !!v; }
+    if (f.type === 'text') { const q = (Array.isArray(r.val) ? '' : (r.val || '')).trim().toLowerCase(); if (!q) return true; const sv = String(v || '').toLowerCase(); return r.op === 'is not' ? !sv.includes(q) : sv.includes(q); }
+    if (f.type === 'number') { const n = Number(r.val); if (isNaN(n)) return true; return r.op === 'less than' ? v < n : r.op === 'equals' ? v === n : v > n; }
+    return true;
+  };
+  const filterContacts = (rows, join) => {
+    const active = rows.filter(r => r.field);
+    if (!active.length) return CONTACTS.slice();
+    return CONTACTS.filter(c => join === 'and' ? active.every(r => matchRow(c, r)) : active.some(r => matchRow(c, r)));
+  };
+
+  let WUID = 0;
+  const wuid = () => 'w' + (++WUID);
+
+  // Custom dropdown
+  function Dropdown({ value, onChange, options, groups, multi, placeholder = 'Select…', width, height = 36 }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+    useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, [open]);
+    const allOpts = groups ? groups.flatMap(g => g.items) : options;
+    const has = multi ? (value && value.length) : (value !== undefined && value !== null && value !== '');
+    const label = multi
+      ? (!has ? placeholder : ((allOpts.find(o => o.value === value[0]) || {}).label || value[0]) + (value.length > 1 ? ' +' + (value.length - 1) + ' more' : ''))
+      : (has ? ((allOpts.find(o => o.value === value) || {}).label || value) : placeholder);
+    const isSel = v => multi ? (value || []).includes(v) : value === v;
+    const pick = v => { if (multi) { const cur = value || []; onChange(cur.includes(v) ? cur.filter(x => x !== v) : [...cur, v]); } else { onChange(v); setOpen(false); } };
+    const item = o => <div key={o.value} onClick={() => pick(o.value)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '7px 11px', fontSize: 13, color: LH.ink, cursor: 'pointer', borderRadius: 7, background: isSel(o.value) ? LH.tint : 'transparent' }}>{o.label}{isSel(o.value) && <Ic name="check" size={14} color={LH.primary} />}</div>;
+    return <div ref={ref} style={{ position: 'relative', width: width || '100%' }}>
+      <div onClick={() => setOpen(o => !o)} style={{ height, borderRadius: 8, border: '1px solid ' + (open ? LH.primary : LH.border), background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, padding: '0 10px', fontSize: 13, color: has ? LH.ink : LH.muted, cursor: 'pointer', fontWeight: has ? 600 : 400 }}>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span><Ic name={open ? 'chevron-up' : 'chevron-down'} size={14} color={LH.muted} />
+      </div>
+      {open && <div style={{ position: 'absolute', top: height + 4, left: 0, minWidth: '100%', zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, maxHeight: 260, overflowY: 'auto' }}>
+        {groups ? groups.map(g => <div key={g.title}><div style={{ fontSize: 11, color: LH.muted, padding: '6px 11px 3px', fontWeight: 600 }}>{g.title}</div>{g.items.map(item)}</div>) : options.map(item)}
+      </div>}
+    </div>;
+  }
+  function Toggle({ on, onChange }) {
+    return <span onClick={() => onChange(!on)} style={{ width: 34, height: 19, borderRadius: 999, background: on ? LH.primary : '#d8d2c6', position: 'relative', display: 'inline-block', cursor: 'pointer', flexShrink: 0, transition: 'background .15s' }}><span style={{ position: 'absolute', top: 2, left: on ? 17 : 2, width: 15, height: 15, borderRadius: 999, background: '#fff', transition: 'left .15s' }} /></span>;
+  }
+  function AndOr({ join, onChange }) {
+    return <div style={{ display: 'inline-flex', border: '1px solid ' + LH.border, borderRadius: 8, overflow: 'hidden' }}>
+      {['and', 'or'].map(j => <button key={j} onClick={() => onChange(j)} style={{ padding: '5px 14px', fontSize: 12.5, fontWeight: 600, textTransform: 'capitalize', border: 'none', cursor: 'pointer', background: join === j ? LH.tint : '#fff', color: join === j ? LH.primaryDark : LH.sub }}>{j}</button>)}
+    </div>;
+  }
+  // Condition builder shared by Audience + Exit rules
+  function Conditions({ rows, setRows, join, setJoin, addLabel }) {
+    const update = (id, patch) => setRows(rows.map(r => r.id === id ? { ...r, ...patch } : r));
+    const valOptions = f => (FIELD_DEFS[f] && FIELD_DEFS[f].options || []).map(o => ({ value: o, label: o }));
+    return <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="filter" size={15} color={LH.sub} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{addLabel === 'Add exit condition' ? 'Exit conditions' : 'Conditions'} ({rows.length})</span></div>
+        <AndOr join={join} onChange={setJoin} />
+      </div>
+      {rows.map((r, i) => {
+        const f = FIELD_DEFS[r.field]; const type = f ? f.type : 'multiselect';
+        return <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <span style={{ width: 42, fontSize: 12, color: LH.muted, flexShrink: 0 }}>{i === 0 ? 'Where' : (join === 'and' ? 'And' : 'Or')}</span>
+          <div style={{ flex: 1 }}><Dropdown value={r.field} groups={FIELD_GROUPS} placeholder="Field" onChange={v => update(r.id, { field: v, op: OPS[FIELD_DEFS[v].type][0], val: [] })} /></div>
+          <div style={{ width: 130, flexShrink: 0 }}><Dropdown value={r.op} options={OPS[type].map(o => ({ value: o, label: o }))} onChange={v => update(r.id, { op: v })} /></div>
+          <div style={{ flex: 1 }}>{type === 'multiselect' || type === 'bool'
+            ? <Dropdown multi={type === 'multiselect'} value={type === 'bool' ? (r.val || []) : (r.val || [])} options={valOptions(r.field)} placeholder="Select…" onChange={v => update(r.id, { val: type === 'bool' ? [v].flat().slice(-1) : v })} />
+            : <input value={Array.isArray(r.val) ? '' : (r.val || '')} onChange={e => update(r.id, { val: e.target.value })} placeholder={type === 'number' ? '0' : 'Value'} style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none' }} />}
+          </div>
+          <button onClick={() => setRows(rows.filter(x => x.id !== r.id))} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: 'transparent', color: LH.muted, cursor: 'pointer', flexShrink: 0 }}><Ic name="x" size={15} color={LH.muted} /></button>
+        </div>;
+      })}
+      <button onClick={() => setRows([...rows, { id: wuid(), field: 'customer.lead_source', op: 'is any of', val: [] }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 9, padding: '10px', background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4 }}><Ic name="plus" size={15} color={LH.primary} />{addLabel || 'Add filter'}</button>
+    </div>;
+  }
+
+  // A single channel step editor (used by Speed to Lead + Nurture)
+  function StepEditor({ step, onChange, onRemove, timingMode }) {
+    const snapRef = useRef(null);
+    const ch = step.ch;
+    const insertSnippet = tok => onChange({ ...step, body: (step.body || '') + tok });
+    return <Card style={{ padding: 14, marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: (ch === 'call') ? 0 : 10 }}>
+        <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={CH_ICON[ch]} size={15} color={LH.primary} /></div>
+        <div style={{ width: 168, flexShrink: 0 }}><Dropdown value={ch} options={CH_LIST.map(([v, l]) => ({ value: v, label: l }))} onChange={v => onChange({ ...step, ch: v })} /></div>
+        {timingMode === 'offset'
+          ? <><div style={{ width: 120, flexShrink: 0 }}><Dropdown value={step.offset} options={OFFSETS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => onChange({ ...step, offset: v })} /></div>
+            {step.offset !== 'launch' && <div style={{ flex: 1 }}><Dropdown value={step.anchor} options={ANCHORS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => onChange({ ...step, anchor: v })} /></div>}</>
+          : <div style={{ width: 130, flexShrink: 0 }}><Dropdown value={step.time} options={TIMES.map(t => ({ value: t, label: t }))} onChange={v => onChange({ ...step, time: v })} /></div>}
+        <div style={{ flex: 1 }} />
+        <button onClick={onRemove} style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}><Ic name="trash-2" size={15} color={LH.muted} /></button>
+      </div>
+      {ch === 'email' && <input value={step.subject || ''} onChange={e => onChange({ ...step, subject: e.target.value })} placeholder="Subject" style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, fontWeight: 600, color: LH.ink, outline: 'none', marginBottom: 8 }} />}
+      {ch === 'task' && <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        <input value={step.title || ''} onChange={e => onChange({ ...step, title: e.target.value })} placeholder="Task title" style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none' }} />
+        <div style={{ width: 170 }}><Dropdown value={step.taskType} options={TASK_TYPES.map(t => ({ value: t, label: t }))} placeholder="Task type" onChange={v => onChange({ ...step, taskType: v })} /></div>
+      </div>}
+      {ch === 'call'
+        ? <div style={{ fontSize: 12, color: LH.muted, marginTop: 8, paddingLeft: 38 }}>Nova places this call using the qualification playbook from the Communication step.</div>
+        : <div style={{ marginTop: ch === 'sms' || ch === 'task' || ch === 'email' ? 0 : 8 }}>
+          <textarea value={step.body || ''} onChange={e => onChange({ ...step, body: e.target.value })} placeholder={ch === 'task' ? 'Description' : 'Message'} style={{ width: '100%', height: 74, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 12.5, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+            <div style={{ width: 170 }}><Dropdown value="" placeholder="Insert snippet…" options={SNIPPETS.map(([v, l]) => ({ value: v, label: l }))} onChange={insertSnippet} height={32} /></div>
+            {ch === 'sms' && <span style={{ fontSize: 11.5, color: (step.body || '').length > 612 ? LH.red : LH.muted }}>{(step.body || '').length} / 612 characters</span>}
+          </div>
+        </div>}
+    </Card>;
+  }
+
   function CampaignWizard({ onClose, onCreate, embed }) {
     const [step, setStep] = useState(0);
     const [name, setName] = useState('Storm Season Re-engage');
-    const [conds, setConds] = useState([{ f: 'Lead Source', op: 'is any of', v: 'Angi, Thumbtack' }]);
+    const [desc, setDesc] = useState('Re-engages storm-season leads from Angi and Thumbtack with a 14-day drip.');
+    // Audience
+    const [join, setJoin] = useState('and');
+    const [conds, setConds] = useState([
+      { id: wuid(), field: 'customer.lead_source', op: 'is any of', val: ['Angi', 'Thumbtack'] },
+      { id: wuid(), field: 'job.current_status', op: 'is any of', val: ['New Lead', 'Nurture'] },
+      { id: wuid(), field: 'job.service_type', op: 'is any of', val: ['Roofing'] }
+    ]);
+    const [search, setSearch] = useState('');
+    // Communication
+    const [numIdx, setNumIdx] = useState(0);
+    const [agent, setAgent] = useState('Nova — AI voice agent');
+    const [instructions, setInstructions] = useState('Be warm and concise. Confirm the property address, damage type, and urgency. Offer a free inspection.');
     const [playbook, setPlaybook] = useState([
-      { q: 'Is this for a home or a commercial property?', req: true },
-      { q: 'What is going on with the roof — leak, storm damage, or age?', req: true },
-      { q: 'How soon are you looking to get this done?', req: true },
-      { q: 'Have you had any other companies out to quote it?', req: false },
-      { q: 'What day and time works for a free inspection?', req: true }
+      { id: wuid(), q: 'Is this for a home or a commercial property?', req: true },
+      { id: wuid(), q: 'What is going on with the roof — leak, storm damage, or age?', req: true },
+      { id: wuid(), q: 'How soon are you looking to get this done?', req: true },
+      { id: wuid(), q: 'Have you had any other companies out to quote it?', req: false },
+      { id: wuid(), q: 'What day and time works for a free inspection?', req: true }
     ]);
-    const [steps4, setSteps4] = useState([
-      { ch: 'Send SMS', off: 'On arrival', body: 'Hi {customer_first_name}, this is {company.company_name}. We just got your roofing request.' },
-      { ch: 'Make a phone call', off: '+5 min', body: 'Nova qualification call.' }
+    // Speed to Lead
+    const [s2l, setS2l] = useState([
+      { id: wuid(), ch: 'sms', offset: 'launch', anchor: 'last_message', body: 'Hi {{customer_first_name}}, this is {{user_first_name}} with {{company.company_name}}. Got your request — thanks for reaching out!\n\nWe have a few open spots this week for your roof check-up. Any day or time that works best for you? I’ll get it locked in.' },
+      { id: wuid(), ch: 'call', offset: '30', anchor: 'last_message' },
+      { id: wuid(), ch: 'email', offset: '60', anchor: 'last_message', subject: 'We just received your request', body: 'Hi {{customer_first_name}},\n\nThanks for reaching out to {{company.company_name}} — happy to help. Reply to this email with any questions, or grab a slot that suits you.' }
     ]);
-    const suggestions = ['Are you the homeowner or decision-maker?', 'Is an insurance claim involved?', 'Roughly how old is the current roof?', 'Has there been any interior water damage?', 'What is the best number to reach you on?'];
-    const CHOFF = ['On arrival', '+5 min', '+15 min', '+30 min', '+60 min', '+2 hrs'];
+    const [bizHours, setBizHours] = useState(false);
+    const [weekend, setWeekend] = useState({ sat: false, sun: false });
+    // Nurture
+    const [tz, setTz] = useState('America/New_York (ET)');
+    const [sendDays, setSendDays] = useState({ 0: false, 1: true, 2: true, 3: true, 4: true, 5: true, 6: false });
+    const [dayCount, setDayCount] = useState(14);
+    const [selDay, setSelDay] = useState(1);
+    const [days, setDays] = useState({
+      1: { active: true, steps: [
+        { id: wuid(), ch: 'sms', time: '10:00 am', body: 'Good morning {{customer_first_name}}! Still need a hand with the roof? We have time this week and would be glad to take a look.\n\nReply YES and I’ll get you on the schedule.' },
+        { id: wuid(), ch: 'call', time: '6:00 pm' }
+      ] },
+      5: { active: true, steps: [{ id: wuid(), ch: 'sms', time: '10:00 am', body: 'Checking back in, {{customer_first_name}} — happy to hold a slot for your roof inspection.' }] }
+    });
+    // Exit
+    const [exitJoin, setExitJoin] = useState('or');
+    const [exitConds, setExitConds] = useState([{ id: wuid(), field: 'job.current_status', op: 'is any of', val: ['Qualified', 'Dead'] }]);
 
-    const contacts = [
-      { n: 'Daniel Thompson', e: 'daniel.t@gmail.com', src: 'Angi', st: 'New Lead', sv: 'Roofing', d: '2h ago' },
-      { n: 'Rosa Nguyen', e: 'rosa.n@outlook.com', src: 'Thumbtack', st: 'Nurture', sv: 'Roofing', d: '1d ago' },
-      { n: 'Kevin Alvarez', e: 'kalvarez@gmail.com', src: 'Angi', st: 'New Lead', sv: 'Gutter', d: '3d ago' }
-    ];
+    const matchCount = useMemo(() => filterContacts(conds, join).length, [conds, join]);
+    const matched = useMemo(() => {
+      const list = filterContacts(conds, join);
+      const q = search.trim().toLowerCase();
+      return (q ? list.filter(c => (c.name + ' ' + c.email + ' ' + c.phone).toLowerCase().includes(q)) : list);
+    }, [conds, join, search]);
+
+    const dayList = []; for (let d = 1; d <= dayCount; d++) dayList.push(d);
+    const dayObj = days[selDay] || { active: true, steps: [] };
+    const setDaySteps = steps => setDays({ ...days, [selDay]: { ...dayObj, steps } });
+    const sendDaysLabel = Object.keys(sendDays).filter(k => sendDays[k]).map(k => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][k]).join(', ');
 
     const stepBody = () => {
       if (step === 0) return <div style={{ maxWidth: 560, margin: '0 auto' }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="pencil" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Add details to your campaign</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 22px' }}>Name it something your team will recognise in the campaign list.</div>
         <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign name <span style={{ color: LH.red }}>*</span></label>
-        <input value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', height: 38, borderRadius: 9, border: '1px solid ' + LH.border, padding: '0 12px', fontSize: 14, color: LH.ink, margin: '6px 0 18px', outline: 'none' }} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Description</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>auto-written from your rules</span></div>
-        <textarea defaultValue="Re-engages storm-season leads from Angi and Thumbtack with a 14-day drip." style={{ width: '100%', height: 88, borderRadius: 9, border: '1px solid ' + LH.border, padding: 12, fontSize: 13.5, color: LH.body, margin: '6px 0 10px', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} />
-        <Btn icon="refresh-cw">Regenerate from rules</Btn>
+        <input value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', height: 38, borderRadius: 9, border: '1px solid ' + (name.trim() ? LH.border : LH.red), padding: '0 12px', fontSize: 14, color: LH.ink, margin: '6px 0 4px', outline: 'none' }} />
+        {!name.trim() && <div style={{ fontSize: 11.5, color: LH.red, marginBottom: 10 }}>A campaign name is required.</div>}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Description</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>auto-written from your rules</span></div>
+        <textarea value={desc} onChange={e => setDesc(e.target.value)} style={{ width: '100%', height: 88, borderRadius: 9, border: '1px solid ' + LH.border, padding: 12, fontSize: 13.5, color: LH.body, margin: '6px 0 10px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+        <Btn icon="refresh-cw" onClick={() => setDesc('Re-engages ' + (conds.find(c => c.field === 'customer.lead_source') ? (conds.find(c => c.field === 'customer.lead_source').val || []).join(' and ') : 'inbound') + ' leads over a ' + dayCount + '-day drip.')}>Regenerate from rules</Btn>
       </div>;
       if (step === 1) return <div>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="filter" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Audience</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Customers are evaluated when they are created — matching customers are enrolled automatically.</div>
-        <div style={{ display: 'flex', gap: 20 }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Conditions ({conds.length})</div>
-            {conds.map((c, i) => <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 8, alignItems: 'center' }}>
-              <div style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12.5, color: LH.body }}>{c.f}</div>
-              <div style={{ width: 100, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12.5, color: LH.sub }}>{c.op}</div>
-              <div style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12.5, color: LH.ink, fontWeight: 600 }}>{c.v}</div>
-              <button onClick={() => setConds(conds.filter((_, j) => j !== i))} style={{ width: 34, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', color: LH.muted, cursor: 'pointer' }}>–</button>
-            </div>)}
-            <Btn icon="plus" onClick={() => setConds([...conds, { f: 'Current Status', op: 'is any of', v: 'New Lead' }])} style={{ marginTop: 4 }}>Add filter</Btn>
-            <div style={{ fontSize: 12, color: LH.sub, marginTop: 14, background: LH.blueBg, border: '1px solid ' + LH.blueBd, borderRadius: 8, padding: '9px 12px' }}>105 records match your current filters · 0 removed manually, 105 will enrol</div>
-          </div>
-          <div style={{ width: 300, flexShrink: 0 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Matching contacts ({contacts.length})</div>
-            {contacts.map(c => <Card key={c.e} style={{ padding: 11, marginBottom: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 999, background: LH.tint, color: LH.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{c.n.split(' ').map(w => w[0]).join('')}</div>
-                <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{c.n}</div><div style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.e}</div></div>
-              </div>
-              <div style={{ display: 'flex', gap: 6, marginTop: 8 }}><Pill label={c.src} tone="New" /><Pill label={c.st} tone={c.st === 'New Lead' ? 'New' : 'In drip'} /></div>
-            </Card>)}
-          </div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 16px', maxWidth: 640 }}>Configure which customers qualify for this campaign. Customers are evaluated when they are created — matching customers are enrolled automatically.</div>
+        <div style={{ background: LH.blueBg, border: '1px solid ' + LH.blueBd, borderRadius: 10, padding: '12px 14px', display: 'flex', gap: 10, marginBottom: 20 }}>
+          <Ic name="info" size={16} color={LH.blue} />
+          <div><div style={{ fontSize: 13.5, fontWeight: 700, color: '#1e3a8a' }}>{matchCount} records match your current filters</div><div style={{ fontSize: 12, color: '#3b5b9e', marginTop: 2 }}>Records already enrolled in another active campaign will be excluded.</div></div>
         </div>
-      </div>;
-      if (step === 2) return <div style={{ maxWidth: 620, margin: '0 auto' }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>How this campaign reaches out</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px' }}>Nova places every call step. Emails send from your workspace sending domain.</div>
-        <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Outbound number</label><div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>{['Zuper Sunday · (+1) 650 206 1172', '(+1) 1145 626 7281'].map((o, i) => <label key={o} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: LH.body }}><span style={{ width: 16, height: 16, borderRadius: 999, border: '2px solid ' + (i === 0 ? LH.primary : LH.border), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i === 0 && <span style={{ width: 7, height: 7, borderRadius: 999, background: LH.primary }} />}</span>{o}</label>)}</div></Card>
-        <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Voice agent</label><div style={{ height: 36, borderRadius: 8, border: '1px solid ' + LH.border, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 11px', fontSize: 13, color: LH.ink, fontWeight: 600, marginTop: 8 }}>Nova — AI voice agent <Ic name="chevron-down" size={14} color={LH.muted} /></div></Card>
-        <Card style={{ padding: 15 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}><label style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Nova playbook ({playbook.length} questions)</label></div>
-          {playbook.map((p, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 0', borderBottom: i < playbook.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
-            <span style={{ width: 20, height: 20, borderRadius: 999, background: '#f1f0ec', color: LH.sub, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
-            <span style={{ flex: 1, fontSize: 12.5, color: LH.body }}>{p.q}</span>
-            {p.req && <span style={{ fontSize: 10.5, color: LH.primary, fontWeight: 600 }}>required</span>}
-            <button onClick={() => setPlaybook(playbook.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', color: LH.muted, cursor: 'pointer' }}><Ic name="x" size={14} color={LH.muted} /></button>
-          </div>)}
-          <div style={{ fontSize: 11.5, color: LH.muted, margin: '12px 0 6px' }}>Suggested for roofing leads</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{suggestions.map(s => <button key={s} onClick={() => setPlaybook([...playbook, { q: s, req: false }])} style={{ fontSize: 11.5, border: '1px dashed ' + LH.border, borderRadius: 999, padding: '4px 10px', background: '#fff', color: LH.body, cursor: 'pointer' }}>+ {s}</button>)}</div>
+        <Conditions rows={conds} setRows={setConds} join={join} setJoin={setJoin} />
+        <Card style={{ marginTop: 20, padding: 0, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px', borderBottom: '1px solid ' + LH.borderSoft }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="user-plus" size={15} color={LH.sub} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Matching contacts ({matchCount})</span></div>
+            <div style={{ position: 'relative', width: 260 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 10, top: 9 }} /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, email, phone" style={{ width: '100%', height: 32, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px 0 30px', fontSize: 12.5, color: LH.ink, outline: 'none' }} /></div>
+          </div>
+          <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+            {matched.length ? matched.slice(0, 60).map(c => <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 15px', borderBottom: '1px solid ' + LH.borderSoft }}>
+              <div style={{ width: 30, height: 30, borderRadius: 999, background: LH.tint, color: LH.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{(c.first[0] + c.last[0])}</div>
+              <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{c.name}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.email}</div></div>
+              <span style={{ fontSize: 11.5, color: LH.sub, width: 90 }}>{c.source}</span>
+              <Pill label={c.status} tone={c.status === 'Qualified' ? 'Qualified' : c.status === 'New Lead' ? 'New' : 'In drip'} />
+              <span style={{ fontSize: 11.5, color: LH.muted, width: 70, textAlign: 'right' }}>{c.service}</span>
+            </div>) : <div style={{ padding: 30, textAlign: 'center', fontSize: 13, color: LH.muted }}>No matching contact for that search.</div>}
+          </div>
+          {matched.length > 60 && <div style={{ padding: '9px 15px', fontSize: 12, color: LH.muted, textAlign: 'center' }}>Showing 60 of {matched.length}</div>}
         </Card>
       </div>;
-      if (step === 3) return <div style={{ maxWidth: 640, margin: '0 auto' }}>
+      if (step === 2) return <div style={{ maxWidth: 640, margin: '0 auto' }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="radio" size={19} color={LH.primary} /></div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>How this campaign reaches out</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px' }}>Nova places every call step. Emails send from your workspace sending domain.</div>
+        <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Outbound number</label><div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>{NUMBERS.map((o, i) => <label key={o} onClick={() => setNumIdx(i)} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: LH.body, cursor: 'pointer' }}><span style={{ width: 16, height: 16, borderRadius: 999, border: '2px solid ' + (numIdx === i ? LH.primary : LH.border), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{numIdx === i && <span style={{ width: 7, height: 7, borderRadius: 999, background: LH.primary }} />}</span>{i === 0 ? 'Zuper Sunday · ' : ''}{o}</label>)}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 8 }}>Used for both SMS and calls. Replies and callbacks come back to this number.</div></Card>
+        <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Voice agent</label><div style={{ marginTop: 8 }}><Dropdown value={agent} options={['Nova — AI voice agent', 'AR Agent'].map(a => ({ value: a, label: a }))} onChange={setAgent} /></div></Card>
+        <Card style={{ padding: 15, marginBottom: 12 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Instructions for Nova</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>guidance, not a word-for-word script</span></div><textarea value={instructions} onChange={e => setInstructions(e.target.value)} style={{ width: '100%', height: 64, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', marginTop: 8, lineHeight: 1.5 }} /></Card>
+        <Card style={{ padding: 15 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Nova playbook ({playbook.length} questions)</div>
+          {playbook.map((p, i) => <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 0', borderBottom: i < playbook.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+            <span style={{ width: 20, height: 20, borderRadius: 999, background: '#f1f0ec', color: LH.sub, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
+            <input value={p.q} onChange={e => setPlaybook(playbook.map(x => x.id === p.id ? { ...x, q: e.target.value } : x))} style={{ flex: 1, fontSize: 12.5, color: LH.body, border: 'none', outline: 'none', background: 'transparent' }} />
+            <button onClick={() => setPlaybook(playbook.map(x => x.id === p.id ? { ...x, req: !x.req } : x))} style={{ fontSize: 10.5, color: p.req ? LH.primary : LH.muted, fontWeight: 600, border: 'none', background: 'none', cursor: 'pointer' }}>{p.req ? 'required' : 'optional'}</button>
+            <button onClick={() => setPlaybook(playbook.filter(x => x.id !== p.id))} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={14} color={LH.muted} /></button>
+          </div>)}
+          <button onClick={() => setPlaybook([...playbook, { id: wuid(), q: 'New question', req: false }])} style={{ marginTop: 10, fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 5 }}><Ic name="plus" size={14} color={LH.primary} />Add a question</button>
+        </Card>
+      </div>;
+      if (step === 3) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="zap" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Speed to Lead</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px' }}>Launch day. These steps fire the moment a lead is enrolled, each relative to the step before it.</div>
-        {steps4.map((s, i) => <Card key={i} style={{ padding: 14, marginBottom: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 9 }}>
-            <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={s.ch.includes('SMS') ? 'message-square' : s.ch.includes('call') ? 'phone' : s.ch.includes('email') ? 'mail' : 'check-square'} size={15} color={LH.primary} /></div>
-            <span style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink, flex: 1 }}>{s.ch}</span>
-            <div style={{ height: 30, borderRadius: 8, border: '1px solid ' + LH.border, display: 'flex', alignItems: 'center', gap: 5, padding: '0 9px', fontSize: 12, color: LH.body }}>{s.off} <Ic name="chevron-down" size={12} color={LH.muted} /></div>
-            <button onClick={() => setSteps4(steps4.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="trash-2" size={15} color={LH.muted} /></button>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px' }}>Launch day. These steps fire the moment a lead is enrolled, each one relative to the step before it.</div>
+        {s2l.map(s => <StepEditor key={s.id} step={s} timingMode="offset" onChange={ns => setS2l(s2l.map(x => x.id === s.id ? ns : x))} onRemove={() => setS2l(s2l.filter(x => x.id !== s.id))} />)}
+        <button onClick={() => setS2l([...s2l, { id: wuid(), ch: 'sms', offset: '15', anchor: 'last_message', body: '' }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 10, padding: 12, background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button>
+        <Card style={{ padding: 16, marginTop: 18 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Business hours for launch day</div>
+          <div style={{ fontSize: 12, color: LH.sub, margin: '4px 0 12px' }}>A lead that arrives outside these hours waits — launch day steps run at the start of the next available window. Nurture days keep their own schedule.</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: bizHours ? 12 : 0 }}><Toggle on={bizHours} onChange={setBizHours} /><span style={{ fontSize: 13, color: LH.body }}>{bizHours ? 'Yes — respect business hours' : 'No — send any time of day'}</span></div>
+          {bizHours && <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><div style={{ width: 130 }}><Dropdown value="9:00 am" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div><span style={{ color: LH.muted, fontSize: 12 }}>to</span><div style={{ width: 130 }}><Dropdown value="8:00 pm" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div></div>}
+          <div style={{ borderTop: '1px solid ' + LH.borderSoft, margin: '14px 0' }} />
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Run launch day on weekends?</div>
+          <div style={{ display: 'flex', gap: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={weekend.sat} onChange={v => setWeekend({ ...weekend, sat: v })} /><span style={{ fontSize: 13, color: LH.body }}>Saturday</span></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={weekend.sun} onChange={v => setWeekend({ ...weekend, sun: v })} /><span style={{ fontSize: 13, color: LH.body }}>Sunday</span></div>
           </div>
-          {s.ch.includes('SMS') && <div><textarea defaultValue={s.body} style={{ width: '100%', height: 60, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 12.5, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} /><div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}><button style={{ fontSize: 11.5, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Insert snippet…</button><span style={{ fontSize: 11, color: LH.muted }}>{s.body.length} / 612 characters</span></div></div>}
-        </Card>)}
-        <Btn icon="plus" onClick={() => setSteps4([...steps4, { ch: 'Send SMS', off: '+15 min', body: '' }])}>Add a step</Btn>
-        <Card style={{ padding: 14, marginTop: 16 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Business hours for launch day</div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12.5, color: LH.body }}><Select label="Start" value="09:00" /><span style={{ color: LH.muted }}>to</span><Select label="End" value="20:00" /></div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: LH.body, marginTop: 12 }}><input type="checkbox" /> Run launch day on weekends?</label>
         </Card>
       </div>;
       if (step === 4) return <div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Nurture sequence</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Day-by-day follow-ups after launch day. Pick a day on the left, edit its steps on the right.</div>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}><Select label="Time zone" value="America/New_York (ET)" /><Select label="Sequence length" value="14 days" /></div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <div><div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="headphones" size={19} color={LH.primary} /></div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Nurture sequence</div>
+            <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 0', maxWidth: 520 }}>Day-by-day follow-ups after launch day. Pick a day on the left, edit its steps on the right.</div></div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: '1px solid ' + LH.primary, borderRadius: 9, padding: '8px 12px', fontSize: 12.5, color: LH.ink, fontWeight: 600 }}><Ic name="calendar" size={14} color={LH.sub} />{dayCount} days · {sendDaysLabel} · ET</div>
+        </div>
+        <div style={{ display: 'flex', gap: 12, margin: '18px 0' }}>
+          <Card style={{ flex: 1, padding: 14 }}><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 8 }}>TIME ZONE</div><Dropdown value={tz} options={TZS.map(t => ({ value: t, label: t }))} onChange={setTz} /></Card>
+          <Card style={{ flex: 1, padding: 14 }}><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 8 }}>SEND DAYS</div><div style={{ display: 'flex', gap: 5 }}>{DOW.map((d, i) => <button key={i} onClick={() => setSendDays({ ...sendDays, [i]: !sendDays[i] })} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + (sendDays[i] ? LH.primary : LH.border), background: sendDays[i] ? LH.primary : '#fff', color: sendDays[i] ? '#fff' : LH.sub, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>{d}</button>)}</div></Card>
+          <Card style={{ flex: 1, padding: 14 }}><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 8 }}>SEQUENCE LENGTH</div><div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><input type="range" min="1" max="30" value={dayCount} onChange={e => { const v = +e.target.value; setDayCount(v); if (selDay > v) setSelDay(v); }} style={{ flex: 1, accentColor: LH.primary }} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap' }}>{dayCount} days</span></div></Card>
+        </div>
         <div style={{ display: 'flex', gap: 16 }}>
-          <div style={{ width: 170, flexShrink: 0 }}>{[1, 2, 3, 5, 7, 9, 11, 12, 13, 14].map((d, i) => <div key={d} style={{ padding: '10px 12px', borderRadius: 9, marginBottom: 6, border: '1px solid ' + (i === 0 ? LH.primary : LH.border), background: i === 0 ? LH.tint : '#fff', cursor: 'pointer' }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>Day {d}</div><div style={{ display: 'flex', gap: 4, marginTop: 4 }}><Ic name="message-square" size={12} color={LH.muted} />{d % 2 === 1 && <Ic name="phone" size={12} color={LH.muted} />}</div></div>)}</div>
-          <Card style={{ flex: 1, padding: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}><div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Day 1</div><div style={{ fontSize: 12, color: LH.sub }}>2 steps · SMS + Nova call</div></div><Pill label="Active" /></div>
-            {SEQ_OUT.slice(4, 6).map((s, i) => <Card key={i} style={{ padding: 12, marginBottom: 8 }}><div style={{ display: 'flex', alignItems: 'center', gap: 9 }}><Ic name={s.icon} size={15} color={LH.primary} /><span style={{ fontSize: 13, fontWeight: 600, color: LH.ink, flex: 1 }}>{s.ch}</span><span style={{ fontSize: 11.5, color: LH.muted }}>{s.t}</span></div><div style={{ fontSize: 12, color: LH.body, marginTop: 6 }}>{s.body}</div></Card>)}
-            <Btn icon="plus">Add a step</Btn>
+          <div style={{ width: 180, flexShrink: 0, maxHeight: 420, overflowY: 'auto' }}>{dayList.map(d => { const o = days[d]; const chs = o ? o.steps.map(s => s.ch) : []; return <div key={d} onClick={() => setSelDay(d)} style={{ padding: '10px 12px', borderRadius: 9, marginBottom: 6, border: '1px solid ' + (selDay === d ? LH.primary : LH.border), background: selDay === d ? LH.tint : '#fff', cursor: 'pointer' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>Day {d}</span>{o && o.active === false && <span style={{ fontSize: 10, color: LH.amber }}>Paused</span>}</div><div style={{ display: 'flex', gap: 5, marginTop: 5, minHeight: 13 }}>{['sms', 'email', 'call'].filter(c => chs.includes(c)).map(c => <Ic key={c} name={CH_ICON[c]} size={12} color={LH.muted} />)}</div></div>; })}</div>
+          <Card style={{ flex: 1, padding: 16, alignSelf: 'flex-start' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Day {selDay}</div><div style={{ fontSize: 12, color: LH.sub }}>{dayObj.steps.length ? dayObj.steps.length + (dayObj.steps.length > 1 ? ' steps' : ' step') : 'No steps yet'}</div></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={dayObj.active !== false} onChange={v => setDays({ ...days, [selDay]: { ...dayObj, active: v } })} /><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 600 }}>{dayObj.active === false ? 'Paused' : 'Active'}</span></div>
+            </div>
+            {dayObj.active === false && <div style={{ fontSize: 12, color: LH.amber, background: LH.amberBg, border: '1px solid ' + LH.amberBd, borderRadius: 8, padding: '9px 12px', marginBottom: 12 }}>This day is paused — nothing sends. Disabled days are skipped and the campaign continues with the next enabled day.</div>}
+            {dayObj.steps.map(s => <StepEditor key={s.id} step={s} timingMode="time" onChange={ns => setDaySteps(dayObj.steps.map(x => x.id === s.id ? ns : x))} onRemove={() => setDaySteps(dayObj.steps.filter(x => x.id !== s.id))} />)}
+            <button onClick={() => setDaySteps([...dayObj.steps, { id: wuid(), ch: 'sms', time: '10:00 am', body: '' }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 10, padding: 11, background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button>
           </Card>
         </div>
       </div>;
-      return <div style={{ maxWidth: 560, margin: '0 auto' }}>
+      return <div style={{ maxWidth: 640, margin: '0 auto' }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="log-out" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>When should we stop reaching out?</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Records are unenrolled as soon as any of these becomes true.</div>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Exit conditions (2)</div>
-        {[{ f: 'Current Status', op: 'is any of', v: 'Qualified, Dead' }, { f: 'Replied to us', op: 'is', v: 'Yes' }].map((c, i) => <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-          <div style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12.5, color: LH.body }}>{c.f}</div>
-          <div style={{ width: 90, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12.5, color: LH.sub }}>{c.op}</div>
-          <div style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12.5, color: LH.ink, fontWeight: 600 }}>{c.v}</div>
-        </div>)}
-        <Btn icon="plus" style={{ marginTop: 4 }}>Add exit condition</Btn>
-        <div style={{ fontSize: 12, color: LH.sub, marginTop: 16, background: LH.amberBg, border: '1px solid ' + LH.amberBd, borderRadius: 8, padding: '9px 12px' }}>Automatic stop. After the final step on Day 14, the record is unenrolled.</div>
+        <Conditions rows={exitConds} setRows={setExitConds} join={exitJoin} setJoin={setExitJoin} addLabel="Add exit condition" />
+        <div style={{ fontSize: 12.5, color: LH.body, marginTop: 16, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '11px 13px', display: 'flex', gap: 9 }}><Ic name="rotate-ccw" size={15} color={LH.sub} /><span><b style={{ color: LH.ink }}>Automatic stop.</b> Beyond the conditions above, the sequence ends on its own — after the final step on Day {dayCount}, the record is unenrolled.</span></div>
       </div>;
     };
 
     const shell = <div style={{ width: '100%', height: '100%', background: '#fff', borderRadius: embed ? 0 : 16, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: embed ? 'none' : '0 24px 60px rgba(0,0,0,.3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="send" size={15} color={LH.primary} /></div><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>{name}</span><Pill label="Draft" /></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="send" size={15} color={LH.primary} /></div><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>{name || 'New campaign'}</span><Pill label="Draft" /></div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
         </div>
         <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-          <div style={{ width: 220, flexShrink: 0, borderRight: '1px solid ' + LH.borderSoft, padding: 14, background: LH.bg }}>
-            {WIZ_STEPS.map((s, i) => <div key={s} onClick={() => setStep(i)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, marginBottom: 3, cursor: 'pointer', background: step === i ? '#fff' : 'transparent', border: '1px solid ' + (step === i ? LH.border : 'transparent') }}>
+          <div style={{ width: 230, flexShrink: 0, borderRight: '1px solid ' + LH.borderSoft, padding: 14, background: LH.bg, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ flex: 1 }}>{WIZ_STEPS.map((s, i) => <div key={s} onClick={() => setStep(i)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, marginBottom: 3, cursor: 'pointer', background: step === i ? '#fff' : 'transparent', border: '1px solid ' + (step === i ? LH.border : 'transparent') }}>
               <span style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: i < step ? LH.green : (i === step ? LH.primary : '#f1f0ec'), color: i <= step ? '#fff' : LH.muted }}>{i < step ? '✓' : i + 1}</span>
               <span style={{ fontSize: 12.5, fontWeight: step === i ? 600 : 500, color: step === i ? LH.ink : LH.sub }}>{s}</span>
-            </div>)}
+            </div>)}</div>
+            <div style={{ border: '1px solid ' + LH.border, borderRadius: 10, padding: 12, background: '#fff' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="users" size={15} color={LH.primary} /></div><div><div style={{ fontSize: 17, fontWeight: 700, color: LH.ink, lineHeight: 1 }}>{matchCount}</div><div style={{ fontSize: 11, color: LH.sub }}>records enrolled</div></div></div>
+              <div style={{ height: 4, borderRadius: 999, background: '#efe9de', marginTop: 10, overflow: 'hidden' }}><div style={{ width: Math.min(100, matchCount / CONTACTS.length * 100) + '%', height: '100%', background: LH.primary }} /></div>
+              <div style={{ fontSize: 10.5, color: LH.muted, marginTop: 6 }}>{matchCount} of {CONTACTS.length} records in scope</div>
+            </div>
           </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '26px 28px' }}>{stepBody()}</div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '26px 30px' }}>{stepBody()}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
-          <div style={{ display: 'flex', gap: 5 }}>{WIZ_STEPS.map((_, i) => <span key={i} style={{ width: 22, height: 4, borderRadius: 999, background: i <= step ? LH.primary : '#e7e2d8' }} />)}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ fontSize: 12, color: LH.muted }}>Step {step + 1} of {WIZ_STEPS.length}</span><div style={{ display: 'flex', gap: 5 }}>{WIZ_STEPS.map((_, i) => <span key={i} style={{ width: 20, height: 4, borderRadius: 999, background: i <= step ? LH.primary : '#e7e2d8' }} />)}</div></div>
           <div style={{ display: 'flex', gap: 8 }}>
             {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go back</Btn>}
             {step < WIZ_STEPS.length - 1
-              ? <Btn kind="primary" onClick={() => setStep(step + 1)}>Continue</Btn>
+              ? <Btn kind="primary" onClick={() => { if (step === 0 && !name.trim()) return; setStep(step + 1); }}>Continue</Btn>
               : <Btn kind="primary" icon="check" onClick={onCreate}>Create campaign</Btn>}
           </div>
         </div>
