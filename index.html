@@ -28877,7 +28877,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ];
     const config = [
       { icon: 'filter', title: 'Audience', lines: ['3 conditions (AND)', 'Angi, Thumbtack · New Lead · Roofing', enrolled + ' records enrolled'] },
-      { icon: 'radio', title: 'Communication', lines: ['Nova — AI voice agent', '(+1) 650 206 1172', '5 playbook questions'] },
+      { icon: 'radio', title: 'Communication', lines: ['Nova — AI voice agent', 'SMS/calls: (+1) 650 206 1172', 'Email: hello@mail.hillroofing.com', '5 playbook questions'] },
       { icon: 'zap', title: 'Speed to Lead', lines: ['3 launch-day steps', 'SMS on arrival · call +30m · email +60m', 'Business hours: any time'] },
       { icon: 'headphones', title: 'Nurture sequence', lines: ['14-day sequence', 'Send days: Mon–Fri · ET', '6 days with steps'] },
       { icon: 'log-out', title: 'Exit rules', lines: ['2 exit conditions (OR)', 'Qualified or Dead', 'Built-in: reply, opt-out, Nova DND'] }
@@ -29234,6 +29234,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     // Communication
     const [numIdx, setNumIdx] = useState(0);
     const [agent, setAgent] = useState('Nova — AI voice agent');
+    const [emailFrom, setEmailFrom] = useState('Hill Roofing');
+    const [emailAddr, setEmailAddr] = useState('hello@mail.hillroofing.com');
+    const [emailReply, setEmailReply] = useState('replies@hillroofing.com');
+    const [emailSig, setEmailSig] = useState('Hill Roofing\n(+1) 650 206 1172 · hillroofing.com');
+    const [trackOpens, setTrackOpens] = useState(true);
+    const [trackClicks, setTrackClicks] = useState(true);
     const [instructions, setInstructions] = useState('Be warm and concise. Confirm the property address, damage type, and urgency. Offer a free inspection.');
     const [playbook, setPlaybook] = useState([
       { id: wuid(), q: 'Is this for a home or a commercial property?', req: true },
@@ -29334,6 +29340,20 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px' }}>Nova places every call step. Emails send from your workspace sending domain.</div>
         <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Outbound number</label><div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>{NUMBERS.map((o, i) => <label key={o} onClick={() => setNumIdx(i)} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: LH.body, cursor: 'pointer' }}><span style={{ width: 16, height: 16, borderRadius: 999, border: '2px solid ' + (numIdx === i ? LH.primary : LH.border), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{numIdx === i && <span style={{ width: 7, height: 7, borderRadius: 999, background: LH.primary }} />}</span>{i === 0 ? 'Zuper Sunday · ' : ''}{o}</label>)}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 8 }}>Used for both SMS and calls. Replies and callbacks come back to this number.</div></Card>
         <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Voice agent</label><div style={{ marginTop: 8 }}><Dropdown value={agent} options={['Nova — AI voice agent', 'AR Agent'].map(a => ({ value: a, label: a }))} onChange={setAgent} /></div></Card>
+        <Card style={{ padding: 15, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}><Ic name="mail" size={15} color={LH.ink} /><label style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Email sending</label></div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>From name</label><input value={emailFrom} onChange={e => setEmailFrom(e.target.value)} style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none', marginTop: 6 }} /></div>
+            <div><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Sending address</label><div style={{ marginTop: 6 }}><Dropdown value={emailAddr} options={['hello@mail.hillroofing.com', 'quotes@mail.hillroofing.com', 'no-reply@mail.hillroofing.com'].map(a => ({ value: a, label: a }))} onChange={setEmailAddr} /></div></div>
+          </div>
+          <div style={{ marginTop: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Reply-to</label><input value={emailReply} onChange={e => setEmailReply(e.target.value)} style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none', marginTop: 6 }} /></div>
+          <div style={{ marginTop: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Email signature</label><textarea value={emailSig} onChange={e => setEmailSig(e.target.value)} style={{ width: '100%', height: 60, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 12.5, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', marginTop: 6, lineHeight: 1.5 }} /></div>
+          <div style={{ display: 'flex', gap: 22, marginTop: 14 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: LH.body }}><Toggle on={trackOpens} onChange={setTrackOpens} />Track opens</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: LH.body }}><Toggle on={trackClicks} onChange={setTrackClicks} />Track clicks</span>
+          </div>
+          <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 12 }}>Emails send from your verified workspace domain. Every email automatically includes an unsubscribe link.</div>
+        </Card>
         <Card style={{ padding: 15, marginBottom: 12 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Instructions for Nova</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>guidance, not a word-for-word script</span></div><textarea value={instructions} onChange={e => setInstructions(e.target.value)} style={{ width: '100%', height: 64, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', marginTop: 8, lineHeight: 1.5 }} /></Card>
         <Card style={{ padding: 15 }}>
           <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Nova playbook ({playbook.length} questions)</div>
