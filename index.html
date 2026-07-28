@@ -29077,6 +29077,20 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   const OFFSETS = [['launch', 'On arrival'], ['5', '+5 min'], ['15', '+15 min'], ['30', '+30 min'], ['60', '+60 min'], ['120', '+2 hrs']];
   const ANCHORS = [['last_message', 'after the previous step'], ['salesboard', 'after it hits the salesboard'], ['lead_created', 'after the lead is created']];
   const SNIPPETS = [['{{customer_first_name}}', 'Contact first name'], ['{{customer_last_name}}', 'Contact last name'], ['{{company.company_name}}', 'Company name'], ['{{company.company_phone}}', 'Company phone'], ['{{user_first_name}}', 'User first name']];
+  const SMS_TEMPLATES = [
+    { name: 'Speed-to-lead intro', body: 'Hi {{customer_first_name}}, this is {{user_first_name}} with {{company.company_name}}. Thanks for reaching out about your roof! When’s a good time for a free inspection?' },
+    { name: 'Quick follow-up', body: 'Hi {{customer_first_name}}, just checking in on your roof project. Happy to hold a spot this week — reply YES and I’ll lock it in.' },
+    { name: 'Storm damage', body: 'Hi {{customer_first_name}}, storm damage can worsen fast. We can usually inspect within 48 hours — want me to get you scheduled?' },
+    { name: 'Appointment reminder', body: 'Reminder: your roof inspection with {{company.company_name}} is coming up. Reply R to reschedule or C to confirm.' },
+    { name: 'Last touch', body: 'Hi {{customer_first_name}}, we’ll close out your request unless you still need help. Reply anytime and we’ll pick right back up.' }
+  ];
+  const EMAIL_TEMPLATES = [
+    { name: 'Welcome / intro', subject: 'Thanks for reaching out to {{company.company_name}}', body: 'Hi {{customer_first_name}},\n\nThanks for contacting {{company.company_name}} — we’d love to help with your roof. Reply with a good time and we’ll set up a free inspection.\n\n{{user_first_name}}' },
+    { name: 'Free inspection offer', subject: 'Your free roof inspection', body: 'Hi {{customer_first_name}},\n\nWe’re offering free roof inspections this week. Pick a slot that works and our team handles the rest.\n\nTalk soon,\n{{user_first_name}}' },
+    { name: 'Insurance claim help', subject: 'We can help with your insurance claim', body: 'Hi {{customer_first_name}},\n\nStorm damage is often covered by insurance. We can document everything and walk you through the claim. Want to set up a quick call?\n\n{{user_first_name}}' },
+    { name: 'Nurture check-in', subject: 'Still thinking about the roof?', body: 'Hi {{customer_first_name}},\n\nJust following up on your roof project — no rush. Whenever you’re ready, we’re here to help.\n\n{{user_first_name}}' },
+    { name: 'Final follow-up', subject: 'Closing out your request', body: 'Hi {{customer_first_name}},\n\nWe’ll archive your request unless you still need a hand. Reply anytime and we’ll jump right back in.\n\n{{user_first_name}}' }
+  ];
   const TASK_TYPES = ['Call back', 'Site visit', 'Send a quote', 'Inspection', 'General follow-up'];
   const REPS = ['Assigned to me', 'Michael Richardson', 'Luke Marks', 'Eli Cohen', 'Monica Klein', 'Tyson Silva', 'Marcus Webb'];
   const NUMBERS = ['(+1) 650 206 1172', '(+1) 1145 626 7281'];
@@ -29196,6 +29210,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ flex: 1 }} />
         <button onClick={onRemove} style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}><Ic name="trash-2" size={15} color={LH.muted} /></button>
       </div>
+      {(ch === 'sms' || ch === 'email') && <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <span style={{ fontSize: 11.5, color: LH.muted, whiteSpace: 'nowrap' }}>Start from a template</span>
+        <div style={{ width: 220 }}><Dropdown value="" placeholder="Choose a template…" height={32} options={(ch === 'sms' ? SMS_TEMPLATES : EMAIL_TEMPLATES).map(tpl => ({ value: tpl.name, label: tpl.name }))} onChange={name => { const tpl = (ch === 'sms' ? SMS_TEMPLATES : EMAIL_TEMPLATES).find(x => x.name === name); if (tpl) onChange({ ...step, body: tpl.body, ...(tpl.subject ? { subject: tpl.subject } : {}) }); }} /></div>
+      </div>}
       {ch === 'email' && <input value={step.subject || ''} onChange={e => onChange({ ...step, subject: e.target.value })} placeholder="Subject" style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, fontWeight: 600, color: LH.ink, outline: 'none', marginBottom: 8 }} />}
       {ch === 'task' && <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <input value={step.title || ''} onChange={e => onChange({ ...step, title: e.target.value })} placeholder="Task title" style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none' }} />
