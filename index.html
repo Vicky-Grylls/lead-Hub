@@ -28848,6 +28848,102 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
 
   /* ─────────── CAMPAIGNS ─────────── */
+  function CampaignDetail({ row, onBack, onEdit, onToast, stTone, avaColor }) {
+    const [menu, setMenu] = useState(false);
+    const t = stTone[row.status] || stTone.Draft;
+    const enrolled = row.records;
+    const active = Math.round(enrolled * 0.42);
+    const completed = Math.round(enrolled * 0.4);
+    const exited = Math.max(0, enrolled - active - completed);
+    const contacted = Math.round(enrolled * 0.9);
+    const replied = Math.round(enrolled * 0.55);
+    const qualified = Math.round(enrolled * 0.32);
+    const converted = Math.round(enrolled * 0.18);
+    const replyRate = enrolled ? Math.round(replied / enrolled * 100) + '%' : '—';
+    const funnel = [['Enrolled', enrolled], ['Contacted', contacted], ['Replied', replied], ['Qualified', qualified], ['Converted', converted]];
+    const kpis = [
+      { label: 'Enrolled', value: enrolled },
+      { label: 'Active now', value: active },
+      { label: 'Completed', value: completed, accent: LH.green },
+      { label: 'Exited', value: exited },
+      { label: 'Reply rate', value: replyRate }
+    ];
+    const recent = [
+      { n: 'Daniel Thompson', src: 'Angi', stage: 'Qualified', tone: 'Qualified', last: 'Nova call · answered', when: '12m ago' },
+      { n: 'Rosa Nguyen', src: 'Thumbtack', stage: 'Contacting', tone: 'New', last: 'SMS sent', when: '40m ago' },
+      { n: 'Kevin Alvarez', src: 'Angi', stage: 'In drip', tone: 'In drip', last: 'Day 3 SMS', when: '3h ago' },
+      { n: 'Nina Foster', src: 'Meta Ads', stage: 'Qualifying', tone: 'New', last: 'Nova call · 4/9 fields', when: '5h ago' },
+      { n: 'Grant Wells', src: 'Google LSA', stage: 'Completed', tone: 'Qualified', last: 'Sequence completed', when: '1d ago' }
+    ];
+    const config = [
+      { icon: 'filter', title: 'Audience', lines: ['3 conditions (AND)', 'Angi, Thumbtack · New Lead · Roofing', enrolled + ' records enrolled'] },
+      { icon: 'radio', title: 'Communication', lines: ['Nova — AI voice agent', '(+1) 650 206 1172', '5 playbook questions'] },
+      { icon: 'zap', title: 'Speed to Lead', lines: ['3 launch-day steps', 'SMS on arrival · call +30m · email +60m', 'Business hours: any time'] },
+      { icon: 'headphones', title: 'Nurture sequence', lines: ['14-day sequence', 'Send days: Mon–Fri · ET', '6 days with steps'] },
+      { icon: 'log-out', title: 'Exit rules', lines: ['2 exit conditions (OR)', 'Qualified or Dead', 'Built-in: reply, opt-out, Nova DND'] }
+    ];
+    const primaryAction = row.status === 'Active' ? { label: 'Pause', icon: 'pause' } : row.status === 'Paused' ? { label: 'Resume', icon: 'play' } : row.status === 'Draft' ? { label: 'Publish', icon: 'rocket' } : null;
+    return <div>
+      {/* Title bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 14, marginBottom: 16, borderBottom: '1px solid ' + LH.borderSoft, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+          <button onClick={onBack} style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="arrow-left" size={16} color={LH.body} /></button>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 12, color: LH.muted, marginBottom: 2 }}>Lead Hub · Campaigns</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ fontSize: 20, fontWeight: 700, color: LH.ink }}>{row.name}</span><span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: t.bg, color: t.fg, border: '1px solid ' + t.bd }}>{row.status}</span></div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
+          <Btn icon="pencil" onClick={onEdit}>Edit</Btn>
+          {primaryAction && <Btn kind="primary" icon={primaryAction.icon} onClick={() => onToast(primaryAction.label + ' — “' + row.name + '”')}>{primaryAction.label}</Btn>}
+          <button onClick={() => setMenu(m => !m)} style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="more-horizontal" size={17} color={LH.sub} /></button>
+          {menu && <div style={{ position: 'absolute', top: 40, right: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 160 }}>
+            {[['copy', 'Duplicate'], ['download', 'Export enrollments'], ['archive', 'Archive'], ['trash-2', 'Delete']].map(([ic, l]) => <div key={l} onClick={() => { setMenu(false); onToast(l + ' — “' + row.name + '”'); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', borderRadius: 7, fontSize: 13, color: l === 'Delete' ? LH.red : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={l === 'Delete' ? LH.red : LH.sub} />{l}</div>)}
+          </div>}
+        </div>
+      </div>
+      {/* meta row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 16, fontSize: 12.5, color: LH.sub, flexWrap: 'wrap' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>Created by <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 20, height: 20, borderRadius: 999, background: avaColor(row.bi), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9.5, fontWeight: 700 }}>{row.bi}</span><span style={{ color: LH.body, fontWeight: 600 }}>{row.by}</span></span></span>
+        <span style={{ width: 1, height: 14, background: LH.border }} />
+        <span>Created {row.date}</span>
+        <span style={{ width: 1, height: 14, background: LH.border }} />
+        <span>Version v1</span>
+      </div>
+      {/* KPIs */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>{kpis.map(k => <StatCard key={k.label} label={k.label} value={k.value} accent={k.accent} />)}</div>
+      {/* two columns */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 14, alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <Card style={{ padding: 18 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 14 }}>Performance</div>
+            {enrolled ? funnel.map(([label, val]) => <div key={label} style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}><span style={{ fontSize: 12.5, color: LH.body }}>{label}</span><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{val} · {enrolled ? Math.round(val / enrolled * 100) : 0}%</span></div>
+              <div style={{ height: 8, borderRadius: 999, background: '#efece6', overflow: 'hidden' }}><div style={{ width: (enrolled ? val / enrolled * 100 : 0) + '%', height: '100%', background: LH.primary, borderRadius: 999 }} /></div>
+            </div>) : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No enrollments yet. {row.status === 'Draft' ? 'Publish the campaign to start enrolling.' : 'Matching customers enroll as they are created.'}</div>}
+          </Card>
+          <Card style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft, fontSize: 14, fontWeight: 700, color: LH.ink }}>Recent enrollments</div>
+            {enrolled ? recent.map((c, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < recent.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+              <div style={{ width: 30, height: 30, borderRadius: 999, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{c.n.split(' ').map(w => w[0]).join('')}</div>
+              <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{c.n}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.src} · {c.last}</div></div>
+              <Pill label={c.stage} tone={c.tone} />
+              <span style={{ fontSize: 11.5, color: LH.muted, width: 60, textAlign: 'right' }}>{c.when}</span>
+            </div>) : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No one enrolled yet.</div>}
+          </Card>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>CONFIGURATION</div>
+          {config.map(c => <Card key={c.title} style={{ padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={c.icon} size={15} color={LH.ink} /></div>
+              <div style={{ flex: 1, minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{c.title}</span><button onClick={onEdit} style={{ fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Edit</button></div>{c.lines.map((l, k) => <div key={k} style={{ fontSize: 12, color: LH.sub, marginTop: 2 }}>{l}</div>)}</div>
+            </div>
+          </Card>)}
+        </div>
+      </div>
+    </div>;
+  }
   function CampaignsSection({ onToast, onNavigate }) {
     const ROWS = [
       { name: 'Speed-to-Lead Drip', by: 'Ethan Brooks', bi: 'E', status: 'Active', records: 30, date: '2026/07/28 12:09 PM' },
@@ -28870,6 +28966,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [q, setQ] = useState('');
     const [kebab, setKebab] = useState(null);
     const [filterOpen, setFilterOpen] = useState(false);
+    const [openRow, setOpenRow] = useState(null);
     const [fBy, setFBy] = useState('All');
     const [fMin, setFMin] = useState('');
     const [fSource, setFSource] = useState('All');
@@ -28886,6 +28983,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       .filter(r => r.name.toLowerCase().includes(q.trim().toLowerCase()));
     const th = (label, w, sortable) => <th style={{ textAlign: 'left', padding: '0 16px', height: 42, fontSize: 12, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>{label}{sortable && <Ic name="chevrons-up-down" size={12} color={LH.muted} />}</span></th>;
     const fChip = (label, onX) => <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 8px 0 10px', borderRadius: 8, border: '1px solid ' + LH.blueBd, background: LH.blueBg, fontSize: 12, fontWeight: 600, color: LH.blue }}>{label}<button onClick={onX} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: 0 }}><Ic name="x" size={13} color={LH.blue} /></button></span>;
+    if (openRow) return <CampaignDetail row={openRow} onBack={() => setOpenRow(null)} onEdit={() => onNavigate && onNavigate('lead-campaign-new')} onToast={onToast} stTone={stTone} avaColor={avaColor} />;
     return <div>
       {/* Title bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 12, marginBottom: 12, borderBottom: '1px solid ' + LH.borderSoft, flexWrap: 'wrap' }}>
@@ -28926,7 +29024,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <tr>{th('Campaign', '26%', true)}{th('Created by', '20%')}{th('Status', '13%')}{th('Total Records', '13%')}{th('Created At', '20%', true)}<th style={{ width: '8%', borderBottom: '1px solid ' + LH.border }} /></tr>
           </thead>
           <tbody>
-            {rows.length ? rows.map((r, i) => { const t = stTone[r.status]; return <tr key={i} onClick={() => onNavigate && onNavigate('lead-campaign-new')} style={{ cursor: 'pointer', background: '#fff' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+            {rows.length ? rows.map((r, i) => { const t = stTone[r.status]; return <tr key={i} onClick={() => setOpenRow(r)} style={{ cursor: 'pointer', background: '#fff' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
               <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft, fontSize: 13.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</td>
               <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><span style={{ width: 24, height: 24, borderRadius: 999, background: avaColor(r.bi), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10.5, fontWeight: 700, flexShrink: 0 }}>{r.bi}</span><span style={{ fontSize: 13, color: LH.body }}>{r.by}</span></span></td>
               <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft }}><span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: t.bg, color: t.fg, border: '1px solid ' + t.bd }}>{r.status}</span></td>
