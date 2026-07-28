@@ -29264,6 +29264,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { id: wuid(), q: 'Have you had any other companies out to quote it?', req: false },
       { id: wuid(), q: 'What day and time works for a free inspection?', req: true }
     ]);
+    const [pbFile, setPbFile] = useState(null);
+    const pbInputRef = useRef(null);
     // Speed to Lead
     const [s2l, setS2l] = useState([
       { id: wuid(), ch: 'sms', offset: 'launch', anchor: 'last_message', body: 'Hi {{customer_first_name}}, this is {{user_first_name}} with {{company.company_name}}. Got your request — thanks for reaching out!\n\nWe have a few open spots this week for your roof check-up. Any day or time that works best for you? I’ll get it locked in.' },
@@ -29392,7 +29394,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         })()}
         <Card style={{ padding: 15, marginBottom: 12 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Instructions for Nova</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>guidance, not a word-for-word script</span></div><textarea value={instructions} onChange={e => setInstructions(e.target.value)} style={{ width: '100%', height: 64, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', marginTop: 8, lineHeight: 1.5 }} /></Card>
         <Card style={{ padding: 15 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Nova playbook ({playbook.length} questions)</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Nova playbook ({playbook.length} questions)</span>
+            <button onClick={() => pbInputRef.current && pbInputRef.current.click()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="upload" size={14} color={LH.sub} />Upload playbook</button>
+            <input ref={pbInputRef} type="file" accept=".doc,.docx,.pdf,.txt,.csv" style={{ display: 'none' }} onChange={e => { const f = e.target.files && e.target.files[0]; if (f) setPbFile({ name: f.name, size: f.size }); e.target.value = ''; }} />
+          </div>
+          {pbFile && <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, border: '1px solid ' + LH.border, background: LH.bg, marginBottom: 12 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 7, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="file-text" size={15} color={LH.primary} /></div>
+            <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pbFile.name}</div><div style={{ fontSize: 11, color: LH.green }}>Attached · Nova will follow this decision flow</div></div>
+            <button onClick={() => setPbFile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}><Ic name="x" size={15} color={LH.muted} /></button>
+          </div>}
+          <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 10 }}>Upload a decision-flow doc (.docx, .pdf, .csv) or edit the questions below.</div>
           {playbook.map((p, i) => <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 0', borderBottom: i < playbook.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
             <span style={{ width: 20, height: 20, borderRadius: 999, background: '#f1f0ec', color: LH.sub, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
             <input value={p.q} onChange={e => setPlaybook(playbook.map(x => x.id === p.id ? { ...x, q: e.target.value } : x))} style={{ flex: 1, fontSize: 12.5, color: LH.body, border: 'none', outline: 'none', background: 'transparent' }} />
