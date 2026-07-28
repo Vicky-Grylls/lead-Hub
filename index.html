@@ -28602,12 +28602,24 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   /* ─────────── data ─────────── */
   const PIPE_LEADS = [
     { id: 'l1', col: 'New lead', score: 34, name: 'Jordan Blake', note: 'Phone intake', src: 'Manual', age: '8d', status: 'New', fields: '1/9' },
+    { id: 'l1b', col: 'New lead', score: 29, name: 'Kevin Alvarez', note: 'Website form', src: 'Website Booking', age: '5h', status: 'New', fields: '2/9' },
+    { id: 'l1c', col: 'New lead', score: 41, name: 'Tessa Ward', note: 'Missing shingles', src: 'Meta Ads', age: '2d', status: 'New', fields: '1/9' },
     { id: 'l2', col: 'Contacting', score: 76, name: 'Sarah Mitchell', note: 'Roof leak after rain', src: 'Thumbtack', age: '18m', status: 'Live with Nova', fields: '6/9' },
+    { id: 'l2b', col: 'Contacting', score: 63, name: 'Priya Shah', note: 'Storm damage', src: 'Angi', age: '40m', status: 'Contacting', fields: '4/9' },
+    { id: 'l2c', col: 'Contacting', score: 58, name: 'Owen Brooks', note: 'Gutter estimate', src: 'Google LSA', age: '1h', status: 'Contacting', fields: '3/9' },
     { id: 'l3', col: 'Qualifying', score: 81, name: 'Caleb Norris', note: 'Canvassing follow-up', src: 'SalesRabbit', age: '1d', status: 'Qualifying', fields: '5/9' },
+    { id: 'l3b', col: 'Qualifying', score: 73, name: 'Nina Foster', note: 'Skylight replacement', src: 'Angi', age: '6h', status: 'Qualifying', fields: '7/9' },
+    { id: 'l3c', col: 'Qualifying', score: 69, name: 'Diego Ramos', note: 'Roof age check', src: 'Thumbtack', age: '2d', status: 'Qualifying', fields: '5/9' },
     { id: 'l4', col: 'Needs human', score: 68, name: 'Marcus Reed', note: 'Missing shingles', src: 'Google LSA', age: '4h', status: 'Awaiting human', fields: '6/9' },
+    { id: 'l4b', col: 'Needs human', score: 64, name: 'Hana Kim', note: 'Complex insurance claim', src: 'Angi', age: '3h', status: 'Awaiting human', fields: '6/9' },
     { id: 'l5', col: 'In drip', score: 54, name: 'Erin Patel', note: 'Free roof inspection request', src: 'Meta Ads', age: '4d', status: 'In drip', fields: '3/9' },
-    { id: 'l6', col: 'Qualified', score: 89, name: 'Diane Walsh', note: 'Storm damage inspection', src: 'Angi', age: '2h', status: 'Qualified', fields: '9/9' }
+    { id: 'l5b', col: 'In drip', score: 48, name: 'Blake Turner', note: 'Not ready yet', src: 'Thumbtack', age: '6d', status: 'In drip', fields: '2/9' },
+    { id: 'l5c', col: 'In drip', score: 51, name: 'Camille Diaz', note: 'Comparing quotes', src: 'Website Booking', age: '5d', status: 'In drip', fields: '4/9' },
+    { id: 'l6', col: 'Qualified', score: 89, name: 'Diane Walsh', note: 'Storm damage inspection', src: 'Angi', age: '2h', status: 'Qualified', fields: '9/9' },
+    { id: 'l6b', col: 'Qualified', score: 84, name: 'Grant Wells', note: 'Full roof replacement', src: 'Google LSA', age: '1d', status: 'Qualified', fields: '9/9' },
+    { id: 'l6c', col: 'Qualified', score: 80, name: 'Yara Haddad', note: 'Insurance-approved repair', src: 'Angi', age: '5h', status: 'Qualified', fields: '8/9' }
   ];
+  const COL_STAGE = { 'New lead': 0, 'Contacting': 1, 'Qualifying': 2, 'Needs human': 3, 'In drip': 4, 'Qualified': 5, 'Inspection job': 6 };
   const PIPE_COLS = [
     { key: 'New lead', hint: 'Captured from source' },
     { key: 'Contacting', hint: 'Speed-to-lead active' },
@@ -28720,8 +28732,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   /* ─────────── PIPELINE ─────────── */
   function PipelineSection() {
-    const [selId, setSelId] = useState('l6');
-    const sel = PIPE_LEADS.find(l => l.id === selId) || PIPE_LEADS[5];
+    const [selId, setSelId] = useState(null);
+    const sel = selId ? PIPE_LEADS.find(l => l.id === selId) : null;
+    const lastRef = useRef(null);
+    if (sel) lastRef.current = sel;
+    const shown = sel || lastRef.current;
+    const stageCount = i => PIPE_LEADS.filter(l => COL_STAGE[l.col] === i).length;
+    const captured = shown ? parseInt(shown.fields) : 0;
+    const pct = sel ? Math.round(parseInt(sel.fields) / 9 * 100) : 0;
+    const selStage = sel ? COL_STAGE[sel.col] : -1;
+    const qualified = shown && shown.col === 'Qualified';
     return <div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
         <Select label="Source:" value="All" /><Select label="Status:" value="All" /><Select label="Assigned:" value="All" /><Select label="Score:" value="Any" /><Select label="Age:" value="Any" />
@@ -28730,55 +28750,65 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
         <StatCard label="Received today" value="28" /><StatCard label="Qualified today" value="7" /><StatCard label="In drip" value="41" /><StatCard label="Awaiting human" value="3" accent={LH.primary} />
       </div>
-      <Card style={{ padding: 18, marginBottom: 18 }}>
+      {sel && <Card style={{ padding: 18, marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', color: LH.muted }}>SELECTED LEAD PROGRESS</div><div style={{ fontSize: 15, fontWeight: 600, color: LH.ink, marginTop: 2 }}>{sel.name} is at Qualified</div></div>
-          <div style={{ fontSize: 26, fontWeight: 700, color: LH.primary }}>83%</div>
+          <div><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', color: LH.muted }}>SELECTED LEAD PROGRESS</div><div style={{ fontSize: 15, fontWeight: 600, color: LH.ink, marginTop: 2 }}>{sel.name} is at {STAGES[selStage]}</div></div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: LH.primary }}>{pct}%</div>
         </div>
-        <div style={{ height: 6, borderRadius: 999, background: '#efe9de', overflow: 'hidden', marginBottom: 14 }}><div style={{ width: '83%', height: '100%', background: LH.primary }} /></div>
+        <div style={{ height: 6, borderRadius: 999, background: '#efe9de', overflow: 'hidden', marginBottom: 14 }}><div style={{ width: pct + '%', height: '100%', background: LH.primary }} /></div>
         <div style={{ display: 'flex', gap: 8 }}>
-          {STAGES.map((s, i) => <div key={s} style={{ flex: 1, padding: '8px 6px', borderRadius: 9, textAlign: 'center', background: i < 6 ? LH.greenBg : (i === 6 ? LH.tint : '#f6f4ef'), border: '1px solid ' + (i === 6 ? '#f2d3c6' : 'transparent') }}>
-            <Ic name={i < 6 ? 'circle-check' : 'circle'} size={15} color={i < 6 ? LH.green : LH.muted} style={{ margin: '0 auto 3px' }} />
+          {STAGES.map((s, i) => <div key={s} style={{ flex: 1, padding: '8px 6px', borderRadius: 9, textAlign: 'center', background: i < selStage ? LH.greenBg : (i === selStage ? LH.tint : '#f6f4ef'), border: '1px solid ' + (i === selStage ? '#f2d3c6' : 'transparent') }}>
+            <Ic name={i < selStage ? 'circle-check' : 'circle'} size={15} color={i < selStage ? LH.green : (i === selStage ? LH.primary : LH.muted)} style={{ margin: '0 auto 3px' }} />
             <div style={{ fontSize: 11.5, fontWeight: 600, color: LH.ink }}>{s}</div>
-            <div style={{ fontSize: 10, color: LH.muted }}>{i === 6 ? '0 leads' : '1 lead'}</div>
+            <div style={{ fontSize: 10, color: LH.muted }}>{stageCount(i)} lead{stageCount(i) === 1 ? '' : 's'}</div>
           </div>)}
         </div>
-      </Card>
-      <div style={{ display: 'flex', gap: 12 }}>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6 }}>
-          {PIPE_COLS.map(col => {
-            const leads = PIPE_LEADS.filter(l => l.col === col.key);
-            return <div key={col.key} style={{ width: 190, flexShrink: 0 }}>
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>{col.key}</span><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 999, padding: '1px 7px' }}>{leads.length}</span></div>
-                <div style={{ fontSize: 10.5, color: LH.muted, marginTop: 1 }}>{col.hint}</div>
+      </Card>}
+      <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6 }}>
+        {PIPE_COLS.map(col => {
+          const leads = PIPE_LEADS.filter(l => l.col === col.key);
+          return <div key={col.key} style={{ width: 208, flexShrink: 0 }}>
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>{col.key}</span><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 999, padding: '1px 7px' }}>{leads.length}</span></div>
+              <div style={{ fontSize: 10.5, color: LH.muted, marginTop: 1 }}>{col.hint}</div>
+            </div>
+            {leads.length ? leads.map(l => <Card key={l.id} hover onClick={() => setSelId(l.id)} style={{ padding: 11, marginBottom: 8, ...(selId === l.id ? { borderColor: LH.primary, boxShadow: '0 0 0 1px ' + LH.primary } : {}) }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <div style={{ width: 26, height: 26, borderRadius: 999, background: l.score >= 80 ? LH.greenBg : l.score >= 60 ? LH.amberBg : '#f1f0ec', color: l.score >= 80 ? LH.green : l.score >= 60 ? LH.amber : LH.sub, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{l.score}</div>
+                <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.name}</div><div style={{ fontSize: 10.5, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.note}</div></div>
               </div>
-              {leads.length ? leads.map(l => <Card key={l.id} hover onClick={() => setSelId(l.id)} style={{ padding: 11, marginBottom: 8, ...(selId === l.id ? { borderColor: LH.primary, boxShadow: '0 0 0 1px ' + LH.primary } : {}) }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <div style={{ width: 26, height: 26, borderRadius: 999, background: l.score >= 80 ? LH.greenBg : l.score >= 60 ? LH.amberBg : '#f1f0ec', color: l.score >= 80 ? LH.green : l.score >= 60 ? LH.amber : LH.sub, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{l.score}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.name}</div><div style={{ fontSize: 10.5, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.note}</div></div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><Pill label={l.src} tone="New" /><span style={{ fontSize: 10.5, color: LH.muted }}>{l.age}</span></div>
-                <div style={{ fontSize: 10.5, color: LH.sub, marginTop: 6 }}>{l.fields} fields</div>
-              </Card>) : <div style={{ fontSize: 11.5, color: LH.muted, padding: '14px 0', textAlign: 'center' }}>No leads here</div>}
-            </div>;
-          })}
-        </div>
-        <Card style={{ width: 300, flexShrink: 0, padding: 16, alignSelf: 'flex-start' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
-            <div><div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>{sel.name}</div><div style={{ display: 'flex', gap: 6, marginTop: 6 }}><Pill label={sel.src} tone="New" /><Pill label={sel.status} /></div></div>
-            <div style={{ width: 34, height: 34, borderRadius: 999, background: LH.primary, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>{sel.score}</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><Pill label={l.src} tone="New" /><span style={{ fontSize: 10.5, color: LH.muted }}>{l.age}</span></div>
+              <div style={{ fontSize: 10.5, color: LH.sub, marginTop: 6 }}>{l.fields} fields</div>
+            </Card>) : <div style={{ fontSize: 11.5, color: LH.muted, padding: '14px 0', textAlign: 'center' }}>No leads here</div>}
+          </div>;
+        })}
+      </div>
+      {/* Lead detail side sheet */}
+      <div onClick={() => setSelId(null)} style={{ position: 'fixed', inset: 0, zIndex: 190, background: 'rgba(20,18,15,.28)', opacity: sel ? 1 : 0, pointerEvents: sel ? 'auto' : 'none', transition: 'opacity .22s' }} />
+      <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 191, width: 380, maxWidth: '92vw', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,.12)', display: 'flex', flexDirection: 'column', transform: sel ? 'translateX(0)' : 'translateX(100%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1)' }}>
+        {shown && <>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="user" size={15} color={LH.sub} /><span style={{ fontSize: 13, fontWeight: 600, color: LH.sub }}>Lead details</span></div>
+            <button onClick={() => setSelId(null)} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="x" size={17} color={LH.sub} /></button>
           </div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, margin: '16px 0 8px' }}>{sel.fields === '9/9' ? '9 OF 9 FIELDS CAPTURED' : sel.fields.replace('/', ' OF ') + ' FIELDS CAPTURED'}</div>
-          {DIANE_FIELDS.map((f, i) => <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '5px 0' }}><Ic name="check" size={13} color={LH.green} /><span style={{ fontSize: 12.5, color: LH.body }}>{f}</span></div>)}
-          <div style={{ background: LH.tint, borderRadius: 9, padding: 11, margin: '14px 0' }}><div style={{ fontSize: 11, fontWeight: 700, color: LH.primaryDark, marginBottom: 3 }}>Suggested next step</div><div style={{ fontSize: 12, color: '#7a3a20', lineHeight: 1.4 }}>Ready to convert. Tap Convert to Inspection to move this to Sales Hub.</div></div>
-          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-            <Btn icon="phone" style={{ flex: 1, justifyContent: 'center', height: 32 }}>Call</Btn>
-            <Btn icon="message-square" style={{ flex: 1, justifyContent: 'center', height: 32 }}>Text</Btn>
-            <Btn icon="mail" style={{ flex: 1, justifyContent: 'center', height: 32 }}>Email</Btn>
+          <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+              <div><div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>{shown.name}</div><div style={{ fontSize: 12, color: LH.muted, marginTop: 2 }}>{shown.note}</div><div style={{ display: 'flex', gap: 6, marginTop: 8 }}><Pill label={shown.src} tone="New" /><Pill label={shown.status} /></div></div>
+              <div style={{ width: 40, height: 40, borderRadius: 999, background: shown.score >= 80 ? LH.primary : shown.score >= 60 ? '#c9922e' : '#9c9b96', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>{shown.score}</div>
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, margin: '18px 0 8px' }}>{captured} OF 9 FIELDS CAPTURED</div>
+            {DIANE_FIELDS.map((f, i) => <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}><Ic name={i < captured ? 'check' : 'circle'} size={14} color={i < captured ? LH.green : '#cfc9bd'} /><span style={{ fontSize: 12.5, color: i < captured ? LH.body : LH.muted }}>{f}</span></div>)}
+            <div style={{ background: LH.tint, borderRadius: 9, padding: 12, margin: '16px 0' }}><div style={{ fontSize: 11, fontWeight: 700, color: LH.primaryDark, marginBottom: 3 }}>Suggested next step</div><div style={{ fontSize: 12, color: '#7a3a20', lineHeight: 1.45 }}>{qualified ? 'Ready to convert. Tap Convert to Inspection to move this to Sales Hub.' : (9 - captured) + ' more field' + (9 - captured === 1 ? '' : 's') + ' to capture. Nova is working this lead — nudge with a call or text.'}</div></div>
           </div>
-          <Btn kind="primary" icon="arrow-right-circle" style={{ width: '100%', justifyContent: 'center' }}>Convert to Inspection</Btn>
-        </Card>
+          <div style={{ flexShrink: 0, padding: 16, borderTop: '1px solid ' + LH.borderSoft }}>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+              <Btn icon="phone" style={{ flex: 1, justifyContent: 'center', height: 34 }}>Call</Btn>
+              <Btn icon="message-square" style={{ flex: 1, justifyContent: 'center', height: 34 }}>Text</Btn>
+              <Btn icon="mail" style={{ flex: 1, justifyContent: 'center', height: 34 }}>Email</Btn>
+            </div>
+            <Btn kind="primary" icon={qualified ? 'arrow-right-circle' : 'chevrons-right'} style={{ width: '100%', justifyContent: 'center' }}>{qualified ? 'Convert to Inspection' : 'Move to next stage'}</Btn>
+          </div>
+        </>}
       </div>
     </div>;
   }
