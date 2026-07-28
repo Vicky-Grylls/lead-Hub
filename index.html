@@ -29198,7 +29198,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   function StepEditor({ step, onChange, onRemove, timingMode }) {
     const ch = step.ch;
     const insertSnippet = tok => onChange({ ...step, body: (step.body || '') + tok });
-    const applyTemplate = name => { const list = ch === 'sms' ? SMS_TEMPLATES : EMAIL_TEMPLATES; const tpl = list.find(x => x.name === name); if (tpl) onChange({ ...step, body: tpl.body, ...(tpl.subject ? { subject: tpl.subject } : {}) }); };
+    const applyTemplate = name => { const list = ch === 'sms' ? SMS_TEMPLATES : EMAIL_TEMPLATES; const tpl = list.find(x => x.name === name); if (tpl) onChange({ ...step, tpl: name, body: tpl.body, ...(tpl.subject ? { subject: tpl.subject } : {}) }); };
     return <Card style={{ padding: 14, marginBottom: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: (ch === 'call') ? 0 : 10, flexWrap: 'wrap', rowGap: 8 }}>
         <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={CH_ICON[ch]} size={15} color={LH.primary} /></div>
@@ -29208,7 +29208,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             {step.offset !== 'launch' && <div style={{ width: 175, flexShrink: 0 }}><Dropdown value={step.anchor} options={ANCHORS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => onChange({ ...step, anchor: v })} /></div>}</>
           : <div style={{ width: 120, flexShrink: 0 }}><Dropdown value={step.time} options={TIMES.map(t => ({ value: t, label: t }))} onChange={v => onChange({ ...step, time: v })} /></div>}
         <div style={{ flex: 1, minWidth: 8 }} />
-        {(ch === 'sms' || ch === 'email') && <div style={{ width: 150, flexShrink: 0 }}><Dropdown value="" placeholder="Choose a template…" height={30} options={(ch === 'sms' ? SMS_TEMPLATES : EMAIL_TEMPLATES).map(tpl => ({ value: tpl.name, label: tpl.name }))} onChange={applyTemplate} /></div>}
+        {(ch === 'sms' || ch === 'email') && <div style={{ width: 150, flexShrink: 0 }}><Dropdown value={step.tpl || ''} placeholder="Choose a template…" height={30} options={(ch === 'sms' ? SMS_TEMPLATES : EMAIL_TEMPLATES).map(tpl => ({ value: tpl.name, label: tpl.name }))} onChange={applyTemplate} /></div>}
         {(ch === 'sms' || ch === 'email') && <div style={{ width: 150, flexShrink: 0 }}><Dropdown value="" placeholder="Insert snippet…" height={30} options={SNIPPETS.map(([v, l]) => ({ value: v, label: l }))} onChange={insertSnippet} /></div>}
         <button onClick={onRemove} style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 4 }}><Ic name="trash-2" size={15} color={LH.muted} /></button>
       </div>
