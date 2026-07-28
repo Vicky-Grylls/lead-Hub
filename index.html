@@ -29266,6 +29266,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ]);
     const [pbFile, setPbFile] = useState(null);
     const pbInputRef = useRef(null);
+    const [commTab, setCommTab] = useState('sms');
     // Speed to Lead
     const [s2l, setS2l] = useState([
       { id: wuid(), ch: 'sms', offset: 'launch', anchor: 'last_message', body: 'Hi {{customer_first_name}}, this is {{user_first_name}} with {{company.company_name}}. Got your request — thanks for reaching out!\n\nWe have a few open spots this week for your roof check-up. Any day or time that works best for you? I’ll get it locked in.' },
@@ -29352,14 +29353,30 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {matched.length > 60 && <div style={{ padding: '9px 15px', fontSize: 12, color: LH.muted, textAlign: 'center' }}>Showing 60 of {matched.length}</div>}
         </Card>
       </div>;
-      if (step === 2) return <div style={{ maxWidth: 640, margin: '0 auto' }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="radio" size={19} color={LH.primary} /></div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>How this campaign reaches out</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px' }}>Nova places every call step. Emails send from your workspace sending domain.</div>
-        <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Outbound number</label><div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>{NUMBERS.map((o, i) => <label key={o} onClick={() => setNumIdx(i)} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: LH.body, cursor: 'pointer' }}><span style={{ width: 16, height: 16, borderRadius: 999, border: '2px solid ' + (numIdx === i ? LH.primary : LH.border), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{numIdx === i && <span style={{ width: 7, height: 7, borderRadius: 999, background: LH.primary }} />}</span>{i === 0 ? 'Zuper Sunday · ' : ''}{o}</label>)}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 8 }}>Used for both SMS and calls. Replies and callbacks come back to this number.</div></Card>
-        <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Voice agent</label><div style={{ marginTop: 8 }}><Dropdown value={agent} options={['Nova — AI voice agent', 'AR Agent'].map(a => ({ value: a, label: a }))} onChange={setAgent} /></div></Card>
-        <Card style={{ padding: 15, marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}><Ic name="mail" size={15} color={LH.ink} /><label style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Email sending</label></div>
+      if (step === 2) {
+        const MANDATE = { 'United States': true, 'Canada': true, 'United Kingdom': true, 'European Union': true, 'Australia': true, 'Other / no mandate': false };
+        const locked = MANDATE[region];
+        const numberCard = <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Outbound number</label><div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>{NUMBERS.map((o, i) => <label key={o} onClick={() => setNumIdx(i)} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: LH.body, cursor: 'pointer' }}><span style={{ width: 16, height: 16, borderRadius: 999, border: '2px solid ' + (numIdx === i ? LH.primary : LH.border), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{numIdx === i && <span style={{ width: 7, height: 7, borderRadius: 999, background: LH.primary }} />}</span>{i === 0 ? 'Zuper Sunday · ' : ''}{o}</label>)}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 8 }}>Shared by SMS and calls. Replies and callbacks come back to this number.</div></Card>;
+        const complianceCard = which => {
+          const on = which === 'email' ? (locked || emailUnsub) : (locked || smsStop);
+          const setOn = which === 'email' ? setEmailUnsub : setSmsStop;
+          const title = which === 'email' ? 'Email unsubscribe link' : 'SMS STOP opt-out';
+          const desc = which === 'email' ? 'Add a one-click unsubscribe link to every campaign email.' : 'Honour the STOP keyword and append opt-out text to SMS.';
+          const icon = which === 'email' ? 'mail' : 'message-square-off';
+          return <Card style={{ padding: 15, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="shield-check" size={15} color={LH.ink} /><label style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Compliance</label></div>
+            <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 12 }}>Opt-out adapts to the customer's preferred region.</div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Customer preferred region</label>
+            <div style={{ marginTop: 6 }}><Dropdown value={region} options={Object.keys(MANDATE).map(r => ({ value: r, label: r }))} onChange={setRegion} /></div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '12px 0 0', marginTop: 12, borderTop: '1px solid ' + LH.borderSoft }}>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={15} color={LH.sub} /></div>
+              <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{title}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 1 }}>{locked ? 'Required in ' + region + ' — always on' : desc}</div></div>
+              <div style={{ opacity: locked ? 0.55 : 1, pointerEvents: locked ? 'none' : 'auto', flexShrink: 0, marginTop: 2 }}><Toggle on={on} onChange={setOn} /></div>
+            </div>
+            {!locked && <div style={{ fontSize: 11.5, color: LH.amber, background: LH.amberBg, border: '1px solid ' + LH.amberBd, borderRadius: 8, padding: '8px 11px', marginTop: 12 }}>No legal mandate for this region — keeping opt-outs on is recommended.</div>}
+          </Card>;
+        };
+        const emailCard = <Card style={{ padding: 15, marginBottom: 12 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>From name</label><input value={emailFrom} onChange={e => setEmailFrom(e.target.value)} style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none', marginTop: 6 }} /></div>
             <div><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Sending address</label><div style={{ marginTop: 6 }}><Dropdown value={emailAddr} options={['hello@mail.hillroofing.com', 'quotes@mail.hillroofing.com', 'no-reply@mail.hillroofing.com'].map(a => ({ value: a, label: a }))} onChange={setEmailAddr} /></div></div>
@@ -29371,29 +29388,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: LH.body }}><Toggle on={trackClicks} onChange={setTrackClicks} />Track clicks</span>
           </div>
           <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 12 }}>Emails send from your verified workspace domain.</div>
-        </Card>
-        {(() => {
-          const MANDATE = { 'United States': true, 'Canada': true, 'United Kingdom': true, 'European Union': true, 'Australia': true, 'Other / no mandate': false };
-          const locked = MANDATE[region];
-          const emailOn = locked || emailUnsub;
-          const smsOn = locked || smsStop;
-          const complianceRow = (icon, title, desc, on, setOn) => <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '11px 0', borderTop: '1px solid ' + LH.borderSoft }}>
-            <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={15} color={LH.sub} /></div>
-            <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{title}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 1 }}>{locked ? 'Required in ' + region + ' — always on' : desc}</div></div>
-            <div style={{ opacity: locked ? 0.55 : 1, pointerEvents: locked ? 'none' : 'auto', flexShrink: 0, marginTop: 2 }}><Toggle on={on} onChange={setOn} /></div>
-          </div>;
-          return <Card style={{ padding: 15, marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="shield-check" size={15} color={LH.ink} /><label style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Compliance</label></div>
-            <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 12 }}>Opt-out controls adapt to the customer's preferred region.</div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Customer preferred region</label>
-            <div style={{ marginTop: 6, marginBottom: 4 }}><Dropdown value={region} options={Object.keys(MANDATE).map(r => ({ value: r, label: r }))} onChange={setRegion} /></div>
-            {complianceRow('mail', 'Email unsubscribe link', 'Add a one-click unsubscribe link to every campaign email.', emailOn, setEmailUnsub)}
-            {complianceRow('message-square-off', 'SMS STOP opt-out', 'Honour the STOP keyword and append opt-out text to SMS.', smsOn, setSmsStop)}
-            {!locked && <div style={{ fontSize: 11.5, color: LH.amber, background: LH.amberBg, border: '1px solid ' + LH.amberBd, borderRadius: 8, padding: '8px 11px', marginTop: 10 }}>No legal mandate for this region — you can toggle opt-outs, but keeping them on is recommended.</div>}
-          </Card>;
-        })()}
-        <Card style={{ padding: 15, marginBottom: 12 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Instructions for Nova</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>guidance, not a word-for-word script</span></div><textarea value={instructions} onChange={e => setInstructions(e.target.value)} style={{ width: '100%', height: 64, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', marginTop: 8, lineHeight: 1.5 }} /></Card>
-        <Card style={{ padding: 15 }}>
+        </Card>;
+        const voiceCard = <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Voice agent</label><div style={{ marginTop: 8 }}><Dropdown value={agent} options={['Nova — AI voice agent', 'AR Agent'].map(a => ({ value: a, label: a }))} onChange={setAgent} /></div></Card>;
+        const instructionsCard = <Card style={{ padding: 15, marginBottom: 12 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Instructions for Nova</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>guidance, not a word-for-word script</span></div><textarea value={instructions} onChange={e => setInstructions(e.target.value)} style={{ width: '100%', height: 64, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', marginTop: 8, lineHeight: 1.5 }} /></Card>;
+        const playbookCard = <Card style={{ padding: 15 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Nova playbook ({playbook.length} questions)</span>
             <button onClick={() => pbInputRef.current && pbInputRef.current.click()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="upload" size={14} color={LH.sub} />Upload playbook</button>
@@ -29412,8 +29410,23 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <button onClick={() => setPlaybook(playbook.filter(x => x.id !== p.id))} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={14} color={LH.muted} /></button>
           </div>)}
           <button onClick={() => setPlaybook([...playbook, { id: wuid(), q: 'New question', req: false }])} style={{ marginTop: 10, fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 5 }}><Ic name="plus" size={14} color={LH.primary} />Add a question</button>
-        </Card>
-      </div>;
+        </Card>;
+        const TABS = [['sms', 'SMS', 'message-square'], ['email', 'Email', 'mail'], ['call', 'Call', 'phone']];
+        const groupTitle = commTab === 'sms' ? 'SMS settings' : commTab === 'email' ? 'Email settings' : 'Call settings';
+        const groupSub = commTab === 'sms' ? 'The number your texts send from, and STOP opt-out handling.' : commTab === 'email' ? 'Sender identity, tracking, and unsubscribe handling.' : 'Voice agent, guidance, and the qualification playbook Nova follows on calls.';
+        return <div style={{ maxWidth: 640, margin: '0 auto' }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="radio" size={19} color={LH.primary} /></div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>How this campaign reaches out</div>
+          <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Set up each channel below. SMS and calls share one outbound number.</div>
+          <div style={{ display: 'flex', gap: 6, padding: 4, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 11, marginBottom: 18 }}>
+            {TABS.map(([k, l, ic]) => <button key={k} onClick={() => setCommTab(k)} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 36, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: commTab === k ? '#fff' : 'transparent', color: commTab === k ? LH.ink : LH.sub, boxShadow: commTab === k ? '0 1px 2px rgba(0,0,0,.06)' : 'none' }}><Ic name={ic} size={15} color={commTab === k ? LH.primary : LH.muted} />{l}</button>)}
+          </div>
+          <div style={{ marginBottom: 12 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{groupTitle}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 2 }}>{groupSub}</div></div>
+          {commTab === 'sms' && <>{numberCard}{complianceCard('sms')}</>}
+          {commTab === 'email' && <>{emailCard}{complianceCard('email')}</>}
+          {commTab === 'call' && <>{numberCard}{voiceCard}{instructionsCard}{playbookCard}</>}
+        </div>;
+      }
       if (step === 3) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="zap" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Speed to Lead</div>
