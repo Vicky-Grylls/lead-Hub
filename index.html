@@ -28802,7 +28802,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
       <LeadsKanban leads={leads} onMove={move} onCardClick={setSelId} selId={selId} />
       {/* Lead detail side sheet — docked, no backdrop */}
-      <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 191, width: expanded ? 560 : 380, maxWidth: '94vw', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,.10)', display: 'flex', flexDirection: 'column', transform: sel ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s' }}>
+      <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, zIndex: 40, width: expanded ? 560 : 380, maxWidth: '94%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,.10)', display: 'flex', flexDirection: 'column', transform: sel ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s' }}>
         {shown && <>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}><Ic name="user" size={15} color={LH.sub} /><span style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown.name}</span></div>
@@ -29399,7 +29399,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [wizardOpen, setWizardOpen] = useState(false);
     const h = heads[section] || heads.overview;
     const campaignsAction = <Btn kind="primary" icon="plus" onClick={() => onNavigate('lead-campaign-new')}>New campaign</Btn>;
-    return <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+    return <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       <PageHead crumb={h.crumb} title={h.title} actions={section === 'campaigns' ? campaignsAction : h.actions} />
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 26px 34px', background: '#fdfdfc' }}>
         {section === 'overview' && <Hero />}
