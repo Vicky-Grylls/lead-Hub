@@ -28864,17 +28864,56 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [chip, setChip] = useState('All Campaigns');
     const [q, setQ] = useState('');
     const [kebab, setKebab] = useState(null);
+    const [filterOpen, setFilterOpen] = useState(false);
+    const [fBy, setFBy] = useState('All');
+    const [fMin, setFMin] = useState('');
+    const [fSource, setFSource] = useState('All');
+    const CREATORS = ['All', 'Ethan Brooks', 'Sarah Johnson', 'David Miller'];
+    const SOURCES = ['All', 'Angi', 'Thumbtack', 'Google LSA', 'Meta Ads', 'Website Booking'];
     const stTone = { Active: { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd }, Paused: { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd }, Draft: { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' }, Completed: { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd }, Archived: { bg: '#f1f0ec', fg: '#9c9b96', bd: '#e2ddd2' } };
-    const rows = ROWS.filter(r => (chip === 'All Campaigns' || chip === 'My Campaigns' ? true : r.status === chip)).filter(r => r.name.toLowerCase().includes(q.trim().toLowerCase()));
     const avaColor = bi => bi === 'E' ? '#e0642f' : bi === 'S' ? '#2563eb' : '#7c3aed';
+    const activeFilters = (fBy !== 'All' ? 1 : 0) + (fMin ? 1 : 0) + (fSource !== 'All' ? 1 : 0);
+    const clearFilters = () => { setFBy('All'); setFMin(''); setFSource('All'); };
+    const rows = ROWS
+      .filter(r => (chip === 'All Campaigns' || chip === 'My Campaigns' ? true : r.status === chip))
+      .filter(r => fBy === 'All' || r.by === fBy)
+      .filter(r => !fMin || r.records >= (parseInt(fMin) || 0))
+      .filter(r => r.name.toLowerCase().includes(q.trim().toLowerCase()));
     const th = (label, w, sortable) => <th style={{ textAlign: 'left', padding: '0 16px', height: 42, fontSize: 12, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>{label}{sortable && <Ic name="chevrons-up-down" size={12} color={LH.muted} />}</span></th>;
+    const fChip = (label, onX) => <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 8px 0 10px', borderRadius: 8, border: '1px solid ' + LH.blueBd, background: LH.blueBg, fontSize: 12, fontWeight: 600, color: LH.blue }}>{label}<button onClick={onX} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: 0 }}><Ic name="x" size={13} color={LH.blue} /></button></span>;
     return <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: LH.ink, marginRight: 4 }}>Campaigns <span style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '2px 8px' }}>{ROWS.length}</span></span>
-        {CHIPS.map(c => <button key={c} onClick={() => setChip(c)} style={{ height: 32, padding: '0 13px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', border: '1px solid ' + (chip === c ? LH.border : 'transparent'), background: chip === c ? '#fff' : 'transparent', color: chip === c ? LH.ink : LH.sub, boxShadow: chip === c ? '0 1px 2px rgba(0,0,0,.04)' : 'none' }}>{c}</button>)}
+      {/* Title bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 12, marginBottom: 12, borderBottom: '1px solid ' + LH.borderSoft, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Ic name="megaphone" size={17} color={LH.ink} /><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Campaigns</span><span style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '2px 8px' }}>{ROWS.length}</span></span>
+          <span style={{ width: 1, height: 18, background: LH.border }} />
+          <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>{CHIPS.map(c => <button key={c} onClick={() => setChip(c)} style={{ height: 30, padding: '0 12px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', border: '1px solid ' + (chip === c ? LH.border : 'transparent'), background: chip === c ? '#fff' : 'transparent', color: chip === c ? LH.ink : LH.sub, boxShadow: chip === c ? '0 1px 2px rgba(0,0,0,.04)' : 'none' }}>{c}</button>)}</div>
+        </div>
+        <Btn kind="primary" icon="plus" onClick={() => onNavigate && onNavigate('lead-campaign-new')}>New campaign</Btn>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-        <div style={{ position: 'relative', width: 280 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 11, top: 10 }} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search" style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 12px 0 32px', fontSize: 13, color: LH.ink, outline: 'none', background: '#fff' }} /></div>
+      {/* Filter bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid ' + LH.borderSoft, position: 'relative', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={() => setFilterOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 34, padding: '0 13px', borderRadius: 9, border: '1px solid ' + (filterOpen || activeFilters ? LH.primary : LH.border), background: '#fff', fontSize: 13, fontWeight: 600, color: activeFilters ? LH.primary : LH.body, cursor: 'pointer' }}><Ic name="filter" size={15} color={activeFilters ? LH.primary : LH.sub} />Filter{activeFilters > 0 && <span style={{ minWidth: 17, height: 17, borderRadius: 999, background: LH.primary, color: '#fff', fontSize: 10.5, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{activeFilters}</span>}</button>
+          {fBy !== 'All' && fChip('Created by: ' + fBy, () => setFBy('All'))}
+          {fSource !== 'All' && fChip('Source: ' + fSource, () => setFSource('All'))}
+          {fMin && fChip('Records ≥ ' + fMin, () => setFMin(''))}
+          {activeFilters > 0 && <button onClick={clearFilters} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Clear all</button>}
+          {filterOpen && <div style={{ position: 'absolute', top: 42, left: 0, zIndex: 40, width: 260, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,.14)', padding: 14 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: LH.sub, marginBottom: 6 }}>Created by</div>
+            <Dropdown value={fBy} options={CREATORS.map(c => ({ value: c, label: c }))} onChange={setFBy} />
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: LH.sub, margin: '14px 0 6px' }}>Source</div>
+            <Dropdown value={fSource} options={SOURCES.map(c => ({ value: c, label: c }))} onChange={setFSource} />
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: LH.sub, margin: '14px 0 6px' }}>Min. total records</div>
+            <input value={fMin} onChange={e => setFMin(e.target.value.replace(/[^0-9]/g, ''))} placeholder="0" style={{ width: '100%', height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}><button onClick={clearFilters} style={{ fontSize: 12.5, fontWeight: 600, color: LH.sub, background: 'none', border: 'none', cursor: 'pointer' }}>Reset</button><Btn kind="primary" style={{ height: 30, fontSize: 12.5 }} onClick={() => setFilterOpen(false)}>Apply</Btn></div>
+          </div>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ position: 'relative', width: 240 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 11, top: 10 }} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search campaigns" style={{ width: '100%', height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 12px 0 32px', fontSize: 13, color: LH.ink, outline: 'none', background: '#fff' }} /></div>
+          <button style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Ic name="list" size={15} color={LH.ink} /></button>
+          <button style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Ic name="sliders-horizontal" size={15} color={LH.sub} /></button>
+        </div>
       </div>
       <Card style={{ padding: 0, overflow: 'visible' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
@@ -29400,7 +29439,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const h = heads[section] || heads.overview;
     const campaignsAction = <Btn kind="primary" icon="plus" onClick={() => onNavigate('lead-campaign-new')}>New campaign</Btn>;
     return <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
-      <PageHead crumb={h.crumb} title={h.title} actions={section === 'campaigns' ? campaignsAction : h.actions} />
+      {section !== 'campaigns' && <PageHead crumb={h.crumb} title={h.title} actions={h.actions} />}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 26px 34px', background: '#fdfdfc' }}>
         {section === 'overview' && <Hero />}
         {section === 'overview' && <OverviewSection onNavigate={onNavigate} />}
