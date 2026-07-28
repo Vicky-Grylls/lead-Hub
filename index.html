@@ -29446,21 +29446,27 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </Card>
       </div>;
-      if (step === 4) return <div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          <div><div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="headphones" size={19} color={LH.primary} /></div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Nurture sequence</div>
-            <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 0', maxWidth: 520 }}>Day-by-day follow-ups after launch day. Pick a day on the left, edit its steps on the right.</div></div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: '1px solid ' + LH.primary, borderRadius: 9, padding: '8px 12px', fontSize: 12.5, color: LH.ink, fontWeight: 600 }}><Ic name="calendar" size={14} color={LH.sub} />{dayCount} days · {sendDaysLabel} · ET</div>
-        </div>
-        <div style={{ display: 'flex', gap: 12, margin: '18px 0' }}>
-          <Card style={{ flex: 1, padding: 14 }}><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 8 }}>TIME ZONE</div><Dropdown value={tz} options={TZS.map(t => ({ value: t, label: t }))} onChange={setTz} /></Card>
-          <Card style={{ flex: 1, padding: 14 }}><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 8 }}>SEND DAYS</div><div style={{ display: 'flex', gap: 5 }}>{DOW.map((d, i) => <button key={i} onClick={() => setSendDays({ ...sendDays, [i]: !sendDays[i] })} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + (sendDays[i] ? LH.primary : LH.border), background: sendDays[i] ? LH.primary : '#fff', color: sendDays[i] ? '#fff' : LH.sub, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>{d}</button>)}</div></Card>
-          <Card style={{ flex: 1, padding: 14 }}><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 8 }}>SEQUENCE LENGTH</div><div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><input type="range" min="1" max="30" value={dayCount} onChange={e => { const v = +e.target.value; setDayCount(v); if (selDay > v) setSelDay(v); }} style={{ flex: 1, accentColor: LH.primary }} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap' }}>{dayCount} days</span></div></Card>
-        </div>
-        <div style={{ display: 'flex', gap: 16 }}>
-          <div style={{ width: 180, flexShrink: 0, maxHeight: 420, overflowY: 'auto' }}>{dayList.map(d => { const o = days[d]; const chs = o ? o.steps.map(s => s.ch) : []; return <div key={d} onClick={() => setSelDay(d)} style={{ padding: '10px 12px', borderRadius: 9, marginBottom: 6, border: '1px solid ' + (selDay === d ? LH.primary : LH.border), background: selDay === d ? LH.tint : '#fff', cursor: 'pointer' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>Day {d}</span>{o && o.active === false && <span style={{ fontSize: 10, color: LH.amber }}>Paused</span>}</div><div style={{ display: 'flex', gap: 5, marginTop: 5, minHeight: 13 }}>{['sms', 'email', 'call'].filter(c => chs.includes(c)).map(c => <Ic key={c} name={CH_ICON[c]} size={12} color={LH.muted} />)}</div></div>; })}</div>
-          <Card style={{ flex: 1, padding: 16, alignSelf: 'flex-start' }}>
+      if (step === 4) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="headphones" size={19} color={LH.primary} /></div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Nurture sequence</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Day-by-day follow-ups after launch day. Pick a day on the left, edit its steps on the right.</div>
+        <Card style={{ padding: 16, marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>TIME ZONE</div>
+            <div style={{ flex: 1 }}><Dropdown value={tz} options={TZS.map(t => ({ value: t, label: t }))} onChange={setTz} /></div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingTop: 14, marginTop: 14, borderTop: '1px solid ' + LH.borderSoft }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>SEND DAYS</div>
+            <div style={{ display: 'flex', gap: 5 }}>{DOW.map((d, i) => <button key={i} onClick={() => setSendDays({ ...sendDays, [i]: !sendDays[i] })} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + (sendDays[i] ? LH.primary : LH.border), background: sendDays[i] ? LH.primary : '#fff', color: sendDays[i] ? '#fff' : LH.sub, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>{d}</button>)}</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingTop: 14, marginTop: 14, borderTop: '1px solid ' + LH.borderSoft }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>SEQUENCE LENGTH</div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12 }}><input type="range" min="1" max="30" value={dayCount} onChange={e => { const v = +e.target.value; setDayCount(v); if (selDay > v) setSelDay(v); }} style={{ flex: 1, accentColor: LH.primary }} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap' }}>{dayCount} days</span></div>
+          </div>
+        </Card>
+        <div style={{ display: 'flex', gap: 14 }}>
+          <div style={{ width: 132, flexShrink: 0, maxHeight: 460, overflowY: 'auto' }}>{dayList.map(d => { const o = days[d]; const chs = o ? o.steps.map(s => s.ch) : []; return <div key={d} onClick={() => setSelDay(d)} style={{ padding: '9px 11px', borderRadius: 9, marginBottom: 6, border: '1px solid ' + (selDay === d ? LH.primary : LH.border), background: selDay === d ? LH.tint : '#fff', cursor: 'pointer' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>Day {d}</span>{o && o.active === false && <span style={{ fontSize: 10, color: LH.amber }}>Paused</span>}</div><div style={{ display: 'flex', gap: 5, marginTop: 5, minHeight: 13 }}>{['sms', 'email', 'call'].filter(c => chs.includes(c)).map(c => <Ic key={c} name={CH_ICON[c]} size={12} color={LH.muted} />)}</div></div>; })}</div>
+          <Card style={{ flex: 1, minWidth: 0, padding: 16, alignSelf: 'flex-start' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Day {selDay}</div><div style={{ fontSize: 12, color: LH.sub }}>{dayObj.steps.length ? dayObj.steps.length + (dayObj.steps.length > 1 ? ' steps' : ' step') : 'No steps yet'}</div></div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={dayObj.active !== false} onChange={v => setDays({ ...days, [selDay]: { ...dayObj, active: v } })} /><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 600 }}>{dayObj.active === false ? 'Paused' : 'Active'}</span></div>
