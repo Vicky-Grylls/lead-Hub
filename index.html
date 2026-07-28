@@ -29308,7 +29308,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const sendDaysLabel = Object.keys(sendDays).filter(k => sendDays[k]).map(k => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][k]).join(', ');
 
     const stepBody = () => {
-      if (step === 0) return <div style={{ maxWidth: 560, margin: '0 auto' }}>
+      if (step === 0) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="pencil" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Add details to your campaign</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 22px' }}>Name it something your team will recognise in the campaign list.</div>
@@ -29414,7 +29414,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         const TABS = [['sms', 'SMS', 'message-square'], ['email', 'Email', 'mail'], ['call', 'Call', 'phone']];
         const groupTitle = commTab === 'sms' ? 'SMS settings' : commTab === 'email' ? 'Email settings' : 'Call settings';
         const groupSub = commTab === 'sms' ? 'The number your texts send from, and STOP opt-out handling.' : commTab === 'email' ? 'Sender identity, tracking, and unsubscribe handling.' : 'Voice agent, guidance, and the qualification playbook Nova follows on calls.';
-        return <div style={{ maxWidth: 640, margin: '0 auto' }}>
+        return <div style={{ maxWidth: 720, margin: '0 auto' }}>
           <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="radio" size={19} color={LH.primary} /></div>
           <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>How this campaign reaches out</div>
           <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Set up each channel below. SMS and calls share one outbound number.</div>
@@ -29471,7 +29471,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </Card>
         </div>
       </div>;
-      if (step === 5) return <div style={{ maxWidth: 640, margin: '0 auto' }}>
+      if (step === 5) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="log-out" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>When should we stop reaching out?</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Records are unenrolled as soon as any of these becomes true.</div>
@@ -29500,7 +29500,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         { i: 5, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'Built-in stops: reply, opt-out, Nova DND'] }
       ];
       const problems = []; if (!name.trim()) problems.push('Campaign name is required (Basic details).'); if (!tz) problems.push('Campaign time zone is required (Basic details).'); if (!conds.filter(c => c.field).length) problems.push('Add at least one audience condition.');
-      return <div style={{ maxWidth: 680, margin: '0 auto' }}>
+      return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="clipboard-check" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Review & publish</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Check each section, then publish to make the campaign Active. Publishing enrolls newly created matching customers.</div>
