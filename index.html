@@ -29240,6 +29240,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [emailSig, setEmailSig] = useState('Hill Roofing\n(+1) 650 206 1172 · hillroofing.com');
     const [trackOpens, setTrackOpens] = useState(true);
     const [trackClicks, setTrackClicks] = useState(true);
+    const [region, setRegion] = useState('United States');
+    const [emailUnsub, setEmailUnsub] = useState(true);
+    const [smsStop, setSmsStop] = useState(true);
     const [instructions, setInstructions] = useState('Be warm and concise. Confirm the property address, damage type, and urgency. Offer a free inspection.');
     const [playbook, setPlaybook] = useState([
       { id: wuid(), q: 'Is this for a home or a commercial property?', req: true },
@@ -29352,8 +29355,28 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: LH.body }}><Toggle on={trackOpens} onChange={setTrackOpens} />Track opens</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: LH.body }}><Toggle on={trackClicks} onChange={setTrackClicks} />Track clicks</span>
           </div>
-          <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 12 }}>Emails send from your verified workspace domain. Every email automatically includes an unsubscribe link.</div>
+          <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 12 }}>Emails send from your verified workspace domain.</div>
         </Card>
+        {(() => {
+          const MANDATE = { 'United States': true, 'Canada': true, 'United Kingdom': true, 'European Union': true, 'Australia': true, 'Other / no mandate': false };
+          const locked = MANDATE[region];
+          const emailOn = locked || emailUnsub;
+          const smsOn = locked || smsStop;
+          const complianceRow = (icon, title, desc, on, setOn) => <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '11px 0', borderTop: '1px solid ' + LH.borderSoft }}>
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={15} color={LH.sub} /></div>
+            <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{title}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 1 }}>{locked ? 'Required in ' + region + ' — always on' : desc}</div></div>
+            <div style={{ opacity: locked ? 0.55 : 1, pointerEvents: locked ? 'none' : 'auto', flexShrink: 0, marginTop: 2 }}><Toggle on={on} onChange={setOn} /></div>
+          </div>;
+          return <Card style={{ padding: 15, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="shield-check" size={15} color={LH.ink} /><label style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Compliance</label></div>
+            <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 12 }}>Opt-out controls adapt to the customer's preferred region.</div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Customer preferred region</label>
+            <div style={{ marginTop: 6, marginBottom: 4 }}><Dropdown value={region} options={Object.keys(MANDATE).map(r => ({ value: r, label: r }))} onChange={setRegion} /></div>
+            {complianceRow('mail', 'Email unsubscribe link', 'Add a one-click unsubscribe link to every campaign email.', emailOn, setEmailUnsub)}
+            {complianceRow('message-square-off', 'SMS STOP opt-out', 'Honour the STOP keyword and append opt-out text to SMS.', smsOn, setSmsStop)}
+            {!locked && <div style={{ fontSize: 11.5, color: LH.amber, background: LH.amberBg, border: '1px solid ' + LH.amberBd, borderRadius: 8, padding: '8px 11px', marginTop: 10 }}>No legal mandate for this region — you can toggle opt-outs, but keeping them on is recommended.</div>}
+          </Card>;
+        })()}
         <Card style={{ padding: 15, marginBottom: 12 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Instructions for Nova</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>guidance, not a word-for-word script</span></div><textarea value={instructions} onChange={e => setInstructions(e.target.value)} style={{ width: '100%', height: 64, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', marginTop: 8, lineHeight: 1.5 }} /></Card>
         <Card style={{ padding: 15 }}>
           <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Nova playbook ({playbook.length} questions)</div>
