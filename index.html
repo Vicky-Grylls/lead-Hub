@@ -28743,7 +28743,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     return <div draggable onClick={() => onClick(lead.id)}
       onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; onDragStart(lead.id); }}
       onDragEnd={onDragEnd}
-      style={{ background: '#fff', border: '1px solid ' + (selected ? LH.primary : '#ece4d3'), borderRadius: 12, padding: '10px 12px', boxShadow: selected ? '0 0 0 1px ' + LH.primary : '0 1px 3px rgba(0,0,0,.04)', cursor: 'grab', opacity: dragging ? 0.4 : 1, transition: 'opacity 150ms, box-shadow 150ms, border-color 150ms' }}
+      style={{ background: '#fff', border: '1px solid ' + (selected ? LH.primary : '#ece4d3'), borderRadius: 12, padding: '10px 12px', boxShadow: selected ? '0 0 0 3px rgba(31,31,29,0.10)' : '0 1px 3px rgba(0,0,0,.04)', cursor: 'grab', opacity: dragging ? 0.4 : 1, transition: 'opacity 150ms, box-shadow 150ms, border-color 150ms' }}
       onMouseEnter={e => { if (!dragging && !selected) { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,.08)'; e.currentTarget.style.borderColor = '#d6cbbf'; } }}
       onMouseLeave={e => { if (!selected) { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,.04)'; e.currentTarget.style.borderColor = '#ece4d3'; } }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
