@@ -28845,20 +28845,20 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   /* ─────────── CAMPAIGNS ─────────── */
   function CampaignsSection({ onToast, onNavigate }) {
     const ROWS = [
-      { name: 'Speed-to-Lead Drip', by: 'Zuper Connect', bi: 'Z', status: 'Active', records: 30, date: '2026/07/28 12:09 PM' },
-      { name: 'Storm Season Re-engage', by: 'Jegadheesh R', bi: 'J', status: 'Draft', records: 0, date: '2026/07/27 07:22 PM' },
-      { name: 'Estimate Follow-up', by: 'Zuper Connect', bi: 'Z', status: 'Active', records: 92, date: '2026/07/24 12:16 PM' },
-      { name: 'Angi Lead Nurture', by: 'Zuper Connect', bi: 'Z', status: 'Paused', records: 12, date: '2026/07/03 04:46 PM' },
-      { name: 'Winback — Cold Leads', by: 'Jegadheesh R', bi: 'J', status: 'Completed', records: 0, date: '2026/07/02 04:16 PM' },
-      { name: 'New Roof Inquiry', by: 'Zuper Connect', bi: 'Z', status: 'Draft', records: 3, date: '2026/07/02 03:57 PM' },
-      { name: 'Insurance Claim Assist', by: 'Zuper Connect', bi: 'Z', status: 'Active', records: 47, date: '2026/07/02 10:32 AM' },
-      { name: 'Gutter Season Push', by: 'Jegadheesh R', bi: 'J', status: 'Paused', records: 8, date: '2026/07/01 06:58 PM' },
-      { name: 'Referral Thank-you', by: 'Connect Admin', bi: 'C', status: 'Completed', records: 21, date: '2026/06/29 05:33 PM' },
-      { name: 'Meta Ads Fast Response', by: 'Jegadheesh R', bi: 'J', status: 'Draft', records: 1, date: '2026/06/29 01:55 PM' },
-      { name: 'Website Booking Confirm', by: 'Zuper Connect', bi: 'Z', status: 'Active', records: 15, date: '2026/06/26 06:32 PM' },
-      { name: 'Canvassing Follow-up', by: 'Zuper Connect', bi: 'Z', status: 'Draft', records: 3, date: '2026/06/25 05:35 PM' },
-      { name: 'Skylight Repair Offer', by: 'Jegadheesh R', bi: 'J', status: 'Archived', records: 0, date: '2026/06/23 07:35 PM' },
-      { name: 'Spring Maintenance', by: 'Connect Admin', bi: 'C', status: 'Completed', records: 64, date: '2026/06/23 07:31 PM' }
+      { name: 'Speed-to-Lead Drip', by: 'Ethan Brooks', bi: 'E', status: 'Active', records: 30, date: '2026/07/28 12:09 PM' },
+      { name: 'Storm Season Re-engage', by: 'Sarah Johnson', bi: 'S', status: 'Draft', records: 0, date: '2026/07/27 07:22 PM' },
+      { name: 'Estimate Follow-up', by: 'Ethan Brooks', bi: 'E', status: 'Active', records: 92, date: '2026/07/24 12:16 PM' },
+      { name: 'Angi Lead Nurture', by: 'Ethan Brooks', bi: 'E', status: 'Paused', records: 12, date: '2026/07/03 04:46 PM' },
+      { name: 'Winback — Cold Leads', by: 'Sarah Johnson', bi: 'S', status: 'Completed', records: 0, date: '2026/07/02 04:16 PM' },
+      { name: 'New Roof Inquiry', by: 'Ethan Brooks', bi: 'E', status: 'Draft', records: 3, date: '2026/07/02 03:57 PM' },
+      { name: 'Insurance Claim Assist', by: 'Ethan Brooks', bi: 'E', status: 'Active', records: 47, date: '2026/07/02 10:32 AM' },
+      { name: 'Gutter Season Push', by: 'Sarah Johnson', bi: 'S', status: 'Paused', records: 8, date: '2026/07/01 06:58 PM' },
+      { name: 'Referral Thank-you', by: 'David Miller', bi: 'D', status: 'Completed', records: 21, date: '2026/06/29 05:33 PM' },
+      { name: 'Meta Ads Fast Response', by: 'Sarah Johnson', bi: 'S', status: 'Draft', records: 1, date: '2026/06/29 01:55 PM' },
+      { name: 'Website Booking Confirm', by: 'Ethan Brooks', bi: 'E', status: 'Active', records: 15, date: '2026/06/26 06:32 PM' },
+      { name: 'Canvassing Follow-up', by: 'Ethan Brooks', bi: 'E', status: 'Draft', records: 3, date: '2026/06/25 05:35 PM' },
+      { name: 'Skylight Repair Offer', by: 'Sarah Johnson', bi: 'S', status: 'Archived', records: 0, date: '2026/06/23 07:35 PM' },
+      { name: 'Spring Maintenance', by: 'David Miller', bi: 'D', status: 'Completed', records: 64, date: '2026/06/23 07:31 PM' }
     ];
     const CHIPS = ['All Campaigns', 'My Campaigns', 'Active', 'Paused', 'Draft', 'Completed', 'Archived'];
     const [chip, setChip] = useState('All Campaigns');
@@ -28866,7 +28866,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [kebab, setKebab] = useState(null);
     const stTone = { Active: { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd }, Paused: { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd }, Draft: { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' }, Completed: { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd }, Archived: { bg: '#f1f0ec', fg: '#9c9b96', bd: '#e2ddd2' } };
     const rows = ROWS.filter(r => (chip === 'All Campaigns' || chip === 'My Campaigns' ? true : r.status === chip)).filter(r => r.name.toLowerCase().includes(q.trim().toLowerCase()));
-    const avaColor = bi => bi === 'Z' ? '#e0642f' : bi === 'J' ? '#2563eb' : '#7c3aed';
+    const avaColor = bi => bi === 'E' ? '#e0642f' : bi === 'S' ? '#2563eb' : '#7c3aed';
     const th = (label, w, sortable) => <th style={{ textAlign: 'left', padding: '0 16px', height: 42, fontSize: 12, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>{label}{sortable && <Ic name="chevrons-up-down" size={12} color={LH.muted} />}</span></th>;
     return <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
