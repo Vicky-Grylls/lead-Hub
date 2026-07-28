@@ -28500,7 +28500,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   const { useState, useEffect, useRef, useMemo } = React;
 
   const LH = {
-    primary: '#E44A19', primaryDark: '#b4441f', tint: '#FCEDE8',
+    primary: '#1f1f1d', primaryDark: '#000000', tint: '#f0eeea',
     ink: '#252A31', body: '#475569', sub: '#64748B', muted: '#94A3B8',
     border: '#e7e2d8', borderSoft: '#efeae0', card: '#ffffff', bg: '#fbf9f5',
     green: '#15803d', greenBg: '#e7f6ec', greenBd: '#c3e8ce',
@@ -28552,7 +28552,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       : kind === 'ghost'
         ? { background: 'transparent', color: LH.primary, border: '1px solid transparent' }
         : { background: '#fff', color: LH.body, border: '1px solid ' + LH.border, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' };
-    return <button onClick={onClick} style={{ ...base, ...skin, ...style }}>
+    const hoverBg = kind === 'primary' ? '#3a3a37' : kind === 'ghost' ? '#f0eeea' : '#faf9f6';
+    const restBg = skin.background;
+    return <button onClick={onClick}
+      onMouseEnter={e => { e.currentTarget.style.background = hoverBg; if (kind === 'primary') e.currentTarget.style.borderColor = '#3a3a37'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = restBg; if (kind === 'primary') e.currentTarget.style.borderColor = LH.primary; }}
+      style={{ ...base, ...skin, ...style }}>
       {icon && <Ic name={icon} size={15} color={kind === 'primary' ? '#fff' : (kind === 'ghost' ? LH.primary : LH.sub)} />}
       {children}
     </button>;
@@ -28567,7 +28572,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
 
   function Hero() {
-    return <div style={{ borderRadius: 14, padding: '22px 26px', marginBottom: 22, background: 'linear-gradient(100deg,#1b1a18 0%,#221f1b 34%,#7a2e15 78%,#b4441f 100%)', color: '#fff', position: 'relative', overflow: 'hidden' }}>
+    return <div style={{ borderRadius: 14, padding: '22px 26px', marginBottom: 22, background: 'linear-gradient(100deg,#1a1a18 0%,#242220 48%,#33302c 100%)', color: '#fff', position: 'relative', overflow: 'hidden' }}>
       <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.14em', color: 'rgba(255,255,255,.62)', marginBottom: 8 }}>GET THE WORK</div>
       <div style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Lead Hub</div>
       <div style={{ fontSize: 13.5, color: 'rgba(255,255,255,.8)', maxWidth: 620, lineHeight: 1.5 }}>Capture demand faster, qualify the right homeowners, and move hot leads into the sales motion without delay.</div>
@@ -28821,7 +28826,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               </div>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, margin: '18px 0 8px' }}>{captured} OF 9 FIELDS CAPTURED</div>
               {DIANE_FIELDS.map((f, i) => <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}><Ic name={i < captured ? 'check' : 'circle'} size={14} color={i < captured ? LH.green : '#cfc9bd'} /><span style={{ fontSize: 12.5, color: i < captured ? LH.body : LH.muted }}>{f}</span></div>)}
-              <div style={{ background: LH.tint, borderRadius: 9, padding: 12, marginTop: 16 }}><div style={{ fontSize: 11, fontWeight: 700, color: LH.primaryDark, marginBottom: 3 }}>Suggested next step</div><div style={{ fontSize: 12, color: '#7a3a20', lineHeight: 1.45 }}>{qualified ? 'Ready to convert. Tap Convert to Inspection to move this to Sales Hub.' : (9 - captured) + ' more field' + (9 - captured === 1 ? '' : 's') + ' to capture. Nova is working this lead — nudge with a call or text.'}</div></div>
+              <div style={{ background: LH.tint, borderRadius: 9, padding: 12, marginTop: 16 }}><div style={{ fontSize: 11, fontWeight: 700, color: LH.primaryDark, marginBottom: 3 }}>Suggested next step</div><div style={{ fontSize: 12, color: '#4a4a46', lineHeight: 1.45 }}>{qualified ? 'Ready to convert. Tap Convert to Inspection to move this to Sales Hub.' : (9 - captured) + ' more field' + (9 - captured === 1 ? '' : 's') + ' to capture. Nova is working this lead — nudge with a call or text.'}</div></div>
             </>}
             {tab === 'activity' && <div>{DIANE_ACT.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: 14, position: 'relative' }}>
               <div style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={a.who === 'Nova' ? 'sparkles' : 'settings'} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div>
