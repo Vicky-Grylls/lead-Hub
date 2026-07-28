@@ -28843,39 +28843,64 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
 
   /* ─────────── CAMPAIGNS ─────────── */
-  function CampaignsSection({ onToast }) {
-    const [tab, setTab] = useState('out');
+  function CampaignsSection({ onToast, onNavigate }) {
+    const ROWS = [
+      { name: 'Speed-to-Lead Drip', by: 'Zuper Connect', bi: 'Z', status: 'Active', records: 30, date: '2026/07/28 12:09 PM' },
+      { name: 'Storm Season Re-engage', by: 'Jegadheesh R', bi: 'J', status: 'Draft', records: 0, date: '2026/07/27 07:22 PM' },
+      { name: 'Estimate Follow-up', by: 'Zuper Connect', bi: 'Z', status: 'Active', records: 92, date: '2026/07/24 12:16 PM' },
+      { name: 'Angi Lead Nurture', by: 'Zuper Connect', bi: 'Z', status: 'Paused', records: 12, date: '2026/07/03 04:46 PM' },
+      { name: 'Winback — Cold Leads', by: 'Jegadheesh R', bi: 'J', status: 'Completed', records: 0, date: '2026/07/02 04:16 PM' },
+      { name: 'New Roof Inquiry', by: 'Zuper Connect', bi: 'Z', status: 'Draft', records: 3, date: '2026/07/02 03:57 PM' },
+      { name: 'Insurance Claim Assist', by: 'Zuper Connect', bi: 'Z', status: 'Active', records: 47, date: '2026/07/02 10:32 AM' },
+      { name: 'Gutter Season Push', by: 'Jegadheesh R', bi: 'J', status: 'Paused', records: 8, date: '2026/07/01 06:58 PM' },
+      { name: 'Referral Thank-you', by: 'Connect Admin', bi: 'C', status: 'Completed', records: 21, date: '2026/06/29 05:33 PM' },
+      { name: 'Meta Ads Fast Response', by: 'Jegadheesh R', bi: 'J', status: 'Draft', records: 1, date: '2026/06/29 01:55 PM' },
+      { name: 'Website Booking Confirm', by: 'Zuper Connect', bi: 'Z', status: 'Active', records: 15, date: '2026/06/26 06:32 PM' },
+      { name: 'Canvassing Follow-up', by: 'Zuper Connect', bi: 'Z', status: 'Draft', records: 3, date: '2026/06/25 05:35 PM' },
+      { name: 'Skylight Repair Offer', by: 'Jegadheesh R', bi: 'J', status: 'Archived', records: 0, date: '2026/06/23 07:35 PM' },
+      { name: 'Spring Maintenance', by: 'Connect Admin', bi: 'C', status: 'Completed', records: 64, date: '2026/06/23 07:31 PM' }
+    ];
+    const CHIPS = ['All Campaigns', 'My Campaigns', 'Active', 'Paused', 'Draft', 'Completed', 'Archived'];
+    const [chip, setChip] = useState('All Campaigns');
+    const [q, setQ] = useState('');
+    const [kebab, setKebab] = useState(null);
+    const stTone = { Active: { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd }, Paused: { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd }, Draft: { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' }, Completed: { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd }, Archived: { bg: '#f1f0ec', fg: '#9c9b96', bd: '#e2ddd2' } };
+    const rows = ROWS.filter(r => (chip === 'All Campaigns' || chip === 'My Campaigns' ? true : r.status === chip)).filter(r => r.name.toLowerCase().includes(q.trim().toLowerCase()));
+    const avaColor = bi => bi === 'Z' ? '#e0642f' : bi === 'J' ? '#2563eb' : '#7c3aed';
+    const th = (label, w, sortable) => <th style={{ textAlign: 'left', padding: '0 16px', height: 42, fontSize: 12, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>{label}{sortable && <Ic name="chevrons-up-down" size={12} color={LH.muted} />}</span></th>;
     return <div>
-      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-        <Card style={{ width: 250, flexShrink: 0, padding: 16 }}>
-          <label style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub }}>Campaign name</label>
-          <div style={{ height: 34, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 13, color: LH.ink, fontWeight: 600, margin: '5px 0 14px' }}>Speed-to-Lead Drip</div>
-          <label style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub }}>Assigned sources</label>
-          <div style={{ minHeight: 34, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, padding: 6, margin: '5px 0 14px' }}>
-            {['Angi', 'Thumbtack', 'Google LSA'].map(s => <span key={s} style={{ fontSize: 11.5, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px', color: LH.body }}>{s}</span>)}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', marginBottom: 16 }}><span style={{ fontSize: 13, color: LH.body }}>Active</span><span style={{ fontSize: 12, fontWeight: 700, color: LH.green, display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 30, height: 17, borderRadius: 999, background: LH.green, position: 'relative', display: 'inline-block' }}><span style={{ position: 'absolute', top: 2, right: 2, width: 13, height: 13, borderRadius: 999, background: '#fff' }} /></span>On</span></div>
-          <Btn kind="primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 8 }} onClick={() => onToast('Campaign saved.')}>Save</Btn>
-          <button style={{ width: '100%', height: 34, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 13, color: LH.red, fontWeight: 600, cursor: 'pointer' }}>Delete campaign</button>
-        </Card>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid ' + LH.borderSoft, marginBottom: 16 }}>
-            {[['out', 'Outbound sequence'], ['in', 'Inbound handling']].map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ padding: '9px 14px', fontSize: 13.5, fontWeight: 600, color: tab === k ? LH.primary : LH.sub, background: 'transparent', border: 'none', borderBottom: '2px solid ' + (tab === k ? LH.primary : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{l}</button>)}
-          </div>
-          {tab === 'out' ? <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 12 }}>
-            {SEQ_OUT.map((s, i) => <Card key={i} style={{ padding: 14 }}>
-              <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 9 }}><Ic name={s.icon} size={15} color={LH.primary} /></div>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink }}>{s.ch}</div>
-              <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 8 }}>{s.t}</div>
-              <div style={{ fontSize: 12, color: LH.body, lineHeight: 1.45, minHeight: 34 }}>{s.body}</div>
-              <button style={{ marginTop: 10, fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>Edit</button>
-            </Card>)}
-          </div> : <Card style={{ padding: 40, textAlign: 'center' }}>
-            <Ic name="message-circle-reply" size={40} color="#d8cdb8" style={{ margin: '0 auto 12px', width: 40, height: 40 }} />
-            <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink }}>Inbound handling</div>
-            <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 4 }}>Nova replies to inbound texts and calls automatically, using the campaign playbook.</div>
-          </Card>}
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: LH.ink, marginRight: 4 }}>Campaigns <span style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '2px 8px' }}>{ROWS.length}</span></span>
+        {CHIPS.map(c => <button key={c} onClick={() => setChip(c)} style={{ height: 32, padding: '0 13px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', border: '1px solid ' + (chip === c ? LH.border : 'transparent'), background: chip === c ? '#fff' : 'transparent', color: chip === c ? LH.ink : LH.sub, boxShadow: chip === c ? '0 1px 2px rgba(0,0,0,.04)' : 'none' }}>{c}</button>)}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+        <div style={{ position: 'relative', width: 280 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 11, top: 10 }} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search" style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 12px 0 32px', fontSize: 13, color: LH.ink, outline: 'none', background: '#fff' }} /></div>
+      </div>
+      <Card style={{ padding: 0, overflow: 'visible' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+          <thead>
+            <tr>{th('Campaign', '26%', true)}{th('Created by', '20%')}{th('Status', '13%')}{th('Total Records', '13%')}{th('Created At', '20%', true)}<th style={{ width: '8%', borderBottom: '1px solid ' + LH.border }} /></tr>
+          </thead>
+          <tbody>
+            {rows.length ? rows.map((r, i) => { const t = stTone[r.status]; return <tr key={i} onClick={() => onNavigate && onNavigate('lead-campaign-new')} style={{ cursor: 'pointer', background: '#fff' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+              <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft, fontSize: 13.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</td>
+              <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><span style={{ width: 24, height: 24, borderRadius: 999, background: avaColor(r.bi), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10.5, fontWeight: 700, flexShrink: 0 }}>{r.bi}</span><span style={{ fontSize: 13, color: LH.body }}>{r.by}</span></span></td>
+              <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft }}><span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: t.bg, color: t.fg, border: '1px solid ' + t.bd }}>{r.status}</span></td>
+              <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft, fontSize: 13, color: LH.body }}>{r.records}</td>
+              <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft, fontSize: 13, color: LH.body, whiteSpace: 'nowrap' }}>{r.date}</td>
+              <td style={{ padding: '0 8px', height: 52, borderBottom: '1px solid ' + LH.borderSoft, textAlign: 'right', position: 'relative' }}>
+                <button onClick={e => { e.stopPropagation(); setKebab(kebab === i ? null : i); }} style={{ width: 30, height: 30, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f1efe9'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="more-horizontal" size={17} color={LH.sub} /></button>
+                {kebab === i && <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 44, right: 12, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 150 }}>
+                  {[['pencil', 'Edit'], ['copy', 'Duplicate'], ['pause', 'Pause'], ['trash-2', 'Delete']].map(([ic, l]) => <div key={l} onClick={() => { setKebab(null); if (l === 'Edit') onNavigate && onNavigate('lead-campaign-new'); else onToast(l + ' — “' + r.name + '”'); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', borderRadius: 7, fontSize: 13, color: l === 'Delete' ? LH.red : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={l === 'Delete' ? LH.red : LH.sub} />{l}</div>)}
+                </div>}
+              </td>
+            </tr>; }) : <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', fontSize: 13, color: LH.muted }}>No campaigns match.</td></tr>}
+          </tbody>
+        </table>
+      </Card>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: LH.sub }}>Rows per page <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 30, padding: '0 10px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', color: LH.ink, fontWeight: 600 }}>15 <Ic name="chevron-down" size={13} color={LH.muted} /></span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5, color: LH.sub }}>Page 1 of 1<div style={{ display: 'flex', gap: 4 }}>{['chevrons-left', 'chevron-left', 'chevron-right', 'chevrons-right'].map((ic, k) => <button key={k} style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}><Ic name={ic} size={14} color={LH.sub} /></button>)}</div></div>
       </div>
     </div>;
   }
@@ -29380,7 +29405,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {section === 'overview' && <Hero />}
         {section === 'overview' && <OverviewSection onNavigate={onNavigate} />}
         {section === 'pipeline' && <PipelineSection />}
-        {section === 'campaigns' && <CampaignsSection onToast={showToast} />}
+        {section === 'campaigns' && <CampaignsSection onToast={showToast} onNavigate={onNavigate} />}
         {section === 'channels' && <ChannelsSection />}
         {section === 'health' && <HealthSection />}
       </div>
