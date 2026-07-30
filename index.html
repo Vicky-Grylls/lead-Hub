@@ -28851,6 +28851,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   function CampaignDetail({ row, onBack, onEdit, onToast, stTone, avaColor }) {
     const [menu, setMenu] = useState(false);
     const [st, setSt] = useState(row.status);
+    const [tab, setTab] = useState('leads');
+    const [nameEdit, setNameEdit] = useState(row.name);
     const t = stTone[st] || stTone.Draft;
     const enrolled = row.records;
     const active = Math.round(enrolled * 0.42);
@@ -28863,11 +28865,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const replyRate = enrolled ? Math.round(replied / enrolled * 100) + '%' : '—';
     const funnel = [['Enrolled', enrolled], ['Contacted', contacted], ['Replied', replied], ['Qualified', qualified], ['Converted', converted]];
     const kpis = [
-      { label: 'Enrolled', value: enrolled },
-      { label: 'Active now', value: active },
-      { label: 'Completed', value: completed, accent: LH.green },
-      { label: 'Exited', value: exited },
-      { label: 'Reply rate', value: replyRate }
+      { label: 'Enrolled', value: enrolled }, { label: 'Active now', value: active },
+      { label: 'Completed', value: completed, accent: LH.green }, { label: 'Exited', value: exited }, { label: 'Reply rate', value: replyRate }
     ];
     const recent = [
       { n: 'Daniel Thompson', src: 'Angi', stage: 'Qualified', tone: 'Qualified', last: 'Nova call · answered', when: '12m ago' },
@@ -28883,11 +28882,71 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { icon: 'headphones', title: 'Nurture sequence', lines: ['14-day sequence', 'Send days: Mon–Fri · ET', '6 days with steps'] },
       { icon: 'log-out', title: 'Exit rules', lines: ['2 exit conditions (OR)', 'Qualified or Dead', 'Built-in: reply, opt-out, Nova DND'] }
     ];
+    const activity = [
+      { icon: 'user-plus', who: 'System', msg: 'Daniel Thompson enrolled from Angi.', when: '12m ago' },
+      { icon: 'phone', who: 'Nova', msg: 'Call to Daniel Thompson answered — qualified.', when: '11m ago' },
+      { icon: 'message-square', who: 'Nova', msg: 'Speed-to-lead SMS sent to Rosa Nguyen.', when: '40m ago' },
+      { icon: 'mail', who: 'System', msg: 'Day-3 email delivered to Kevin Alvarez.', when: '3h ago' },
+      { icon: 'log-out', who: 'System', msg: 'Grant Wells completed the sequence.', when: '1d ago' }
+    ];
+    const tasks = [
+      { title: 'Call back Marcus Reed', type: 'Call back', who: 'Michael Richardson', due: 'Today 4:00 PM', done: false },
+      { title: 'Site visit — Diane Walsh', type: 'Site visit', who: 'Tyson Silva', due: 'Tomorrow 9:00 AM', done: false },
+      { title: 'Send quote to Grant Wells', type: 'Send a quote', who: 'Marcus Webb', due: 'Jul 30', done: true }
+    ];
     const primaryAction = st === 'Active' ? { label: 'Pause', icon: 'pause', next: 'Paused' } : st === 'Paused' ? { label: 'Resume', icon: 'play', next: 'Active' } : st === 'Draft' ? { label: 'Publish', icon: 'rocket', next: 'Active' } : null;
     const doPrimary = () => { setSt(primaryAction.next); updateCampaign(row.name, { status: primaryAction.next }); onToast(primaryAction.label + ' — “' + row.name + '”'); };
+    const TABS = [['leads', 'Leads'], ['editor', 'Editor'], ['reports', 'Reports'], ['activity', 'Activity'], ['health', 'Health'], ['tasks', 'Tasks'], ['settings', 'Settings']];
+
+    const perfCard = <Card style={{ padding: 18 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 14 }}>Performance</div>
+      {enrolled ? funnel.map(([label, val]) => <div key={label} style={{ marginBottom: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}><span style={{ fontSize: 12.5, color: LH.body }}>{label}</span><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{val} · {enrolled ? Math.round(val / enrolled * 100) : 0}%</span></div>
+        <div style={{ height: 8, borderRadius: 999, background: '#efece6', overflow: 'hidden' }}><div style={{ width: (enrolled ? val / enrolled * 100 : 0) + '%', height: '100%', background: LH.primary, borderRadius: 999 }} /></div>
+      </div>) : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No enrollments yet. {st === 'Draft' ? 'Publish the campaign to start enrolling.' : 'Matching customers enroll as they are created.'}</div>}
+    </Card>;
+    const recentCard = <Card style={{ padding: 0, overflow: 'hidden' }}>
+      <div style={{ padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft, fontSize: 14, fontWeight: 700, color: LH.ink }}>Recent enrollments</div>
+      {enrolled ? recent.map((c, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < recent.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+        <div style={{ width: 30, height: 30, borderRadius: 999, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{c.n.split(' ').map(w => w[0]).join('')}</div>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{c.n}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.src} · {c.last}</div></div>
+        <Pill label={c.stage} tone={c.tone} />
+        <span style={{ fontSize: 11.5, color: LH.muted, width: 60, textAlign: 'right' }}>{c.when}</span>
+      </div>) : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No one enrolled yet.</div>}
+    </Card>;
+
+    const tabBody = () => {
+      if (tab === 'leads') return <><div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>{kpis.map(k => <StatCard key={k.label} label={k.label} value={k.value} accent={k.accent} />)}</div>{recentCard}</>;
+      if (tab === 'reports') return <><div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>{[{ label: 'Delivered', value: '98%' }, { label: 'Open rate', value: '42%' }, { label: 'Reply rate', value: replyRate }, { label: 'Opt-outs', value: enrolled ? Math.max(1, Math.round(enrolled * 0.03)) : 0 }].map(k => <StatCard key={k.label} {...k} />)}</div>{perfCard}</>;
+      if (tab === 'editor') return <><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}><div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Campaign setup</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Edit any section, or open the full step-by-step editor.</div></div><Btn kind="primary" icon="pencil" onClick={onEdit}>Open full editor</Btn></div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12 }}>{config.map(c => <Card key={c.title} style={{ padding: 14 }}><div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={c.icon} size={15} color={LH.ink} /></div><div style={{ flex: 1, minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{c.title}</span><button onClick={onEdit} style={{ fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Edit</button></div>{c.lines.map((l, k) => <div key={k} style={{ fontSize: 12, color: LH.sub, marginTop: 2 }}>{l}</div>)}</div></div></Card>)}</div></>;
+      if (tab === 'activity') return <Card style={{ padding: 18 }}><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 14 }}>Activity</div>{activity.map((a, i) => <div key={i} style={{ display: 'flex', gap: 11, paddingBottom: i < activity.length - 1 ? 14 : 0 }}><div style={{ width: 28, height: 28, borderRadius: 8, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={a.icon} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.45 }}>{a.msg}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 2 }}>{a.who} · {a.when}</div></div></div>)}</Card>;
+      if (tab === 'health') return <><div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>{[{ label: 'Delivered', value: '98%', accent: LH.green }, { label: 'Bounced', value: '1%' }, { label: 'Opt-outs', value: enrolled ? Math.max(1, Math.round(enrolled * 0.03)) : 0 }, { label: 'Failed sends', value: 0 }].map(k => <StatCard key={k.label} {...k} />)}</div><Card style={{ padding: 16, display: 'flex', gap: 11, alignItems: 'flex-start' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="shield-check" size={15} color={LH.green} /></div><div><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>No delivery issues</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>Sending domain verified, number registered, and opt-out handling active. Nova DND is honoured on every channel.</div></div></Card></>;
+      if (tab === 'tasks') return <Card style={{ padding: 0, overflow: 'hidden' }}><div style={{ padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft, fontSize: 14, fontWeight: 700, color: LH.ink }}>Tasks</div>{tasks.map((tk, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < tasks.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><span style={{ width: 18, height: 18, borderRadius: 5, border: '1.5px solid ' + (tk.done ? LH.green : LH.border), background: tk.done ? LH.green : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{tk.done && <Ic name="check" size={12} color="#fff" />}</span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink, textDecoration: tk.done ? 'line-through' : 'none' }}>{tk.title}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{tk.type} · {tk.who}</div></div><span style={{ fontSize: 11.5, color: LH.sub }}>{tk.due}</span></div>)}</Card>;
+      // settings
+      return <div style={{ maxWidth: 560 }}>
+        <Card style={{ padding: 18, marginBottom: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 14 }}>General</div>
+          <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign name</label>
+          <input value={nameEdit} onChange={e => setNameEdit(e.target.value)} style={{ width: '100%', height: 38, borderRadius: 9, border: '1px solid ' + LH.border, padding: '0 12px', fontSize: 14, color: LH.ink, margin: '6px 0 14px', outline: 'none' }} />
+          <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Status</label>
+          <div style={{ marginTop: 6, maxWidth: 220 }}><Dropdown value={st} options={['Draft', 'Active', 'Paused', 'Inactive', 'Archived'].map(s => ({ value: s, label: s }))} onChange={v => { setSt(v); updateCampaign(row.name, { status: v }); }} /></div>
+          <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 10 }}>Created {row.date} · Version v1</div>
+          <div style={{ marginTop: 14 }}><Btn kind="primary" icon="check" onClick={() => { updateCampaign(row.name, { status: st }); onToast('Settings saved.'); }}>Save changes</Btn></div>
+        </Card>
+        <Card style={{ padding: 18, borderColor: LH.redBd }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: LH.red, marginBottom: 4 }}>Danger zone</div>
+          <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 12 }}>Archiving stops all activity; deleting removes the campaign and its enrollments.</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Btn icon="archive" onClick={() => onToast('Archived — “' + row.name + '”')}>Archive</Btn>
+            <button onClick={() => onToast('Delete — “' + row.name + '”')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', borderRadius: 9, border: '1px solid ' + LH.redBd, background: '#fff', color: LH.red, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}><Ic name="trash-2" size={15} color={LH.red} />Delete campaign</button>
+          </div>
+        </Card>
+      </div>;
+    };
+
     return <div>
-      {/* Title bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 14, marginBottom: 16, borderBottom: '1px solid ' + LH.borderSoft, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid ' + LH.borderSoft, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
           <button onClick={onBack} style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="arrow-left" size={16} color={LH.body} /></button>
           <div style={{ minWidth: 0 }}>
@@ -28904,46 +28963,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>}
         </div>
       </div>
-      {/* meta row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 16, fontSize: 12.5, color: LH.sub, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 14, fontSize: 12.5, color: LH.sub, flexWrap: 'wrap' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>Created by <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 20, height: 20, borderRadius: 999, background: avaColor(row.bi), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9.5, fontWeight: 700 }}>{row.bi}</span><span style={{ color: LH.body, fontWeight: 600 }}>{row.by}</span></span></span>
         <span style={{ width: 1, height: 14, background: LH.border }} />
         <span>Created {row.date}</span>
         <span style={{ width: 1, height: 14, background: LH.border }} />
         <span>Version v1</span>
       </div>
-      {/* KPIs */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>{kpis.map(k => <StatCard key={k.label} label={k.label} value={k.value} accent={k.accent} />)}</div>
-      {/* two columns */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 14, alignItems: 'start' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <Card style={{ padding: 18 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 14 }}>Performance</div>
-            {enrolled ? funnel.map(([label, val]) => <div key={label} style={{ marginBottom: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}><span style={{ fontSize: 12.5, color: LH.body }}>{label}</span><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{val} · {enrolled ? Math.round(val / enrolled * 100) : 0}%</span></div>
-              <div style={{ height: 8, borderRadius: 999, background: '#efece6', overflow: 'hidden' }}><div style={{ width: (enrolled ? val / enrolled * 100 : 0) + '%', height: '100%', background: LH.primary, borderRadius: 999 }} /></div>
-            </div>) : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No enrollments yet. {row.status === 'Draft' ? 'Publish the campaign to start enrolling.' : 'Matching customers enroll as they are created.'}</div>}
-          </Card>
-          <Card style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft, fontSize: 14, fontWeight: 700, color: LH.ink }}>Recent enrollments</div>
-            {enrolled ? recent.map((c, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < recent.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
-              <div style={{ width: 30, height: 30, borderRadius: 999, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{c.n.split(' ').map(w => w[0]).join('')}</div>
-              <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{c.n}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.src} · {c.last}</div></div>
-              <Pill label={c.stage} tone={c.tone} />
-              <span style={{ fontSize: 11.5, color: LH.muted, width: 60, textAlign: 'right' }}>{c.when}</span>
-            </div>) : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No one enrolled yet.</div>}
-          </Card>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>CONFIGURATION</div>
-          {config.map(c => <Card key={c.title} style={{ padding: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
-              <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={c.icon} size={15} color={LH.ink} /></div>
-              <div style={{ flex: 1, minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{c.title}</span><button onClick={onEdit} style={{ fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Edit</button></div>{c.lines.map((l, k) => <div key={k} style={{ fontSize: 12, color: LH.sub, marginTop: 2 }}>{l}</div>)}</div>
-            </div>
-          </Card>)}
-        </div>
+      <div style={{ display: 'flex', gap: 2, borderBottom: '1px solid ' + LH.borderSoft, marginBottom: 20, flexWrap: 'wrap' }}>
+        {TABS.map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ padding: '9px 13px', fontSize: 13.5, fontWeight: 600, color: tab === k ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (tab === k ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{l}</button>)}
       </div>
+      {tabBody()}
     </div>;
   }
   let CAMPAIGN_ROWS = [
