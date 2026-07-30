@@ -29191,7 +29191,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       : (has ? ((allOpts.find(o => o.value === value) || {}).label || value) : placeholder);
     const isSel = v => multi ? (value || []).includes(v) : value === v;
     const pick = v => { if (multi) { const cur = value || []; onChange(cur.includes(v) ? cur.filter(x => x !== v) : [...cur, v]); } else { onChange(v); setOpen(false); } };
-    const item = o => <div key={o.value} onClick={() => pick(o.value)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '7px 11px', fontSize: 13, color: LH.ink, cursor: 'pointer', borderRadius: 7, background: isSel(o.value) ? LH.tint : 'transparent' }}>{o.label}{isSel(o.value) && <Ic name="check" size={14} color={LH.primary} />}</div>;
+    const item = o => { const sel = isSel(o.value); return <div key={o.value} onClick={() => pick(o.value)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', fontSize: 13, color: LH.ink, cursor: 'pointer', borderRadius: 7, background: 'transparent' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+      {multi && <span style={{ width: 16, height: 16, borderRadius: 5, flexShrink: 0, border: '1.5px solid ' + (sel ? LH.primary : LH.border), background: sel ? LH.primary : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{sel && <Ic name="check" size={11} color="#fff" />}</span>}
+      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.label}</span>
+      {!multi && sel && <Ic name="check" size={14} color={LH.primary} />}
+    </div>; };
     return <div ref={ref} style={{ position: 'relative', width: width || '100%' }}>
       <div onClick={() => setOpen(o => !o)} style={{ height, borderRadius: 8, border: '1px solid ' + (open ? LH.primary : LH.border), background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, padding: '0 10px', fontSize: 13, color: has ? LH.ink : LH.muted, cursor: 'pointer', fontWeight: has ? 600 : 400 }}>
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span><Ic name={open ? 'chevron-up' : 'chevron-down'} size={14} color={LH.muted} />
