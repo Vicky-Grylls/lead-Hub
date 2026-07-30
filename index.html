@@ -29666,10 +29666,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       ];
       return wrap(<>
         {shellHead('Create a campaign', null)}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '28px 30px' }}>
-          <div style={{ maxWidth: 760, margin: '0 auto' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: LH.ink }}>How do you want to start?</div>
-            <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 22px' }}>Campaigns automatically engage matching leads across SMS, email, and calls.</div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '28px 30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ maxWidth: 760, width: '100%', margin: '0 auto' }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: LH.ink, textAlign: 'center' }}>How do you want to start?</div>
+            <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 22px', textAlign: 'center' }}>Campaigns automatically engage matching leads across SMS, email, and calls.</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14 }}>
               {CARDS.map(c => <div key={c.key} onClick={() => c.key === 'scratch' ? launch({ name: '', desc: '', dayCount: 7, s2l: [{ ch: 'sms', offset: 'launch', body: '' }], days: {} }) : setMode(c.key)}
                 style={{ border: '1px solid ' + LH.border, borderRadius: 14, padding: 20, cursor: 'pointer', transition: 'border-color .12s, box-shadow .12s', background: '#fff' }}
