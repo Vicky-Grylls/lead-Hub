@@ -14280,8 +14280,8 @@ function App() {
     }), /*#__PURE__*/React.createElement("div", {
       className: "flex flex-col flex-1 overflow-hidden rounded-2xl",
       style: { background: '#fdfdfc', border: '1px solid #ece4d3', overflow: 'hidden' }
-    }, window.LeadHubCampaignWizard
-      ? /*#__PURE__*/React.createElement(window.LeadHubCampaignWizard, { embed: true, onClose: () => setPage('lead-campaigns'), onCreate: () => { setPage('lead-campaigns'); showToast('Campaign created.'); } })
+    }, window.LeadHubCampaignCreate
+      ? /*#__PURE__*/React.createElement(window.LeadHubCampaignCreate, { embed: true, onClose: () => setPage('lead-campaigns'), onCreate: () => { setPage('lead-campaigns'); showToast('Campaign created.'); } })
       : /*#__PURE__*/React.createElement("div", { style: { padding: 40, color: '#8c7a5a', fontSize: 14 } }, "Loading…"))), toast && /*#__PURE__*/React.createElement(Toast, {
       message: toast,
       onClose: () => setToast(null)
@@ -29222,10 +29222,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </Card>;
   }
 
-  function CampaignWizard({ onClose, onCreate, embed }) {
+  function CampaignWizard({ onClose, onCreate, embed, init }) {
+    init = init || {};
     const [step, setStep] = useState(0);
-    const [name, setName] = useState('Storm Season Re-engage');
-    const [desc, setDesc] = useState('Re-engages storm-season leads from Angi and Thumbtack with a 14-day drip.');
+    const [name, setName] = useState(init.name !== undefined ? init.name : 'Storm Season Re-engage');
+    const [desc, setDesc] = useState(init.desc !== undefined ? init.desc : 'Re-engages storm-season leads from Angi and Thumbtack with a 14-day drip.');
     // Audience
     const [join, setJoin] = useState('and');
     const [conds, setConds] = useState([
@@ -29259,7 +29260,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const pbInputRef = useRef(null);
     const [commTab, setCommTab] = useState('sms');
     // Speed to Lead
-    const [s2l, setS2l] = useState([
+    const [s2l, setS2l] = useState(init.s2l ? init.s2l.map(s => ({ id: wuid(), ...s })) : [
       { id: wuid(), ch: 'sms', offset: 'launch', anchor: 'last_message', body: 'Hi {{customer_first_name}}, this is {{user_first_name}} with {{company.company_name}}. Got your request — thanks for reaching out!\n\nWe have a few open spots this week for your roof check-up. Any day or time that works best for you? I’ll get it locked in.' },
       { id: wuid(), ch: 'call', offset: '30', anchor: 'last_message' },
       { id: wuid(), ch: 'email', offset: '60', anchor: 'last_message', subject: 'We just received your request', body: 'Hi {{customer_first_name}},\n\nThanks for reaching out to {{company.company_name}} — happy to help. Reply to this email with any questions, or grab a slot that suits you.' }
@@ -29269,9 +29270,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     // Nurture
     const [tz, setTz] = useState('America/New_York (ET)');
     const [sendDays, setSendDays] = useState({ 0: false, 1: true, 2: true, 3: true, 4: true, 5: true, 6: false });
-    const [dayCount, setDayCount] = useState(14);
+    const [dayCount, setDayCount] = useState(init.dayCount || 14);
     const [selDay, setSelDay] = useState(1);
-    const [days, setDays] = useState({
+    const [days, setDays] = useState(init.days ? Object.keys(init.days).reduce((a, k) => { a[k] = { active: init.days[k].active !== false, steps: init.days[k].steps.map(s => ({ id: wuid(), ...s })) }; return a; }, {}) : {
       1: { active: true, steps: [
         { id: wuid(), ch: 'sms', time: '10:00 am', body: 'Good morning {{customer_first_name}}! Still need a hand with the roof? We have time this week and would be glad to take a look.\n\nReply YES and I’ll get you on the schedule.' },
         { id: wuid(), ch: 'call', time: '6:00 pm' }
@@ -29624,6 +29625,155 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   window.LeadHubShell = LeadHubShell;
   window.LeadHubCampaignWizard = CampaignWizard;
+
+  const CAMP_TEMPLATES = [
+    { cat: 'Speed to lead', name: 'Speed-to-Lead Drip', chans: ['sms', 'call', 'email'], blurb: 'Text and call within minutes of a new lead, with an email backup and a 14-day nurture.',
+      init: { name: 'Speed-to-Lead Drip', desc: 'Contact new leads within minutes: SMS on arrival, a Nova call, and an email backup, then a 14-day nurture.', dayCount: 14, s2l: [{ ch: 'sms', offset: 'launch', body: 'Hi {{customer_first_name}}, this is {{user_first_name}} with {{company.company_name}}. Thanks for reaching out! When works for a quick call?' }, { ch: 'call', offset: '5', anchor: 'last_message' }, { ch: 'email', offset: '60', anchor: 'last_message', subject: 'We got your request', body: 'Hi {{customer_first_name}},\n\nThanks for contacting {{company.company_name}} — happy to help. Reply with a good time and we’ll set up a free inspection.' }], days: { 2: { steps: [{ ch: 'sms', time: '10:00 am', body: 'Still happy to help, {{customer_first_name}}. Want me to hold a slot this week?' }] }, 5: { steps: [{ ch: 'call', time: '2:00 pm' }] } } } },
+    { cat: 'Re-engagement', name: 'Storm Season Re-engage', chans: ['sms', 'email'], blurb: 'Re-warm storm-season leads from Angi and Thumbtack with a value-led email + SMS drip.',
+      init: { name: 'Storm Season Re-engage', desc: 'Re-engage storm-season leads with a 14-day SMS + email drip about fast inspections.', dayCount: 14, s2l: [{ ch: 'sms', offset: 'launch', body: 'Hi {{customer_first_name}}, storm damage can worsen fast. We can usually inspect within 48 hours — want me to get you scheduled?' }, { ch: 'email', offset: '30', anchor: 'last_message', subject: 'Fast storm-damage inspections', body: 'Hi {{customer_first_name}},\n\nWe’re booking storm inspections this week. Pick a slot and our team handles the rest.' }], days: { 3: { steps: [{ ch: 'sms', time: '11:00 am', body: 'Checking back in, {{customer_first_name}} — still glad to take a look at the roof.' }] } } } },
+    { cat: 'Re-engagement', name: 'Winback — Cold Leads', chans: ['sms', 'email', 'call'], blurb: 'A gentle multi-touch sequence to revive leads that went quiet.',
+      init: { name: 'Winback — Cold Leads', desc: 'Revive cold leads with a light-touch 21-day SMS/email/call sequence.', dayCount: 21, s2l: [{ ch: 'email', offset: 'launch', subject: 'Still thinking about the roof?', body: 'Hi {{customer_first_name}},\n\nNo rush — whenever you’re ready, {{company.company_name}} is here to help.' }], days: { 5: { steps: [{ ch: 'sms', time: '10:00 am', body: 'Hi {{customer_first_name}}, want us to take one more look at the roof?' }] }, 12: { steps: [{ ch: 'call', time: '3:00 pm' }] } } } },
+    { cat: 'Nurture', name: 'Estimate Follow-up', chans: ['email', 'call'], blurb: 'Follow up after an estimate is sent to move deals to a decision.',
+      init: { name: 'Estimate Follow-up', desc: 'Follow up after an estimate with email nudges and a call to close.', dayCount: 10, s2l: [{ ch: 'email', offset: 'launch', subject: 'Your estimate from {{company.company_name}}', body: 'Hi {{customer_first_name}},\n\nHere’s your estimate — happy to walk through any questions.' }], days: { 3: { steps: [{ ch: 'call', time: '1:00 pm' }] }, 7: { steps: [{ ch: 'email', time: '9:00 am', subject: 'Any questions on your estimate?', body: 'Hi {{customer_first_name}}, just checking in on the estimate.' }] } } } },
+    { cat: 'Nurture', name: 'Insurance Claim Assist', chans: ['sms', 'call', 'email'], blurb: 'Guide storm leads through the insurance claim process step by step.',
+      init: { name: 'Insurance Claim Assist', desc: 'Help storm leads file and track an insurance claim while booking an inspection.', dayCount: 14, s2l: [{ ch: 'sms', offset: 'launch', body: 'Hi {{customer_first_name}}, storm damage is often covered by insurance. We can document everything — want a quick call?' }, { ch: 'call', offset: '30', anchor: 'last_message' }], days: { 4: { steps: [{ ch: 'email', time: '10:00 am', subject: 'Your claim checklist', body: 'Hi {{customer_first_name}}, here’s what you’ll need for the claim.' }] } } } },
+    { cat: 'Seasonal', name: 'Gutter Season Push', chans: ['sms', 'email'], blurb: 'Seasonal offer to book gutter cleaning and guards before the rains.',
+      init: { name: 'Gutter Season Push', desc: 'Seasonal SMS + email push for gutter cleaning and guard installs.', dayCount: 7, s2l: [{ ch: 'email', offset: 'launch', subject: 'Beat the rain — gutter tune-up', body: 'Hi {{customer_first_name}}, book a gutter clean before the season hits.' }], days: { 3: { steps: [{ ch: 'sms', time: '10:00 am', body: 'Hi {{customer_first_name}}, spots are filling up for gutter service — want one?' }] } } } }
+  ];
+  const TPL_CATS = ['All templates', 'Speed to lead', 'Nurture', 'Re-engagement', 'Seasonal'];
+  const CHAN_ICON = { sms: 'message-square', email: 'mail', call: 'phone', task: 'check-square' };
+
+  function CampaignCreate({ embed, onClose, onCreate }) {
+    const [mode, setMode] = useState('choose');
+    const [init, setInit] = useState(null);
+    const [tplCat, setTplCat] = useState('All templates');
+    const [tplQ, setTplQ] = useState('');
+    const [cloneQ, setCloneQ] = useState('');
+    const [aiGoal, setAiGoal] = useState('Re-engage storm-season roofing leads and book inspections.');
+    const launch = ini => { setInit(ini); setMode('wizard'); };
+
+    if (mode === 'wizard') return <CampaignWizard embed={embed} init={init} onClose={() => setMode('choose')} onCreate={onCreate} />;
+
+    const shellHead = (title, onBack) => <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>{onBack && <button onClick={onBack} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="arrow-left" size={15} color={LH.body} /></button>}<span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>{title}</span></div>
+      <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
+    </div>;
+    const wrap = children => <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: '#fff', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>{children}</div>;
+
+    if (mode === 'choose') {
+      const CARDS = [
+        { key: 'ai', icon: 'sparkles', color: '#6d28d9', bg: '#f3eefe', title: 'AI-assisted', desc: 'Describe your goal and generate a campaign in one click.' },
+        { key: 'templates', icon: 'layout-template', color: '#b45309', bg: '#fdf2e3', title: 'Templates', desc: 'Start from one of our proven campaign templates.' },
+        { key: 'clone', icon: 'copy', color: '#2563eb', bg: '#eff4ff', title: 'Clone', desc: 'Make a copy of one of your existing campaigns.' },
+        { key: 'scratch', icon: 'send', color: '#dc2626', bg: '#fdecec', title: 'From scratch', desc: 'Build a brand-new campaign from a blank canvas.' }
+      ];
+      return wrap(<>
+        {shellHead('Create a campaign', null)}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '28px 30px' }}>
+          <div style={{ maxWidth: 760, margin: '0 auto' }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: LH.ink }}>How do you want to start?</div>
+            <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 22px' }}>Campaigns automatically engage matching leads across SMS, email, and calls.</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14 }}>
+              {CARDS.map(c => <div key={c.key} onClick={() => c.key === 'scratch' ? launch({ name: '', desc: '', dayCount: 7, s2l: [{ ch: 'sms', offset: 'launch', body: '' }], days: {} }) : setMode(c.key)}
+                style={{ border: '1px solid ' + LH.border, borderRadius: 14, padding: 20, cursor: 'pointer', transition: 'border-color .12s, box-shadow .12s', background: '#fff' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#d8cdb8'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,.06)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = LH.border; e.currentTarget.style.boxShadow = 'none'; }}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}><Ic name={c.icon} size={22} color={c.color} /></div>
+                <div style={{ fontSize: 15.5, fontWeight: 700, color: LH.ink }}>{c.title}</div>
+                <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 4, lineHeight: 1.5 }}>{c.desc}</div>
+              </div>)}
+            </div>
+          </div>
+        </div>
+      </>);
+    }
+
+    if (mode === 'templates') {
+      const list = CAMP_TEMPLATES.filter(t => tplCat === 'All templates' || t.cat === tplCat).filter(t => (t.name + ' ' + t.blurb).toLowerCase().includes(tplQ.trim().toLowerCase()));
+      return wrap(<>
+        {shellHead('Campaign templates', () => setMode('choose'))}
+        <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+          <div style={{ width: 220, flexShrink: 0, borderRight: '1px solid ' + LH.borderSoft, padding: 16, background: LH.bg }}>
+            <div style={{ position: 'relative', marginBottom: 12 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 10, top: 9 }} /><input value={tplQ} onChange={e => setTplQ(e.target.value)} placeholder="Search templates" style={{ width: '100%', height: 32, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px 0 30px', fontSize: 12.5, color: LH.ink, outline: 'none' }} /></div>
+            {TPL_CATS.map(c => { const n = c === 'All templates' ? CAMP_TEMPLATES.length : CAMP_TEMPLATES.filter(t => t.cat === c).length; return <div key={c} onClick={() => setTplCat(c)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', borderRadius: 8, marginBottom: 2, cursor: 'pointer', background: tplCat === c ? '#fff' : 'transparent', border: '1px solid ' + (tplCat === c ? LH.border : 'transparent'), fontSize: 12.5, fontWeight: tplCat === c ? 600 : 500, color: tplCat === c ? LH.ink : LH.sub }}>{c}<span style={{ fontSize: 11, color: LH.muted }}>{n}</span></div>; })}
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink, marginBottom: 2 }}>{tplCat}</div>
+            <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 16 }}>Pick a template to prefill the wizard — you can edit everything.</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 14 }}>
+              {list.map(t => <div key={t.name} style={{ border: '1px solid ' + LH.border, borderRadius: 12, padding: 15, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>{t.chans.map(ch => <span key={ch} style={{ width: 26, height: 26, borderRadius: 7, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={CHAN_ICON[ch]} size={13} color={LH.primary} /></span>)}</div>
+                <span style={{ alignSelf: 'flex-start', fontSize: 10.5, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '2px 8px', marginBottom: 8 }}>{t.cat}</span>
+                <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>{t.name}</div>
+                <div style={{ fontSize: 12, color: LH.sub, marginTop: 4, lineHeight: 1.5, flex: 1 }}>{t.blurb}</div>
+                <Btn kind="primary" style={{ marginTop: 12, justifyContent: 'center' }} onClick={() => launch(t.init)}>Use template</Btn>
+              </div>)}
+              {!list.length && <div style={{ fontSize: 13, color: LH.muted, padding: 20 }}>No templates match.</div>}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}><Btn onClick={() => launch({ name: '', desc: '', dayCount: 7, s2l: [{ ch: 'sms', offset: 'launch', body: '' }], days: {} })}>Create from scratch</Btn></div>
+      </>);
+    }
+
+    if (mode === 'clone') {
+      const list = CAMPAIGN_ROWS.filter(r => r.name.toLowerCase().includes(cloneQ.trim().toLowerCase()));
+      return wrap(<>
+        {shellHead('Clone a campaign', () => setMode('choose'))}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 30px' }}>
+          <div style={{ maxWidth: 720, margin: '0 auto' }}>
+            <div style={{ fontSize: 13, color: LH.sub, marginBottom: 14 }}>Pick a campaign to copy. We’ll open a new draft named “Copy of …” with its setup prefilled.</div>
+            <div style={{ position: 'relative', marginBottom: 14 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 11, top: 10 }} /><input value={cloneQ} onChange={e => setCloneQ(e.target.value)} placeholder="Search campaigns" style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 12px 0 32px', fontSize: 13, color: LH.ink, outline: 'none' }} /></div>
+            <div style={{ border: '1px solid ' + LH.border, borderRadius: 12, overflow: 'hidden' }}>
+              {list.map((r, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 15px', borderBottom: i < list.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="megaphone" size={14} color={LH.primary} /></div>
+                <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{r.name}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{r.status} · {r.records} records · {r.by}</div></div>
+                <Btn onClick={() => launch({ name: 'Copy of ' + r.name, desc: 'Cloned from “' + r.name + '”.' })}>Clone</Btn>
+              </div>)}
+              {!list.length && <div style={{ padding: 24, textAlign: 'center', fontSize: 13, color: LH.muted }}>No campaigns match.</div>}
+            </div>
+          </div>
+        </div>
+      </>);
+    }
+
+    // AI-assisted
+    const CHIPS = ['Re-engage storm-season roofing leads and book inspections.', 'Win back cold leads that went quiet.', 'Follow up fast on new website form leads.', 'Book more free roof inspections this month.'];
+    const generate = () => {
+      const g = aiGoal.trim() || 'Engage new leads and book inspections.';
+      const words = g.replace(/[.,]/g, '').split(/\s+/).filter(Boolean);
+      const nm = words.slice(0, 4).map(w => w[0].toUpperCase() + w.slice(1)).join(' ') + ' Campaign';
+      launch({
+        name: nm,
+        desc: 'AI-drafted from your goal: “' + g + '” — a multi-touch SMS, call, and email sequence over 14 days.',
+        dayCount: 14,
+        s2l: [
+          { ch: 'sms', offset: 'launch', body: 'Hi {{customer_first_name}}, {{user_first_name}} here from {{company.company_name}}. ' + g + ' When’s a good time for a quick chat?' },
+          { ch: 'call', offset: '30', anchor: 'last_message' },
+          { ch: 'email', offset: '60', anchor: 'last_message', subject: 'Quick note from {{company.company_name}}', body: 'Hi {{customer_first_name}},\n\nReaching out about your roof. ' + g + ' Reply and we’ll take it from there.' }
+        ],
+        days: { 3: { steps: [{ ch: 'sms', time: '10:00 am', body: 'Following up, {{customer_first_name}} — still happy to help. Want me to hold a slot?' }] }, 7: { steps: [{ ch: 'call', time: '2:00 pm' }] } }
+      });
+    };
+    return wrap(<>
+      {shellHead('AI-assisted campaign', () => setMode('choose'))}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 30px' }}>
+        <div style={{ maxWidth: 620, margin: '0 auto' }}>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: '#f3eefe', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}><Ic name="sparkles" size={22} color="#6d28d9" /></div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>What should this campaign do?</div>
+          <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 16px' }}>Describe the goal in plain language. We’ll draft the name, message steps, and a 14-day nurture — you can edit everything after.</div>
+          <textarea value={aiGoal} onChange={e => setAiGoal(e.target.value)} style={{ width: '100%', height: 96, borderRadius: 10, border: '1px solid ' + LH.border, padding: 12, fontSize: 13.5, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+          <div style={{ fontSize: 11.5, color: LH.muted, margin: '14px 0 8px' }}>Try one of these</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{CHIPS.map(c => <button key={c} onClick={() => setAiGoal(c)} style={{ fontSize: 12, border: '1px dashed ' + LH.border, borderRadius: 999, padding: '6px 12px', background: '#fff', color: LH.body, cursor: 'pointer', textAlign: 'left' }}>{c}</button>)}</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+        <Btn onClick={() => setMode('choose')}>Back</Btn>
+        <Btn kind="primary" icon="sparkles" onClick={generate}>Generate campaign</Btn>
+      </div>
+    </>);
+  }
+  window.LeadHubCampaignCreate = CampaignCreate;
 })();
 </script>
 <script>
