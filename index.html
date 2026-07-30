@@ -29555,16 +29555,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <span style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: i < step ? LH.green : (i === step ? LH.primary : '#f1f0ec'), color: i <= step ? '#fff' : LH.muted }}>{i < step ? '✓' : i + 1}</span>
               <span style={{ fontSize: 12.5, fontWeight: step === i ? 600 : 500, color: step === i ? LH.ink : LH.sub }}>{s}</span>
             </div>)}</div>
-            <div style={{ border: '1px solid ' + LH.border, borderRadius: 10, padding: 12, background: '#fff' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="users" size={15} color={LH.primary} /></div><div><div style={{ fontSize: 17, fontWeight: 700, color: LH.ink, lineHeight: 1 }}>{enrolledCount}</div><div style={{ fontSize: 11, color: LH.sub }}>records enrolled</div></div></div>
-              <div style={{ height: 4, borderRadius: 999, background: '#efe9de', marginTop: 10, overflow: 'hidden' }}><div style={{ width: Math.min(100, enrolledCount / CONTACTS.length * 100) + '%', height: '100%', background: LH.primary }} /></div>
-              <div style={{ fontSize: 10.5, color: LH.muted, marginTop: 6 }}>{enrolledCount} of {CONTACTS.length} records in scope</div>
-            </div>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '26px 30px' }}>{stepBody()}</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ fontSize: 12, color: LH.muted }}>Step {step + 1} of {WIZ_STEPS.length}</span><div style={{ display: 'flex', gap: 5 }}>{WIZ_STEPS.map((_, i) => <span key={i} style={{ width: 20, height: 4, borderRadius: 999, background: i <= step ? LH.primary : '#e7e2d8' }} />)}</div></div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
           <div style={{ display: 'flex', gap: 8 }}>
             {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go back</Btn>}
             {step < WIZ_STEPS.length - 1
