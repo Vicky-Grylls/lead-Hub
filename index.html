@@ -28848,6 +28848,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
 
   /* ─────────── CAMPAIGNS ─────────── */
+  const CAMP_AVATARS = {
+    'Ethan Brooks': 'https://randomuser.me/api/portraits/men/32.jpg',
+    'Sarah Johnson': 'https://randomuser.me/api/portraits/women/65.jpg',
+    'David Miller': 'https://randomuser.me/api/portraits/men/54.jpg'
+  };
+  function CampAva({ by, bi, color, size }) {
+    const url = CAMP_AVATARS[by];
+    return <span style={{ width: size, height: size, borderRadius: 999, background: color, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: Math.round(size * 0.44), fontWeight: 700, flexShrink: 0, overflow: 'hidden', position: 'relative' }}>{bi}{url && <img src={url} alt={by} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />}</span>;
+  }
   function CampaignDetail({ row, onBack, onEdit, onToast, stTone, avaColor }) {
     const [menu, setMenu] = useState(false);
     const [st, setSt] = useState(row.status);
@@ -28964,7 +28973,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 14, fontSize: 12.5, color: LH.sub, flexWrap: 'wrap' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>Created by <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 20, height: 20, borderRadius: 999, background: avaColor(row.bi), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9.5, fontWeight: 700 }}>{row.bi}</span><span style={{ color: LH.body, fontWeight: 600 }}>{row.by}</span></span></span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>Created by <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><CampAva by={row.by} bi={row.bi} color={avaColor(row.bi)} size={20} /><span style={{ color: LH.body, fontWeight: 600 }}>{row.by}</span></span></span>
         <span style={{ width: 1, height: 14, background: LH.border }} />
         <span>Created {row.date}</span>
         <span style={{ width: 1, height: 14, background: LH.border }} />
@@ -29003,20 +29012,22 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [chip, setChip] = useState('All Campaigns');
     const [q, setQ] = useState('');
     const [kebab, setKebab] = useState(null);
-    const [filterOpen, setFilterOpen] = useState(false);
     const [openRow, setOpenRow] = useState(null);
     const [fBy, setFBy] = useState('All');
-    const [fMin, setFMin] = useState('');
-    const [fSource, setFSource] = useState('All');
+    const [fStatus, setFStatus] = useState('All');
+    const [fRecords, setFRecords] = useState('All');
     const CREATORS = ['All', 'Ethan Brooks', 'Sarah Johnson', 'David Miller'];
-    const SOURCES = ['All', 'Angi', 'Thumbtack', 'Google LSA', 'Meta Ads', 'Website Booking'];
+    const STATUSES = ['All', 'Active', 'Paused', 'Draft', 'Completed', 'Archived'];
+    const RECORD_RANGES = [{ value: 'All', label: 'All' }, { value: '0', label: 'Empty (0)' }, { value: '1', label: '1+' }, { value: '10', label: '10+' }, { value: '50', label: '50+' }];
     const stTone = { Active: { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd }, Paused: { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd }, Draft: { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' }, Completed: { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd }, Archived: { bg: '#f1f0ec', fg: '#9c9b96', bd: '#e2ddd2' } };
     const avaColor = bi => bi === 'E' ? '#e0642f' : bi === 'S' ? '#2563eb' : '#7c3aed';
-    const activeFilters = (fBy !== 'All' ? 1 : 0) + (fMin ? 1 : 0) + (fSource !== 'All' ? 1 : 0);
-    const clearFilters = () => { setFBy('All'); setFSource('All'); };
+    const anyFilter = fBy !== 'All' || fStatus !== 'All' || fRecords !== 'All';
+    const clearFilters = () => { setFBy('All'); setFStatus('All'); setFRecords('All'); };
     const rows = ROWS
       .filter(r => (chip === 'All Campaigns' || chip === 'My Campaigns' ? true : r.status === chip))
       .filter(r => fBy === 'All' || r.by === fBy)
+      .filter(r => fStatus === 'All' || r.status === fStatus)
+      .filter(r => fRecords === 'All' || (fRecords === '0' ? r.records === 0 : r.records >= Number(fRecords)))
       .filter(r => r.name.toLowerCase().includes(q.trim().toLowerCase()));
     const th = (label, w, sortable) => <th style={{ textAlign: 'left', padding: '0 16px', height: 42, fontSize: 12, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>{label}{sortable && <Ic name="chevrons-up-down" size={12} color={LH.muted} />}</span></th>;
     const fChip = (label, onX) => <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 8px 0 10px', borderRadius: 8, border: '1px solid ' + LH.blueBd, background: LH.blueBg, fontSize: 12, fontWeight: 600, color: LH.blue }}>{label}<button onClick={onX} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: 0 }}><Ic name="x" size={13} color={LH.blue} /></button></span>;
@@ -29035,8 +29046,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid ' + LH.borderSoft, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 12.5, color: LH.muted, whiteSpace: 'nowrap' }}>Created by</span><div style={{ width: 156 }}><Dropdown value={fBy} options={CREATORS.map(c => ({ value: c, label: c }))} onChange={setFBy} /></div></div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 12.5, color: LH.muted, whiteSpace: 'nowrap' }}>Source</span><div style={{ width: 150 }}><Dropdown value={fSource} options={SOURCES.map(c => ({ value: c, label: c }))} onChange={setFSource} /></div></div>
-          {(fBy !== 'All' || fSource !== 'All') && <button onClick={clearFilters} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Clear filters</button>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 12.5, color: LH.muted, whiteSpace: 'nowrap' }}>Status</span><div style={{ width: 140 }}><Dropdown value={fStatus} options={STATUSES.map(c => ({ value: c, label: c }))} onChange={setFStatus} /></div></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 12.5, color: LH.muted, whiteSpace: 'nowrap' }}>Records</span><div style={{ width: 130 }}><Dropdown value={fRecords} options={RECORD_RANGES} onChange={setFRecords} /></div></div>
+          {anyFilter && <button onClick={clearFilters} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Clear filters</button>}
         </div>
         <div style={{ position: 'relative', width: 240 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 11, top: 10 }} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search campaigns" style={{ width: '100%', height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 12px 0 32px', fontSize: 13, color: LH.ink, outline: 'none', background: '#fff' }} /></div>
       </div>
@@ -29048,7 +29060,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <tbody>
             {rows.length ? rows.map((r, i) => { const t = stTone[r.status]; return <tr key={i} onClick={() => setOpenRow(r)} style={{ cursor: 'pointer', background: '#fff' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
               <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft, fontSize: 13.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</td>
-              <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><span style={{ width: 24, height: 24, borderRadius: 999, background: avaColor(r.bi), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10.5, fontWeight: 700, flexShrink: 0 }}>{r.bi}</span><span style={{ fontSize: 13, color: LH.body }}>{r.by}</span></span></td>
+              <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><CampAva by={r.by} bi={r.bi} color={avaColor(r.bi)} size={24} /><span style={{ fontSize: 13, color: LH.body }}>{r.by}</span></span></td>
               <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft }}><span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: t.bg, color: t.fg, border: '1px solid ' + t.bd }}>{r.status}</span></td>
               <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft, fontSize: 13, color: LH.body }}>{r.records}</td>
               <td style={{ padding: '0 16px', height: 52, borderBottom: '1px solid ' + LH.borderSoft, fontSize: 13, color: LH.body, whiteSpace: 'nowrap' }}>{r.date}</td>
