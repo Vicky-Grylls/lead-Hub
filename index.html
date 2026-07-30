@@ -29127,7 +29127,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   ];
   const TASK_TYPES = ['Call back', 'Site visit', 'Send a quote', 'Inspection', 'General follow-up'];
   const REPS = ['Assigned to me', 'Michael Richardson', 'Luke Marks', 'Eli Cohen', 'Monica Klein', 'Tyson Silva', 'Marcus Webb'];
-  const NUMBERS = ['(+1) 650 206 1172', '(+1) 1145 626 7281'];
+  const NUMBERS = [
+    { name: 'Zuper Sunday', num: '(+1) 650 206 1172' },
+    { name: 'Sales Team', num: '(+1) 1145 626 7281' },
+    { name: 'Support Line', num: '(+1) 415 992 3380' },
+    { name: 'Storm Response', num: '(+1) 650 447 2210' },
+    { name: 'Nova AI Line', num: '(+1) 628 555 0179' },
+    { name: 'Estimates Desk', num: '(+1) 408 771 4460' }
+  ];
   const TZS = ['America/New_York (ET)', 'America/Chicago (CT)', 'America/Los_Angeles (PT)'];
   const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   const TIMES = (() => { const o = []; for (let h = 8; h <= 21; h++) for (const m of [0, 30]) { const hr = ((h + 11) % 12) + 1, ap = h < 12 ? 'am' : 'pm'; o.push(hr + ':' + String(m).padStart(2, '0') + ' ' + ap); } return o; })();
@@ -29388,7 +29395,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </Card>
       </div>;
       if (step === 2) {
-        const numberCard = <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Outbound number</label><div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>{NUMBERS.map((o, i) => <label key={o} onClick={() => setNumIdx(i)} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: LH.body, cursor: 'pointer' }}><span style={{ width: 16, height: 16, borderRadius: 999, border: '2px solid ' + (numIdx === i ? LH.primary : LH.border), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{numIdx === i && <span style={{ width: 7, height: 7, borderRadius: 999, background: LH.primary }} />}</span>{i === 0 ? 'Zuper Sunday · ' : ''}{o}</label>)}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 8 }}>Shared by SMS and calls. Replies and callbacks come back to this number.</div></Card>;
+        const numberCard = <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Outbound number</label><div style={{ marginTop: 8 }}><Dropdown value={NUMBERS[numIdx].num} options={NUMBERS.map(o => ({ value: o.num, label: o.name + ' · ' + o.num }))} onChange={v => setNumIdx(Math.max(0, NUMBERS.findIndex(o => o.num === v)))} /></div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 8 }}>Shared by SMS and calls. Replies and callbacks come back to this number.</div></Card>;
         const optOutCard = which => {
           const val = which === 'email' ? emailOptOut : smsOptOut;
           const setVal = which === 'email' ? setEmailOptOut : setSmsOptOut;
@@ -29520,7 +29527,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       const summary = [
         { i: 0, icon: 'pencil', t: 'Basic details', lines: ['Name: ' + (name || '—'), 'Time zone: ' + tz, desc ? 'Description set' : 'No description'] },
         { i: 1, icon: 'filter', t: 'Audience', lines: [conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', enrolledCount + ' of ' + CONTACTS.length + ' records will enrol', removedInMatch + ' removed manually'] },
-        { i: 2, icon: 'radio', t: 'Communication', lines: ['Number: ' + NUMBERS[numIdx], 'Voice agent: ' + agent, 'Playbook: ' + playbook.length + ' questions'] },
+        { i: 2, icon: 'radio', t: 'Communication', lines: ['Number: ' + NUMBERS[numIdx].name + ' · ' + NUMBERS[numIdx].num, 'Voice agent: ' + agent, 'Playbook: ' + playbook.length + ' questions'] },
         { i: 3, icon: 'zap', t: 'Speed to Lead', lines: [s2l.length + ' launch-day step' + (s2l.length !== 1 ? 's' : ''), 'Business hours: ' + (bizHours ? 'on' : 'any time'), 'Weekends: ' + ((weekend.sat || weekend.sun) ? [weekend.sat && 'Sat', weekend.sun && 'Sun'].filter(Boolean).join(', ') : 'off')] },
         { i: 4, icon: 'headphones', t: 'Nurture sequence', lines: [dayCount + '-day sequence', activeDays + ' day' + (activeDays !== 1 ? 's' : '') + ' with steps', 'Send days: ' + sendDaysLabel] },
         { i: 5, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'Built-in stops: reply, opt-out, Nova DND'] }
