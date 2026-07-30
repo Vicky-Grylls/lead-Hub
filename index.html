@@ -29003,6 +29003,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   ];
   const addCampaign = row => { CAMPAIGN_ROWS = [row, ...CAMPAIGN_ROWS]; };
   const updateCampaign = (name, patch) => { CAMPAIGN_ROWS = CAMPAIGN_ROWS.map(r => r.name === name ? { ...r, ...patch } : r); };
+  let CAMPAIGN_EDIT = null;
+  const setCampaignEdit = row => { CAMPAIGN_EDIT = row; };
   const fmtNow = () => { const d = new Date(); const p = n => String(n).padStart(2, '0'); let h12 = d.getHours() % 12; if (h12 === 0) h12 = 12; const ap = d.getHours() < 12 ? 'AM' : 'PM'; return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(h12) + ':' + p(d.getMinutes()) + ' ' + ap; };
 
   function CampaignsSection({ onToast, onNavigate }) {
@@ -29031,7 +29033,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       .filter(r => r.name.toLowerCase().includes(q.trim().toLowerCase()));
     const th = (label, w, sortable) => <th style={{ textAlign: 'left', padding: '0 16px', height: 42, fontSize: 12, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>{label}{sortable && <Ic name="chevrons-up-down" size={12} color={LH.muted} />}</span></th>;
     const fChip = (label, onX) => <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 8px 0 10px', borderRadius: 8, border: '1px solid ' + LH.blueBd, background: LH.blueBg, fontSize: 12, fontWeight: 600, color: LH.blue }}>{label}<button onClick={onX} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: 0 }}><Ic name="x" size={13} color={LH.blue} /></button></span>;
-    if (openRow) return <CampaignDetail row={openRow} onBack={() => setOpenRow(null)} onEdit={() => onNavigate && onNavigate('lead-campaign-new')} onToast={onToast} stTone={stTone} avaColor={avaColor} />;
+    if (openRow) return <CampaignDetail row={openRow} onBack={() => setOpenRow(null)} onEdit={() => { setCampaignEdit(openRow); onNavigate && onNavigate('lead-campaign-new'); }} onToast={onToast} stTone={stTone} avaColor={avaColor} />;
     return <div>
       {/* Title bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 12, marginBottom: 12, borderBottom: '1px solid ' + LH.borderSoft, flexWrap: 'wrap' }}>
@@ -29040,7 +29042,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <span style={{ width: 1, height: 18, background: LH.border }} />
           <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>{CHIPS.map(c => <button key={c} onClick={() => setChip(c)} style={{ height: 30, padding: '0 12px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', border: '1px solid ' + (chip === c ? LH.border : 'transparent'), background: chip === c ? '#fff' : 'transparent', color: chip === c ? LH.ink : LH.sub, boxShadow: chip === c ? '0 1px 2px rgba(0,0,0,.04)' : 'none' }}>{c}</button>)}</div>
         </div>
-        <Btn kind="primary" icon="plus" onClick={() => onNavigate && onNavigate('lead-campaign-new')}>New campaign</Btn>
+        <Btn kind="primary" icon="plus" onClick={() => { setCampaignEdit(null); onNavigate && onNavigate('lead-campaign-new'); }}>New campaign</Btn>
       </div>
       {/* Filter bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid ' + LH.borderSoft, flexWrap: 'wrap' }}>
@@ -29067,7 +29069,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <td style={{ padding: '0 8px', height: 52, borderBottom: '1px solid ' + LH.borderSoft, textAlign: 'right', position: 'relative' }}>
                 <button onClick={e => { e.stopPropagation(); setKebab(kebab === i ? null : i); }} style={{ width: 30, height: 30, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f1efe9'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="more-horizontal" size={17} color={LH.sub} /></button>
                 {kebab === i && <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 44, right: 12, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 150 }}>
-                  {[['pencil', 'Edit'], ['copy', 'Duplicate'], ['pause', 'Pause'], ['trash-2', 'Delete']].map(([ic, l]) => <div key={l} onClick={() => { setKebab(null); if (l === 'Edit') onNavigate && onNavigate('lead-campaign-new'); else onToast(l + ' — “' + r.name + '”'); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', borderRadius: 7, fontSize: 13, color: l === 'Delete' ? LH.red : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={l === 'Delete' ? LH.red : LH.sub} />{l}</div>)}
+                  {[['pencil', 'Edit'], ['copy', 'Duplicate'], ['pause', 'Pause'], ['trash-2', 'Delete']].map(([ic, l]) => <div key={l} onClick={() => { setKebab(null); if (l === 'Edit') { setCampaignEdit(r); onNavigate && onNavigate('lead-campaign-new'); } else onToast(l + ' — “' + r.name + '”'); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', borderRadius: 7, fontSize: 13, color: l === 'Delete' ? LH.red : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={l === 'Delete' ? LH.red : LH.sub} />{l}</div>)}
                 </div>}
               </td>
             </tr>; }) : <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', fontSize: 13, color: LH.muted }}>No campaigns match.</td></tr>}
@@ -29275,7 +29277,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </Card>;
   }
 
-  function CampaignWizard({ onClose, onCreate, embed, init }) {
+  function CampaignWizard({ onClose, onCreate, embed, init, editing }) {
     init = init || {};
     const [step, setStep] = useState(0);
     const [name, setName] = useState(init.name !== undefined ? init.name : 'Storm Season Re-engage');
@@ -29289,7 +29291,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ]);
     const [search, setSearch] = useState('');
     const [removedIds, setRemovedIds] = useState(() => new Set());
-    const [status, setStatus] = useState('Draft');
+    const [status, setStatus] = useState(init.status || 'Draft');
     // Communication
     const [numIdx, setNumIdx] = useState(0);
     const [agent, setAgent] = useState('Nova — AI voice agent');
@@ -29574,7 +29576,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go back</Btn>}
             {step < WIZ_STEPS.length - 1
               ? <Btn kind="primary" onClick={() => { if (step === 0 && !name.trim()) return; setStep(step + 1); }}>Continue</Btn>
-              : <Btn kind="primary" icon="rocket" onClick={() => { if (!(name.trim() && tz && conds.some(c => c.field))) return; addCampaign({ name: name.trim(), by: 'Ethan Brooks', bi: 'E', status: 'Active', records: enrolledCount, date: fmtNow() }); onCreate(); }} style={{ opacity: (name.trim() && tz && conds.some(c => c.field)) ? 1 : 0.5 }}>Publish campaign</Btn>}
+              : <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={() => { if (!(name.trim() && tz && conds.some(c => c.field))) return; if (editing) { updateCampaign(editing.name, { name: name.trim(), status, records: enrolledCount }); } else { addCampaign({ name: name.trim(), by: 'Ethan Brooks', bi: 'E', status: status === 'Draft' ? 'Active' : status, records: enrolledCount, date: fmtNow() }); } onCreate(); }} style={{ opacity: (name.trim() && tz && conds.some(c => c.field)) ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Publish campaign'}</Btn>}
           </div>
         </div>
       </div>;
@@ -29652,7 +29654,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     };
     const [wizardOpen, setWizardOpen] = useState(false);
     const h = heads[section] || heads.overview;
-    const campaignsAction = <Btn kind="primary" icon="plus" onClick={() => onNavigate('lead-campaign-new')}>New campaign</Btn>;
+    const campaignsAction = <Btn kind="primary" icon="plus" onClick={() => { setCampaignEdit(null); onNavigate('lead-campaign-new'); }}>New campaign</Btn>;
     return <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       {section !== 'campaigns' && <PageHead crumb={h.crumb} title={h.title} actions={h.actions} />}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 26px 34px', background: '#fdfdfc' }}>
@@ -29688,8 +29690,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   const CHAN_ICON = { sms: 'message-square', email: 'mail', call: 'phone', task: 'check-square' };
 
   function CampaignCreate({ embed, onClose, onCreate }) {
-    const [mode, setMode] = useState('choose');
-    const [init, setInit] = useState(null);
+    const editRow = CAMPAIGN_EDIT;
+    const [mode, setMode] = useState(editRow ? 'wizard' : 'choose');
+    const [init, setInit] = useState(editRow ? { name: editRow.name, status: editRow.status } : null);
     const [tplCat, setTplCat] = useState('All templates');
     const [tplQ, setTplQ] = useState('');
     const [cloneQ, setCloneQ] = useState('');
@@ -29713,7 +29716,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       });
     };
 
-    if (mode === 'wizard') return <CampaignWizard embed={embed} init={init} onClose={() => setMode('choose')} onCreate={onCreate} />;
+    if (mode === 'wizard') return <CampaignWizard embed={embed} init={init} editing={editRow} onClose={() => { setCampaignEdit(null); if (editRow) onClose(); else setMode('choose'); }} onCreate={() => { setCampaignEdit(null); onCreate(); }} />;
 
     const shellHead = (title, onBack) => <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>{onBack && <button onClick={onBack} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="arrow-left" size={15} color={LH.body} /></button>}<span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>{title}</span></div>
