@@ -28643,6 +28643,83 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { t: '1h ago', who: 'Nova', msg: 'Call completed. Insurance claim and urgency captured.' },
     { t: '32m ago', who: 'Nova', msg: 'All 9 qualification fields captured.' }
   ];
+  function LeadSideSheet({ lead, onClose, onToast }) {
+    const [tab, setTab] = useState('details');
+    const [expanded, setExpanded] = useState(false);
+    const [tasks, setTasks] = useState(lead && lead.tasks ? lead.tasks : []);
+    const [taskOpen, setTaskOpen] = useState(false);
+    const [tTitle, setTTitle] = useState('');
+    const [tType, setTType] = useState('Call back');
+    const [tWho, setTWho] = useState('Ethan Brooks');
+    const [tDue, setTDue] = useState('Today 4:00 PM');
+    const [notes, setNotes] = useState(lead && lead.notes ? lead.notes : []);
+    const [noteText, setNoteText] = useState('');
+    const lastRef = useRef(null);
+    if (lead) lastRef.current = lead;
+    const shown = lead || lastRef.current;
+    useEffect(() => { setTasks(lead && lead.tasks ? lead.tasks : []); setNotes(lead && lead.notes ? lead.notes : []); setTab('details'); setTaskOpen(false); }, [lead && lead.id]);
+    useEffect(() => { const h = e => { if (e.key === 'Escape') onClose(); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, [onClose]);
+    const captured = shown ? parseInt(shown.fields || '0') : 0;
+    const qualified = shown && (shown.col === 'Qualified' || shown.col === 'Completed');
+    const act = (shown && shown.act) || DIANE_ACT;
+    const addTask = () => { if (!tTitle.trim()) return; setTasks(ts => [{ title: tTitle.trim(), type: tType, who: tWho, due: tDue, done: false }, ...ts]); setTTitle(''); setTaskOpen(false); onToast && onToast('Task created — “' + tTitle.trim() + '”'); };
+    const addNote = () => { if (!noteText.trim()) return; setNotes(ns => [{ text: noteText.trim(), who: 'You', when: 'Just now' }, ...ns]); setNoteText(''); };
+    const TABS = [['details', 'Primary Details'], ['activity', 'Activity'], ['tasks', 'Tasks'], ['notes', 'Notes']];
+    return <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, zIndex: 40, width: expanded ? 560 : 400, maxWidth: '94%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,.10)', display: 'flex', flexDirection: 'column', transform: lead ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s' }}>
+      {shown && <>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}><Ic name="user" size={15} color={LH.sub} /><span style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown.name}</span></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {[{ i: expanded ? 'minimize-2' : 'maximize-2', f: () => setExpanded(x => !x) }, { i: 'external-link', f: () => {} }, { i: 'x', f: onClose }].map((b, k) => <button key={k} onClick={b.f} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name={b.i} size={15} color={LH.sub} /></button>)}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 2, padding: '0 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+          {TABS.map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ padding: '11px 10px', fontSize: 13, fontWeight: 600, color: tab === k ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (tab === k ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{l}</button>)}
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
+          {tab === 'details' && <>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+              <div><div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>{shown.name}</div><div style={{ fontSize: 12, color: LH.muted, marginTop: 2 }}>{shown.note}</div><div style={{ display: 'flex', gap: 6, marginTop: 8 }}><Pill label={shown.src} tone="New" /><Pill label={shown.status} /></div></div>
+              <div style={{ width: 40, height: 40, borderRadius: 999, background: shown.score >= 80 ? LH.primary : shown.score >= 60 ? '#c9922e' : '#9c9b96', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>{shown.score}</div>
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, margin: '18px 0 8px' }}>{captured} OF 9 FIELDS CAPTURED</div>
+            {DIANE_FIELDS.map((f, i) => <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}><Ic name={i < captured ? 'check' : 'circle'} size={14} color={i < captured ? LH.green : '#cfc9bd'} /><span style={{ fontSize: 12.5, color: i < captured ? LH.body : LH.muted }}>{f}</span></div>)}
+            <div style={{ background: LH.tint, borderRadius: 9, padding: 12, marginTop: 16 }}><div style={{ fontSize: 11, fontWeight: 700, color: LH.primaryDark, marginBottom: 3 }}>Suggested next step</div><div style={{ fontSize: 12, color: '#4a4a46', lineHeight: 1.45 }}>{qualified ? 'Ready to convert. Tap Convert to Inspection to move this to Sales Hub.' : (9 - captured) + ' more field' + (9 - captured === 1 ? '' : 's') + ' to capture. Nova is working this lead — nudge with a call or text.'}</div></div>
+          </>}
+          {tab === 'activity' && <div>{act.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: 14 }}>
+            <div style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={a.who === 'Nova' ? 'sparkles' : 'settings'} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div>
+            <div style={{ flex: 1 }}><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.45 }}>{a.msg}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 2 }}>{a.who} · {a.t || a.when}</div></div>
+          </div>)}</div>}
+          {tab === 'tasks' && <div>
+            {taskOpen ? <div style={{ border: '1px solid ' + LH.border, borderRadius: 10, padding: 12, marginBottom: 12 }}>
+              <input value={tTitle} onChange={e => setTTitle(e.target.value)} placeholder="Task title" autoFocus style={{ width: '100%', height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none', marginBottom: 8 }} />
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}><div style={{ flex: 1 }}><Dropdown value={tType} options={['Call back', 'Site visit', 'Send a quote', 'Follow up', 'Email'].map(o => ({ value: o, label: o }))} onChange={setTType} /></div><div style={{ flex: 1 }}><Dropdown value={tWho} options={['Ethan Brooks', 'Sarah Johnson', 'David Miller'].map(o => ({ value: o, label: o }))} onChange={setTWho} /></div></div>
+              <input value={tDue} onChange={e => setTDue(e.target.value)} placeholder="Due (e.g. Today 4:00 PM)" style={{ width: '100%', height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none', marginBottom: 10 }} />
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}><Btn onClick={() => setTaskOpen(false)}>Cancel</Btn><Btn kind="primary" icon="check" onClick={addTask}>Add task</Btn></div>
+            </div> : <Btn icon="plus" style={{ width: '100%', justifyContent: 'center', marginBottom: 12 }} onClick={() => setTaskOpen(true)}>Create task</Btn>}
+            {tasks.length ? tasks.map((tk, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: i < tasks.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+              <span onClick={() => setTasks(ts => ts.map((x, j) => j === i ? { ...x, done: !x.done } : x))} style={{ width: 18, height: 18, borderRadius: 5, border: '1.5px solid ' + (tk.done ? LH.green : LH.border), background: tk.done ? LH.green : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer' }}>{tk.done && <Ic name="check" size={12} color="#fff" />}</span>
+              <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink, textDecoration: tk.done ? 'line-through' : 'none' }}>{tk.title}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{tk.type} · {tk.who}</div></div>
+              <span style={{ fontSize: 11.5, color: LH.sub }}>{tk.due}</span>
+            </div>) : !taskOpen && <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.sub }}>No tasks yet</div>}
+          </div>}
+          {tab === 'notes' && <div>
+            <textarea value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Add a note…" style={{ width: '100%', height: 72, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 13, color: LH.ink, outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8, marginBottom: 14 }}><Btn kind="primary" icon="plus" onClick={addNote} style={{ opacity: noteText.trim() ? 1 : 0.5 }}>Add note</Btn></div>
+            {notes.length ? notes.map((nt, i) => <div key={i} style={{ padding: '10px 0', borderBottom: i < notes.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.45 }}>{nt.text}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 3 }}>{nt.who} · {nt.when}</div></div>) : <div style={{ padding: '20px 0', textAlign: 'center' }}><Ic name="sticky-note" size={30} color="#d8cdb8" style={{ margin: '0 auto 10px', width: 30, height: 30 }} /><div style={{ fontSize: 13, color: LH.sub }}>No notes yet</div></div>}
+          </div>}
+        </div>
+        {tab === 'details' && <div style={{ flexShrink: 0, padding: 16, borderTop: '1px solid ' + LH.borderSoft }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+            <Btn icon="phone" style={{ flex: 1, justifyContent: 'center', height: 34 }} onClick={() => onToast && onToast('Calling ' + shown.name + '…')}>Call</Btn>
+            <Btn icon="message-square" style={{ flex: 1, justifyContent: 'center', height: 34 }} onClick={() => onToast && onToast('Texting ' + shown.name + '…')}>Text</Btn>
+            <Btn icon="mail" style={{ flex: 1, justifyContent: 'center', height: 34 }} onClick={() => onToast && onToast('Emailing ' + shown.name + '…')}>Email</Btn>
+          </div>
+          <Btn kind="primary" icon={qualified ? 'arrow-right-circle' : 'chevrons-right'} style={{ width: '100%', justifyContent: 'center' }} onClick={() => onToast && onToast((qualified ? 'Converting ' : 'Advancing ') + shown.name + '…')}>{qualified ? 'Convert to Inspection' : 'Move to next stage'}</Btn>
+        </div>}
+      </>}
+    </div>;
+  }
   const CHANNELS = [
     { g: 'Marketplace', items: [
       { k: 'A', n: 'Angi', s: '142 leads this month · 36 this week', st: 'Live', hook: 'hooks.zuper.com/lead/angi/hill-roofing', last: '4 min ago' },
@@ -28862,6 +28939,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [st, setSt] = useState(row.status);
     const [tab, setTab] = useState('leads');
     const [nameEdit, setNameEdit] = useState(row.name);
+    const [selLead, setSelLead] = useState(null);
+    const SCORE_BY_STAGE = { Qualified: 86, Completed: 90, Contacting: 62, Qualifying: 58, 'In drip': 48 };
+    const openEnrollment = c => setSelLead({
+      id: c.n, name: c.n, note: c.last, src: c.src, status: c.stage, col: c.stage,
+      score: SCORE_BY_STAGE[c.stage] || 55, fields: c.last && c.last.match(/(\d+)\/9/) ? c.last.match(/(\d+)\/9/)[1] : (c.stage === 'Qualified' || c.stage === 'Completed' ? '9' : c.stage === 'Contacting' ? '3' : '5'),
+      act: [
+        { who: 'System', t: c.when, msg: c.n + ' enrolled from ' + c.src + '.' },
+        { who: 'Nova', t: c.when, msg: c.last + '.' },
+        { who: 'Nova', t: '2h ago', msg: 'Working the lead through the ' + row.name + ' sequence.' }
+      ]
+    });
     const t = stTone[st] || stTone.Draft;
     const enrolled = row.records;
     const active = Math.round(enrolled * 0.42);
@@ -28916,7 +29004,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </Card>;
     const recentCard = <Card style={{ padding: 0, overflow: 'hidden' }}>
       <div style={{ padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft, fontSize: 14, fontWeight: 700, color: LH.ink }}>Recent enrollments</div>
-      {enrolled ? recent.map((c, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < recent.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+      {enrolled ? recent.map((c, i) => <div key={i} onClick={() => openEnrollment(c)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < recent.length - 1 ? '1px solid ' + LH.borderSoft : 'none', cursor: 'pointer', background: selLead && selLead.id === c.n ? '#faf8f4' : 'transparent' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = selLead && selLead.id === c.n ? '#faf8f4' : 'transparent'}>
         <div style={{ width: 30, height: 30, borderRadius: 999, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{c.n.split(' ').map(w => w[0]).join('')}</div>
         <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{c.n}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.src} · {c.last}</div></div>
         <Pill label={c.stage} tone={c.tone} />
@@ -28983,6 +29071,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {TABS.map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ padding: '9px 13px', fontSize: 13.5, fontWeight: 600, color: tab === k ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (tab === k ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{l}</button>)}
       </div>
       {tabBody()}
+      <LeadSideSheet lead={selLead} onClose={() => setSelLead(null)} onToast={onToast} />
     </div>;
   }
   let CAMPAIGN_ROWS = [
