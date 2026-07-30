@@ -29245,9 +29245,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [emailSig, setEmailSig] = useState('Hill Roofing\n(+1) 650 206 1172 · hillroofing.com');
     const [trackOpens, setTrackOpens] = useState(true);
     const [trackClicks, setTrackClicks] = useState(true);
-    const [region, setRegion] = useState('United States');
-    const [emailUnsub, setEmailUnsub] = useState(true);
-    const [smsStop, setSmsStop] = useState(true);
+    const [smsOptOut, setSmsOptOut] = useState('Reply STOP to unsubscribe.');
+    const [emailOptOut, setEmailOptOut] = useState('You’re receiving this because you contacted Hill Roofing. Unsubscribe: {{unsubscribe_link}}');
     const [instructions, setInstructions] = useState('Be warm and concise. Confirm the property address, damage type, and urgency. Offer a free inspection.');
     const [playbook, setPlaybook] = useState([
       { id: wuid(), q: 'Is this for a home or a commercial property?', req: true },
@@ -29346,26 +29345,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </Card>
       </div>;
       if (step === 2) {
-        const MANDATE = { 'United States': true, 'Canada': true, 'United Kingdom': true, 'European Union': true, 'Australia': true, 'Other / no mandate': false };
-        const locked = MANDATE[region];
         const numberCard = <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Outbound number</label><div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>{NUMBERS.map((o, i) => <label key={o} onClick={() => setNumIdx(i)} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: LH.body, cursor: 'pointer' }}><span style={{ width: 16, height: 16, borderRadius: 999, border: '2px solid ' + (numIdx === i ? LH.primary : LH.border), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{numIdx === i && <span style={{ width: 7, height: 7, borderRadius: 999, background: LH.primary }} />}</span>{i === 0 ? 'Zuper Sunday · ' : ''}{o}</label>)}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 8 }}>Shared by SMS and calls. Replies and callbacks come back to this number.</div></Card>;
-        const complianceCard = which => {
-          const on = which === 'email' ? (locked || emailUnsub) : (locked || smsStop);
-          const setOn = which === 'email' ? setEmailUnsub : setSmsStop;
-          const title = which === 'email' ? 'Email unsubscribe link' : 'SMS STOP opt-out';
-          const desc = which === 'email' ? 'Add a one-click unsubscribe link to every campaign email.' : 'Honour the STOP keyword and append opt-out text to SMS.';
-          const icon = which === 'email' ? 'mail' : 'message-square-off';
+        const optOutCard = which => {
+          const val = which === 'email' ? emailOptOut : smsOptOut;
+          const setVal = which === 'email' ? setEmailOptOut : setSmsOptOut;
+          const hint = which === 'email' ? 'Appended to the footer of every campaign email.' : 'Appended to campaign texts so recipients know how to opt out.';
           return <Card style={{ padding: 15, marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="shield-check" size={15} color={LH.ink} /><label style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Compliance</label></div>
-            <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 12 }}>Opt-out adapts to the customer's preferred region.</div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Customer preferred region</label>
-            <div style={{ marginTop: 6 }}><Dropdown value={region} options={Object.keys(MANDATE).map(r => ({ value: r, label: r }))} onChange={setRegion} /></div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '12px 0 0', marginTop: 12, borderTop: '1px solid ' + LH.borderSoft }}>
-              <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={15} color={LH.sub} /></div>
-              <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{title}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 1 }}>{locked ? 'Required in ' + region + ' — always on' : desc}</div></div>
-              <div style={{ opacity: locked ? 0.55 : 1, pointerEvents: locked ? 'none' : 'auto', flexShrink: 0, marginTop: 2 }}><Toggle on={on} onChange={setOn} /></div>
-            </div>
-            {!locked && <div style={{ fontSize: 11.5, color: LH.amber, background: LH.amberBg, border: '1px solid ' + LH.amberBd, borderRadius: 8, padding: '8px 11px', marginTop: 12 }}>No legal mandate for this region — keeping opt-outs on is recommended.</div>}
+            <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Opt-out message</label>
+            <textarea value={val} onChange={e => setVal(e.target.value)} placeholder={which === 'email' ? 'e.g. Unsubscribe: {{unsubscribe_link}}' : 'e.g. Reply STOP to unsubscribe.'} style={{ width: '100%', height: 60, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 12.5, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', marginTop: 6, lineHeight: 1.5 }} />
+            <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 6 }}>{hint}</div>
           </Card>;
         };
         const emailCard = <Card style={{ padding: 15, marginBottom: 12 }}>
@@ -29414,8 +29402,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             {TABS.map(([k, l, ic]) => <button key={k} onClick={() => setCommTab(k)} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 36, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: commTab === k ? '#fff' : 'transparent', color: commTab === k ? LH.ink : LH.sub, boxShadow: commTab === k ? '0 1px 2px rgba(0,0,0,.06)' : 'none' }}><Ic name={ic} size={15} color={commTab === k ? LH.primary : LH.muted} />{l}</button>)}
           </div>
           <div style={{ marginBottom: 12 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{groupTitle}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 2 }}>{groupSub}</div></div>
-          {commTab === 'sms' && <>{numberCard}{complianceCard('sms')}</>}
-          {commTab === 'email' && <>{emailCard}{complianceCard('email')}</>}
+          {commTab === 'sms' && <>{numberCard}{optOutCard('sms')}</>}
+          {commTab === 'email' && <>{emailCard}{optOutCard('email')}</>}
           {commTab === 'call' && <>{numberCard}{voiceCard}{instructionsCard}{playbookCard}</>}
         </div>;
       }
