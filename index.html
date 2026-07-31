@@ -28974,13 +28974,19 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { label: 'Enrolled', value: enrolled }, { label: 'Active now', value: active },
       { label: 'Completed', value: completed, accent: LH.green }, { label: 'Exited', value: exited }, { label: 'Reply rate', value: replyRate }
     ];
-    const recent = [
+    const RECENT_FIXED = [
       { n: 'Daniel Thompson', src: 'Angi', stage: 'Qualified', tone: 'Qualified', last: 'Nova call · answered', when: '12m ago' },
       { n: 'Rosa Nguyen', src: 'Thumbtack', stage: 'Contacting', tone: 'New', last: 'SMS sent', when: '40m ago' },
       { n: 'Kevin Alvarez', src: 'Angi', stage: 'In drip', tone: 'In drip', last: 'Day 3 SMS', when: '3h ago' },
       { n: 'Nina Foster', src: 'Meta Ads', stage: 'Qualifying', tone: 'New', last: 'Nova call · 4/9 fields', when: '5h ago' },
       { n: 'Grant Wells', src: 'Google LSA', stage: 'Completed', tone: 'Qualified', last: 'Sequence completed', when: '1d ago' }
     ];
+    const R_FIRST = ['Marcus', 'Priya', 'Dana', 'Owen', 'Bianca', 'Trevor', 'Sofia', 'Andre', 'Hannah', 'Leon', 'Mia', 'Caleb', 'Ruby', 'Victor', 'Elena', 'Jonah', 'Tara', 'Wyatt', 'Nadia', 'Gabe', 'Ivy', 'Simon', 'Farah', 'Cole', 'Maya', 'Dylan', 'Zoe', 'Reid', 'Amara', 'Kyle'];
+    const R_LAST = ['Reed', 'Raman', 'Whitfield', 'Castillo', 'Flores', 'Hunt', 'Marin', 'Cole', 'Yates', 'Park', 'Chen', 'Nash', 'Ortiz', 'Popov', 'Singh', 'Brooks', 'Khan', 'Rivera', 'Coleman', 'Wu', 'Aziz', 'Barrett', 'Lin', 'Frost', 'Adams', 'Palmer', 'Beck', 'Dunn', 'Voss', 'Carter'];
+    const R_SRC = ['Angi', 'Thumbtack', 'Google LSA', 'Meta Ads', 'Website Booking'];
+    const R_STAGE = [['Qualified', 'Qualified', 'Nova call · answered'], ['Contacting', 'New', 'SMS sent'], ['In drip', 'In drip', 'Day 3 SMS'], ['Qualifying', 'New', 'Nova call · 4/9 fields'], ['Completed', 'Qualified', 'Sequence completed'], ['Contacting', 'New', 'Email delivered']];
+    const R_WHEN = ['1h ago', '2h ago', '4h ago', '6h ago', '9h ago', '14h ago', '1d ago', '2d ago', '3d ago', '4d ago'];
+    const recent = enrolled <= RECENT_FIXED.length ? RECENT_FIXED.slice(0, enrolled) : RECENT_FIXED.concat(Array.from({ length: enrolled - RECENT_FIXED.length }, (_, k) => { const i = k + RECENT_FIXED.length; const s = R_STAGE[i % R_STAGE.length]; return { n: R_FIRST[i % R_FIRST.length] + ' ' + R_LAST[(i * 7 + 3) % R_LAST.length], src: R_SRC[i % R_SRC.length], stage: s[0], tone: s[1], last: s[2], when: R_WHEN[i % R_WHEN.length] }; }));
     const config = [
       { icon: 'filter', title: 'Audience', lines: ['3 conditions (AND)', 'Angi, Thumbtack · New Lead · Roofing', enrolled + ' records enrolled'] },
       { icon: 'radio', title: 'Communication', lines: ['Nova — AI voice agent', 'SMS/calls: (+1) 650 206 1172', 'Email: hello@mail.hillroofing.com', '5 playbook questions'] },
@@ -29018,13 +29024,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>) : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No enrollments yet. {st === 'Draft' ? 'Publish the campaign to start enrolling.' : 'Matching customers enroll as they are created.'}</div>}
     </Card>;
     const recentCard = <Card style={{ padding: 0, overflow: 'hidden' }}>
-      <div style={{ padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft, fontSize: 14, fontWeight: 700, color: LH.ink }}>Recent enrollments</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Enrolled leads</span>{enrolled ? <span style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '2px 8px' }}>{enrolled}</span> : null}</div>
+      <div style={{ maxHeight: 520, overflowY: 'auto' }}>
       {enrolled ? recent.map((c, i) => <div key={i} onClick={() => openEnrollment(c)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < recent.length - 1 ? '1px solid ' + LH.borderSoft : 'none', cursor: 'pointer', background: selLead && selLead.id === c.n ? '#faf8f4' : 'transparent' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = selLead && selLead.id === c.n ? '#faf8f4' : 'transparent'}>
         <div style={{ width: 30, height: 30, borderRadius: 999, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{c.n.split(' ').map(w => w[0]).join('')}</div>
         <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{c.n}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.src} · {c.last}</div></div>
         <Pill label={c.stage} tone={c.tone} />
         <span style={{ fontSize: 11.5, color: LH.muted, width: 60, textAlign: 'right' }}>{c.when}</span>
       </div>) : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No one enrolled yet.</div>}
+      </div>
     </Card>;
     const reasonTone = { 'Opted out': { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd }, 'Sent to rep': { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd }, 'Delivery failed': { bg: '#fbeaea', fg: LH.red, bd: '#f2d0d0' } };
     const openAttention = a => openEnrollment({ n: a.n, src: a.src, last: a.detail, stage: a.reason === 'Sent to rep' ? 'Qualifying' : 'In drip', when: a.when });
