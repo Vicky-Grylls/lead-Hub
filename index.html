@@ -29085,6 +29085,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const matchKpi = l => !kpi || (kpi === 'received' ? ageHours(l.age) < 24 : kpi === 'qualified' ? l.col === 'Qualified' : kpi === 'drip' ? l.col === 'In drip' : kpi === 'human' ? l.col === 'Needs human' : true);
     const ASSIGNEES = ['Maria Gonzalez', 'Tyson Silva', 'Michael Richardson', 'Marcus Webb'];
     const assigneeOf = l => ASSIGNEES[(l.id.charCodeAt(1) + l.id.length) % ASSIGNEES.length];
+    const CAMPS = ['Speed-to-Lead Drip', 'Estimate Follow-up', 'Storm Season Re-engage', 'Insurance Claim Assist', 'Gutter Season Push'];
+    const campaignOf = l => l.col === 'New lead' ? null : CAMPS[(l.name.length + l.score) % CAMPS.length];
     const ageHours = a => { const n = parseInt(a) || 0; return a.indexOf('d') > -1 ? n * 24 : a.indexOf('h') > -1 ? n : a.indexOf('m') > -1 ? n / 60 : n; };
     const SRCS = ['All'].concat(Array.from(new Set(PIPE_LEADS.map(l => l.src))));
     const STATS = ['All'].concat(Array.from(new Set(PIPE_LEADS.map(l => l.status))));
@@ -29135,16 +29137,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         ? <LeadsKanban leads={filtered} onMove={move} onCardClick={setSelId} selId={selId} />
         : <Card style={{ padding: 0, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead><tr>{[['Score', 64], ['Lead', 0], ['Stage', 130], ['Source', 130], ['Fields', 80], ['Status', 130], ['Age', 70]].map(([h, w]) => <th key={h} style={{ textAlign: h === 'Score' || h === 'Fields' || h === 'Age' ? 'left' : 'left', padding: '10px 16px', fontSize: 12, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w || 'auto' }}>{h}</th>)}</tr></thead>
+            <thead><tr>{[['Score', 64], ['Lead', 0], ['Stage', 130], ['Source', 130], ['Campaigns', 180], ['Fields', 80], ['Status', 130], ['Age', 70]].map(([h, w]) => <th key={h} style={{ textAlign: h === 'Score' || h === 'Fields' || h === 'Age' ? 'left' : 'left', padding: '10px 16px', fontSize: 12, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w || 'auto' }}>{h}</th>)}</tr></thead>
             <tbody>{filtered.map((l, i) => <tr key={l.id} onClick={() => openPage(l)} style={{ cursor: 'pointer', background: '#fff' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
               <td style={{ padding: '11px 16px', borderBottom: i < filtered.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><span style={{ width: 30, height: 30, borderRadius: 999, background: scoreColor(l.score), color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>{l.score}</span></td>
               <td style={{ padding: '11px 16px', borderBottom: i < filtered.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink }}>{l.name}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 1 }}>{l.note}</div></td>
               <td style={{ padding: '11px 16px', borderBottom: i < filtered.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: LH.body }}><span style={{ width: 8, height: 8, borderRadius: 999, background: COL_DOT[l.col] || LH.sub }} />{l.col}</span></td>
               <td style={{ padding: '11px 16px', borderBottom: i < filtered.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 9px', borderRadius: 7, background: LH.blueBg, color: LH.blue, fontSize: 11.5, fontWeight: 600 }}>{l.src}</span></td>
+              <td style={{ padding: '11px 16px', borderBottom: i < filtered.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>{campaignOf(l) ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 22, padding: '0 9px', borderRadius: 7, background: '#f1f0ec', color: LH.body, fontSize: 11.5, fontWeight: 600, maxWidth: 168, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}><Ic name="megaphone" size={12} color={LH.sub} />{campaignOf(l)}</span> : <span style={{ fontSize: 11.5, color: LH.muted }}>Not enrolled</span>}</td>
               <td style={{ padding: '11px 16px', borderBottom: i < filtered.length - 1 ? '1px solid ' + LH.borderSoft : 'none', fontSize: 12.5, color: LH.body }}>{l.fields}</td>
               <td style={{ padding: '11px 16px', borderBottom: i < filtered.length - 1 ? '1px solid ' + LH.borderSoft : 'none', fontSize: 12.5, color: LH.body }}>{l.status}</td>
               <td style={{ padding: '11px 16px', borderBottom: i < filtered.length - 1 ? '1px solid ' + LH.borderSoft : 'none', fontSize: 12.5, color: LH.muted }}>{l.age}</td>
-            </tr>)}{!filtered.length && <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', fontSize: 13, color: LH.muted }}>No leads match the filters.</td></tr>}</tbody>
+            </tr>)}{!filtered.length && <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', fontSize: 13, color: LH.muted }}>No leads match the filters.</td></tr>}</tbody>
           </table>
         </Card>}
       {/* Lead detail side sheet — reuse the full campaign LeadSideSheet (Tasks, Notes, functional) */}
