@@ -29446,6 +29446,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [emailFrom, setEmailFrom] = useState('Hill Roofing');
     const [emailAddr, setEmailAddr] = useState('hello@mail.hillroofing.com');
     const [emailReply, setEmailReply] = useState('replies@hillroofing.com');
+    const [sigPreview, setSigPreview] = useState(false);
     const [emailSig, setEmailSig] = useState('Hill Roofing\nTrusted roofing & storm restoration since 2004\n\n(+1) 650 206 1172  ·  hello@hillroofing.com\nhillroofing.com\n123 Market Street, Suite 400, San Mateo, CA 94402\n\nFollow us:  Facebook  ·  Instagram  ·  LinkedIn  ·  X (Twitter)\n\nYou received this email from Hill Roofing.\nUnsubscribe: {{unsubscribe_link}}  ·  Update preferences: {{preferences_link}}');
     const [trackOpens, setTrackOpens] = useState(true);
     const [trackClicks, setTrackClicks] = useState(true);
@@ -29560,8 +29561,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <div><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Sending address</label><div style={{ marginTop: 6 }}><Dropdown value={emailAddr} options={['hello@mail.hillroofing.com', 'quotes@mail.hillroofing.com', 'no-reply@mail.hillroofing.com'].map(a => ({ value: a, label: a }))} onChange={setEmailAddr} /></div></div>
           </div>
           <div style={{ marginTop: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Reply-to</label><input value={emailReply} onChange={e => setEmailReply(e.target.value)} style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none', marginTop: 6 }} /></div>
-          <div style={{ marginTop: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Email signature</label><textarea value={emailSig} onChange={e => setEmailSig(e.target.value)} style={{ width: '100%', height: 110, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 12.5, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', marginTop: 6, lineHeight: 1.5 }} /></div>
-          <div style={{ marginTop: 10, border: '1px solid ' + LH.border, borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ marginTop: 12 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Email signature</label><button onClick={() => setSigPreview(p => !p)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 28, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: sigPreview ? LH.tint : '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name={sigPreview ? 'eye-off' : 'eye'} size={13} color={LH.sub} />{sigPreview ? 'Hide preview' : 'Preview'}</button></div><textarea value={emailSig} onChange={e => setEmailSig(e.target.value)} style={{ width: '100%', height: 110, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 12.5, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', marginTop: 6, lineHeight: 1.5 }} /></div>
+          {sigPreview && <div style={{ marginTop: 10, border: '1px solid ' + LH.border, borderRadius: 10, overflow: 'hidden' }}>
             <div style={{ padding: '7px 12px', background: '#faf8f4', borderBottom: '1px solid ' + LH.borderSoft, fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: LH.muted }}>FOOTER PREVIEW</div>
             <div style={{ padding: 18, background: '#fff' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 14 }}>
@@ -29579,7 +29580,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 <span style={{ color: LH.primary, fontWeight: 600, cursor: 'pointer' }}>Unsubscribe</span> · <span style={{ color: LH.primary, fontWeight: 600, cursor: 'pointer' }}>Update preferences</span>
               </div>
             </div>
-          </div>
+          </div>}
           <div style={{ display: 'flex', gap: 22, marginTop: 14 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: LH.body }}><Toggle on={trackOpens} onChange={setTrackOpens} />Track opens</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: LH.body }}><Toggle on={trackClicks} onChange={setTrackClicks} />Track clicks</span>
