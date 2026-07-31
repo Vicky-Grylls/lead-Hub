@@ -29008,7 +29008,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ];
     const primaryAction = st === 'Active' ? { label: 'Pause', icon: 'pause', next: 'Paused' } : st === 'Paused' ? { label: 'Resume', icon: 'play', next: 'Active' } : st === 'Draft' ? { label: 'Publish', icon: 'rocket', next: 'Active' } : null;
     const doPrimary = () => { setSt(primaryAction.next); updateCampaign(row.name, { status: primaryAction.next }); onToast(primaryAction.label + ' — “' + row.name + '”'); };
-    const TABS = [['overview', 'Overview'], ['leads', 'Leads'], ['editor', 'Editor'], ['reports', 'Reports'], ['activity', 'Activity'], ['health', 'Health'], ['tasks', 'Tasks'], ['settings', 'Settings']];
+    const TABS = [['overview', 'Overview'], ['leads', 'Leads'], ['flow', 'Flow'], ['editor', 'Editor'], ['reports', 'Reports'], ['activity', 'Activity'], ['health', 'Health'], ['tasks', 'Tasks'], ['settings', 'Settings']];
 
     const perfCard = <Card style={{ padding: 18 }}>
       <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 14 }}>Performance</div>
@@ -29044,6 +29044,38 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>{kpis.map(k => <StatCard key={k.label} label={k.label} value={k.value} accent={k.accent} />)}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 14, alignItems: 'start' }}>{needsCard}{activityCard}</div>
       </>;
+      if (tab === 'flow') {
+        const chMeta = { sms: { icon: 'message-square', label: 'SMS', bg: LH.tint, fg: LH.ink }, call: { icon: 'phone', label: 'Call', bg: LH.blueBg, fg: LH.blue }, email: { icon: 'mail', label: 'Email', bg: '#efe9de', fg: '#8a6d3b' } };
+        const flowSteps = [
+          { ch: 'sms', title: 'Speed-to-lead SMS', when: 'On enrollment', preview: 'Hi {{first_name}} — thanks for reaching out! When works for a quick chat?' },
+          { ch: 'call', title: 'Nova qualification call', when: '+30 minutes', preview: 'Nova confirms property, damage type, and urgency by phone.' },
+          { ch: 'email', title: 'Intro email', when: '+60 minutes', preview: 'Subject · We just received your request' },
+          { ch: 'sms', title: 'Nurture check-in', when: 'Day 3', preview: 'Following up — still happy to help. Want me to hold a slot?' },
+          { ch: 'call', title: 'Nurture call', when: 'Day 7', preview: 'Nova checks back in with the homeowner.' },
+          { ch: 'email', title: 'Value email', when: 'Day 10', preview: 'Subject · A few ways we can help with your roof' }
+        ];
+        const stepStats = i => { const sent = Math.max(0, Math.round(enrolled * (1 - i * 0.09))); return [['Scheduled', Math.max(0, enrolled - sent)], ['Delivered', Math.round(sent * 0.97)], ['Reply', Math.round(sent * Math.max(0.04, 0.22 - i * 0.03))], ['Opt-out', Math.round(sent * 0.03)]]; };
+        const connector = <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 22, background: LH.border }} /></div>;
+        const timingPill = when => <div style={{ display: 'flex', justifyContent: 'center' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 12px', borderRadius: 999, background: '#f1f0ec', border: '1px solid ' + LH.borderSoft, fontSize: 12, fontWeight: 600, color: LH.body }}><Ic name="timer" size={13} color={LH.sub} />{when}</span></div>;
+        const node = (icon, bg, fg, title, sub) => <Card style={{ padding: 14, maxWidth: 760, margin: '0 auto' }}><div style={{ display: 'flex', alignItems: 'center', gap: 11 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={16} color={fg} /></div><div><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{title}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1 }}>{sub}</div></div></div></Card>;
+        return <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, maxWidth: 760, margin: '0 auto 16px' }}><div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Campaign flow</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>How a lead moves through this campaign, step by step.</div></div><Btn icon="pencil" onClick={onEdit}>Edit flow</Btn></div>
+          {node('user-plus', LH.greenBg, LH.green, 'Lead enrolled', 'Angi, Thumbtack · New Lead · Roofing — enters on create')}
+          {flowSteps.map((s, i) => { const m = chMeta[s.ch]; return <div key={i}>
+            {connector}{timingPill(s.when)}{connector}
+            <Card style={{ padding: 0, overflow: 'hidden', maxWidth: 760, margin: '0 auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '13px 16px' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 9, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={m.icon} size={16} color={m.fg} /></div>
+                <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Step {i + 1}: {s.title}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.preview}</div></div>
+                <span style={{ display: 'inline-flex', alignItems: 'center', height: 24, padding: '0 9px', borderRadius: 7, background: '#f1f0ec', fontSize: 11.5, fontWeight: 600, color: LH.sub, flexShrink: 0 }}>{m.label}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 18, padding: '10px 16px', borderTop: '1px solid ' + LH.borderSoft, background: '#faf8f4', flexWrap: 'wrap' }}>{stepStats(i).map(([lbl, val]) => <span key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}><span style={{ fontWeight: 700, color: LH.ink }}>{enrolled ? val : 0}</span><span style={{ color: LH.muted }}>{lbl}</span></span>)}</div>
+            </Card>
+          </div>; })}
+          {connector}{timingPill('Exit conditions')}{connector}
+          {node('log-out', '#f1f0ec', LH.sub, 'Exit — Qualified or Dead', 'Also exits on reply, opt-out, or Nova DND')}
+        </div>;
+      }
       if (tab === 'leads') return <><div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>{kpis.map(k => <StatCard key={k.label} label={k.label} value={k.value} accent={k.accent} />)}</div>{recentCard}</>;
       if (tab === 'reports') return <><div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>{[{ label: 'Delivered', value: '98%' }, { label: 'Open rate', value: '42%' }, { label: 'Reply rate', value: replyRate }, { label: 'Opt-outs', value: enrolled ? Math.max(1, Math.round(enrolled * 0.03)) : 0 }].map(k => <StatCard key={k.label} {...k} />)}</div>{perfCard}</>;
       if (tab === 'editor') return <><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}><div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Campaign setup</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Edit any section, or open the full step-by-step editor.</div></div><Btn kind="primary" icon="pencil" onClick={onEdit}>Open full editor</Btn></div>
@@ -29480,12 +29512,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {!name.trim() && <div style={{ fontSize: 11.5, color: LH.red, marginBottom: 10 }}>A campaign name is required.</div>}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Description</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>auto-written from your rules</span></div>
         <textarea value={desc} onChange={e => setDesc(e.target.value)} style={{ width: '100%', height: 88, borderRadius: 9, border: '1px solid ' + LH.border, padding: 12, fontSize: 13.5, color: LH.body, margin: '6px 0 10px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
-        <Btn icon="refresh-cw" onClick={() => setDesc('Re-engages ' + (conds.find(c => c.field === 'customer.lead_source') ? (conds.find(c => c.field === 'customer.lead_source').val || []).join(' and ') : 'inbound') + ' leads over a ' + dayCount + '-day drip.')}>Regenerate from rules</Btn>
-        <div style={{ marginTop: 18 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign time zone <span style={{ color: LH.red }}>*</span></label>
-          <div style={{ marginTop: 6 }}><Dropdown value={tz} options={TZS.map(t => ({ value: t, label: t }))} onChange={setTz} /></div>
-          <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 6 }}>Governs launch-day hours, nurture send days, and every scheduled action — independent of workspace or customer time zones.</div>
-        </div>
       </div>;
       if (step === 1) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="filter" size={19} color={LH.primary} /></div>
