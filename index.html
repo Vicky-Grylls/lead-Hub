@@ -28875,6 +28875,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [selId, setSelId] = useState(null);
     const [tab, setTab] = useState('details');
     const [expanded, setExpanded] = useState(false);
+    const [view, setView] = useState('kanban');
+    const scoreColor = s => s >= 80 ? LH.primary : s >= 60 ? '#c9922e' : '#9c9b96';
     const sel = selId ? leads.find(l => l.id === selId) : null;
     const lastRef = useRef(null);
     if (sel) lastRef.current = sel;
@@ -28890,8 +28892,26 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16, paddingBottom: 14, borderBottom: '1px solid ' + LH.borderSoft }}>
         <Select label="Source:" value="All" /><Select label="Status:" value="All" /><Select label="Assigned:" value="All" /><Select label="Score:" value="Any" /><Select label="Age:" value="Any" />
         <button style={{ height: 32, padding: '0 11px', borderRadius: 8, border: '1px solid transparent', background: 'transparent', fontSize: 12.5, color: LH.primary, fontWeight: 600, cursor: 'pointer' }}>Clear filters</button>
+        <div style={{ marginLeft: 'auto', display: 'inline-flex', border: '1px solid ' + LH.border, borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
+          {[['kanban', 'layout-grid', 'Board'], ['list', 'list', 'List']].map(([v, ic, lbl]) => <button key={v} onClick={() => setView(v)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 12px', border: 'none', borderLeft: v === 'list' ? '1px solid ' + LH.border : 'none', background: view === v ? LH.tint : '#fff', color: view === v ? LH.ink : LH.sub, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}><Ic name={ic} size={14} color={view === v ? LH.ink : LH.sub} />{lbl}</button>)}
+        </div>
       </div>
-      <LeadsKanban leads={leads} onMove={move} onCardClick={setSelId} selId={selId} />
+      {view === 'kanban'
+        ? <LeadsKanban leads={leads} onMove={move} onCardClick={setSelId} selId={selId} />
+        : <Card style={{ padding: 0, overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead><tr>{[['Score', 64], ['Lead', 0], ['Stage', 130], ['Source', 130], ['Fields', 80], ['Status', 130], ['Age', 70]].map(([h, w]) => <th key={h} style={{ textAlign: h === 'Score' || h === 'Fields' || h === 'Age' ? 'left' : 'left', padding: '10px 16px', fontSize: 12, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w || 'auto' }}>{h}</th>)}</tr></thead>
+            <tbody>{leads.map((l, i) => <tr key={l.id} onClick={() => setSelId(l.id)} style={{ cursor: 'pointer', background: selId === l.id ? '#faf8f4' : '#fff' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = selId === l.id ? '#faf8f4' : '#fff'}>
+              <td style={{ padding: '11px 16px', borderBottom: i < leads.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><span style={{ width: 30, height: 30, borderRadius: 999, background: scoreColor(l.score), color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>{l.score}</span></td>
+              <td style={{ padding: '11px 16px', borderBottom: i < leads.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink }}>{l.name}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 1 }}>{l.note}</div></td>
+              <td style={{ padding: '11px 16px', borderBottom: i < leads.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: LH.body }}><span style={{ width: 8, height: 8, borderRadius: 999, background: COL_DOT[l.col] || LH.sub }} />{l.col}</span></td>
+              <td style={{ padding: '11px 16px', borderBottom: i < leads.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 9px', borderRadius: 7, background: LH.blueBg, color: LH.blue, fontSize: 11.5, fontWeight: 600 }}>{l.src}</span></td>
+              <td style={{ padding: '11px 16px', borderBottom: i < leads.length - 1 ? '1px solid ' + LH.borderSoft : 'none', fontSize: 12.5, color: LH.body }}>{l.fields}</td>
+              <td style={{ padding: '11px 16px', borderBottom: i < leads.length - 1 ? '1px solid ' + LH.borderSoft : 'none', fontSize: 12.5, color: LH.body }}>{l.status}</td>
+              <td style={{ padding: '11px 16px', borderBottom: i < leads.length - 1 ? '1px solid ' + LH.borderSoft : 'none', fontSize: 12.5, color: LH.muted }}>{l.age}</td>
+            </tr>)}</tbody>
+          </table>
+        </Card>}
       {/* Lead detail side sheet — docked, no backdrop */}
       <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, zIndex: 40, width: expanded ? 560 : 380, maxWidth: '94%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,.10)', display: 'flex', flexDirection: 'column', transform: sel ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s' }}>
         {shown && <>
