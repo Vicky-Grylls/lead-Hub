@@ -28911,15 +28911,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { who: 'out', name: 'Henry', t: '3:20 PM', text: "Hi " + lead.name.split(' ')[0] + ", I'm Henry from Zuper. I saw your " + lead.src + " lead come in and wanted to confirm your storm damage. Are you available for a free inspection this week?" },
       { who: 'in', name: lead.name.split(' ')[0], t: '3:20 PM', text: 'Yes, tomorrow evening would be fine.' }
     ];
-    return <div style={{ fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+    return <div style={{ fontFamily: "'Inter',ui-sans-serif,system-ui", margin: '-20px -26px -34px', minHeight: 'calc(100% + 54px)', background: '#fff', display: 'flex', flexDirection: 'column' }}>
       {/* Top bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 14, marginBottom: 16, borderBottom: '1px solid ' + LH.borderSoft }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '15px 24px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5 }}><button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: LH.sub, fontWeight: 600, padding: 0 }}>Pipeline</button><Ic name="chevron-right" size={14} color={LH.muted} /><span style={{ fontWeight: 700, color: LH.ink }}>{lead.name}</span><Ic name="star" size={15} color={LH.muted} /></div>
         <Btn icon="chevron-down" onClick={() => toast('More actions')}>More Actions</Btn>
       </div>
-      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, minHeight: 0 }}>
         {/* Left column */}
-        <div style={{ width: 300, flexShrink: 0 }}>
+        <div style={{ width: 316, flexShrink: 0, padding: '18px 18px', borderRight: '1px solid ' + LH.borderSoft, overflowY: 'auto' }}>
           <div style={{ display: 'flex', gap: 11, marginBottom: 12 }}>
             <div style={{ width: 44, height: 44, borderRadius: 12, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, flexShrink: 0 }}>{initials}</div>
             <div style={{ fontSize: 15, fontWeight: 700, color: LH.ink, lineHeight: 1.3 }}>Roof Replacement for {lead.name}</div>
@@ -28945,7 +28945,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </div>
         {/* Center column */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, padding: '18px 22px', borderRight: '1px solid ' + LH.borderSoft, overflowY: 'auto' }}>
           <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid ' + LH.borderSoft, marginBottom: 16, flexWrap: 'wrap' }}>
             {TABS.map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '9px 13px', fontSize: 13.5, fontWeight: 600, color: tab === t ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (tab === t ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{t}</button>)}
             <button style={{ padding: '9px 13px', fontSize: 13.5, fontWeight: 600, color: LH.sub, background: 'none', border: 'none', cursor: 'pointer' }}>+6 More</button>
@@ -28960,13 +28960,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <Card style={{ padding: 0, overflow: 'hidden' }}>{recentJobs.map((j, i) => <div key={j.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i < recentJobs.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={14} color={LH.sub} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{j.title}</div><div style={{ fontSize: 11.5, color: LH.muted }}>#{j.id} · {j.when}</div></div><Pill label={j.status} tone="Qualified" /></div>)}</Card>
         </div>
         {/* Right column — communication */}
-        <div style={{ width: 360, flexShrink: 0 }}>
-          <Card style={{ padding: 0, overflow: 'hidden', background: '#f6f8fb' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', borderBottom: '1px solid ' + LH.borderSoft, background: '#fff' }}>
+        <div style={{ width: 372, flexShrink: 0, background: '#f6f8fb', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', borderBottom: '1px solid ' + LH.borderSoft, background: '#fff', flexShrink: 0 }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: LH.body }}><Ic name="home" size={14} color={LH.sub} />Home<Ic name="chevron-down" size={13} color={LH.muted} /></span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 10px', borderRadius: 7, background: LH.blueBg, color: LH.blue, fontSize: 12, fontWeight: 600 }}>Pre Sales<Ic name="chevron-down" size={12} color={LH.blue} /></span><button onClick={() => toast('Options')} style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="more-vertical" size={15} color={LH.sub} /></button></div>
             </div>
-            <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12, flex: 1, overflowY: 'auto', minHeight: 0 }}>
               {chat.map((c, i) => c.who === 'out'
                 ? <div key={i} style={{ alignSelf: 'flex-end', maxWidth: '86%' }}><div style={{ fontSize: 10.5, color: LH.muted, textAlign: 'right', marginBottom: 3 }}>{c.t} · {c.name}</div><div style={{ background: '#1d4ed8', color: '#fff', fontSize: 12.5, lineHeight: 1.5, padding: '10px 12px', borderRadius: '12px 12px 3px 12px' }}>{c.text}</div></div>
                 : <div key={i} style={{ alignSelf: 'flex-start', maxWidth: '86%' }}><div style={{ fontSize: 10.5, color: LH.muted, marginBottom: 3 }}>{c.name} · {c.t}</div><div style={{ background: '#fff', color: LH.body, fontSize: 12.5, lineHeight: 1.5, padding: '10px 12px', borderRadius: '12px 12px 12px 3px', border: '1px solid ' + LH.borderSoft }}>{c.text}</div></div>)}
@@ -28983,11 +28982,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 <div style={{ fontSize: 12, color: LH.body, lineHeight: 1.5 }}>• Inspection scheduled for tomorrow at 6:00 PM · Drone report included.</div>
               </Card>
             </div>
-            <div style={{ padding: 12, borderTop: '1px solid ' + LH.borderSoft, background: '#fff' }}>
+            <div style={{ padding: 12, borderTop: '1px solid ' + LH.borderSoft, background: '#fff', flexShrink: 0 }}>
               <input value={msg} onChange={e => setMsg(e.target.value)} placeholder="Enter to send message" style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 12px', fontSize: 12.5, outline: 'none', marginBottom: 8 }} />
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}><Btn kind="primary" icon="send" onClick={() => { if (msg.trim()) { toast('Message sent'); setMsg(''); } }}>Send</Btn></div>
             </div>
-          </Card>
+        </div>
+        {/* Far-right icon rail */}
+        <div style={{ width: 48, flexShrink: 0, borderLeft: '1px solid ' + LH.borderSoft, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '12px 0' }}>
+          {[['link', 'Associations'], ['clock', 'Timeline'], ['phone', 'Calls'], ['message-circle', 'Chat']].map(([ic, lbl], k) => <button key={ic} onClick={() => toast(lbl)} style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: k === 0 ? LH.tint : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => { if (k !== 0) e.currentTarget.style.background = '#f5f2ec'; }} onMouseLeave={e => { if (k !== 0) e.currentTarget.style.background = 'none'; }}><Ic name={ic} size={16} color={k === 0 ? LH.ink : LH.sub} /></button>)}
         </div>
       </div>
     </div>;
