@@ -30015,7 +30015,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const showToast = m => { setToast(m); setTimeout(() => setToast(null), 3200); };
     const heads = {
       overview: { crumb: 'Lead Hub', title: 'Overview', actions: <Btn icon="calendar">Today</Btn> },
-      pipeline: { crumb: 'Lead Hub', title: 'Pipeline', actions: <><Btn icon="calendar">Today</Btn><Btn icon="filter">Filter</Btn><Btn icon="layout-grid">Pipeline view</Btn></> },
+      pipeline: { crumb: 'Lead Hub', title: 'Pipeline', actions: <Btn icon="calendar">Today</Btn> },
       campaigns: { crumb: 'Lead Hub · 3 active', title: 'Campaigns', actions: null },
       channels: { crumb: 'Lead Hub · 6 sources connected', title: 'Channels', actions: <Btn kind="primary" icon="plus">Connect source</Btn> },
       health: { crumb: 'Last 30 days · 18 issues surfaced · 13 resolved · 5 pending', title: 'Hub Health', actions: <><Btn icon="calendar">Last 30 days</Btn><Btn icon="download">Export log</Btn></> }
