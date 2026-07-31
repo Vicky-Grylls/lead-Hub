@@ -29014,7 +29014,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ];
     const primaryAction = st === 'Active' ? { label: 'Pause', icon: 'pause', next: 'Paused' } : st === 'Paused' ? { label: 'Resume', icon: 'play', next: 'Active' } : st === 'Draft' ? { label: 'Publish', icon: 'rocket', next: 'Active' } : null;
     const doPrimary = () => { setSt(primaryAction.next); updateCampaign(row.name, { status: primaryAction.next }); onToast(primaryAction.label + ' — “' + row.name + '”'); };
-    const TABS = [['overview', 'Overview'], ['leads', 'Leads'], ['flow', 'Flow'], ['editor', 'Editor'], ['reports', 'Reports'], ['activity', 'Activity'], ['health', 'Health'], ['tasks', 'Tasks'], ['settings', 'Settings']];
+    const TABS = [['overview', 'Overview'], ['leads', 'Leads'], ['flow', 'Flow'], ['reports', 'Reports'], ['activity', 'Activity'], ['health', 'Health'], ['tasks', 'Tasks'], ['settings', 'Settings']];
 
     const perfCard = <Card style={{ padding: 18 }}>
       <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 14 }}>Performance</div>
