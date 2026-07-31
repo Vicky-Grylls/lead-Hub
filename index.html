@@ -28881,7 +28881,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const phone = '469-555-0172';
     const toast = m => onToast && onToast(m);
     const TABS = ['Overview', 'Qualification', 'Campaign', 'Communication'];
-    const kv = (k, v) => <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0' }}><span style={{ fontSize: 12, color: LH.muted, flexShrink: 0 }}>{k}</span><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 500, textAlign: 'right', minWidth: 0 }}>{v}</span></div>;
+    const kv = (k, v) => <div style={{ display: 'flex', gap: 12, padding: '7px 0' }}><span style={{ fontSize: 12, color: LH.muted, width: 108, flexShrink: 0 }}>{k}</span><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 500, flex: 1, minWidth: 0 }}>{v}</span></div>;
     const iconBtn = (ic, m) => <button onClick={() => toast(m)} style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name={ic} size={15} color={LH.sub} /></button>;
     const secHead = (label, open, onT) => <button onClick={onT} style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', marginBottom: open ? 4 : 0 }}><Ic name={open ? 'chevron-down' : 'chevron-right'} size={14} color={LH.sub} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{label}</span></button>;
     const highlights = [
@@ -28898,10 +28898,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { ic: 'user-plus', msg: 'Lead created from ' + lead.src + ' · auto-assigned to Maria Gonzalez', t: '3 days ago' }
     ];
     const tasks = [
-      { done: false, title: 'Explain infra to client', dur: '35 min', tag: 'Check for leaks' },
-      { done: true, title: 'Explain roofing options', dur: '35 min', tag: 'Install flashing' },
-      { done: true, title: 'Tear off old roof', dur: '35 min', tag: 'Install flashing' },
-      { done: 'partial', title: 'Apply underlayment', dur: '35 min', tag: 'Check for leaks' }
+      { done: false, title: 'Explain infra to client', dur: '35 min', tag: 'Check for leaks', av: 'https://randomuser.me/api/portraits/men/32.jpg' },
+      { done: true, title: 'Explain roofing options', dur: '35 min', tag: 'Install flashing', av: '' },
+      { done: true, title: 'Tear off old roof', dur: '35 min', tag: 'Install flashing', av: 'https://randomuser.me/api/portraits/men/54.jpg' },
+      { done: 'partial', title: 'Apply underlayment', dur: '35 min', tag: 'Check for leaks', av: 'https://randomuser.me/api/portraits/women/65.jpg' }
+    ];
+    const recentJobs = [
+      { id: 'JN-245678', title: 'Roof leak repair', status: 'Completed', when: 'Jun 2025' },
+      { id: 'JN-244190', title: 'Gutter cleaning', status: 'Completed', when: 'Apr 2025' }
     ];
     const chat = [
       { who: 'out', name: 'Henry', t: '3:20 PM', text: "Hi " + lead.name.split(' ')[0] + ", I'm Henry from Zuper. I saw your " + lead.src + " lead come in and wanted to confirm your storm damage. Are you available for a free inspection this week?" },
@@ -28922,20 +28926,23 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: LH.sub, marginBottom: 12 }}><Ic name="map-pin" size={13} color={LH.muted} />4821 Oakwood Dr, Plano, TX 75024</div>
           <div style={{ display: 'flex', gap: 7, marginBottom: 16 }}><Btn icon="plus" onClick={() => toast('New')}>New</Btn>{iconBtn('mail', 'Email ' + lead.name)}{iconBtn('phone', 'Call ' + lead.name)}{iconBtn('flag', 'Flagged')}{iconBtn('bell', 'Reminder set')}</div>
-          <Card style={{ padding: 14, marginBottom: 12 }}>
+          <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14, marginBottom: 6 }}>
             {secHead('Primary Details', pd, () => setPd(p => !p))}
-            {pd && <div>
-              {kv('Contact', lead.name)}{kv('Email', email)}{kv('Mobile', phone)}
+            {pd && <div style={{ marginTop: 4 }}>
+              {kv('Contact', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: LH.ink }}>{lead.name}<Ic name="chevron-right" size={13} color={LH.muted} /></span>)}
+              {kv('Email', email)}{kv('Mobile', phone)}
               {kv('Lead Source', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, height: 16, borderRadius: 5, background: LH.blueBg, color: LH.blue, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>{lead.src[0]}</span>{lead.src}</span>)}
-              {kv('Status', <Pill label={lead.status} tone="Qualified" />)}{kv('Lead Score', lead.score + '/100')}
+              {kv('Status', <Pill label={lead.status} tone="Qualified" />)}
+              {kv('Tags', <Pill label={lead.status} tone="Qualified" />)}
+              {kv('Lead Score', lead.score + '/100')}
               {kv('Assigned CSR', 'Maria Gonzalez')}{kv('Age', lead.age)}{kv('Auto-qualified', 'Yes — Property Intelligence')}
-              {kv('City, State, ZIP', 'Plano, TX 75024')}{kv('Score Breakdown', 'Source 20 · Data 22 · Intel 25 · Demo 15')}
+              {kv('Service Address', '4821 Oakwood Dr')}{kv('City, State, ZIP', 'Plano, TX 75024')}{kv('Score Breakdown', 'Source 20 · Data 22 · Intel 25 · Demo 15')}
             </div>}
-          </Card>
-          <Card style={{ padding: 14 }}>
+          </div>
+          <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
             {secHead('Custom Fields', cf, () => setCf(p => !p))}
-            {cf && <div>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}{kv('Status', <Pill label={lead.status} tone="Qualified" />)}</div>}
-          </Card>
+            {cf && <div style={{ marginTop: 4 }}>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}{kv('Status', <Pill label={lead.status} tone="Qualified" />)}</div>}
+          </div>
         </div>
         {/* Center column */}
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -28943,19 +28950,21 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             {TABS.map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '9px 13px', fontSize: 13.5, fontWeight: 600, color: tab === t ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (tab === t ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{t}</button>)}
             <button style={{ padding: '9px 13px', fontSize: 13.5, fontWeight: 600, color: LH.sub, background: 'none', border: 'none', cursor: 'pointer' }}>+6 More</button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}><Ic name="sparkles" size={16} color={LH.ink} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Highlights</span></div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><Ic name="sparkles" size={16} color={LH.ink} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Highlights</span><Ic name="chevron-right" size={14} color={LH.muted} /></span><Ic name="sliders" size={15} color={LH.sub} /></div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12, marginBottom: 22 }}>{highlights.map(hi => <Card key={hi.label} style={{ padding: 13, display: 'flex', alignItems: 'center', gap: 11 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: hi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={hi.ic} size={16} color={hi.fg} /></div><div><div style={{ fontSize: 11.5, color: LH.muted }}>{hi.label}</div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginTop: 1 }}>{hi.val}</div></div></Card>)}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="activity" size={16} color={LH.ink} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Activity</span></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="activity" size={16} color={LH.ink} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Activity</span><Ic name="chevron-right" size={14} color={LH.muted} /></div>
           <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 22 }}>{acts.map((a, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i < acts.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: a.nova ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={a.ic} size={14} color={a.nova ? LH.primary : LH.sub} /></div><div style={{ flex: 1, fontSize: 12.5, color: LH.body }}>{a.msg}</div><span style={{ fontSize: 11.5, color: LH.muted, whiteSpace: 'nowrap' }}>{a.t}</span></div>)}</Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="check-square" size={16} color={LH.ink} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Tasks</span><span style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 8px' }}>10</span></div>
-          <Card style={{ padding: 0, overflow: 'hidden' }}>{tasks.map((tk, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><Ic name={tk.done === true ? 'check-circle' : tk.done === 'partial' ? 'loader' : 'circle'} size={17} color={tk.done === true ? LH.green : tk.done === 'partial' ? LH.amber : LH.muted} /><span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: LH.ink }}>{tk.title}</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 9px', borderRadius: 7, border: '1px solid ' + LH.border, fontSize: 11.5, color: LH.sub }}><Ic name="clock" size={12} color={LH.muted} />{tk.dur}</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 9px', borderRadius: 7, border: '1px solid ' + LH.border, fontSize: 11.5, color: LH.sub }}><Ic name="file-text" size={12} color={LH.muted} />{tk.tag}</span><div style={{ width: 24, height: 24, borderRadius: 999, background: LH.tint, flexShrink: 0 }} /></div>)}<div style={{ padding: '11px 16px', textAlign: 'center' }}><button onClick={() => toast('View all tasks')} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>View All</button></div></Card>
+          <Card style={{ padding: 0, overflow: 'hidden' }}>{tasks.map((tk, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><Ic name={tk.done === true ? 'check-circle' : tk.done === 'partial' ? 'loader' : 'circle'} size={17} color={tk.done === true ? LH.green : tk.done === 'partial' ? LH.amber : LH.muted} /><span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: LH.ink }}>{tk.title}</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 9px', borderRadius: 7, border: '1px solid ' + LH.border, fontSize: 11.5, color: LH.sub }}><Ic name="clock" size={12} color={LH.muted} />{tk.dur}</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 9px', borderRadius: 7, border: '1px solid ' + LH.border, fontSize: 11.5, color: LH.sub }}><Ic name="file-text" size={12} color={LH.muted} />{tk.tag}</span><span style={{ width: 26, height: 26, borderRadius: 999, background: LH.tint, flexShrink: 0, overflow: 'hidden', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed ' + LH.border }}>{tk.av ? <img src={tk.av} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} /> : <Ic name="user" size={13} color={LH.muted} />}</span><button onClick={() => toast('Task options')} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="more-vertical" size={15} color={LH.sub} /></button></div>)}<div style={{ padding: '11px 16px', textAlign: 'center' }}><button onClick={() => toast('View all tasks')} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>View All</button></div></Card>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, margin: '22px 0 10px' }}><Ic name="briefcase" size={16} color={LH.ink} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Recent Jobs</span><Ic name="chevron-right" size={14} color={LH.muted} /></div>
+          <Card style={{ padding: 0, overflow: 'hidden' }}>{recentJobs.map((j, i) => <div key={j.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i < recentJobs.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={14} color={LH.sub} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{j.title}</div><div style={{ fontSize: 11.5, color: LH.muted }}>#{j.id} · {j.when}</div></div><Pill label={j.status} tone="Qualified" /></div>)}</Card>
         </div>
         {/* Right column — communication */}
         <div style={{ width: 360, flexShrink: 0 }}>
           <Card style={{ padding: 0, overflow: 'hidden', background: '#f6f8fb' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', borderBottom: '1px solid ' + LH.borderSoft, background: '#fff' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: LH.body }}><Ic name="home" size={14} color={LH.sub} />Home<Ic name="chevron-down" size={13} color={LH.muted} /></span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 10px', borderRadius: 7, background: LH.blueBg, color: LH.blue, fontSize: 12, fontWeight: 600 }}>Pre Sales<Ic name="chevron-down" size={12} color={LH.blue} /></span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 10px', borderRadius: 7, background: LH.blueBg, color: LH.blue, fontSize: 12, fontWeight: 600 }}>Pre Sales<Ic name="chevron-down" size={12} color={LH.blue} /></span><button onClick={() => toast('Options')} style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="more-vertical" size={15} color={LH.sub} /></button></div>
             </div>
             <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
               {chat.map((c, i) => c.who === 'out'
