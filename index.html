@@ -28653,6 +28653,18 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { t: '1h ago', who: 'Nova', msg: 'Call completed. Insurance claim and urgency captured.' },
     { t: '32m ago', who: 'Nova', msg: 'All 9 qualification fields captured.' }
   ];
+  // Which campaign each pipeline lead is currently enrolled in (New leads aren't enrolled yet).
+  const LEAD_CAMPAIGN = {
+    l2: 'Speed-to-Lead Drip', l2b: 'Speed-to-Lead Drip', l2c: 'Speed-to-Lead Drip',
+    l3: 'Speed-to-Lead Drip', l3b: 'Speed-to-Lead Drip', l3c: 'Speed-to-Lead Drip',
+    l4: 'Speed-to-Lead Drip', l4b: 'Speed-to-Lead Drip',
+    l5: 'Storm Season Re-engage', l5b: 'Estimate Follow-up', l5c: 'Estimate Follow-up',
+    l6: 'Speed-to-Lead Drip', l6b: 'Speed-to-Lead Drip', l6c: 'Storm Season Re-engage'
+  };
+  const leadCampaign = l => !l ? null : (l.campaign || LEAD_CAMPAIGN[l.id] || (
+    ['Contacting', 'Qualifying', 'Needs human'].includes(l.col) ? 'Speed-to-Lead Drip'
+    : l.col === 'In drip' ? 'Storm Season Re-engage'
+    : l.col === 'Qualified' || l.col === 'Completed' ? 'Speed-to-Lead Drip' : null));
   function LeadSideSheet({ lead, onClose, onToast, onOpenPage }) {
     const [tab, setTab] = useState('details');
     const [expanded, setExpanded] = useState(false);
@@ -28692,6 +28704,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <div><div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>{shown.name}</div><div style={{ fontSize: 12, color: LH.muted, marginTop: 2 }}>{shown.note}</div><div style={{ display: 'flex', gap: 6, marginTop: 8 }}><Pill label={shown.src} tone="New" /><Pill label={shown.status} /></div></div>
               <div style={{ width: 40, height: 40, borderRadius: 999, background: shown.score >= 80 ? LH.primary : shown.score >= 60 ? '#c9922e' : '#9c9b96', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>{shown.score}</div>
             </div>
+            {(() => { const camp = leadCampaign(shown); return <div style={{ marginTop: 14, padding: '10px 12px', borderRadius: 9, border: '1px solid ' + LH.borderSoft, background: camp ? LH.tint : '#fff', display: 'flex', alignItems: 'center', gap: 9 }}>
+              <span style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: camp ? '#fff' : '#f1f0ec', border: camp ? '1px solid ' + LH.borderSoft : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="megaphone" size={14} color={camp ? LH.primary : LH.sub} /></span>
+              <div style={{ minWidth: 0 }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>CAMPAIGN</div><div style={{ fontSize: 12.5, fontWeight: 600, color: camp ? LH.ink : LH.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{camp || 'Not enrolled in a campaign'}</div></div>
+            </div>; })()}
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, margin: '18px 0 8px' }}>{captured} OF 9 FIELDS CAPTURED</div>
             {DIANE_FIELDS.map((f, i) => <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}><Ic name={i < captured ? 'check' : 'circle'} size={14} color={i < captured ? LH.green : '#cfc9bd'} /><span style={{ fontSize: 12.5, color: i < captured ? LH.body : LH.muted }}>{f}</span></div>)}
             <div style={{ background: LH.tint, borderRadius: 9, padding: 12, marginTop: 16 }}><div style={{ fontSize: 11, fontWeight: 700, color: LH.primaryDark, marginBottom: 3 }}>Suggested next step</div><div style={{ fontSize: 12, color: '#4a4a46', lineHeight: 1.45 }}>{qualified ? 'Ready to convert. Tap Convert to Inspection to move this to Sales Hub.' : (9 - captured) + ' more field' + (9 - captured === 1 ? '' : 's') + ' to capture. Nova is working this lead — nudge with a call or text.'}</div></div>
