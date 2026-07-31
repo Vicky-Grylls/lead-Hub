@@ -28870,13 +28870,130 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </div>;
   }
 
-  function PipelineSection() {
+  function LeadDetailsPage({ lead, onBack, onToast }) {
+    const [tab, setTab] = useState('Overview');
+    const [msg, setMsg] = useState('');
+    const [pd, setPd] = useState(true);
+    const [cf, setCf] = useState(true);
+    const captured = parseInt(lead.fields) || 0;
+    const initials = lead.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const email = lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com';
+    const phone = '469-555-0172';
+    const toast = m => onToast && onToast(m);
+    const TABS = ['Overview', 'Qualification', 'Campaign', 'Communication'];
+    const kv = (k, v) => <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0' }}><span style={{ fontSize: 12, color: LH.muted, flexShrink: 0 }}>{k}</span><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 500, textAlign: 'right', minWidth: 0 }}>{v}</span></div>;
+    const iconBtn = (ic, m) => <button onClick={() => toast(m)} style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name={ic} size={15} color={LH.sub} /></button>;
+    const secHead = (label, open, onT) => <button onClick={onT} style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', marginBottom: open ? 4 : 0 }}><Ic name={open ? 'chevron-down' : 'chevron-right'} size={14} color={LH.sub} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{label}</span></button>;
+    const highlights = [
+      { ic: 'gauge', bg: LH.greenBg, fg: LH.green, label: 'Score', val: lead.score + '/100' },
+      { ic: 'clock', bg: '#f1f0ec', fg: LH.sub, label: 'Age', val: lead.age },
+      { ic: 'mail', bg: LH.amberBg, fg: LH.amber, label: 'Qualification Progress', val: captured + ' of 9 captured' },
+      { ic: 'phone', bg: LH.blueBg, fg: LH.blue, label: 'Last Call/SMS', val: 'Jul 26, 2025' }
+    ];
+    const acts = [
+      { ic: 'sparkles', nova: true, msg: 'Nova qualified this lead — all checklist criteria met', t: '4 hours ago' },
+      { ic: 'message-square', msg: 'SMS sent · Speed-to-lead drip, step 3', t: '1 day ago' },
+      { ic: 'phone-incoming', msg: lead.name.split(' ')[0] + ' confirmed storm damage on call — roof ~15 years old', t: '1 day ago' },
+      { ic: 'phone', msg: 'Inbound call answered · 12s ring time', t: '2 days ago' },
+      { ic: 'user-plus', msg: 'Lead created from ' + lead.src + ' · auto-assigned to Maria Gonzalez', t: '3 days ago' }
+    ];
+    const tasks = [
+      { done: false, title: 'Explain infra to client', dur: '35 min', tag: 'Check for leaks' },
+      { done: true, title: 'Explain roofing options', dur: '35 min', tag: 'Install flashing' },
+      { done: true, title: 'Tear off old roof', dur: '35 min', tag: 'Install flashing' },
+      { done: 'partial', title: 'Apply underlayment', dur: '35 min', tag: 'Check for leaks' }
+    ];
+    const chat = [
+      { who: 'out', name: 'Henry', t: '3:20 PM', text: "Hi " + lead.name.split(' ')[0] + ", I'm Henry from Zuper. I saw your " + lead.src + " lead come in and wanted to confirm your storm damage. Are you available for a free inspection this week?" },
+      { who: 'in', name: lead.name.split(' ')[0], t: '3:20 PM', text: 'Yes, tomorrow evening would be fine.' }
+    ];
+    return <div style={{ fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      {/* Top bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 14, marginBottom: 16, borderBottom: '1px solid ' + LH.borderSoft }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5 }}><button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: LH.sub, fontWeight: 600, padding: 0 }}>Pipeline</button><Ic name="chevron-right" size={14} color={LH.muted} /><span style={{ fontWeight: 700, color: LH.ink }}>{lead.name}</span><Ic name="star" size={15} color={LH.muted} /></div>
+        <Btn icon="chevron-down" onClick={() => toast('More actions')}>More Actions</Btn>
+      </div>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        {/* Left column */}
+        <div style={{ width: 300, flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: 11, marginBottom: 12 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, flexShrink: 0 }}>{initials}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: LH.ink, lineHeight: 1.3 }}>Roof Replacement for {lead.name}</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: LH.sub, marginBottom: 12 }}><Ic name="map-pin" size={13} color={LH.muted} />4821 Oakwood Dr, Plano, TX 75024</div>
+          <div style={{ display: 'flex', gap: 7, marginBottom: 16 }}><Btn icon="plus" onClick={() => toast('New')}>New</Btn>{iconBtn('mail', 'Email ' + lead.name)}{iconBtn('phone', 'Call ' + lead.name)}{iconBtn('flag', 'Flagged')}{iconBtn('bell', 'Reminder set')}</div>
+          <Card style={{ padding: 14, marginBottom: 12 }}>
+            {secHead('Primary Details', pd, () => setPd(p => !p))}
+            {pd && <div>
+              {kv('Contact', lead.name)}{kv('Email', email)}{kv('Mobile', phone)}
+              {kv('Lead Source', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, height: 16, borderRadius: 5, background: LH.blueBg, color: LH.blue, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>{lead.src[0]}</span>{lead.src}</span>)}
+              {kv('Status', <Pill label={lead.status} tone="Qualified" />)}{kv('Lead Score', lead.score + '/100')}
+              {kv('Assigned CSR', 'Maria Gonzalez')}{kv('Age', lead.age)}{kv('Auto-qualified', 'Yes — Property Intelligence')}
+              {kv('City, State, ZIP', 'Plano, TX 75024')}{kv('Score Breakdown', 'Source 20 · Data 22 · Intel 25 · Demo 15')}
+            </div>}
+          </Card>
+          <Card style={{ padding: 14 }}>
+            {secHead('Custom Fields', cf, () => setCf(p => !p))}
+            {cf && <div>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}{kv('Status', <Pill label={lead.status} tone="Qualified" />)}</div>}
+          </Card>
+        </div>
+        {/* Center column */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid ' + LH.borderSoft, marginBottom: 16, flexWrap: 'wrap' }}>
+            {TABS.map(t => <button key={t} onClick={() => setTab(t)} style={{ padding: '9px 13px', fontSize: 13.5, fontWeight: 600, color: tab === t ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (tab === t ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{t}</button>)}
+            <button style={{ padding: '9px 13px', fontSize: 13.5, fontWeight: 600, color: LH.sub, background: 'none', border: 'none', cursor: 'pointer' }}>+6 More</button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}><Ic name="sparkles" size={16} color={LH.ink} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Highlights</span></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12, marginBottom: 22 }}>{highlights.map(hi => <Card key={hi.label} style={{ padding: 13, display: 'flex', alignItems: 'center', gap: 11 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: hi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={hi.ic} size={16} color={hi.fg} /></div><div><div style={{ fontSize: 11.5, color: LH.muted }}>{hi.label}</div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginTop: 1 }}>{hi.val}</div></div></Card>)}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="activity" size={16} color={LH.ink} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Activity</span></div>
+          <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 22 }}>{acts.map((a, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i < acts.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: a.nova ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={a.ic} size={14} color={a.nova ? LH.primary : LH.sub} /></div><div style={{ flex: 1, fontSize: 12.5, color: LH.body }}>{a.msg}</div><span style={{ fontSize: 11.5, color: LH.muted, whiteSpace: 'nowrap' }}>{a.t}</span></div>)}</Card>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="check-square" size={16} color={LH.ink} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Tasks</span><span style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 8px' }}>10</span></div>
+          <Card style={{ padding: 0, overflow: 'hidden' }}>{tasks.map((tk, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><Ic name={tk.done === true ? 'check-circle' : tk.done === 'partial' ? 'loader' : 'circle'} size={17} color={tk.done === true ? LH.green : tk.done === 'partial' ? LH.amber : LH.muted} /><span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: LH.ink }}>{tk.title}</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 9px', borderRadius: 7, border: '1px solid ' + LH.border, fontSize: 11.5, color: LH.sub }}><Ic name="clock" size={12} color={LH.muted} />{tk.dur}</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 9px', borderRadius: 7, border: '1px solid ' + LH.border, fontSize: 11.5, color: LH.sub }}><Ic name="file-text" size={12} color={LH.muted} />{tk.tag}</span><div style={{ width: 24, height: 24, borderRadius: 999, background: LH.tint, flexShrink: 0 }} /></div>)}<div style={{ padding: '11px 16px', textAlign: 'center' }}><button onClick={() => toast('View all tasks')} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>View All</button></div></Card>
+        </div>
+        {/* Right column — communication */}
+        <div style={{ width: 360, flexShrink: 0 }}>
+          <Card style={{ padding: 0, overflow: 'hidden', background: '#f6f8fb' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', borderBottom: '1px solid ' + LH.borderSoft, background: '#fff' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: LH.body }}><Ic name="home" size={14} color={LH.sub} />Home<Ic name="chevron-down" size={13} color={LH.muted} /></span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 10px', borderRadius: 7, background: LH.blueBg, color: LH.blue, fontSize: 12, fontWeight: 600 }}>Pre Sales<Ic name="chevron-down" size={12} color={LH.blue} /></span>
+            </div>
+            <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {chat.map((c, i) => c.who === 'out'
+                ? <div key={i} style={{ alignSelf: 'flex-end', maxWidth: '86%' }}><div style={{ fontSize: 10.5, color: LH.muted, textAlign: 'right', marginBottom: 3 }}>{c.t} · {c.name}</div><div style={{ background: '#1d4ed8', color: '#fff', fontSize: 12.5, lineHeight: 1.5, padding: '10px 12px', borderRadius: '12px 12px 3px 12px' }}>{c.text}</div></div>
+                : <div key={i} style={{ alignSelf: 'flex-start', maxWidth: '86%' }}><div style={{ fontSize: 10.5, color: LH.muted, marginBottom: 3 }}>{c.name} · {c.t}</div><div style={{ background: '#fff', color: LH.body, fontSize: 12.5, lineHeight: 1.5, padding: '10px 12px', borderRadius: '12px 12px 12px 3px', border: '1px solid ' + LH.borderSoft }}>{c.text}</div></div>)}
+              <Card style={{ padding: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}><div style={{ width: 26, height: 26, borderRadius: 999, background: LH.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="phone" size={13} color={LH.green} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Completed</div><div style={{ fontSize: 11, color: LH.muted }}>Henry answered · 4:32</div></div></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}><Ic name="play-circle" size={20} color={LH.ink} /><div style={{ flex: 1, height: 4, borderRadius: 999, background: '#e7e2d8' }}><div style={{ width: '35%', height: '100%', borderRadius: 999, background: LH.ink }} /></div><span style={{ fontSize: 11, color: LH.muted }}>00:53</span></div>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>{['Spam', 'Marketing', '+1'].map(t => <span key={t} style={{ fontSize: 11, color: LH.sub, border: '1px solid ' + LH.border, borderRadius: 7, padding: '2px 8px' }}>{t}</span>)}</div>
+                <Btn kind="primary" icon="calendar" style={{ width: '100%', justifyContent: 'center' }} onClick={() => toast('Inspection scheduled')}>Schedule Inspection</Btn>
+              </Card>
+              <Card style={{ padding: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: LH.ink }}><Ic name="sparkles" size={14} color={LH.primary} />Call Summary</span><button onClick={() => toast('Transcript')} style={{ fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>View Transcript</button></div>
+                <div style={{ fontSize: 12, color: LH.body, lineHeight: 1.5 }}>• Homeowner confirmed storm damage last month, roof ~15 years old, interested in a free inspection.</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: LH.ink, margin: '8px 0 3px' }}>Next Steps</div>
+                <div style={{ fontSize: 12, color: LH.body, lineHeight: 1.5 }}>• Inspection scheduled for tomorrow at 6:00 PM · Drone report included.</div>
+              </Card>
+            </div>
+            <div style={{ padding: 12, borderTop: '1px solid ' + LH.borderSoft, background: '#fff' }}>
+              <input value={msg} onChange={e => setMsg(e.target.value)} placeholder="Enter to send message" style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 12px', fontSize: 12.5, outline: 'none', marginBottom: 8 }} />
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}><Btn kind="primary" icon="send" onClick={() => { if (msg.trim()) { toast('Message sent'); setMsg(''); } }}>Send</Btn></div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>;
+  }
+
+  function PipelineSection({ onToast, onFull }) {
     const [leads, setLeads] = useState(PIPE_LEADS);
     const [selId, setSelId] = useState(null);
     const [tab, setTab] = useState('details');
     const [expanded, setExpanded] = useState(false);
     const [view, setView] = useState('kanban');
+    const [pageLead, setPageLead] = useState(null);
     const scoreColor = s => s >= 80 ? LH.primary : s >= 60 ? '#c9922e' : '#9c9b96';
+    const openPage = l => { setSelId(null); setPageLead(l); onFull && onFull(true); };
+    const closePage = () => { setPageLead(null); onFull && onFull(false); };
     const sel = selId ? leads.find(l => l.id === selId) : null;
     const lastRef = useRef(null);
     if (sel) lastRef.current = sel;
@@ -28885,6 +29002,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const qualified = shown && shown.col === 'Qualified';
     const move = (id, col) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col } : l));
     useEffect(() => { const h = e => { if (e.key === 'Escape') setSelId(null); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, []);
+    if (pageLead) return <LeadDetailsPage lead={pageLead} onBack={closePage} onToast={onToast} />;
     return <div>
       <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
         <StatCard label="Received today" value="28" /><StatCard label="Qualified today" value="7" /><StatCard label="In drip" value="41" /><StatCard label="Awaiting human" value="3" accent={LH.primary} />
@@ -28918,7 +29036,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}><Ic name="user" size={15} color={LH.sub} /><span style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown.name}</span></div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              {[{ i: expanded ? 'minimize-2' : 'maximize-2', f: () => setExpanded(x => !x) }, { i: 'external-link', f: () => {} }, { i: 'x', f: () => setSelId(null) }].map((b, k) => <button key={k} onClick={b.f} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name={b.i} size={15} color={LH.sub} /></button>)}
+              {[{ i: expanded ? 'minimize-2' : 'maximize-2', f: () => setExpanded(x => !x) }, { i: 'external-link', f: () => openPage(shown) }, { i: 'x', f: () => setSelId(null) }].map((b, k) => <button key={k} onClick={b.f} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name={b.i} size={15} color={LH.sub} /></button>)}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 2, padding: '0 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
@@ -29843,14 +29961,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       health: { crumb: 'Last 30 days · 18 issues surfaced · 13 resolved · 5 pending', title: 'Hub Health', actions: <><Btn icon="calendar">Last 30 days</Btn><Btn icon="download">Export log</Btn></> }
     };
     const [wizardOpen, setWizardOpen] = useState(false);
+    const [pipeFull, setPipeFull] = useState(false);
+    useEffect(() => { if (section !== 'pipeline') setPipeFull(false); }, [section]);
     const h = heads[section] || heads.overview;
     const campaignsAction = <Btn kind="primary" icon="plus" onClick={() => { setCampaignEdit(null); onNavigate('lead-campaign-new'); }}>New campaign</Btn>;
     return <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
-      {section !== 'campaigns' && <PageHead crumb={h.crumb} title={h.title} actions={h.actions} />}
+      {section !== 'campaigns' && !(section === 'pipeline' && pipeFull) && <PageHead crumb={h.crumb} title={h.title} actions={h.actions} />}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 26px 34px', background: '#fdfdfc' }}>
         {section === 'overview' && <Hero />}
         {section === 'overview' && <OverviewSection onNavigate={onNavigate} />}
-        {section === 'pipeline' && <PipelineSection />}
+        {section === 'pipeline' && <PipelineSection onToast={showToast} onFull={setPipeFull} />}
         {section === 'campaigns' && <CampaignsSection onToast={showToast} onNavigate={onNavigate} />}
         {section === 'channels' && <ChannelsSection />}
         {section === 'health' && <HealthSection />}
