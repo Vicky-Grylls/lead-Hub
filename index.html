@@ -29292,7 +29292,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>{tasksCard}<div /></div>
       </>;
       if (tab === 'flow') {
-        const chMeta = { sms: { icon: 'message-square', label: 'SMS', bg: LH.tint, fg: LH.ink }, call: { icon: 'phone', label: 'Call', bg: LH.blueBg, fg: LH.blue }, email: { icon: 'mail', label: 'Email', bg: '#efe9de', fg: '#8a6d3b' } };
+        const chMeta = { sms: { icon: 'message-square', label: 'SMS', bg: LH.tint, fg: LH.ink }, call: { icon: 'phone', label: 'Call', bg: LH.blueBg, fg: LH.blue }, email: { icon: 'mail', label: 'Email', bg: '#efe9de', fg: '#8a6d3b' }, voice_drop: { icon: 'mic', label: 'Voice drop', bg: LH.tint, fg: LH.ink }, video_drop: { icon: 'video', label: 'Video drop', bg: '#efe9de', fg: '#8a6d3b' } };
         const flowSteps = [
           { ch: 'sms', title: 'Speed-to-lead SMS', when: 'On enrollment', preview: 'Hi {{first_name}} — thanks for reaching out! When works for a quick chat?' },
           { ch: 'call', title: 'Nova qualification call', when: '+30 minutes', preview: 'Nova confirms property, damage type, and urgency by phone.' },
@@ -29509,8 +29509,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   const SERVICE_FRAC = { Roofing: 0.6, Gutter: 0.22, Siding: 0.3, Windows: 0.25, Door: 0.15 };
   const FIRST = ['Marcus', 'Danielle', 'Priya', 'Owen', 'Sofia', 'Trevor', 'Amara', 'Grant', 'Leah', 'Diego', 'Nina', 'Colton', 'Rosa', 'Jared', 'Imani', 'Blake', 'Hana', 'Miles', 'Yara', 'Dean', 'Camille', 'Ravi', 'Tessa', 'Nolan', 'Selena'];
   const LAST = ['Thompson', 'Nguyen', 'Alvarez', 'Patel', 'Walsh', 'Reed', 'Norris', 'Mitchell', 'Blake', 'Cohen', 'Marks', 'Silva', 'Webb', 'Klein', 'Perkins', 'Hart', 'Whitfield', 'Fisher', 'Dawson', 'Bryant'];
-  const CH_LIST = [['sms', 'Send SMS'], ['email', 'Send email'], ['call', 'Make a phone call'], ['task', 'Add a task']];
-  const CH_ICON = { sms: 'message-square', email: 'mail', call: 'phone', task: 'check-square' };
+  const CH_LIST = [['sms', 'Send SMS'], ['email', 'Send email'], ['call', 'Make a phone call'], ['voice_drop', 'Ringless voice drop'], ['video_drop', 'Video drop (MMS)'], ['task', 'Add a task']];
+  const VOICE_DROPS = ['Storm follow-up (0:22)', 'Free inspection offer (0:18)', 'Last-touch reminder (0:15)'];
+  const VIDEO_DROPS = ['Owner intro — 30s', 'Drone roof walkthrough — 45s', 'Insurance claim explainer — 60s'];
+  const CH_ICON = { sms: 'message-square', email: 'mail', call: 'phone', voice_drop: 'mic', video_drop: 'video', task: 'check-square' };
   const OFFSETS = [['launch', 'On arrival'], ['5', '+5 min'], ['15', '+15 min'], ['30', '+30 min'], ['60', '+60 min'], ['120', '+2 hrs']];
   const ANCHORS = [['last_message', 'after the previous step'], ['salesboard', 'after it hits the salesboard'], ['lead_created', 'after the lead is created']];
   const SNIPPETS = [['{{customer_first_name}}', 'Contact first name'], ['{{customer_last_name}}', 'Contact last name'], ['{{company.company_name}}', 'Company name'], ['{{company.company_phone}}', 'Company phone'], ['{{user_first_name}}', 'User first name']];
@@ -29666,7 +29668,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ width: 150 }}><Dropdown value={step.taskType} options={TASK_TYPES.map(t => ({ value: t, label: t }))} placeholder="Task type" onChange={v => onChange({ ...step, taskType: v })} /></div>
         <div style={{ width: 160 }}><Dropdown value={step.assignee} options={REPS.map(r => ({ value: r, label: r }))} placeholder="Assign to" onChange={v => onChange({ ...step, assignee: v })} /></div>
       </div>}
-      {ch === 'call'
+      {(ch === 'voice_drop' || ch === 'video_drop')
+        ? <div style={{ marginTop: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><span style={{ fontSize: 12, color: LH.sub, width: 60 }}>{ch === 'voice_drop' ? 'Recording' : 'Video'}</span><div style={{ width: 280 }}><Dropdown value={step.media || ''} placeholder={ch === 'voice_drop' ? 'Choose a voice drop…' : 'Choose a video…'} options={(ch === 'voice_drop' ? VOICE_DROPS : VIDEO_DROPS).map(m => ({ value: m, label: m }))} onChange={v => onChange({ ...step, media: v })} /></div><button onClick={() => onChange({ ...step, media: 'Uploaded ' + (ch === 'voice_drop' ? 'recording' : 'video') })} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="upload" size={13} color={LH.sub} />Upload</button></div>
+          <div style={{ fontSize: 12, color: LH.muted, marginTop: 8 }}>{ch === 'voice_drop' ? 'Delivered as a ringless voicemail — no call, no ring.' : 'Sent as an MMS video message to the lead’s mobile.'}</div>
+        </div>
+        : ch === 'call'
         ? <div style={{ marginTop: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 12, color: LH.sub, width: 60 }}>Placed by</span><div style={{ width: 220 }}><Dropdown value={step.callBy || 'nova'} options={[{ value: 'nova', label: 'Nova — AI voice agent' }, { value: 'rep', label: 'Assign to a sales rep' }]} onChange={v => onChange({ ...step, callBy: v })} /></div>{(step.callBy || 'nova') === 'rep' && <div style={{ width: 160 }}><Dropdown value={step.assignee} options={REPS.map(r => ({ value: r, label: r }))} placeholder="Rep" onChange={v => onChange({ ...step, assignee: v })} /></div>}</div>
           <div style={{ fontSize: 12, color: LH.muted, marginTop: 8 }}>{(step.callBy || 'nova') === 'rep' ? 'A call task is assigned to the selected rep.' : 'Nova places this call using the qualification playbook from the Communication step.'}</div>
@@ -29916,7 +29923,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </Card>
         <div style={{ display: 'flex', gap: 14 }}>
-          <div style={{ width: 132, flexShrink: 0, maxHeight: 460, overflowY: 'auto' }}>{dayList.map(d => { const o = days[d]; const chs = o ? o.steps.map(s => s.ch) : []; return <div key={d} onClick={() => setSelDay(d)} style={{ padding: '9px 11px', borderRadius: 9, marginBottom: 6, border: '1px solid ' + (selDay === d ? LH.primary : LH.border), background: selDay === d ? LH.tint : '#fff', cursor: 'pointer' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>Day {d}</span>{o && o.active === false && <span style={{ fontSize: 10, color: LH.amber }}>Paused</span>}</div><div style={{ display: 'flex', gap: 5, marginTop: 5, minHeight: 13 }}>{['sms', 'email', 'call'].filter(c => chs.includes(c)).map(c => <Ic key={c} name={CH_ICON[c]} size={12} color={LH.muted} />)}</div></div>; })}</div>
+          <div style={{ width: 132, flexShrink: 0, maxHeight: 460, overflowY: 'auto' }}>{dayList.map(d => { const o = days[d]; const chs = o ? o.steps.map(s => s.ch) : []; return <div key={d} onClick={() => setSelDay(d)} style={{ padding: '9px 11px', borderRadius: 9, marginBottom: 6, border: '1px solid ' + (selDay === d ? LH.primary : LH.border), background: selDay === d ? LH.tint : '#fff', cursor: 'pointer' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>Day {d}</span>{o && o.active === false && <span style={{ fontSize: 10, color: LH.amber }}>Paused</span>}</div><div style={{ display: 'flex', gap: 5, marginTop: 5, minHeight: 13 }}>{['sms', 'email', 'call', 'voice_drop', 'video_drop'].filter(c => chs.includes(c)).map(c => <Ic key={c} name={CH_ICON[c]} size={12} color={LH.muted} />)}</div></div>; })}</div>
           <Card style={{ flex: 1, minWidth: 0, padding: 16, alignSelf: 'flex-start' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Day {selDay}</div><div style={{ fontSize: 12, color: LH.sub }}>{dayObj.steps.length ? dayObj.steps.length + (dayObj.steps.length > 1 ? ' steps' : ' step') : 'No steps yet'}</div></div>
