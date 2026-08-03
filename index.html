@@ -28828,6 +28828,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   /* ─────────── OVERVIEW ─────────── */
   function OverviewSection({ onNavigate }) {
+    const [setupTab, setSetupTab] = useState('Setup');
     const kpis = [
       { label: 'Received today', value: 28, accent: LH.ink },
       { label: 'Qualified today', value: 7, accent: LH.green },
@@ -28840,20 +28841,45 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { id: 'lead-channels', icon: 'radio', title: 'Channels', desc: '6 of 11 sources connected', accent: LH.green },
       { id: 'lead-health', icon: 'activity', title: 'Health', desc: '5 pending · 1 requires action', accent: LH.amber }
     ];
+    const steps = [
+      { cat: 'SOURCE', icon: 'plug', bg: '#fdece5', fg: '#e0642f', title: 'Set up source', desc: 'Connect marketplace and native lead sources so new demand lands in Lead Hub.', done: true, go: 'lead-channels' },
+      { cat: 'PHONE', icon: 'phone', bg: LH.blueBg, fg: LH.blue, title: 'Connect phone', desc: 'Set up calling and direct replies now. 10DLC for campaign texting may take longer.', go: 'lead-channels' },
+      { cat: 'CAMPAIGN', icon: 'zap', bg: LH.amberBg, fg: LH.amber, title: 'Set up campaign', desc: 'Define speed-to-lead, nurture, storm response, or rehash follow-up.', go: 'lead-campaign-new' },
+      { cat: 'AI WORKFORCE', icon: 'sparkles', bg: '#efe7fb', fg: '#7c3aed', title: 'Enable AI workforce', desc: 'Turn on Nova for qualification, routing, speed-to-lead replies, and human handoff.', go: 'lead-workforce' }
+    ];
+    const recs = [
+      { cat: 'PLAYBOOK', icon: 'book-open', bg: LH.tint, fg: LH.ink, title: 'Tune your Nova playbook', desc: 'Set qualification tone, handoff rules, and required signals.', go: 'lead-workforce' },
+      { cat: 'TEMPLATES', icon: 'layout-template', bg: LH.tint, fg: LH.ink, title: 'Add message templates', desc: 'Save reusable SMS and email templates for faster campaigns.', go: 'lead-campaigns' }
+    ];
+    const pending = steps.filter(s => !s.done).length;
+    const firstOpen = steps.findIndex(s => !s.done);
+    const list = setupTab === 'Setup' ? steps : recs;
     return <div>
       <div style={{ display: 'flex', gap: 12, marginBottom: 22 }}>{kpis.map(k => <StatCard key={k.label} {...k} />)}</div>
+      <div style={{ marginBottom: 8 }}><div style={{ fontSize: 17, fontWeight: 700, color: LH.ink }}>Next steps for you</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Follow the steps below to tailor Lead Hub to your workflow.</div></div>
+      <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ display: 'flex', gap: 4, padding: '0 16px', borderBottom: '1px solid ' + LH.borderSoft }}>
+          {[['Setup', pending], ['Recommendations', recs.length]].map(([t, n]) => <button key={t} onClick={() => setSetupTab(t)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '12px 8px', fontSize: 13.5, fontWeight: 600, color: setupTab === t ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (setupTab === t ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{t}<span style={{ fontSize: 11, fontWeight: 700, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 7px' }}>{n}</span></button>)}
+        </div>
+        <div style={{ padding: 14 }}>{list.map((s, i) => <div key={s.title} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, border: '1px solid ' + LH.borderSoft, borderRadius: 12, marginBottom: i < list.length - 1 ? 10 : 0 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 11, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={s.icon} size={19} color={s.fg} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>{s.cat}</div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginTop: 1 }}>{s.title}</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{s.desc}</div></div>
+          {s.done ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#f6f4ef', color: LH.sub, fontSize: 13, fontWeight: 600 }}><Ic name="check" size={14} color={LH.sub} />Completed</span>
+            : setupTab === 'Setup' && i === firstOpen ? <Btn kind="primary" onClick={() => onNavigate(s.go)}>Start</Btn>
+            : <Btn onClick={() => onNavigate(s.go)}>Start</Btn>}
+        </div>)}</div>
+      </Card>
       <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 10 }}>JUMP BACK IN</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12, marginBottom: 24 }}>
-        {tiles.map(t => <Card key={t.id} hover onClick={() => onNavigate(t.id)} style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={t.icon} size={19} color={LH.primary} /></div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14.5, fontWeight: 600, color: LH.ink }}>{t.title}</div>
-            <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>{t.desc}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
+        {tiles.map(t => <Card key={t.id} hover onClick={() => onNavigate(t.id)} style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 11 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={t.icon} size={16} color={LH.primary} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{t.title}</div>
+            <div style={{ fontSize: 11.5, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.desc}</div>
           </div>
-          <Ic name="arrow-right" size={17} color={LH.muted} />
         </Card>)}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start' }}>
         <Card style={{ padding: 18 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink, marginBottom: 14 }}>Recent activity</div>
           {DIANE_ACT.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: i < DIANE_ACT.length - 1 ? 12 : 0, marginBottom: i < DIANE_ACT.length - 1 ? 12 : 0, borderBottom: i < DIANE_ACT.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
@@ -30022,13 +30048,31 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   function WorkforceSection({ onToast }) {
     const [agents, setAgents] = useState(AGENTS0);
     const [open, setOpen] = useState(null);
+    const [tone, setTone] = useState('Friendly and concise');
+    const [handoff, setHandoff] = useState('Route low-confidence replies to CSR');
+    const [signals, setSignals] = useState('Contact, service type, timeline, decision maker');
+    const [instructions, setInstructions] = useState('Introduce yourself as Nova from {{company.company_name}}. Confirm the property address, damage type, and urgency. Offer a free inspection and book the earliest slot. Be warm, concise, and never pushy. If the homeowner is unsure or asks for a person, hand off to a CSR.');
     const toggle = key => setAgents(a => a.map(x => x.key === key ? { ...x, on: !x.on } : x));
     const activeN = agents.filter(a => a.on).length;
+    const pbRow = (title, desc, control) => <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '14px 0', borderBottom: '1px solid ' + LH.borderSoft }}><div style={{ minWidth: 0, flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{title}</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{desc}</div></div><div style={{ width: 260, flexShrink: 0 }}>{control}</div></div>;
     return <div style={{ fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
         <StatCard label="Agents active" value={activeN} /><StatCard label="Leads engaged today" value="146" /><StatCard label="Auto-qualified" value="82%" accent={LH.green} /><StatCard label="Human escalations" value="7" accent={LH.primary} />
       </div>
       <div style={{ fontSize: 13, color: LH.sub, marginBottom: 14, maxWidth: 720 }}>Configure your AI workforce right here in the hub — no separate setup. Turn agents on, tune their playbooks, and they start working leads immediately.</div>
+      <Card style={{ padding: 18, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="sparkles" size={16} color={LH.primary} /><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Nova Playbook</span></div>
+        <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 8 }}>Default qualification and handoff settings for every Lead Hub conversation.</div>
+        {pbRow('Qualification tone', 'Controls how Nova introduces itself and asks follow-up questions.', <Dropdown value={tone} options={['Friendly and concise', 'Warm and consultative', 'Direct and efficient', 'Formal and professional'].map(o => ({ value: o, label: o }))} onChange={setTone} />)}
+        {pbRow('Handoff rule', 'Human review starts when Nova cannot confidently qualify or schedule.', <Dropdown value={handoff} options={['Route low-confidence replies to CSR', 'Always confirm with a human first', 'Never hand off — Nova only', 'Hand off after 3 attempts'].map(o => ({ value: o, label: o }))} onChange={setHandoff} />)}
+        {pbRow('Required signals', 'The minimum fields Nova tries to capture before marking a lead ready.', <input value={signals} onChange={e => setSignals(e.target.value)} style={{ width: '100%', height: 60, borderRadius: 8, border: '1px solid ' + LH.border, padding: '8px 10px', fontSize: 12.5, color: LH.body, outline: 'none' }} />)}
+        <div style={{ paddingTop: 14 }}>
+          <label style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Instructions</label>
+          <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 8px' }}>Free-form guidance Nova follows on every conversation.</div>
+          <textarea value={instructions} onChange={e => setInstructions(e.target.value)} style={{ width: '100%', height: 110, borderRadius: 8, border: '1px solid ' + LH.border, padding: 11, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}><Btn kind="primary" icon="check" onClick={() => onToast && onToast('Nova playbook saved')}>Save playbook</Btn></div>
+        </div>
+      </Card>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14 }}>
         {agents.map(a => <Card key={a.key} style={{ padding: 16 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
