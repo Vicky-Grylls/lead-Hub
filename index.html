@@ -30111,7 +30111,27 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       init: { name: 'Gutter Season Push', desc: 'Seasonal SMS + email push for gutter cleaning and guard installs.', dayCount: 7, s2l: [{ ch: 'email', offset: 'launch', subject: 'Beat the rain — gutter tune-up', body: 'Hi {{customer_first_name}}, book a gutter clean before the season hits.' }], days: { 3: { steps: [{ ch: 'sms', time: '10:00 am', body: 'Hi {{customer_first_name}}, spots are filling up for gutter service — want one?' }] } } } }
   ];
   const TPL_CATS = ['All templates', 'Speed to lead', 'Nurture', 'Re-engagement', 'Seasonal'];
-  const CHAN_ICON = { sms: 'message-square', email: 'mail', call: 'phone', task: 'check-square' };
+  const CHAN_ICON = { sms: 'message-square', email: 'mail', call: 'phone', voice_drop: 'mic', video_drop: 'video', task: 'check-square' };
+  // Out-of-box campaign types — every day pre-filled so a campaign can be deployed immediately (Day-1 value).
+  const buildDays = (n, chans, body) => { const d = {}; for (let i = 1; i <= n; i++) { const ch = chans[(i - 1) % chans.length]; const s = { ch, time: '10:00 am', body: body(ch, i) }; if (ch === 'email') s.subject = 'A note from {{company.company_name}} — day ' + i; if (ch === 'voice_drop') s.media = VOICE_DROPS[0]; if (ch === 'video_drop') s.media = VIDEO_DROPS[0]; d[i] = { active: true, steps: [s] }; } return d; };
+  const CAMP_TYPES = [
+    { key: 'speed', name: 'Speed to Lead', icon: 'zap', blurb: 'Contact new leads within minutes and keep touching daily.',
+      init: { type: 'Speed to Lead', name: 'Speed-to-Lead Campaign', desc: 'Reach every new lead within minutes — SMS on arrival, a Nova call, and an email backup — then a daily 14-day follow-up.', dayCount: 14,
+        s2l: [{ ch: 'sms', offset: 'launch', body: 'Hi {{customer_first_name}}, {{user_first_name}} with {{company.company_name}} — thanks for reaching out! When works for a quick call?' }, { ch: 'call', offset: '5', anchor: 'last_message' }, { ch: 'email', offset: '60', anchor: 'last_message', subject: 'We just got your request', body: 'Hi {{customer_first_name}},\n\nThanks for contacting {{company.company_name}}. Reply with a good time and we’ll set up your free inspection.' }],
+        days: buildDays(14, ['sms', 'call', 'email'], (ch, i) => ch === 'call' ? '' : 'Following up, {{customer_first_name}} — happy to hold a slot this week for your roof inspection.') } },
+    { key: 'storm', name: 'Storm Campaign', icon: 'cloud-lightning', blurb: 'Fast storm-damage response with voice + video drops.',
+      init: { type: 'Storm Campaign', name: 'Storm Response Campaign', desc: 'Reach storm-affected homeowners fast with SMS, a ringless voice drop, and a drone-walkthrough video, then a 14-day push.', dayCount: 14,
+        s2l: [{ ch: 'sms', offset: 'launch', body: 'Hi {{customer_first_name}}, storm damage can worsen fast. We can usually inspect within 48 hours — want me to get you scheduled?' }, { ch: 'voice_drop', offset: '30', anchor: 'last_message', media: 'Storm follow-up (0:22)' }, { ch: 'email', offset: '120', anchor: 'last_message', subject: 'Fast storm-damage inspections', body: 'Hi {{customer_first_name}},\n\nWe’re booking storm inspections this week — pick a slot and our team handles the rest.' }],
+        days: buildDays(14, ['sms', 'video_drop', 'email', 'voice_drop'], (ch, i) => ch === 'sms' ? 'Still glad to inspect the storm damage, {{customer_first_name}}. Reply YES to grab a slot.' : ch === 'email' ? 'Storm inspections are filling up — here’s how insurance can cover the repair.' : '') } },
+    { key: 'nurture', name: 'Nurture Campaign', icon: 'sprout', blurb: 'Light-touch education to warm leads over 21 days.',
+      init: { type: 'Nurture Campaign', name: 'Lead Nurture Campaign', desc: 'Warm up not-ready leads with helpful, low-pressure touches over 21 days across email and SMS.', dayCount: 21,
+        s2l: [{ ch: 'email', offset: 'launch', subject: 'Here when you’re ready', body: 'Hi {{customer_first_name}},\n\nNo rush — whenever you’re ready, {{company.company_name}} is here to help with the roof.' }],
+        days: buildDays(21, ['email', 'sms'], (ch, i) => ch === 'email' ? 'A quick roofing tip for you, {{customer_first_name}} — and we’re here whenever you’re ready.' : 'Checking in, {{customer_first_name}}. Want us to take a look at the roof?') } },
+    { key: 'marketing', name: 'Marketing Campaign', icon: 'megaphone', blurb: 'Promotional blasts and seasonal offers to a list.',
+      init: { type: 'Marketing Campaign', name: 'Seasonal Marketing Campaign', desc: 'Promote seasonal offers to your list with email + SMS over 30 days, including a video showcase.', dayCount: 30,
+        s2l: [{ ch: 'email', offset: 'launch', subject: 'A seasonal offer from {{company.company_name}}', body: 'Hi {{customer_first_name}},\n\nBook this month and save on your roof project — limited slots available.' }],
+        days: buildDays(30, ['email', 'sms', 'video_drop'], (ch, i) => ch === 'sms' ? 'Last chance this month, {{customer_first_name}} — reply to claim your offer.' : ch === 'email' ? 'This month’s offer is still open — here’s what’s included.' : '') } }
+  ];
 
   function CampaignCreate({ embed, onClose, onCreate }) {
     const editRow = CAMPAIGN_EDIT;
@@ -30227,7 +30247,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               </div>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+          <div style={{ animation: 'lhFadeUp .55s .16s cubic-bezier(.32,.72,0,1) both', marginTop: 26, marginBottom: 10, fontSize: 12, fontWeight: 700, letterSpacing: '.04em', color: LH.muted }}>START FROM A CAMPAIGN TYPE — READY TO DEPLOY</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12 }}>
+            {CAMP_TYPES.map((ct, i) => <div key={ct.key} onClick={() => launch(JSON.parse(JSON.stringify(ct.init)))} style={{ animation: 'lhFadeUp .55s ' + (0.18 + i * 0.05) + 's cubic-bezier(.32,.72,0,1) both', border: '1px solid ' + LH.border, borderRadius: 12, padding: 14, cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 11, background: '#fff', transition: 'border-color .12s, box-shadow .12s, transform .12s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = '#d8cdb8'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,.06)'; e.currentTarget.style.transform = 'translateY(-2px)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = LH.border; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}>
+              <div style={{ width: 34, height: 34, borderRadius: 9, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={ct.icon} size={17} color={LH.ink} /></div>
+              <div style={{ minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{ct.name}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 3, lineHeight: 1.45 }}>{ct.blurb}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 5 }}>{ct.init.dayCount}-day sequence · all days pre-filled</div></div>
+            </div>)}
+          </div>
+          <div style={{ marginTop: 10, marginBottom: 10, fontSize: 12, fontWeight: 700, letterSpacing: '.04em', color: LH.muted }}>OR</div>
+          <div style={{ display: 'flex', gap: 12 }}>
             {TILES.map(([k, t, d, ic, fn], i) => <div key={k} onClick={fn} style={{ animation: 'lhFadeUp .55s ' + (0.18 + i * 0.06) + 's cubic-bezier(.32,.72,0,1) both', flex: 1, minWidth: 0, border: '1px solid ' + LH.border, borderRadius: 12, padding: 14, cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, background: '#fff', transition: 'border-color .12s, box-shadow .12s, transform .12s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = '#d8cdb8'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,.06)'; e.currentTarget.style.transform = 'translateY(-2px)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = LH.border; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}>
               <div style={{ minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{t}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 3 }}>{d}</div></div>
               <Ic name={ic} size={17} color={LH.sub} />
