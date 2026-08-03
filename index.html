@@ -29839,11 +29839,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       if (step === 1) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="filter" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Audience</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 16px', maxWidth: 640 }}>Configure which customers qualify for this campaign. Customers are evaluated when they are created — matching customers are enrolled automatically.</div>
-        <div style={{ background: LH.blueBg, border: '1px solid ' + LH.blueBd, borderRadius: 10, padding: '12px 14px', display: 'flex', gap: 10, marginBottom: 20 }}>
-          <Ic name="info" size={16} color={LH.blue} />
-          <div><div style={{ fontSize: 13.5, fontWeight: 700, color: '#1e3a8a' }}>{matchCount} records match your current filters{removedInMatch > 0 ? ' · ' + removedInMatch + ' removed manually, ' + enrolledCount + ' will enrol' : ''}</div><div style={{ fontSize: 12, color: '#3b5b9e', marginTop: 2 }}>Records already enrolled in another active campaign will be excluded.</div></div>
-        </div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>Configure which customers qualify for this campaign. Customers are evaluated when they are created — matching customers are enrolled automatically.</div>
         <Conditions rows={conds} setRows={setConds} join={join} setJoin={setJoin} />
         <Card style={{ marginTop: 20, padding: 0, overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px', borderBottom: '1px solid ' + LH.borderSoft }}>
