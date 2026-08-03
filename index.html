@@ -30073,24 +30073,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}><Btn kind="primary" icon="check" onClick={() => onToast && onToast('Nova playbook saved')}>Save playbook</Btn></div>
         </div>
       </Card>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14 }}>
-        {agents.map(a => <Card key={a.key} style={{ padding: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 11, background: a.on ? LH.ink : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={a.icon} size={19} color={a.on ? '#fff' : LH.sub} /></div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>{a.name}</span><span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.03em', color: a.on ? LH.green : LH.muted, background: a.on ? LH.greenBg : '#f1f0ec', borderRadius: 999, padding: '2px 8px' }}>{a.on ? 'ACTIVE' : 'OFF'}</span></div>
-              <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>{a.role}</div>
-              <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>{a.channels.map(c => <span key={c} style={{ fontSize: 11, color: LH.body, background: '#f1f0ec', borderRadius: 6, padding: '2px 8px' }}>{c}</span>)}</div>
-            </div>
-            <Toggle on={a.on} onChange={() => { toggle(a.key); onToast && onToast(a.name + (a.on ? ' turned off' : ' activated')); }} />
-          </div>
-          <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 12 }}>{a.metric}</div>
-          <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 12, paddingTop: 10 }}>
-            <button onClick={() => setOpen(o => o === a.key ? null : a.key)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 12.5, fontWeight: 600, color: LH.primary }}><Ic name={open === a.key ? 'chevron-down' : 'settings'} size={14} color={LH.primary} />{open === a.key ? 'Hide configuration' : 'Configure'}</button>
-            {open === a.key && <div style={{ marginTop: 10 }}>{a.cfg.map(([k, v]) => <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '6px 0', borderBottom: '1px solid ' + LH.borderSoft }}><span style={{ fontSize: 12, color: LH.muted }}>{k}</span><span style={{ fontSize: 12, color: LH.body, fontWeight: 500, textAlign: 'right' }}>{v}</span></div>)}<div style={{ marginTop: 10 }}><Btn kind="primary" icon="check" onClick={() => onToast && onToast(a.name + ' saved')}>Save configuration</Btn></div></div>}
-          </div>
-        </Card>)}
-      </div>
     </div>;
   }
 
