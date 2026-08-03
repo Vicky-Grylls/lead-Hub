@@ -29675,11 +29675,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
 
   // A single channel step editor (used by Speed to Lead + Nurture)
-  function StepEditor({ step, onChange, onRemove, timingMode }) {
+  function StepEditor({ step, onChange, onRemove, timingMode, error }) {
     const ch = step.ch;
     const insertSnippet = tok => onChange({ ...step, body: (step.body || '') + tok });
     const applyTemplate = name => { const list = ch === 'sms' ? SMS_TEMPLATES : EMAIL_TEMPLATES; const tpl = list.find(x => x.name === name); if (tpl) onChange({ ...step, tpl: name, body: tpl.body, ...(tpl.subject ? { subject: tpl.subject } : {}) }); };
-    return <Card style={{ padding: 14, marginBottom: 10 }}>
+    return <Card style={{ padding: 14, marginBottom: 10, border: '1px solid ' + (error ? LH.red : LH.border) }}>
+      {error && <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10, padding: '8px 10px', borderRadius: 8, background: '#fbeaea', border: '1px solid #f2d0d0' }}><Ic name="alert-triangle" size={14} color={LH.red} /><span style={{ fontSize: 12, color: LH.red, fontWeight: 600 }}>{error}</span></div>}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: (ch === 'call') ? 0 : 10, flexWrap: 'wrap', rowGap: 8 }}>
         <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={CH_ICON[ch]} size={15} color={LH.primary} /></div>
         <div style={{ width: 150, flexShrink: 0 }}><Dropdown value={ch} options={CH_LIST.map(([v, l]) => ({ value: v, label: l }))} onChange={v => onChange({ ...step, ch: v })} /></div>
@@ -29915,11 +29916,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {commTab === 'call' && <>{numberCard}{voiceCard}{instructionsCard}{playbookCard}</>}
         </div>;
       }
-      if (step === 3) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      if (step === 3) { const smsReady = !!(NUMBERS[numIdx] && smsOptOut.trim()); const emailReady = !!(emailFrom.trim() && emailAddr && emailReply.trim()); const stepErr = ch => ch === 'email' ? (emailReady ? null : 'Email sender isn’t set up. Add a from name, sending address, and reply-to in Communication.') : (ch === 'sms' || ch === 'voice_drop' || ch === 'video_drop') ? (smsReady ? null : 'Outbound number / opt-out isn’t set up. Configure SMS in Communication.') : null; const needsSms = s2l.some(s => ['sms', 'voice_drop', 'video_drop'].includes(s.ch)) && !smsReady; const needsEmail = s2l.some(s => s.ch === 'email') && !emailReady; return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="zap" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Speed to Lead</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px' }}>Launch day. These steps fire the moment a lead is enrolled, each one relative to the step before it.</div>
-        {s2l.map(s => <StepEditor key={s.id} step={s} timingMode="offset" onChange={ns => setS2l(s2l.map(x => x.id === s.id ? ns : x))} onRemove={() => setS2l(s2l.filter(x => x.id !== s.id))} />)}
+        {(needsSms || needsEmail) && <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 16, padding: '12px 14px', borderRadius: 10, background: '#fbeaea', border: '1px solid #f2d0d0' }}>
+          <Ic name="alert-triangle" size={16} color={LH.red} style={{ marginTop: 1 }} />
+          <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.red }}>Communication setup incomplete</div><div style={{ fontSize: 12.5, color: '#8a4b4b', marginTop: 2, lineHeight: 1.45 }}>{[needsSms && 'your SMS outbound number and opt-out message', needsEmail && 'your email sender details'].filter(Boolean).join(' and ')} {(needsSms && needsEmail) ? 'are' : 'is'} not set up. These steps won’t send until it’s fixed.</div></div>
+          <button onClick={() => setStep(2)} style={{ flexShrink: 0, height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.red, background: '#fff', color: LH.red, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Fix in Communication</button>
+        </div>}
+        {s2l.map(s => <StepEditor key={s.id} step={s} timingMode="offset" error={stepErr(s.ch)} onChange={ns => setS2l(s2l.map(x => x.id === s.id ? ns : x))} onRemove={() => setS2l(s2l.filter(x => x.id !== s.id))} />)}
         <button onClick={() => setS2l([...s2l, { id: wuid(), ch: 'sms', offset: '15', anchor: 'last_message', body: '' }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 10, padding: 12, background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button>
         <Card style={{ padding: 16, marginTop: 18 }}>
           <div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Business hours for launch day</div>
@@ -29933,7 +29939,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={weekend.sun} onChange={v => setWeekend({ ...weekend, sun: v })} /><span style={{ fontSize: 13, color: LH.body }}>Sunday</span></div>
           </div>
         </Card>
-      </div>;
+      </div>; }
       if (step === 4) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="headphones" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Nurture sequence</div>
