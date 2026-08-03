@@ -28665,6 +28665,36 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ['Contacting', 'Qualifying', 'Needs human'].includes(l.col) ? 'Speed-to-Lead Drip'
     : l.col === 'In drip' ? 'Storm Season Re-engage'
     : l.col === 'Qualified' || l.col === 'Completed' ? 'Speed-to-Lead Drip' : null));
+  function LeadPrimaryDetails({ lead, onToast }) {
+    const [pd, setPd] = useState(true);
+    const [cf, setCf] = useState(true);
+    const [status, setStatus] = useState(lead.status);
+    const [statusOpen, setStatusOpen] = useState(false);
+    const toast = m => onToast && onToast(m);
+    const email = lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com';
+    const phone = '469-555-0172';
+    const kv = (k, v) => <div style={{ display: 'flex', gap: 12, padding: '7px 0' }}><span style={{ fontSize: 11, color: LH.muted, width: 104, flexShrink: 0 }}>{k}</span><span style={{ fontSize: 12, color: LH.body, fontWeight: 500, flex: 1, minWidth: 0 }}>{v}</span></div>;
+    const secHead = (label, open, onT) => <button onClick={onT} style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}><Ic name={open ? 'chevron-down' : 'chevron-right'} size={14} color={LH.sub} /><span style={{ fontSize: 12, fontWeight: 700, color: LH.ink }}>{label}</span></button>;
+    return <div>
+      <div style={{ marginBottom: 6 }}>
+        {secHead('Primary Details', pd, () => setPd(p => !p))}
+        {pd && <div style={{ marginTop: 4 }}>
+          {kv('Contact', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: LH.ink }}>{lead.name}<Ic name="chevron-right" size={13} color={LH.muted} /></span>)}
+          {kv('Email', email)}{kv('Mobile', phone)}
+          {kv('Lead Source', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, height: 16, borderRadius: 5, background: LH.blueBg, color: LH.blue, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>{lead.src[0]}</span>{lead.src}</span>)}
+          {kv('Status', <span style={{ position: 'relative', display: 'inline-block' }}><button onClick={() => setStatusOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 8px', borderRadius: 7, border: '1px solid ' + LH.greenBd, background: LH.greenBg, color: LH.green, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{status}<Ic name="chevron-down" size={12} color={LH.green} /></button>{statusOpen && <div onMouseLeave={() => setStatusOpen(false)} style={{ position: 'absolute', top: 28, left: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 150 }}>{['New', 'Contacting', 'Qualifying', 'Live with Nova', 'Qualified', 'Dead'].map(s => <div key={s} onClick={() => { setStatus(s); setStatusOpen(false); toast('Status → ' + s); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 9px', borderRadius: 6, fontSize: 12, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{s}{status === s && <Ic name="check" size={13} color={LH.green} />}</div>)}</div>}</span>)}
+          {kv('Tags', <Pill label={status} tone="Qualified" />)}
+          {kv('Lead Score', lead.score + '/100')}
+          {kv('Assigned CSR', 'Maria Gonzalez')}{kv('Age', lead.age || '—')}{kv('Auto-qualified', 'Yes — Property Intelligence')}
+          {kv('Service Address', '4821 Oakwood Dr')}{kv('City, State, ZIP', 'Plano, TX 75024')}{kv('Score Breakdown', 'Source 20 · Data 22 · Intel 25 · Demo 15')}
+        </div>}
+      </div>
+      <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
+        {secHead('Custom Fields', cf, () => setCf(p => !p))}
+        {cf && <div style={{ marginTop: 4 }}>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}{kv('Status', <Pill label={status} tone="Qualified" />)}</div>}
+      </div>
+    </div>;
+  }
   function LeadSideSheet({ lead, onClose, onToast, onOpenPage }) {
     const [tab, setTab] = useState('details');
     const [expanded, setExpanded] = useState(false);
@@ -28708,9 +28738,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <span style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: camp ? '#fff' : '#f1f0ec', border: camp ? '1px solid ' + LH.borderSoft : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="megaphone" size={14} color={camp ? LH.primary : LH.sub} /></span>
               <div style={{ minWidth: 0 }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>CAMPAIGN</div><div style={{ fontSize: 12.5, fontWeight: 600, color: camp ? LH.ink : LH.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{camp || 'Not enrolled in a campaign'}</div></div>
             </div>; })()}
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, margin: '18px 0 8px' }}>{captured} OF 9 FIELDS CAPTURED</div>
-            {DIANE_FIELDS.map((f, i) => <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}><Ic name={i < captured ? 'check' : 'circle'} size={14} color={i < captured ? LH.green : '#cfc9bd'} /><span style={{ fontSize: 12.5, color: i < captured ? LH.body : LH.muted }}>{f}</span></div>)}
-            <div style={{ background: LH.tint, borderRadius: 9, padding: 12, marginTop: 16 }}><div style={{ fontSize: 11, fontWeight: 700, color: LH.primaryDark, marginBottom: 3 }}>Suggested next step</div><div style={{ fontSize: 12, color: '#4a4a46', lineHeight: 1.45 }}>{qualified ? 'Ready to convert. Tap Convert to Inspection to move this to Sales Hub.' : (9 - captured) + ' more field' + (9 - captured === 1 ? '' : 's') + ' to capture. Nova is working this lead — nudge with a call or text.'}</div></div>
+            <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 16, paddingTop: 14 }}><LeadPrimaryDetails lead={shown} onToast={onToast} /></div>
           </>}
           {tab === 'activity' && <div>{act.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: 14 }}>
             <div style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={a.who === 'Nova' ? 'sparkles' : 'settings'} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div>
@@ -28968,27 +28996,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ width: 316, flexShrink: 0, padding: '18px 18px', borderRight: '1px solid ' + LH.borderSoft, overflowY: 'auto' }}>
           <div style={{ display: 'flex', gap: 11, marginBottom: 12 }}>
             <div style={{ width: 40, height: 40, borderRadius: 11, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>{initials}</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, lineHeight: 1.3 }}>Roof Replacement for {lead.name}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, lineHeight: 1.3 }}>{lead.name}</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: LH.sub, marginBottom: 12 }}><Ic name="map-pin" size={13} color={LH.muted} />4821 Oakwood Dr, Plano, TX 75024</div>
           <div style={{ display: 'flex', gap: 7, marginBottom: 16 }}><Btn icon="plus" onClick={() => toast('New activity')}>New</Btn>{iconBtn('mail', 'Compose email')}{iconBtn('phone', 'Calling ' + lead.name + '…')}<button onClick={() => { setFlagged(f => !f); toast(flagged ? 'Flag removed' : 'Lead flagged'); }} style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid ' + (flagged ? LH.red : LH.border), background: flagged ? '#fbeaea' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="flag" size={15} color={flagged ? LH.red : LH.sub} /></button>{iconBtn('bell', 'Reminder set')}</div>
-          <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14, marginBottom: 6 }}>
-            {secHead('Primary Details', pd, () => setPd(p => !p))}
-            {pd && <div style={{ marginTop: 4 }}>
-              {kv('Contact', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: LH.ink }}>{lead.name}<Ic name="chevron-right" size={13} color={LH.muted} /></span>)}
-              {kv('Email', email)}{kv('Mobile', phone)}
-              {kv('Lead Source', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, height: 16, borderRadius: 5, background: LH.blueBg, color: LH.blue, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>{lead.src[0]}</span>{lead.src}</span>)}
-              {kv('Status', <span style={{ position: 'relative', display: 'inline-block' }}><button onClick={() => setStatusOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 8px', borderRadius: 7, border: '1px solid ' + LH.greenBd, background: LH.greenBg, color: LH.green, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{status}<Ic name="chevron-down" size={12} color={LH.green} /></button>{statusOpen && <div onMouseLeave={() => setStatusOpen(false)} style={{ position: 'absolute', top: 28, left: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 150 }}>{['New', 'Contacting', 'Qualifying', 'Live with Nova', 'Qualified', 'Dead'].map(s => <div key={s} onClick={() => { setStatus(s); setStatusOpen(false); toast('Status → ' + s); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 9px', borderRadius: 6, fontSize: 12, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{s}{status === s && <Ic name="check" size={13} color={LH.green} />}</div>)}</div>}</span>)}
-              {kv('Tags', <Pill label={status} tone="Qualified" />)}
-              {kv('Lead Score', lead.score + '/100')}
-              {kv('Assigned CSR', 'Maria Gonzalez')}{kv('Age', lead.age)}{kv('Auto-qualified', 'Yes — Property Intelligence')}
-              {kv('Service Address', '4821 Oakwood Dr')}{kv('City, State, ZIP', 'Plano, TX 75024')}{kv('Score Breakdown', 'Source 20 · Data 22 · Intel 25 · Demo 15')}
-            </div>}
-          </div>
-          <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
-            {secHead('Custom Fields', cf, () => setCf(p => !p))}
-            {cf && <div style={{ marginTop: 4 }}>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}{kv('Status', <Pill label={lead.status} tone="Qualified" />)}</div>}
-          </div>
+          <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}><LeadPrimaryDetails lead={lead} onToast={onToast} /></div>
         </div>
         {/* Center column */}
         <div style={{ flex: 1, minWidth: 0, borderRight: '1px solid ' + LH.borderSoft, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
