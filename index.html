@@ -28722,11 +28722,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}><Ic name="user" size={15} color={LH.sub} /><span style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown.name}</span></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {onNext && <div style={{ display: 'inline-flex', border: '1px solid ' + LH.border, borderRadius: 7, overflow: 'hidden', marginRight: 4 }}>
-              <button onClick={onPrev} title="Previous lead" style={{ width: 26, height: 26, border: 'none', borderRight: '1px solid ' + LH.border, background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="chevron-up" size={15} color={LH.sub} /></button>
-              <button onClick={onNext} title="Next lead" style={{ width: 26, height: 26, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="chevron-down" size={15} color={LH.sub} /></button>
-            </div>}
-            {[{ i: expanded ? 'minimize-2' : 'maximize-2', f: () => setExpanded(x => !x) }, { i: 'external-link', f: () => onOpenPage && onOpenPage(shown) }, { i: 'x', f: onClose }].map((b, k) => <button key={k} onClick={b.f} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name={b.i} size={15} color={LH.sub} /></button>)}
+            {[]
+              .concat(onNext ? [{ i: 'chevron-up', f: onPrev, t: 'Previous lead' }, { i: 'chevron-down', f: onNext, t: 'Next lead' }] : [])
+              .concat([{ i: 'maximize-2', f: () => onOpenPage && onOpenPage(shown), t: 'Open full page' }, { i: 'x', f: onClose, t: 'Close' }])
+              .map((b, k) => <button key={k} onClick={b.f} title={b.t} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name={b.i} size={15} color={LH.sub} /></button>)}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 2, padding: '0 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
