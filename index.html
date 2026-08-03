@@ -947,6 +947,10 @@ function Sidebar({
         icon: 'megaphone',
         label: 'Campaigns'
       }, {
+        id: 'lead-workforce',
+        icon: 'bot',
+        label: 'AI Workforce'
+      }, {
         id: 'lead-channels',
         icon: 'radio',
         label: 'Channels'
@@ -14289,7 +14293,7 @@ function App() {
     }));
   }
   if (isLeadPage) {
-    const leadSection = page === 'lead-pipeline' ? 'pipeline' : page === 'lead-campaigns' ? 'campaigns' : page === 'lead-channels' ? 'channels' : page === 'lead-health' ? 'health' : 'overview';
+    const leadSection = page === 'lead-pipeline' ? 'pipeline' : page === 'lead-campaigns' ? 'campaigns' : page === 'lead-workforce' ? 'workforce' : page === 'lead-channels' ? 'channels' : page === 'lead-health' ? 'health' : 'overview';
     return /*#__PURE__*/React.createElement("div", {
       className: "flex flex-col h-screen w-screen overflow-hidden",
       style: { background: '#f8f5f0' }
@@ -30006,6 +30010,46 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     return <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(20,18,15,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}><div style={{ width: 'min(1040px,96vw)', height: 'min(700px,92vh)' }}>{shell}</div></div>;
   }
 
+  /* ─────────── AI WORKFORCE ─────────── */
+  const AGENTS0 = [
+    { key: 'csr', name: 'Nova — CSR Agent', role: 'Speed-to-lead & qualification', icon: 'headset', on: true, channels: ['SMS', 'Voice', 'Email'], metric: '312 leads engaged · 57% reply', cfg: [['Voice', 'Nova (US female)'], ['Working hours', '24/7'], ['Escalation', 'After 3 attempts → human'], ['Playbook', '5 questions']] },
+    { key: 'demand', name: 'Demand Gen Agent', role: 'Sources & re-engages demand', icon: 'trending-up', on: true, channels: ['Email', 'SMS'], metric: '4 campaigns live · 128 re-engaged', cfg: [['Audience', 'Cold leads > 30 days'], ['Cadence', 'Weekly'], ['Budget guardrail', '$500/mo'], ['Approval', 'Auto-send']] },
+    { key: 'sched', name: 'Scheduling Agent', role: 'Books inspections & confirms', icon: 'calendar-check', on: true, channels: ['SMS', 'Voice'], metric: '89 inspections booked', cfg: [['Calendar', 'Team availability'], ['Buffer', '30 min'], ['Reminders', 'T-24h, T-2h'], ['Reschedule', 'Self-serve link']] },
+    { key: 'qual', name: 'Qualification Agent', role: 'Scores & routes new leads', icon: 'sliders', on: true, channels: ['Data'], metric: '9-field capture · 82% auto-qualified', cfg: [['Model', 'Property Intelligence'], ['Threshold', 'Score ≥ 60'], ['Route hot', '→ CSR + rep'], ['Route cold', '→ Nurture']] },
+    { key: 'review', name: 'Reputation Agent', role: 'Requests & manages reviews', icon: 'star', on: false, channels: ['SMS', 'Email'], metric: 'Not running', cfg: [['Trigger', 'On job complete'], ['Platforms', 'Google, Facebook'], ['Delay', '2 hours'], ['Follow-up', '1 reminder']] },
+    { key: 'winback', name: 'Winback Agent', role: 'Revives lost & aged leads', icon: 'rotate-ccw', on: false, channels: ['Email', 'Voice drop'], metric: 'Not running', cfg: [['Audience', 'Lost > 60 days'], ['Offer', 'Seasonal discount'], ['Cadence', '21-day drip'], ['Cap', '2 touches/week']] }
+  ];
+  function WorkforceSection({ onToast }) {
+    const [agents, setAgents] = useState(AGENTS0);
+    const [open, setOpen] = useState(null);
+    const toggle = key => setAgents(a => a.map(x => x.key === key ? { ...x, on: !x.on } : x));
+    const activeN = agents.filter(a => a.on).length;
+    return <div style={{ fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
+        <StatCard label="Agents active" value={activeN} /><StatCard label="Leads engaged today" value="146" /><StatCard label="Auto-qualified" value="82%" accent={LH.green} /><StatCard label="Human escalations" value="7" accent={LH.primary} />
+      </div>
+      <div style={{ fontSize: 13, color: LH.sub, marginBottom: 14, maxWidth: 720 }}>Configure your AI workforce right here in the hub — no separate setup. Turn agents on, tune their playbooks, and they start working leads immediately.</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14 }}>
+        {agents.map(a => <Card key={a.key} style={{ padding: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 11, background: a.on ? LH.ink : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={a.icon} size={19} color={a.on ? '#fff' : LH.sub} /></div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>{a.name}</span><span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.03em', color: a.on ? LH.green : LH.muted, background: a.on ? LH.greenBg : '#f1f0ec', borderRadius: 999, padding: '2px 8px' }}>{a.on ? 'ACTIVE' : 'OFF'}</span></div>
+              <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>{a.role}</div>
+              <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>{a.channels.map(c => <span key={c} style={{ fontSize: 11, color: LH.body, background: '#f1f0ec', borderRadius: 6, padding: '2px 8px' }}>{c}</span>)}</div>
+            </div>
+            <Toggle on={a.on} onChange={() => { toggle(a.key); onToast && onToast(a.name + (a.on ? ' turned off' : ' activated')); }} />
+          </div>
+          <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 12 }}>{a.metric}</div>
+          <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 12, paddingTop: 10 }}>
+            <button onClick={() => setOpen(o => o === a.key ? null : a.key)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 12.5, fontWeight: 600, color: LH.primary }}><Ic name={open === a.key ? 'chevron-down' : 'settings'} size={14} color={LH.primary} />{open === a.key ? 'Hide configuration' : 'Configure'}</button>
+            {open === a.key && <div style={{ marginTop: 10 }}>{a.cfg.map(([k, v]) => <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '6px 0', borderBottom: '1px solid ' + LH.borderSoft }}><span style={{ fontSize: 12, color: LH.muted }}>{k}</span><span style={{ fontSize: 12, color: LH.body, fontWeight: 500, textAlign: 'right' }}>{v}</span></div>)}<div style={{ marginTop: 10 }}><Btn kind="primary" icon="check" onClick={() => onToast && onToast(a.name + ' saved')}>Save configuration</Btn></div></div>}
+          </div>
+        </Card>)}
+      </div>
+    </div>;
+  }
+
   /* ─────────── CHANNELS ─────────── */
   function ChannelsSection() {
     return <div>
@@ -30071,6 +30115,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       overview: { crumb: 'Lead Hub', title: 'Overview', actions: <Btn icon="calendar">Today</Btn> },
       pipeline: { crumb: 'Lead Hub', title: 'Pipeline', actions: <Btn icon="calendar">Today</Btn> },
       campaigns: { crumb: 'Lead Hub · 3 active', title: 'Campaigns', actions: null },
+      workforce: { crumb: 'Lead Hub · AI Workforce', title: 'AI Workforce', actions: <Btn kind="primary" icon="plus">Add agent</Btn> },
       channels: { crumb: 'Lead Hub · 6 sources connected', title: 'Channels', actions: <Btn kind="primary" icon="plus">Connect source</Btn> },
       health: { crumb: 'Last 30 days · 18 issues surfaced · 13 resolved · 5 pending', title: 'Hub Health', actions: <><Btn icon="calendar">Last 30 days</Btn><Btn icon="download">Export log</Btn></> }
     };
@@ -30086,6 +30131,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {section === 'overview' && <OverviewSection onNavigate={onNavigate} />}
         {section === 'pipeline' && <PipelineSection onToast={showToast} onFull={setPipeFull} />}
         {section === 'campaigns' && <CampaignsSection onToast={showToast} onNavigate={onNavigate} />}
+        {section === 'workforce' && <WorkforceSection onToast={showToast} />}
         {section === 'channels' && <ChannelsSection />}
         {section === 'health' && <HealthSection />}
       </div>
