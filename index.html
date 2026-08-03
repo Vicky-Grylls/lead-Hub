@@ -28858,7 +28858,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   /* ─────────── OVERVIEW ─────────── */
   function OverviewSection({ onNavigate }) {
-    const [setupTab, setSetupTab] = useState('Setup');
+    const [setupSel, setSetupSel] = useState(1);
+    const stepArt = id => {
+      const card = (x, y, w, ln) => <g key={x + '' + y}><rect x={x} y={y} width={w} height="26" rx="6" fill="#fff" stroke="#e7e2d8" /><circle cx={x + 15} cy={y + 13} r="7" fill="#efeae2" />{[0, 1].map(k => <rect key={k} x={x + 27} y={y + 8 + k * 7} width={ln - k * 14} height="4" rx="2" fill="#e7e2d8" />)}</g>;
+      const base = { width: '100%', height: 150, viewBox: '0 0 300 150', fill: 'none' };
+      if (id === 'source') return <svg {...base}><rect x="24" y="20" width="120" height="30" rx="8" fill="#fff" stroke="#e7e2d8" /><rect x="24" y="60" width="120" height="30" rx="8" fill="#fff" stroke="#e7e2d8" /><rect x="24" y="100" width="120" height="30" rx="8" fill="#fff" stroke="#e7e2d8" />{[35, 75, 115].map(y => <circle key={y} cx="40" cy={y} r="7" fill="#efeae2" />)}<path d="M144 35 C 190 35, 190 75, 236 75 M144 75 C 190 75, 190 75, 236 75 M144 115 C 190 115, 190 75, 236 75" stroke="#cfc7b8" strokeWidth="1.5" strokeDasharray="3 4" /><rect x="236" y="58" width="40" height="34" rx="9" fill="#1f1f1d" /><path d="M250 75 h12 M256 69 v12" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>;
+      if (id === 'phone') return <svg {...base}><rect x="120" y="24" width="60" height="102" rx="12" fill="#1f1f1d" /><rect x="126" y="34" width="48" height="70" rx="6" fill="#2f2c28" /><circle cx="150" cy="115" r="5" fill="#4a463f" />{[0, 1, 2].map(k => <path key={k} d={'M184 ' + (75 - 18 + k * 0) + ' q' + (14 + k * 12) + ' ' + (0) + ' ' + (14 + k * 12) + ' 0'} />)}{[10, 20, 30].map((r, k) => <path key={k} d={'M186 55 a' + r + ' ' + r + ' 0 0 1 0 ' + (r * 2)} stroke="#cfc7b8" strokeOpacity={0.8 - k * 0.2} strokeWidth="2" fill="none" strokeLinecap="round" />)}<rect x="132" y="44" width="30" height="4" rx="2" fill="#4a463f" /><rect x="132" y="54" width="20" height="4" rx="2" fill="#4a463f" /></svg>;
+      if (id === 'campaign') return <svg {...base}>{[[70, 30], [150, 22], [110, 34]].map(([x, y], k) => <circle key={k} cx={x} cy={y} r={k === 1 ? 5 : 6} fill="#cfc7b8" />)}<path d="M70 52 L172 52 L138 92 L138 118 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 L104 92 Z" fill="#efeae2" stroke="#cfc7b8" strokeWidth="1.5" strokeLinejoin="round" /><ellipse cx="121" cy="52" rx="51" ry="7" fill="#e7e2d8" stroke="#cfc7b8" /><circle cx="121" cy="132" r="4" fill="#1f1f1d" />{card(196, 44, 80, 34)}</svg>;
+      return <svg {...base}><path d="M110 40 q4 20 24 24 q-20 4 -24 24 q-4 -20 -24 -24 q20 -4 24 -24 z" fill="#1f1f1d" /><path d="M170 74 q2 12 14 14 q-12 2 -14 14 q-2 -12 -14 -14 q12 -2 14 -14 z" fill="#cfc7b8" />{card(196, 44, 80, 34)}{card(196, 90, 80, 34)}</svg>;
+    };
     const kpis = [
       { label: 'Received today', value: 28, accent: LH.ink },
       { label: 'Qualified today', value: 7, accent: LH.green },
@@ -28872,32 +28880,41 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { id: 'lead-health', icon: 'activity', title: 'Health', desc: '5 pending · 1 requires action', accent: LH.amber }
     ];
     const steps = [
-      { cat: 'SOURCE', icon: 'plug', bg: '#fdece5', fg: '#e0642f', title: 'Set up source', desc: 'Connect marketplace and native lead sources so new demand lands in Lead Hub.', done: true, go: 'lead-channels' },
-      { cat: 'PHONE', icon: 'phone', bg: LH.blueBg, fg: LH.blue, title: 'Connect phone', desc: 'Set up calling and direct replies now. 10DLC for campaign texting may take longer.', go: 'lead-channels' },
-      { cat: 'CAMPAIGN', icon: 'zap', bg: LH.amberBg, fg: LH.amber, title: 'Set up campaign', desc: 'Define speed-to-lead, nurture, storm response, or rehash follow-up.', go: 'lead-campaign-new' },
-      { cat: 'AI WORKFORCE', icon: 'sparkles', bg: '#efe7fb', fg: '#7c3aed', title: 'Enable AI workforce', desc: 'Turn on Nova for qualification, routing, speed-to-lead replies, and human handoff.', go: 'lead-workforce' }
+      { cat: 'SOURCE', title: 'Set up source', time: '3 minutes', done: true, go: 'lead-channels', art: 'source', desc: 'Connect marketplace and native lead sources so new demand lands in Lead Hub automatically.', cta: 'Connect a source' },
+      { cat: 'PHONE', title: 'Connect phone', time: '4 minutes', go: 'lead-channels', art: 'phone', desc: 'Set up calling and direct replies now. 10DLC registration for campaign texting may take longer.', cta: 'Connect phone' },
+      { cat: 'CAMPAIGN', title: 'Set up campaign', time: '5 minutes', go: 'lead-campaign-new', art: 'campaign', desc: 'Define a speed-to-lead, nurture, storm response, or rehash follow-up — deploy in minutes.', cta: 'Create a campaign' },
+      { cat: 'AI WORKFORCE', title: 'Enable AI workforce', time: '2 minutes', go: 'lead-workforce', art: 'ai', desc: 'Turn on Nova for qualification, routing, speed-to-lead replies, and human handoff.', cta: 'Enable Nova' }
     ];
-    const recs = [
-      { cat: 'PLAYBOOK', icon: 'book-open', bg: LH.tint, fg: LH.ink, title: 'Tune your Nova playbook', desc: 'Set qualification tone, handoff rules, and required signals.', go: 'lead-workforce' },
-      { cat: 'TEMPLATES', icon: 'layout-template', bg: LH.tint, fg: LH.ink, title: 'Add message templates', desc: 'Save reusable SMS and email templates for faster campaigns.', go: 'lead-campaigns' }
-    ];
-    const pending = steps.filter(s => !s.done).length;
-    const firstOpen = steps.findIndex(s => !s.done);
-    const list = setupTab === 'Setup' ? steps : recs;
+    const doneN = steps.filter(s => s.done).length;
+    const pct = Math.round(doneN / steps.length * 100);
+    const cur = steps[setupSel] || steps[0];
     return <div>
       <div style={{ display: 'flex', gap: 12, marginBottom: 22 }}>{kpis.map(k => <StatCard key={k.label} {...k} />)}</div>
-      <div style={{ marginBottom: 8 }}><div style={{ fontSize: 17, fontWeight: 700, color: LH.ink }}>Next steps for you</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Follow the steps below to tailor Lead Hub to your workflow.</div></div>
       <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 24 }}>
-        <div style={{ display: 'flex', gap: 4, padding: '0 16px', borderBottom: '1px solid ' + LH.borderSoft }}>
-          {[['Setup', pending], ['Recommendations', recs.length]].map(([t, n]) => <button key={t} onClick={() => setSetupTab(t)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '12px 8px', fontSize: 13.5, fontWeight: 600, color: setupTab === t ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (setupTab === t ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{t}<span style={{ fontSize: 11, fontWeight: 700, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 7px' }}>{n}</span></button>)}
+        <div style={{ padding: '20px 22px 16px', borderBottom: '1px solid ' + LH.borderSoft }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>You're {pct}% closer to a full lead engine</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: LH.sub, whiteSpace: 'nowrap' }}>{doneN}/{steps.length} complete</span>
+            <div style={{ flex: 1, height: 8, borderRadius: 999, background: '#efece6', overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: LH.ink, borderRadius: 999, transition: 'width .4s cubic-bezier(.32,.72,0,1)' }} /></div>
+          </div>
         </div>
-        <div style={{ padding: 14 }}>{list.map((s, i) => <div key={s.title} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, border: '1px solid ' + LH.borderSoft, borderRadius: 12, marginBottom: i < list.length - 1 ? 10 : 0 }}>
-          <div style={{ width: 42, height: 42, borderRadius: 11, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={s.icon} size={19} color={s.fg} /></div>
-          <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>{s.cat}</div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginTop: 1 }}>{s.title}</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{s.desc}</div></div>
-          {s.done ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#f6f4ef', color: LH.sub, fontSize: 13, fontWeight: 600 }}><Ic name="check" size={14} color={LH.sub} />Completed</span>
-            : setupTab === 'Setup' && i === firstOpen ? <Btn kind="primary" onClick={() => onNavigate(s.go)}>Start</Btn>
-            : <Btn onClick={() => onNavigate(s.go)}>Start</Btn>}
-        </div>)}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 0 }}>
+          <div style={{ padding: 14, borderRight: '1px solid ' + LH.borderSoft }}>{steps.map((s, i) => { const active = i === setupSel; return <div key={s.title} onClick={() => setSetupSel(i)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 12px', borderRadius: 10, cursor: 'pointer', background: active ? LH.tint : 'transparent', marginBottom: 2 }} onMouseEnter={e => { if (!active) e.currentTarget.style.background = '#f8f6f1'; }} onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}>
+            <Ic name={s.done ? 'check-circle' : 'circle'} size={20} color={s.done ? LH.ink : LH.muted} />
+            <span style={{ flex: 1, fontSize: 14, fontWeight: s.done ? 700 : 600, color: LH.ink }}>{s.done && i !== setupSel ? s.title + ' — done' : s.title}</span>
+            {!s.done && <span style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '3px 9px' }}>{s.time}</span>}
+          </div>; })}</div>
+          <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ borderRadius: 12, background: '#f4f1ea', padding: '10px 14px', marginBottom: 16 }}>{stepArt(cur.art)}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>{cur.title}</div>
+            <div style={{ fontSize: 13, color: LH.sub, marginTop: 6, lineHeight: 1.5, flex: 1 }}>{cur.desc}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 14 }}>
+              {cur.done ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: LH.green }}><Ic name="check-circle" size={16} color={LH.green} />Completed</span> : <Btn kind="primary" onClick={() => onNavigate(cur.go)}>{cur.cta}</Btn>}
+              {!cur.done && <button onClick={() => setSetupSel(Math.min(steps.length - 1, setupSel + 1))} style={{ fontSize: 13, fontWeight: 600, color: LH.sub, background: 'none', border: 'none', cursor: 'pointer' }}>Skip</button>}
+              <button onClick={() => onNavigate(cur.go)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="play-circle" size={16} color={LH.primary} />Show me how</button>
+            </div>
+          </div>
+        </div>
       </Card>
       <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 10 }}>JUMP BACK IN</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
