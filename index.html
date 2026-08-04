@@ -28858,15 +28858,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   /* ─────────── OVERVIEW ─────────── */
   function OverviewSection({ onNavigate }) {
-    const [setupSel, setSetupSel] = useState(1);
-    const stepArt = id => {
-      const base = { width: 260, height: 150, viewBox: '0 0 260 150', fill: 'none' };
-      const chip = (y, on) => <g key={y}><rect x="26" y={y} width="96" height="26" rx="7" fill="#fff" stroke="#e7e2d8" /><circle cx="41" cy={y + 13} r="7" fill={on ? '#1f1f1d' : '#e7e2d8'} /><rect x="54" y={y + 8} width="52" height="4" rx="2" fill="#e7e2d8" /><rect x="54" y={y + 16} width="34" height="4" rx="2" fill="#efeae2" /></g>;
-      if (id === 'source') return <svg {...base}><circle cx="200" cy="75" r="52" fill="#fff" fillOpacity="0.5" />{chip(30, true)}{chip(62, false)}{chip(94, true)}<path d="M122 43 C 165 43, 170 75, 196 75 M122 107 C 165 107, 170 75, 196 75 M122 75 h74" stroke="#cfc7b8" strokeWidth="1.5" strokeDasharray="3 4" fill="none" /><rect x="182" y="57" width="40" height="36" rx="11" fill="#1f1f1d" /><path d="M191 70 h22 l-7 9 v9 l-8 -4 v-5 z" fill="#fff" /></svg>;
-      if (id === 'phone') return <svg {...base}><circle cx="130" cy="75" r="56" fill="#fff" fillOpacity="0.5" />{[26, 40, 54].map((r, k) => <path key={k} d={'M158 ' + (75 - r) + ' a' + r + ' ' + r + ' 0 0 1 0 ' + (r * 2)} stroke="#cfc7b8" strokeOpacity={0.9 - k * 0.25} strokeWidth="2.5" fill="none" strokeLinecap="round" />)}<rect x="98" y="30" width="64" height="90" rx="13" fill="#1f1f1d" /><rect x="104" y="40" width="52" height="66" rx="6" fill="#38352f" /><circle cx="130" cy="113" r="4" fill="#5a554c" /><rect x="112" y="50" width="30" height="5" rx="2.5" fill="#5a554c" /><rect x="112" y="61" width="38" height="5" rx="2.5" fill="#4a463f" /><rect x="112" y="72" width="24" height="5" rx="2.5" fill="#4a463f" /></svg>;
-      if (id === 'campaign') return <svg {...base}><circle cx="130" cy="78" r="58" fill="#fff" fillOpacity="0.5" />{[[104, 34], [130, 26], [156, 34]].map(([x, y], k) => <circle key={k} cx={x} cy={y} r={k === 1 ? 5 : 6} fill="#cfc7b8" />)}<ellipse cx="130" cy="52" rx="46" ry="7" fill="#e7e2d8" stroke="#cfc7b8" strokeWidth="1.5" /><path d="M84 52 L176 52 L146 96 L146 118 a5 5 0 0 1 -5 5 h-6 a5 5 0 0 1 -5 -5 L114 96 Z" fill="#fff" stroke="#cfc7b8" strokeWidth="1.5" strokeLinejoin="round" /><circle cx="130" cy="134" r="4.5" fill="#1f1f1d" /></svg>;
-      return <svg {...base}><circle cx="130" cy="75" r="56" fill="#fff" fillOpacity="0.5" /><circle cx="130" cy="75" r="42" fill="none" stroke="#e7e2d8" strokeWidth="1.5" strokeDasharray="2 6" /><path d="M130 40 q6 29 35 35 q-29 6 -35 35 q-6 -29 -35 -35 q29 -6 35 -35 z" fill="#1f1f1d" /><path d="M182 52 q2 11 13 13 q-11 2 -13 13 q-2 -11 -13 -13 q11 -2 13 -13 z" fill="#cfc7b8" /><circle cx="80" cy="108" r="4" fill="#cfc7b8" /></svg>;
-    };
+    const [setupTab, setSetupTab] = useState('Setup');
     const kpis = [
       { label: 'Received today', value: 28, accent: LH.ink },
       { label: 'Qualified today', value: 7, accent: LH.green },
@@ -28880,42 +28872,32 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { id: 'lead-health', icon: 'activity', title: 'Health', desc: '5 pending · 1 requires action', accent: LH.amber }
     ];
     const steps = [
-      { cat: 'SOURCE', title: 'Set up source', time: '3 minutes', done: true, go: 'lead-channels', art: 'source', desc: 'Connect marketplace and native lead sources so new demand lands in Lead Hub automatically.', cta: 'Connect a source' },
-      { cat: 'PHONE', title: 'Connect phone', time: '4 minutes', go: 'lead-channels', art: 'phone', desc: 'Set up calling and direct replies now. 10DLC registration for campaign texting may take longer.', cta: 'Connect phone' },
-      { cat: 'CAMPAIGN', title: 'Set up campaign', time: '5 minutes', go: 'lead-campaign-new', art: 'campaign', desc: 'Define a speed-to-lead, nurture, storm response, or rehash follow-up — deploy in minutes.', cta: 'Create a campaign' },
-      { cat: 'AI WORKFORCE', title: 'Enable AI workforce', time: '2 minutes', go: 'lead-workforce', art: 'ai', desc: 'Turn on Nova for qualification, routing, speed-to-lead replies, and human handoff.', cta: 'Enable Nova' }
+      { cat: 'SOURCE', icon: 'plug', bg: '#fdece5', fg: '#e0642f', title: 'Set up source', desc: 'Connect marketplace and native lead sources so new demand lands in Lead Hub.', done: true, go: 'lead-channels' },
+      { cat: 'PHONE', icon: 'phone', bg: LH.blueBg, fg: LH.blue, title: 'Connect phone', desc: 'Set up calling and direct replies now. 10DLC for campaign texting may take longer.', go: 'lead-channels' },
+      { cat: 'CAMPAIGN', icon: 'zap', bg: LH.amberBg, fg: LH.amber, title: 'Set up campaign', desc: 'Define speed-to-lead, nurture, storm response, or rehash follow-up.', go: 'lead-campaign-new' },
+      { cat: 'AI WORKFORCE', icon: 'sparkles', bg: '#efe7fb', fg: '#7c3aed', title: 'Enable AI workforce', desc: 'Turn on Nova for qualification, routing, speed-to-lead replies, and human handoff.', go: 'lead-workforce' }
     ];
-    const doneN = steps.filter(s => s.done).length;
-    const pct = Math.round(doneN / steps.length * 100);
-    const cur = steps[setupSel] || steps[0];
+    const recs = [
+      { cat: 'PLAYBOOK', icon: 'book-open', bg: LH.tint, fg: LH.ink, title: 'Tune your Nova playbook', desc: 'Set qualification tone, handoff rules, and required signals.', go: 'lead-workforce' },
+      { cat: 'TEMPLATES', icon: 'layout-template', bg: LH.tint, fg: LH.ink, title: 'Add message templates', desc: 'Save reusable SMS and email templates for faster campaigns.', go: 'lead-campaigns' }
+    ];
+    const pending = steps.filter(s => !s.done).length;
+    const firstOpen = steps.findIndex(s => !s.done);
+    const list = setupTab === 'Setup' ? steps : recs;
     return <div>
       <div style={{ display: 'flex', gap: 12, marginBottom: 22 }}>{kpis.map(k => <StatCard key={k.label} {...k} />)}</div>
+      <div style={{ marginBottom: 8 }}><div style={{ fontSize: 17, fontWeight: 700, color: LH.ink }}>Next steps for you</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Follow the steps below to tailor Lead Hub to your workflow.</div></div>
       <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 24 }}>
-        <div style={{ padding: '20px 22px 16px', borderBottom: '1px solid ' + LH.borderSoft }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>You're {pct}% closer to a full lead engine</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: LH.sub, whiteSpace: 'nowrap' }}>{doneN}/{steps.length} complete</span>
-            <div style={{ flex: 1, height: 8, borderRadius: 999, background: '#efece6', overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: LH.ink, borderRadius: 999, transition: 'width .4s cubic-bezier(.32,.72,0,1)' }} /></div>
-          </div>
+        <div style={{ display: 'flex', gap: 4, padding: '0 16px', borderBottom: '1px solid ' + LH.borderSoft }}>
+          {[['Setup', pending], ['Recommendations', recs.length]].map(([t, n]) => <button key={t} onClick={() => setSetupTab(t)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '12px 8px', fontSize: 13.5, fontWeight: 600, color: setupTab === t ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (setupTab === t ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{t}<span style={{ fontSize: 11, fontWeight: 700, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 7px' }}>{n}</span></button>)}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '0.95fr 1.05fr', gap: 0, alignItems: 'stretch' }}>
-          <div style={{ padding: 16, borderRight: '1px solid ' + LH.borderSoft, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 4 }}>{steps.map((s, i) => { const active = i === setupSel; return <div key={s.title} onClick={() => setSetupSel(i)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 12px', borderRadius: 10, cursor: 'pointer', background: active ? LH.tint : 'transparent', boxShadow: active ? 'inset 3px 0 0 ' + LH.ink : 'none', transition: 'background .12s' }} onMouseEnter={e => { if (!active) e.currentTarget.style.background = '#f8f6f1'; }} onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}>
-            <Ic name={s.done ? 'check-circle' : 'circle'} size={19} color={s.done ? LH.green : active ? LH.ink : LH.muted} />
-            <span style={{ flex: 1, fontSize: 13.5, fontWeight: active || s.done ? 700 : 500, color: s.done && !active ? LH.sub : LH.ink }}>{s.title}</span>
-            {s.done ? <Ic name="check" size={14} color={LH.muted} /> : <span style={{ fontSize: 11, fontWeight: 600, color: active ? LH.ink : LH.sub, background: active ? '#fff' : '#f1f0ec', border: '1px solid ' + (active ? LH.border : 'transparent'), borderRadius: 999, padding: '3px 9px' }}>{s.time}</span>}
-          </div>; })}</div>
-          <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ borderRadius: 12, background: 'linear-gradient(135deg,#f6f3ec,#eee9e0)', height: 170, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, overflow: 'hidden' }}>{stepArt(cur.art)}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}><span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>{cur.cat}</span>{!cur.done && <span style={{ fontSize: 10.5, color: LH.muted }}>· {cur.time}</span>}</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>{cur.title}</div>
-            <div style={{ fontSize: 13, color: LH.sub, marginTop: 5, lineHeight: 1.5 }}>{cur.desc}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 16 }}>
-              {cur.done ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: LH.green }}><Ic name="check-circle" size={16} color={LH.green} />Completed</span> : <Btn kind="primary" onClick={() => onNavigate(cur.go)}>{cur.cta}</Btn>}
-              {!cur.done && <button onClick={() => setSetupSel(Math.min(steps.length - 1, setupSel + 1))} style={{ fontSize: 13, fontWeight: 600, color: LH.sub, background: 'none', border: 'none', cursor: 'pointer' }}>Skip</button>}
-              <button onClick={() => onNavigate(cur.go)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', marginLeft: 'auto' }}><Ic name="play-circle" size={16} color={LH.primary} />Show me how</button>
-            </div>
-          </div>
-        </div>
+        <div style={{ padding: 14 }}>{list.map((s, i) => <div key={s.title} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, border: '1px solid ' + LH.borderSoft, borderRadius: 12, marginBottom: i < list.length - 1 ? 10 : 0 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 11, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={s.icon} size={19} color={s.fg} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>{s.cat}</div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginTop: 1 }}>{s.title}</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{s.desc}</div></div>
+          {s.done ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#f6f4ef', color: LH.sub, fontSize: 13, fontWeight: 600 }}><Ic name="check" size={14} color={LH.sub} />Completed</span>
+            : setupTab === 'Setup' && i === firstOpen ? <Btn kind="primary" onClick={() => onNavigate(s.go)}>Start</Btn>
+            : <Btn onClick={() => onNavigate(s.go)}>Start</Btn>}
+        </div>)}</div>
       </Card>
       <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 10 }}>JUMP BACK IN</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
