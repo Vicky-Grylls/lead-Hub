@@ -14541,65 +14541,86 @@ function App() {
     onClose: () => setCustomerDrawerOpen(false)
   }), toast && /*#__PURE__*/React.createElement(Toast, { message: toast, onClose: () => setToast(null) }))));
 }
-/* ══════════ NOTIFICATION BELL (top bar) ══════════ */
+/* ══════════ NOTIFICATION BELL (top bar) — ported from prelude-job-details / layout-customization ══════════ */
+const LEAD_NOTIFS = [
+  { id: 'ln1', type: 'reply', actor: 'Marcus Thompson', preview: 'Storm Season Re-engage · “Yes, this week works great!”', time: '2 min ago', unread: true },
+  { id: 'ln2', type: 'mention', actor: 'Emily Carter', preview: '@you can you take Priya Patel’s callback? She asked for you by name.', time: '12 min ago', unread: true },
+  { id: 'ln3', type: 'status', preview: 'Priya Patel moved to Qualified · Speed-to-Lead Drip', time: '14 min ago', unread: true },
+  { id: 'ln4', type: 'reply', actor: 'Danielle Nguyen', preview: 'Insurance Claim Assist · “Can you call me tomorrow?”', time: '1 hour ago', unread: true },
+  { id: 'ln5', type: 'task', preview: 'Task assigned to you — Call back · Sofia Alvarez · Estimate Follow-up', time: '3 hours ago', unread: false },
+  { id: 'ln6', type: 'optout', preview: 'Owen Walsh opted out (replied STOP) · Gutter Season Push', time: '5 hours ago', unread: false },
+  { id: 'ln7', type: 'complete', preview: 'Trevor Reed completed the Storm Season Re-engage sequence', time: '1 day ago', unread: false }
+];
+const LEAD_NOTIF_READ = new Set();
+const LEAD_NOTIF_DELETED = new Set();
 function NotifBell() {
+  const h = React.createElement;
   const [open, setOpen] = React.useState(false);
-  const [items, setItems] = React.useState([
-    { id: 1, icon: 'message-square', color: '#2563eb', bg: '#eff4ff', title: 'New reply from Marcus Thompson', desc: 'Storm Season Re-engage · “Yes, this week works great!”', time: '2m', unread: true },
-    { id: 2, icon: 'trending-up', color: '#15803d', bg: '#e7f6ec', title: 'Lead moved to Qualified', desc: 'Priya Patel · Speed-to-Lead Drip', time: '14m', unread: true },
-    { id: 3, icon: 'message-square', color: '#2563eb', bg: '#eff4ff', title: 'New reply from Danielle Nguyen', desc: 'Insurance Claim Assist · “Can you call me tomorrow?”', time: '1h', unread: true },
-    { id: 4, icon: 'user-check', color: '#6d28d9', bg: '#f3eefe', title: 'Task assigned to you', desc: 'Call back · Sofia Alvarez · Estimate Follow-up', time: '3h', unread: false },
-    { id: 5, icon: 'ban', color: '#dc2626', bg: '#fdecec', title: 'Lead opted out', desc: 'Owen Walsh replied STOP · Gutter Season Push', time: '5h', unread: false },
-    { id: 6, icon: 'flag', color: '#8a6410', bg: '#fff5e2', title: 'Campaign finished for a lead', desc: 'Trevor Reed completed Storm Season Re-engage', time: '1d', unread: false }
-  ]);
+  const [tab, setTab] = React.useState('unread');
+  const [hovered, setHovered] = React.useState(null);
+  const [, force] = React.useReducer(x => x + 1, 0);
   const ref = React.useRef(null);
   React.useEffect(() => {
     if (!open) return;
-    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
+    const onDoc = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
   }, [open]);
-  const unread = items.filter(n => n.unread).length;
-  const markAll = () => setItems(list => list.map(n => ({ ...n, unread: false })));
-  const markOne = id => setItems(list => list.map(n => n.id === id ? { ...n, unread: false } : n));
-  return /*#__PURE__*/React.createElement("div", { ref: ref, style: { position: 'relative' } },
-    /*#__PURE__*/React.createElement("div", {
-      onClick: () => setOpen(o => !o),
-      className: "w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-black/5",
-      style: { position: 'relative' }
-    },
-      /*#__PURE__*/React.createElement(I, { name: 'bell', size: 16, color: open ? '#3f342a' : '#737373' }),
-      unread > 0 && /*#__PURE__*/React.createElement("span", { style: { position: 'absolute', top: 2, right: 2, minWidth: 9, height: 9, borderRadius: 999, background: '#dc2626', border: '1.5px solid #f8f5f0' } })
-    ),
-    open && /*#__PURE__*/React.createElement("div", { style: { position: 'absolute', top: 42, right: 0, width: 366, background: '#fff', borderRadius: 14, border: '1px solid #ece4d3', boxShadow: '0 16px 44px rgba(0,0,0,0.18)', zIndex: 1000, overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" } },
-      /*#__PURE__*/React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderBottom: '1px solid #f0ebe3' } },
-        /*#__PURE__*/React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-          /*#__PURE__*/React.createElement("span", { style: { fontSize: 14, fontWeight: 700, color: '#3f342a' } }, "Notifications"),
-          unread > 0 && /*#__PURE__*/React.createElement("span", { style: { fontSize: 11, fontWeight: 700, color: '#dc2626', background: '#fdecec', borderRadius: 999, padding: '1px 7px' } }, unread + " new")
-        ),
-        /*#__PURE__*/React.createElement("button", { onClick: markAll, style: { fontSize: 12, fontWeight: 600, color: '#737373', background: 'none', border: 'none', cursor: 'pointer' } }, "Mark all read")
-      ),
-      /*#__PURE__*/React.createElement("div", { style: { maxHeight: 360, overflowY: 'auto' } },
-        items.map(n => /*#__PURE__*/React.createElement("div", {
-          key: n.id, onClick: () => markOne(n.id),
-          style: { display: 'flex', gap: 11, padding: '11px 16px', borderBottom: '1px solid #f6f2ea', cursor: 'pointer', background: n.unread ? '#fbfaf6' : '#fff' },
-          onMouseEnter: e => e.currentTarget.style.background = '#f5f1e9',
-          onMouseLeave: e => e.currentTarget.style.background = n.unread ? '#fbfaf6' : '#fff'
-        },
-          /*#__PURE__*/React.createElement("div", { style: { width: 34, height: 34, borderRadius: 9, background: n.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } }, /*#__PURE__*/React.createElement(I, { name: n.icon, size: 16, color: n.color })),
-          /*#__PURE__*/React.createElement("div", { style: { flex: 1, minWidth: 0 } },
-            /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: '#3f342a', lineHeight: 1.35 } }, n.title),
-            /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: '#8b8578', marginTop: 2, lineHeight: 1.4 } }, n.desc),
-            /*#__PURE__*/React.createElement("div", { style: { fontSize: 11, color: '#b0a894', marginTop: 3 } }, n.time + " ago")
-          ),
-          n.unread && /*#__PURE__*/React.createElement("span", { style: { width: 7, height: 7, borderRadius: 999, background: '#2563eb', flexShrink: 0, marginTop: 6 } })
-        ))
-      ),
-      /*#__PURE__*/React.createElement("div", { style: { padding: '10px 16px', borderTop: '1px solid #f0ebe3', textAlign: 'center' } },
-        /*#__PURE__*/React.createElement("button", { onClick: () => setOpen(false), style: { fontSize: 12.5, fontWeight: 600, color: '#5c4a1e', background: 'none', border: 'none', cursor: 'pointer' } }, "View all activity")
-      )
-    )
-  );
+  const isRead = n => LEAD_NOTIF_READ.has(n.id) || !n.unread;
+  const visible = LEAD_NOTIFS.filter(n => !LEAD_NOTIF_DELETED.has(n.id));
+  const unread = visible.filter(n => !isRead(n)).length;
+  const mentions = visible.filter(n => n.type === 'mention').length;
+  const list = tab === 'unread' ? visible.filter(n => !isRead(n)) : tab === 'mentions' ? visible.filter(n => n.type === 'mention') : visible;
+  const usesAvatar = n => n.type === 'reply' || n.type === 'mention';
+  const sysMeta = t => ({
+    status: { icon: 'trending-up', bg: '#dcfce7', fg: '#166534' },
+    task: { icon: 'user-check', bg: '#ede9fe', fg: '#6b21a8' },
+    optout: { icon: 'ban', bg: '#fee2e2', fg: '#b91c1c' },
+    complete: { icon: 'flag', bg: '#fef3c7', fg: '#b45309' },
+    reminder: { icon: 'clock', bg: '#fde7c9', fg: '#b45309' }
+  }[t] || { icon: 'bell', bg: '#efe7d6', fg: '#8a6d3b' });
+  const onRow = n => { LEAD_NOTIF_READ.add(n.id); setOpen(false); force(); };
+  const markRead = (e, n) => { e.stopPropagation(); LEAD_NOTIF_READ.add(n.id); force(); };
+  const del = (e, n) => { e.stopPropagation(); LEAD_NOTIF_DELETED.add(n.id); setHovered(null); force(); };
+  const lead = n => h('span', { style: { position: 'relative', flexShrink: 0, width: 28, height: 28 } },
+    usesAvatar(n)
+      ? h('img', { src: 'https://i.pravatar.cc/72?u=' + encodeURIComponent(n.actor), alt: n.actor, style: { width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', display: 'block' } })
+      : h('span', { style: { width: 28, height: 28, borderRadius: '50%', background: sysMeta(n.type).bg, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' } }, h(I, { name: sysMeta(n.type).icon, size: 14, color: sysMeta(n.type).fg })),
+    !isRead(n) ? h('span', { style: { position: 'absolute', right: -1, bottom: 0, width: 8, height: 8, borderRadius: '50%', background: '#18181b', boxShadow: '0 0 0 1.5px #fff' } }) : null);
+  const actionBtn = (icon, title, color, onClick) => h('button', { onClick, title, className: 'hover:bg-gray-50', style: { width: 26, height: 26, border: '1px solid #e5e7eb', background: '#fff', borderRadius: 7, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', flexShrink: 0 } }, h(I, { name: icon, size: 13, color: color }));
+  const titleFor = n => n.type === 'reply'
+    ? [h('span', { key: 'a', style: { fontWeight: 600 } }, n.actor), h('span', { key: 'b', style: { color: '#4b5563' } }, ' replied')]
+    : n.type === 'mention'
+      ? [h('span', { key: 'a', style: { fontWeight: 600 } }, n.actor), h('span', { key: 'b', style: { color: '#4b5563' } }, ' mentioned you')]
+      : h('span', null, n.preview);
+  const tabBtn = (id, label, cnt) => h('button', { key: id, onClick: () => setTab(id), style: { flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, border: 'none', outline: 'none', background: tab === id ? '#fff' : 'transparent', color: tab === id ? '#111827' : '#6b7280', fontWeight: tab === id ? 600 : 500, fontSize: 11.5, borderRadius: 6, padding: '4px 6px', cursor: 'pointer', boxShadow: tab === id ? '0 1px 2px rgba(0,0,0,0.07)' : 'none', transition: 'all 0.12s' } }, label, cnt ? h('span', { style: { fontSize: 10, fontWeight: 700, color: tab === id ? '#5c4a1e' : '#8a7c5f', background: tab === id ? '#f0e9da' : '#e2d9c7', borderRadius: 20, padding: '0 5px', lineHeight: '15px' } }, cnt) : null);
+  return h('div', { ref: ref, style: { position: 'relative' } },
+    h('div', { onClick: () => setOpen(o => !o), className: 'w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-black/5', style: { position: 'relative' } },
+      h(I, { name: 'bell', size: 16, color: open ? '#111827' : '#737373' }),
+      unread > 0 ? h('span', { style: { position: 'absolute', top: -1, right: -1, minWidth: 15, height: 15, padding: '0 3px', borderRadius: 8, background: '#ef4444', color: '#fff', fontSize: 9.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid #f8f5f0', boxSizing: 'border-box' } }, unread > 9 ? '9+' : unread) : null),
+    open ? h('div', { style: { position: 'absolute', top: 38, right: 0, width: 344, background: '#fff', border: '1px solid #ececec', borderRadius: 12, boxShadow: '0 12px 32px rgba(17,17,17,0.12), 0 2px 8px rgba(17,17,17,0.06)', zIndex: 9999, overflow: 'hidden' } },
+      h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 13px 7px' } },
+        h('span', { style: { fontSize: 13.5, fontWeight: 700, color: '#111827' } }, 'Notifications'),
+        h('button', { onClick: () => { visible.forEach(n => LEAD_NOTIF_READ.add(n.id)); force(); }, title: 'Mark all as read', className: 'hover:bg-gray-50', style: { width: 26, height: 26, border: '1px solid #e5e7eb', background: '#fff', borderRadius: 7, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' } }, h(I, { name: 'list-checks', size: 13, color: '#6b7280' }))),
+      h('div', { style: { display: 'flex', gap: 2, background: '#efe9df', borderRadius: 8, padding: 2, margin: '0 13px 5px' } },
+        tabBtn('unread', 'Unread', unread || null), tabBtn('mentions', 'Mentions', mentions || null), tabBtn('all', 'All', null)),
+      h('div', { style: { maxHeight: 396, overflowY: 'auto', borderTop: '1px solid #f3f4f6' } },
+        list.length === 0
+          ? h('div', { style: { padding: '30px 16px', textAlign: 'center', color: '#9ca3af', fontSize: 12 } }, h(I, { name: 'check-circle', size: 22, color: '#d1d5db' }), h('div', { style: { marginTop: 7, fontWeight: 500 } }, "You're all caught up"))
+          : list.map(n => {
+        const read = isRead(n);
+        const hov = hovered === n.id;
+        return h('div', { key: n.id, onClick: () => onRow(n), onMouseEnter: () => setHovered(n.id), onMouseLeave: () => setHovered(h0 => h0 === n.id ? null : h0), style: { display: 'flex', gap: 9, padding: '8px 13px', cursor: 'pointer', background: hov ? '#f6f3ec' : (read ? '#fff' : '#faf8f2'), borderBottom: '1px solid #f2efe8', position: 'relative', transition: 'background 0.12s' } },
+          lead(n),
+          h('div', { style: { flex: 1, minWidth: 0, paddingRight: 6 } },
+            h('div', { style: { fontSize: 12, color: '#111827', lineHeight: 1.35 } }, titleFor(n)),
+            usesAvatar(n) ? h('div', { style: { marginTop: 1, fontSize: 11.5, color: '#6b7280', lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, n.preview) : null,
+            h('div', { style: { fontSize: 10.5, color: '#9ca3af', marginTop: 2 } }, n.time)),
+          hov ? h('div', { style: { position: 'absolute', top: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 6, paddingRight: 12, paddingLeft: 38, background: 'linear-gradient(to right, rgba(246,243,236,0), #f6f3ec 38%)' } },
+            !read ? actionBtn('check-check', 'Mark as read', '#374151', e => markRead(e, n)) : null,
+            actionBtn('trash-2', 'Delete', '#dc2626', e => del(e, n))) : null);
+      })),
+      h('div', { onClick: () => setOpen(false), className: 'hover:bg-[#f6f3ec]', style: { textAlign: 'center', padding: '9px', fontSize: 12, fontWeight: 600, color: '#5c4a1e', cursor: 'pointer', borderTop: '1px solid #f0ece4' } }, 'View More')) : null);
 }
 document.addEventListener('DOMContentLoaded',function(){ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));;});
 </script>
