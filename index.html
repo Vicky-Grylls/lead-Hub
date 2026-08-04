@@ -29807,6 +29807,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     // Exit
     const [exitJoin, setExitJoin] = useState('or');
     const [exitConds, setExitConds] = useState([{ id: wuid(), field: 'job.current_status', op: 'is any of', val: ['Qualified', 'Dead'] }]);
+    const [replyPause, setReplyPause] = useState(true);
+    const [replyStatusOn, setReplyStatusOn] = useState(true);
+    const [replyStatus, setReplyStatus] = useState('Needs attention');
+    const [replyTaskOn, setReplyTaskOn] = useState(false);
+    const [replyTaskType, setReplyTaskType] = useState('Call back');
+    const [replyAssignee, setReplyAssignee] = useState('Assigned to me');
 
     const matchCount = useMemo(() => filterContacts(conds, join).length, [conds, join]);
     const enrolledCount = useMemo(() => filterContacts(conds, join).filter(c => !removedIds.has(c.id)).length, [conds, join, removedIds]);
@@ -30002,10 +30008,19 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>When should we stop reaching out?</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Records are unenrolled as soon as any of these becomes true.</div>
         <Conditions rows={exitConds} setRows={setExitConds} join={exitJoin} setJoin={setExitJoin} addLabel="Add exit condition" />
-        <div style={{ marginTop: 22, border: '1px solid ' + LH.borderSoft, borderRadius: 10, background: LH.bg, padding: '12px 14px' }}>
+        <Card style={{ padding: 16, marginTop: 22 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 4 }}><Ic name="message-square-reply" size={16} color={LH.ink} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>When a customer replies</span></div>
+          <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 14 }}>A reply to any SMS or email triggers these actions.</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderTop: '1px solid ' + LH.borderSoft }}><Toggle on={replyPause} onChange={setReplyPause} /><span style={{ fontSize: 13, color: LH.body }}>Pause the sequence so we don’t keep messaging them</span></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderTop: '1px solid ' + LH.borderSoft }}><Toggle on={replyStatusOn} onChange={setReplyStatusOn} /><span style={{ fontSize: 13, color: LH.body }}>Change the lead status to</span><div style={{ width: 190, opacity: replyStatusOn ? 1 : 0.5, pointerEvents: replyStatusOn ? 'auto' : 'none' }}><Dropdown value={replyStatus} height={32} options={['Needs attention', 'Contacting', 'Qualifying', 'Qualified', 'Hot lead'].map(o => ({ value: o, label: o }))} onChange={setReplyStatus} /></div></div>
+          <div style={{ padding: '10px 0', borderTop: '1px solid ' + LH.borderSoft }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Toggle on={replyTaskOn} onChange={setReplyTaskOn} /><span style={{ fontSize: 13, color: LH.body }}>Create a task and assign it to a user</span></div>
+            {replyTaskOn && <div style={{ display: 'flex', gap: 10, marginTop: 10, marginLeft: 44, flexWrap: 'wrap' }}><div style={{ width: 180 }}><Dropdown value={replyTaskType} height={32} options={TASK_TYPES.map(o => ({ value: o, label: o }))} onChange={setReplyTaskType} /></div><div style={{ width: 200 }}><Dropdown value={replyAssignee} height={32} options={REPS.map(o => ({ value: o, label: o }))} onChange={setReplyAssignee} /></div></div>}
+          </div>
+        </Card>
+        <div style={{ marginTop: 14, border: '1px solid ' + LH.borderSoft, borderRadius: 10, background: LH.bg, padding: '12px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}><Ic name="shield-check" size={13} color={LH.muted} /><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: LH.muted }}>Built-in stop conditions · always on</span></div>
           {[
-            { icon: 'message-square-reply', t: 'Reply or engagement', d: 'a reply to any SMS/email or an answered call exits the enrollment.' },
             { icon: 'ban', t: 'Opt-out', d: 'STOP on SMS or unsubscribe on email exits and marks the customer Do Not Disturb.' },
             { icon: 'phone-off', t: 'Nova DND', d: 'a stop request on a call activates DND and exits.' }
           ].map(x => <div key={x.t} style={{ display: 'flex', gap: 8, alignItems: 'baseline', padding: '3px 0' }}><Ic name={x.icon} size={12} color={LH.muted} style={{ position: 'relative', top: 2 }} /><div style={{ fontSize: 12, color: LH.sub, lineHeight: 1.5 }}><b style={{ color: LH.body, fontWeight: 600 }}>{x.t}</b> — {x.d}</div></div>)}
@@ -30020,7 +30035,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         { i: 2, icon: 'radio', t: 'Communication', lines: ['Number: ' + NUMBERS[numIdx].name + ' · ' + NUMBERS[numIdx].num, 'Voice agent: ' + agent, 'Playbook: ' + playbook.length + ' questions'] },
         { i: 3, icon: 'zap', t: 'Speed to Lead', lines: [s2l.length + ' launch-day step' + (s2l.length !== 1 ? 's' : ''), 'Business hours: ' + (bizHours ? 'on' : 'any time'), 'Weekends: ' + ((weekend.sat || weekend.sun) ? [weekend.sat && 'Sat', weekend.sun && 'Sun'].filter(Boolean).join(', ') : 'off')] },
         { i: 4, icon: 'headphones', t: 'Nurture sequence', lines: [dayCount + '-day sequence', activeDays + ' day' + (activeDays !== 1 ? 's' : '') + ' with steps', 'Send days: ' + sendDaysLabel] },
-        { i: 5, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'Built-in stops: reply, opt-out, Nova DND'] }
+        { i: 5, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'On reply: ' + [replyStatusOn && 'status → ' + replyStatus, replyTaskOn && 'create task'].filter(Boolean).join(', ') || 'no action', 'Built-in stops: opt-out, Nova DND'] }
       ];
       const problems = []; if (!name.trim()) problems.push('Campaign name is required (Basic details).'); if (!tz) problems.push('Campaign time zone is required (Basic details).'); if (!conds.filter(c => c.field).length) problems.push('Add at least one audience condition.');
       return <div style={{ maxWidth: 720, margin: '0 auto' }}>
