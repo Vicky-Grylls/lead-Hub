@@ -29429,6 +29429,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [nOwner, setNOwner] = useState(true);
     const [nExtra, setNExtra] = useState([]);
     const [nDigest, setNDigest] = useState(false);
+    // Snapshot of the last-saved settings state; Save is enabled only when the current state differs.
+    const [savedSnap, setSavedSnap] = useState(() => JSON.stringify({ name: row.name, status: row.status, nEvents: NOTIF_EVENTS.reduce((a, e) => { a[e.key] = e.dflt; return a; }, {}), nCh: { inapp: true, email: true, sms: false, slack: false }, nEmail: 'lead-alerts@hillroofing.com', nSlack: '#lead-alerts', nRep: true, nOwner: true, nExtra: [], nDigest: false }));
     const SCORE_BY_STAGE = { Qualified: 86, Completed: 90, Contacting: 62, Qualifying: 58, 'In drip': 48 };
     const openEnrollment = c => setSelLead({
       id: c.n, name: c.n, note: c.last, src: c.src, status: c.stage, col: c.stage,
@@ -29586,32 +29588,53 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </Card>; }
       if (tab === 'health') return <><div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>{[{ label: 'Delivered', value: '98%', accent: LH.green }, { label: 'Bounced', value: '1%' }, { label: 'Opt-outs', value: enrolled ? Math.max(1, Math.round(enrolled * 0.03)) : 0 }, { label: 'Failed sends', value: 0 }].map(k => <StatCard key={k.label} {...k} />)}</div><Card style={{ padding: 16, display: 'flex', gap: 11, alignItems: 'flex-start' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="shield-check" size={15} color={LH.green} /></div><div><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>No delivery issues</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>Sending domain verified, number registered, and opt-out handling active. Nova DND is honoured on every channel.</div></div></Card></>;
       // settings
-      return <div style={{ maxWidth: 560, margin: '0 auto' }}>
-        <Card style={{ padding: 18 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 14 }}>General</div>
-          <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign name</label>
-          <input value={nameEdit} onChange={e => setNameEdit(e.target.value)} style={{ width: '100%', height: 38, borderRadius: 9, border: '1px solid ' + LH.border, padding: '0 12px', fontSize: 14, color: LH.ink, margin: '6px 0 14px', outline: 'none' }} />
-          <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Status</label>
-          <div style={{ marginTop: 6, maxWidth: 220 }}><Dropdown value={st} options={['Draft', 'Active', 'Paused', 'Inactive', 'Archived'].map(s => ({ value: s, label: s }))} onChange={v => { setSt(v); updateCampaign(row.name, { status: v }); }} /></div>
-          <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 10 }}>Created {row.date} · Version v1</div>
-          <div style={{ marginTop: 14 }}><Btn kind="primary" icon="check" onClick={() => { updateCampaign(row.name, { status: st }); onToast('Settings saved.'); }}>Save changes</Btn></div>
-        </Card>
-        <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 26, background: LH.border }} /></div>
-        <Card style={{ padding: 18 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="bell" size={16} color={LH.primary} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Notifications</span></div>
-          <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 14 }}>Alert your team when a lead replies or a key incident happens in this campaign.</div>
-          <CampaignNotifSettings events={nEvents} setEvents={setNEvents} ch={nCh} setCh={setNCh} email={nEmail} setEmail={setNEmail} slack={nSlack} setSlack={setNSlack} rep={nRep} setRep={setNRep} owner={nOwner} setOwner={setNOwner} extra={nExtra} setExtra={setNExtra} digest={nDigest} setDigest={setNDigest} />
-          <div style={{ marginTop: 4 }}><Btn kind="primary" icon="check" onClick={() => onToast('Notification settings saved.')}>Save changes</Btn></div>
-        </Card>
-        <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 26, background: LH.border }} /></div>
-        <Card style={{ padding: 18, borderColor: LH.redBd }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: LH.red, marginBottom: 4 }}>Danger zone</div>
-          <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 12 }}>Archiving stops all activity; deleting removes the campaign and its enrollments.</div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Btn icon="archive" onClick={() => onToast('Archived — “' + row.name + '”')}>Archive</Btn>
-            <button onClick={() => onToast('Delete — “' + row.name + '”')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', borderRadius: 9, border: '1px solid ' + LH.redBd, background: '#fff', color: LH.red, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}><Ic name="trash-2" size={15} color={LH.red} />Delete campaign</button>
+      const curSnap = JSON.stringify({ name: nameEdit, status: st, nEvents, nCh, nEmail, nSlack, nRep, nOwner, nExtra, nDigest });
+      const dirty = curSnap !== savedSnap;
+      const saveSettings = () => { updateCampaign(row.name, { name: nameEdit, status: st }); setSavedSnap(curSnap); onToast('Settings saved.'); };
+      const NAV = [['general', 'General', 'sliders'], ['notifications', 'Notifications', 'bell'], ['danger', 'Danger zone', 'alert-triangle']];
+      const goto = id => { const el = document.getElementById('camp-set-' + id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+      const sectionHead = (title, sub, icon, danger) => <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic name={icon} size={16} color={danger ? LH.red : LH.primary} /><span style={{ fontSize: 15, fontWeight: 700, color: danger ? LH.red : LH.ink }}>{title}</span></div>
+        <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 3 }}>{sub}</div>
+      </div>;
+      return <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', maxWidth: 1000, margin: '0 auto' }}>
+        {/* Section rail */}
+        <div style={{ width: 208, flexShrink: 0, position: 'sticky', top: 0, alignSelf: 'flex-start' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, padding: '0 10px 8px' }}>SETTINGS</div>
+          {NAV.map(([id, label, icon]) => <div key={id} onClick={() => goto(id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, fontSize: 13, fontWeight: 600, color: id === 'danger' ? LH.red : LH.body, cursor: 'pointer', marginBottom: 2 }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={icon} size={15} color={id === 'danger' ? LH.red : LH.sub} />{label}</div>)}
+          <div style={{ marginTop: 14, padding: '0 10px', fontSize: 11, color: LH.muted, lineHeight: 1.5 }}>Created {row.date}<br />Version v1</div>
+        </div>
+        {/* Content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, position: 'sticky', top: 0, zIndex: 5, background: '#fdfdfc', padding: '2px 0 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
+            <div><div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>Settings</div><div style={{ fontSize: 12, color: dirty ? LH.amber : LH.muted, marginTop: 1 }}>{dirty ? 'Unsaved changes' : 'All changes saved'}</div></div>
+            <Btn kind="primary" icon="check" onClick={saveSettings} style={{ opacity: dirty ? 1 : 0.45, pointerEvents: dirty ? 'auto' : 'none' }}>Save changes</Btn>
           </div>
-        </Card>
+          <div id="camp-set-general" style={{ marginBottom: 16 }}><Card style={{ padding: 20 }}>
+            {sectionHead('General', 'Name and status for this campaign.', 'sliders')}
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 240 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign name</label>
+                <input value={nameEdit} onChange={e => setNameEdit(e.target.value)} style={{ width: '100%', height: 38, borderRadius: 9, border: '1px solid ' + LH.border, padding: '0 12px', fontSize: 14, color: LH.ink, marginTop: 6, outline: 'none' }} />
+              </div>
+              <div style={{ width: 220 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Status</label>
+                <div style={{ marginTop: 6 }}><Dropdown value={st} options={['Draft', 'Active', 'Paused', 'Inactive', 'Archived'].map(s => ({ value: s, label: s }))} onChange={setSt} /></div>
+              </div>
+            </div>
+          </Card></div>
+          <div id="camp-set-notifications" style={{ marginBottom: 16 }}><Card style={{ padding: 20 }}>
+            {sectionHead('Notifications', 'Alert your team when a lead replies or a key incident happens in this campaign.', 'bell')}
+            <CampaignNotifSettings events={nEvents} setEvents={setNEvents} ch={nCh} setCh={setNCh} email={nEmail} setEmail={setNEmail} slack={nSlack} setSlack={setNSlack} rep={nRep} setRep={setNRep} owner={nOwner} setOwner={setNOwner} extra={nExtra} setExtra={setNExtra} digest={nDigest} setDigest={setNDigest} />
+          </Card></div>
+          <div id="camp-set-danger"><Card style={{ padding: 20, borderColor: LH.redBd, background: '#fffcfc' }}>
+            {sectionHead('Danger zone', 'Archiving stops all activity; deleting removes the campaign and its enrollments.', 'alert-triangle', true)}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Btn icon="archive" onClick={() => onToast('Archived — “' + row.name + '”')}>Archive</Btn>
+              <button onClick={() => onToast('Delete — “' + row.name + '”')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', borderRadius: 9, border: '1px solid ' + LH.redBd, background: '#fff', color: LH.red, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}><Ic name="trash-2" size={15} color={LH.red} />Delete campaign</button>
+            </div>
+          </Card></div>
+        </div>
       </div>;
     };
 
