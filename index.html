@@ -14544,9 +14544,9 @@ function App() {
 /* ══════════ NOTIFICATION BELL (top bar) — ported from prelude-job-details / layout-customization ══════════ */
 const LEAD_NOTIFS = [
   { id: 'ln1', type: 'reply', actor: 'Marcus Thompson', preview: 'Storm Season Re-engage · “Yes, this week works great!”', time: '2 min ago', unread: true },
-  { id: 'ln2', type: 'mention', actor: 'Emily Carter', preview: '@you can you take Priya Patel’s callback? She asked for you by name.', time: '12 min ago', unread: true },
-  { id: 'ln3', type: 'status', preview: 'Priya Patel moved to Qualified · Speed-to-Lead Drip', time: '14 min ago', unread: true },
-  { id: 'ln4', type: 'reply', actor: 'Danielle Nguyen', preview: 'Insurance Claim Assist · “Can you call me tomorrow?”', time: '1 hour ago', unread: true },
+  { id: 'ln2', type: 'mention', actor: 'Emily Carter', preview: '@you can you take Ashley Bennett’s callback? She asked for you by name.', time: '12 min ago', unread: true },
+  { id: 'ln3', type: 'status', preview: 'Ashley Bennett moved to Qualified · Speed-to-Lead Drip', time: '14 min ago', unread: true },
+  { id: 'ln4', type: 'reply', actor: 'Danielle Brooks', preview: 'Insurance Claim Assist · “Can you call me tomorrow?”', time: '1 hour ago', unread: true },
   { id: 'ln5', type: 'task', preview: 'Task assigned to you — Call back · Sofia Alvarez · Estimate Follow-up', time: '3 hours ago', unread: false },
   { id: 'ln6', type: 'optout', preview: 'Owen Walsh opted out (replied STOP) · Gutter Season Push', time: '5 hours ago', unread: false },
   { id: 'ln7', type: 'complete', preview: 'Trevor Reed completed the Storm Season Re-engage sequence', time: '1 day ago', unread: false }
@@ -28804,7 +28804,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const pickStatus = s => { setStatusOpen(false); if (boardMode) { onMove(lead.id, s); toast('Moved to ' + s); } else { setLocalStatus(s); toast('Status → ' + s); } };
     const email = lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com';
     const phone = '469-555-0172';
+    // Lead tags are independent of status and keep a fixed neutral color.
+    const TAG_POOL = ['Roofing', 'Storm area', 'Homeowner', 'Insurance', 'Repeat customer', 'Referral', 'High intent'];
+    const tags = lead.tags || [TAG_POOL[lead.name.length % TAG_POOL.length], TAG_POOL[(lead.score + 3) % TAG_POOL.length]].filter((v, i, a) => a.indexOf(v) === i);
     const kv = (k, v) => <div style={{ display: 'flex', gap: 12, padding: '7px 0' }}><span style={{ fontSize: 11, color: LH.muted, width: 104, flexShrink: 0 }}>{k}</span><span style={{ fontSize: 12, color: LH.body, fontWeight: 500, flex: 1, minWidth: 0 }}>{v}</span></div>;
+    const tagPill = t => <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 10px', borderRadius: 999, fontSize: 11.5, fontWeight: 600, background: '#f1f0ec', color: LH.sub, border: '1px solid ' + LH.border }}><Ic name="tag" size={11} color={LH.muted} />{t}</span>;
     const secHead = (label, open, onT) => <button onClick={onT} style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}><Ic name={open ? 'chevron-down' : 'chevron-right'} size={14} color={LH.sub} /><span style={{ fontSize: 12, fontWeight: 700, color: LH.ink }}>{label}</span></button>;
     return <div>
       <div style={{ marginBottom: 6 }}>
@@ -28814,7 +28818,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {kv('Email', email)}{kv('Mobile', phone)}
           {kv('Lead Source', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, height: 16, borderRadius: 5, background: LH.blueBg, color: LH.blue, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>{lead.src[0]}</span>{lead.src}</span>)}
           {kv('Status', <span style={{ position: 'relative', display: 'inline-block' }}><button onClick={() => setStatusOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 8px', borderRadius: 7, border: '1px solid ' + st.bd, background: st.bg, color: st.fg, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{status}<Ic name="chevron-down" size={12} color={st.fg} /></button>{statusOpen && <div onMouseLeave={() => setStatusOpen(false)} style={{ position: 'absolute', top: 28, left: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 170 }}>{STATUS_OPTS.map(s => <div key={s} onClick={() => pickStatus(s)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 9px', borderRadius: 6, fontSize: 12, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{s}{status === s && <Ic name="check" size={13} color={st.fg} />}</div>)}</div>}</span>)}
-          {kv('Tags', <Pill label={status} />)}
           {kv('Lead Score', lead.score + '/100')}
           {kv('Assigned CSR', 'Maria Gonzalez')}{kv('Age', lead.age || '—')}{kv('Auto-qualified', 'Yes — Property Intelligence')}
           {kv('Service Address', '4821 Oakwood Dr')}{kv('City, State, ZIP', 'Plano, TX 75024')}{kv('Score Breakdown', 'Source 20 · Data 22 · Intel 25 · Demo 15')}
@@ -28822,7 +28825,38 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
       <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
         {secHead('Custom Fields', cf, () => setCf(p => !p))}
-        {cf && <div style={{ marginTop: 4 }}>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}{kv('Status', <Pill label={status} />)}</div>}
+        {cf && <div style={{ marginTop: 4 }}>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}</div>}
+      </div>
+      <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14, marginTop: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: LH.ink }}>Tags</span>
+          <button onClick={() => toast('Add a tag')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="plus" size={13} color={LH.primary} />Add tag</button>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>{tags.length ? tags.map(tagPill) : <span style={{ fontSize: 12, color: LH.muted }}>No tags yet</span>}</div>
+      </div>
+    </div>;
+  }
+  // Shared lead header — avatar, name, address, CTA row. Used at the top of both the
+  // details page left pane and the side sheet so they stay identical.
+  function LeadHeaderBlock({ lead, onToast }) {
+    const [flagged, setFlagged] = useState(false);
+    const toast = m => onToast && onToast(m);
+    const initials = lead.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const address = lead.address || '4821 Oakwood Dr, Plano, TX 75024';
+    const btnStyle = active => ({ width: 34, height: 34, borderRadius: 9, border: '1px solid ' + (active ? LH.red : LH.border), background: active ? '#fbeaea' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 });
+    const iconBtn = (ic, m) => <button onClick={() => toast(m)} style={btnStyle(false)} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name={ic} size={15} color={LH.sub} /></button>;
+    return <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 12 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 11, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>{initials}</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink, lineHeight: 1.3, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.name}</div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: LH.sub, marginBottom: 14 }}><Ic name="map-pin" size={13} color={LH.muted} />{address}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+        <Btn icon="plus" style={{ height: 34 }} onClick={() => toast('New activity')}>New</Btn>
+        {iconBtn('mail', 'Compose email')}
+        {iconBtn('phone', 'Calling ' + lead.name + '…')}
+        <button onClick={() => { setFlagged(f => !f); toast(flagged ? 'Flag removed' : 'Lead flagged'); }} style={btnStyle(flagged)}><Ic name="flag" size={15} color={flagged ? LH.red : LH.sub} /></button>
+        {iconBtn('bell', 'Reminder set')}
       </div>
     </div>;
   }
@@ -28864,11 +28898,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
           {tab === 'details' && <>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
-              <div><div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>{shown.name}</div><div style={{ fontSize: 12, color: LH.muted, marginTop: 2 }}>{shown.note}</div><div style={{ display: 'flex', gap: 6, marginTop: 8 }}><Pill label={shown.src} tone="New" /><Pill label={shown.status} /></div></div>
-              <div style={{ width: 40, height: 40, borderRadius: 999, background: shown.score >= 80 ? LH.primary : shown.score >= 60 ? '#c9922e' : '#9c9b96', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>{shown.score}</div>
-            </div>
-            {(() => { const camp = leadCampaign(shown); return <div style={{ marginTop: 14, padding: '10px 12px', borderRadius: 9, border: '1px solid ' + LH.borderSoft, background: camp ? LH.tint : '#fff', display: 'flex', alignItems: 'center', gap: 9 }}>
+            <LeadHeaderBlock lead={shown} onToast={onToast} />
+            {(() => { const camp = leadCampaign(shown); return <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 9, border: '1px solid ' + LH.borderSoft, background: camp ? LH.tint : '#fff', display: 'flex', alignItems: 'center', gap: 9 }}>
               <span style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: camp ? '#fff' : '#f1f0ec', border: camp ? '1px solid ' + LH.borderSoft : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="megaphone" size={14} color={camp ? LH.primary : LH.sub} /></span>
               <div style={{ minWidth: 0 }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>CAMPAIGN</div><div style={{ fontSize: 12.5, fontWeight: 600, color: camp ? LH.ink : LH.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{camp || 'Not enrolled in a campaign'}</div></div>
             </div>; })()}
@@ -29161,12 +29192,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, minHeight: 0 }}>
         {/* Left column */}
         <div style={{ width: 316, flexShrink: 0, padding: '18px 18px', borderRight: '1px solid ' + LH.borderSoft, overflowY: 'auto' }}>
-          <div style={{ display: 'flex', gap: 11, marginBottom: 12 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 11, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>{initials}</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, lineHeight: 1.3 }}>{lead.name}</div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: LH.sub, marginBottom: 12 }}><Ic name="map-pin" size={13} color={LH.muted} />4821 Oakwood Dr, Plano, TX 75024</div>
-          <div style={{ display: 'flex', gap: 7, marginBottom: 16 }}><Btn icon="plus" onClick={() => toast('New activity')}>New</Btn>{iconBtn('mail', 'Compose email')}{iconBtn('phone', 'Calling ' + lead.name + '…')}<button onClick={() => { setFlagged(f => !f); toast(flagged ? 'Flag removed' : 'Lead flagged'); }} style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid ' + (flagged ? LH.red : LH.border), background: flagged ? '#fbeaea' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="flag" size={15} color={flagged ? LH.red : LH.sub} /></button>{iconBtn('bell', 'Reminder set')}</div>
+          <div style={{ marginBottom: 16 }}><LeadHeaderBlock lead={lead} onToast={onToast} /></div>
           <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}><LeadPrimaryDetails lead={lead} onToast={onToast} /></div>
         </div>
         {/* Center column */}
