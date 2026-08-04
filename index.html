@@ -593,7 +593,9 @@ function TopNavBar({ extraTab, extraTabs = [], activeExtra = null, onSelectExtra
     fill: "#525252"
   })), /*#__PURE__*/React.createElement("span", {
     className: "font-medium"
-  }, "Sense")), ['search', 'message-square', 'bell', 'layout-grid', 'moon'].map(ic => /*#__PURE__*/React.createElement("div", {
+  }, "Sense")), ['search', 'message-square', 'bell', 'layout-grid', 'moon'].map(ic => ic === 'bell' ? /*#__PURE__*/React.createElement(NotifBell, {
+    key: ic
+  }) : /*#__PURE__*/React.createElement("div", {
     key: ic,
     className: "w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-black/5"
   }, /*#__PURE__*/React.createElement(I, {
@@ -14539,6 +14541,66 @@ function App() {
     onClose: () => setCustomerDrawerOpen(false)
   }), toast && /*#__PURE__*/React.createElement(Toast, { message: toast, onClose: () => setToast(null) }))));
 }
+/* ══════════ NOTIFICATION BELL (top bar) ══════════ */
+function NotifBell() {
+  const [open, setOpen] = React.useState(false);
+  const [items, setItems] = React.useState([
+    { id: 1, icon: 'message-square', color: '#2563eb', bg: '#eff4ff', title: 'New reply from Marcus Thompson', desc: 'Storm Season Re-engage · “Yes, this week works great!”', time: '2m', unread: true },
+    { id: 2, icon: 'trending-up', color: '#15803d', bg: '#e7f6ec', title: 'Lead moved to Qualified', desc: 'Priya Patel · Speed-to-Lead Drip', time: '14m', unread: true },
+    { id: 3, icon: 'message-square', color: '#2563eb', bg: '#eff4ff', title: 'New reply from Danielle Nguyen', desc: 'Insurance Claim Assist · “Can you call me tomorrow?”', time: '1h', unread: true },
+    { id: 4, icon: 'user-check', color: '#6d28d9', bg: '#f3eefe', title: 'Task assigned to you', desc: 'Call back · Sofia Alvarez · Estimate Follow-up', time: '3h', unread: false },
+    { id: 5, icon: 'ban', color: '#dc2626', bg: '#fdecec', title: 'Lead opted out', desc: 'Owen Walsh replied STOP · Gutter Season Push', time: '5h', unread: false },
+    { id: 6, icon: 'flag', color: '#8a6410', bg: '#fff5e2', title: 'Campaign finished for a lead', desc: 'Trevor Reed completed Storm Season Re-engage', time: '1d', unread: false }
+  ]);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [open]);
+  const unread = items.filter(n => n.unread).length;
+  const markAll = () => setItems(list => list.map(n => ({ ...n, unread: false })));
+  const markOne = id => setItems(list => list.map(n => n.id === id ? { ...n, unread: false } : n));
+  return /*#__PURE__*/React.createElement("div", { ref: ref, style: { position: 'relative' } },
+    /*#__PURE__*/React.createElement("div", {
+      onClick: () => setOpen(o => !o),
+      className: "w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-black/5",
+      style: { position: 'relative' }
+    },
+      /*#__PURE__*/React.createElement(I, { name: 'bell', size: 16, color: open ? '#3f342a' : '#737373' }),
+      unread > 0 && /*#__PURE__*/React.createElement("span", { style: { position: 'absolute', top: 2, right: 2, minWidth: 9, height: 9, borderRadius: 999, background: '#dc2626', border: '1.5px solid #f8f5f0' } })
+    ),
+    open && /*#__PURE__*/React.createElement("div", { style: { position: 'absolute', top: 42, right: 0, width: 366, background: '#fff', borderRadius: 14, border: '1px solid #ece4d3', boxShadow: '0 16px 44px rgba(0,0,0,0.18)', zIndex: 1000, overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" } },
+      /*#__PURE__*/React.createElement("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderBottom: '1px solid #f0ebe3' } },
+        /*#__PURE__*/React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+          /*#__PURE__*/React.createElement("span", { style: { fontSize: 14, fontWeight: 700, color: '#3f342a' } }, "Notifications"),
+          unread > 0 && /*#__PURE__*/React.createElement("span", { style: { fontSize: 11, fontWeight: 700, color: '#dc2626', background: '#fdecec', borderRadius: 999, padding: '1px 7px' } }, unread + " new")
+        ),
+        /*#__PURE__*/React.createElement("button", { onClick: markAll, style: { fontSize: 12, fontWeight: 600, color: '#737373', background: 'none', border: 'none', cursor: 'pointer' } }, "Mark all read")
+      ),
+      /*#__PURE__*/React.createElement("div", { style: { maxHeight: 360, overflowY: 'auto' } },
+        items.map(n => /*#__PURE__*/React.createElement("div", {
+          key: n.id, onClick: () => markOne(n.id),
+          style: { display: 'flex', gap: 11, padding: '11px 16px', borderBottom: '1px solid #f6f2ea', cursor: 'pointer', background: n.unread ? '#fbfaf6' : '#fff' },
+          onMouseEnter: e => e.currentTarget.style.background = '#f5f1e9',
+          onMouseLeave: e => e.currentTarget.style.background = n.unread ? '#fbfaf6' : '#fff'
+        },
+          /*#__PURE__*/React.createElement("div", { style: { width: 34, height: 34, borderRadius: 9, background: n.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } }, /*#__PURE__*/React.createElement(I, { name: n.icon, size: 16, color: n.color })),
+          /*#__PURE__*/React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+            /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: '#3f342a', lineHeight: 1.35 } }, n.title),
+            /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: '#8b8578', marginTop: 2, lineHeight: 1.4 } }, n.desc),
+            /*#__PURE__*/React.createElement("div", { style: { fontSize: 11, color: '#b0a894', marginTop: 3 } }, n.time + " ago")
+          ),
+          n.unread && /*#__PURE__*/React.createElement("span", { style: { width: 7, height: 7, borderRadius: 999, background: '#2563eb', flexShrink: 0, marginTop: 6 } })
+        ))
+      ),
+      /*#__PURE__*/React.createElement("div", { style: { padding: '10px 16px', borderTop: '1px solid #f0ebe3', textAlign: 'center' } },
+        /*#__PURE__*/React.createElement("button", { onClick: () => setOpen(false), style: { fontSize: 12.5, fontWeight: 600, color: '#5c4a1e', background: 'none', border: 'none', cursor: 'pointer' } }, "View all activity")
+      )
+    )
+  );
+}
 document.addEventListener('DOMContentLoaded',function(){ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));;});
 </script>
 <style>
@@ -15168,7 +15230,9 @@ function TopNavBar({ extraTab, extraTabs = [], activeExtra = null, onSelectExtra
     fill: "#525252"
   })), /*#__PURE__*/React.createElement("span", {
     className: "font-medium"
-  }, "Sense")), ['search', 'message-square', 'bell', 'layout-grid', 'moon'].map(ic => /*#__PURE__*/React.createElement("div", {
+  }, "Sense")), ['search', 'message-square', 'bell', 'layout-grid', 'moon'].map(ic => ic === 'bell' ? /*#__PURE__*/React.createElement(NotifBell, {
+    key: ic
+  }) : /*#__PURE__*/React.createElement("div", {
     key: ic,
     className: "w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-black/5"
   }, /*#__PURE__*/React.createElement(I, {
@@ -28548,7 +28612,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     'Awaiting human': { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
     'Not connected': { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' },
     New: { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
-    Qualifying: { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
+    'New lead': { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
+    Contacting: { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd },
+    Qualifying: { bg: '#f3eefe', fg: '#6d28d9', bd: '#ddd0f7' },
+    'Needs human': { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
+    'Inspection job': { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
     'In drip': { bg: '#f3eefe', fg: '#6d28d9', bd: '#ddd0f7' },
     Draft: { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' }
   };
@@ -28650,17 +28718,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   /* ─────────── data ─────────── */
   const PIPE_LEADS = [
-    { id: 'l1', col: 'New lead', score: 34, name: 'Jordan Blake', note: 'Phone intake', src: 'Manual', age: '8d', status: 'New', fields: '1/9' },
-    { id: 'l1b', col: 'New lead', score: 29, name: 'Kevin Alvarez', note: 'Website form', src: 'Website Booking', age: '5h', status: 'New', fields: '2/9' },
-    { id: 'l1c', col: 'New lead', score: 41, name: 'Tessa Ward', note: 'Missing shingles', src: 'Meta Ads', age: '2d', status: 'New', fields: '1/9' },
-    { id: 'l2', col: 'Contacting', score: 76, name: 'Sarah Mitchell', note: 'Roof leak after rain', src: 'Thumbtack', age: '18m', status: 'Live with Nova', fields: '6/9' },
+    { id: 'l1', col: 'New lead', score: 34, name: 'Jordan Blake', note: 'Phone intake', src: 'Manual', age: '8d', status: 'New lead', fields: '1/9' },
+    { id: 'l1b', col: 'New lead', score: 29, name: 'Kevin Alvarez', note: 'Website form', src: 'Website Booking', age: '5h', status: 'New lead', fields: '2/9' },
+    { id: 'l1c', col: 'New lead', score: 41, name: 'Tessa Ward', note: 'Missing shingles', src: 'Meta Ads', age: '2d', status: 'New lead', fields: '1/9' },
+    { id: 'l2', col: 'Contacting', score: 76, name: 'Sarah Mitchell', note: 'Roof leak after rain', src: 'Thumbtack', age: '18m', status: 'Contacting', fields: '6/9' },
     { id: 'l2b', col: 'Contacting', score: 63, name: 'Priya Shah', note: 'Storm damage', src: 'Angi', age: '40m', status: 'Contacting', fields: '4/9' },
     { id: 'l2c', col: 'Contacting', score: 58, name: 'Owen Brooks', note: 'Gutter estimate', src: 'Google LSA', age: '1h', status: 'Contacting', fields: '3/9' },
     { id: 'l3', col: 'Qualifying', score: 81, name: 'Caleb Norris', note: 'Canvassing follow-up', src: 'SalesRabbit', age: '1d', status: 'Qualifying', fields: '5/9' },
     { id: 'l3b', col: 'Qualifying', score: 73, name: 'Nina Foster', note: 'Skylight replacement', src: 'Angi', age: '6h', status: 'Qualifying', fields: '7/9' },
     { id: 'l3c', col: 'Qualifying', score: 69, name: 'Diego Ramos', note: 'Roof age check', src: 'Thumbtack', age: '2d', status: 'Qualifying', fields: '5/9' },
-    { id: 'l4', col: 'Needs human', score: 68, name: 'Marcus Reed', note: 'Missing shingles', src: 'Google LSA', age: '4h', status: 'Awaiting human', fields: '6/9' },
-    { id: 'l4b', col: 'Needs human', score: 64, name: 'Hana Kim', note: 'Complex insurance claim', src: 'Angi', age: '3h', status: 'Awaiting human', fields: '6/9' },
+    { id: 'l4', col: 'Needs human', score: 68, name: 'Marcus Reed', note: 'Missing shingles', src: 'Google LSA', age: '4h', status: 'Needs human', fields: '6/9' },
+    { id: 'l4b', col: 'Needs human', score: 64, name: 'Hana Kim', note: 'Complex insurance claim', src: 'Angi', age: '3h', status: 'Needs human', fields: '6/9' },
     { id: 'l5', col: 'In drip', score: 54, name: 'Erin Patel', note: 'Free roof inspection request', src: 'Meta Ads', age: '4d', status: 'In drip', fields: '3/9' },
     { id: 'l5b', col: 'In drip', score: 48, name: 'Blake Turner', note: 'Not ready yet', src: 'Thumbtack', age: '6d', status: 'In drip', fields: '2/9' },
     { id: 'l5c', col: 'In drip', score: 51, name: 'Camille Diaz', note: 'Comparing quotes', src: 'Website Booking', age: '5d', status: 'In drip', fields: '4/9' },
@@ -28699,12 +28767,20 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ['Contacting', 'Qualifying', 'Needs human'].includes(l.col) ? 'Speed-to-Lead Drip'
     : l.col === 'In drip' ? 'Storm Season Re-engage'
     : l.col === 'Qualified' || l.col === 'Completed' ? 'Speed-to-Lead Drip' : null));
-  function LeadPrimaryDetails({ lead, onToast }) {
+  function LeadPrimaryDetails({ lead, onToast, onMove }) {
     const [pd, setPd] = useState(true);
     const [cf, setCf] = useState(true);
-    const [status, setStatus] = useState(lead.status);
+    // Kanban bucket (col) is the single source of truth for status. In board mode the
+    // dropdown moves the lead between buckets; elsewhere it falls back to local state.
+    const boardMode = !!onMove;
+    const curCol = lead.col || lead.status || lead.stage || 'New';
+    const [localStatus, setLocalStatus] = useState(curCol);
+    const status = boardMode ? curCol : localStatus;
+    const STATUS_OPTS = boardMode ? PIPE_COLS.map(c => c.key) : ['New', 'Contacting', 'Qualifying', 'Live with Nova', 'Qualified', 'Dead'];
+    const st = TONE[status] || TONE.Draft;
     const [statusOpen, setStatusOpen] = useState(false);
     const toast = m => onToast && onToast(m);
+    const pickStatus = s => { setStatusOpen(false); if (boardMode) { onMove(lead.id, s); toast('Moved to ' + s); } else { setLocalStatus(s); toast('Status → ' + s); } };
     const email = lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com';
     const phone = '469-555-0172';
     const kv = (k, v) => <div style={{ display: 'flex', gap: 12, padding: '7px 0' }}><span style={{ fontSize: 11, color: LH.muted, width: 104, flexShrink: 0 }}>{k}</span><span style={{ fontSize: 12, color: LH.body, fontWeight: 500, flex: 1, minWidth: 0 }}>{v}</span></div>;
@@ -28716,8 +28792,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {kv('Contact', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: LH.ink }}>{lead.name}<Ic name="chevron-right" size={13} color={LH.muted} /></span>)}
           {kv('Email', email)}{kv('Mobile', phone)}
           {kv('Lead Source', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, height: 16, borderRadius: 5, background: LH.blueBg, color: LH.blue, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>{lead.src[0]}</span>{lead.src}</span>)}
-          {kv('Status', <span style={{ position: 'relative', display: 'inline-block' }}><button onClick={() => setStatusOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 8px', borderRadius: 7, border: '1px solid ' + LH.greenBd, background: LH.greenBg, color: LH.green, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{status}<Ic name="chevron-down" size={12} color={LH.green} /></button>{statusOpen && <div onMouseLeave={() => setStatusOpen(false)} style={{ position: 'absolute', top: 28, left: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 150 }}>{['New', 'Contacting', 'Qualifying', 'Live with Nova', 'Qualified', 'Dead'].map(s => <div key={s} onClick={() => { setStatus(s); setStatusOpen(false); toast('Status → ' + s); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 9px', borderRadius: 6, fontSize: 12, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{s}{status === s && <Ic name="check" size={13} color={LH.green} />}</div>)}</div>}</span>)}
-          {kv('Tags', <Pill label={status} tone="Qualified" />)}
+          {kv('Status', <span style={{ position: 'relative', display: 'inline-block' }}><button onClick={() => setStatusOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 8px', borderRadius: 7, border: '1px solid ' + st.bd, background: st.bg, color: st.fg, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{status}<Ic name="chevron-down" size={12} color={st.fg} /></button>{statusOpen && <div onMouseLeave={() => setStatusOpen(false)} style={{ position: 'absolute', top: 28, left: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 170 }}>{STATUS_OPTS.map(s => <div key={s} onClick={() => pickStatus(s)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 9px', borderRadius: 6, fontSize: 12, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{s}{status === s && <Ic name="check" size={13} color={st.fg} />}</div>)}</div>}</span>)}
+          {kv('Tags', <Pill label={status} />)}
           {kv('Lead Score', lead.score + '/100')}
           {kv('Assigned CSR', 'Maria Gonzalez')}{kv('Age', lead.age || '—')}{kv('Auto-qualified', 'Yes — Property Intelligence')}
           {kv('Service Address', '4821 Oakwood Dr')}{kv('City, State, ZIP', 'Plano, TX 75024')}{kv('Score Breakdown', 'Source 20 · Data 22 · Intel 25 · Demo 15')}
@@ -28725,11 +28801,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
       <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
         {secHead('Custom Fields', cf, () => setCf(p => !p))}
-        {cf && <div style={{ marginTop: 4 }}>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}{kv('Status', <Pill label={status} tone="Qualified" />)}</div>}
+        {cf && <div style={{ marginTop: 4 }}>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}{kv('Status', <Pill label={status} />)}</div>}
       </div>
     </div>;
   }
-  function LeadSideSheet({ lead, onClose, onToast, onOpenPage, onPrev, onNext }) {
+  function LeadSideSheet({ lead, onClose, onToast, onOpenPage, onPrev, onNext, onMove }) {
     const [tab, setTab] = useState('details');
     const [expanded, setExpanded] = useState(false);
     const [tasks, setTasks] = useState(lead && lead.tasks ? lead.tasks : []);
@@ -28775,7 +28851,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <span style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: camp ? '#fff' : '#f1f0ec', border: camp ? '1px solid ' + LH.borderSoft : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="megaphone" size={14} color={camp ? LH.primary : LH.sub} /></span>
               <div style={{ minWidth: 0 }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>CAMPAIGN</div><div style={{ fontSize: 12.5, fontWeight: 600, color: camp ? LH.ink : LH.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{camp || 'Not enrolled in a campaign'}</div></div>
             </div>; })()}
-            <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 16, paddingTop: 14 }}><LeadPrimaryDetails lead={shown} onToast={onToast} /></div>
+            <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 16, paddingTop: 14 }}><LeadPrimaryDetails lead={shown} onToast={onToast} onMove={onMove} /></div>
           </>}
           {tab === 'activity' && <div>{act.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: 14 }}>
             <div style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={a.who === 'Nova' ? 'sparkles' : 'settings'} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div>
@@ -28806,7 +28882,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <Btn icon="message-square" style={{ flex: 1, justifyContent: 'center', height: 34 }} onClick={() => onToast && onToast('Texting ' + shown.name + '…')}>Text</Btn>
             <Btn icon="mail" style={{ flex: 1, justifyContent: 'center', height: 34 }} onClick={() => onToast && onToast('Emailing ' + shown.name + '…')}>Email</Btn>
           </div>
-          <Btn kind="primary" icon={qualified ? 'arrow-right-circle' : 'chevrons-right'} style={{ width: '100%', justifyContent: 'center' }} onClick={() => onToast && onToast((qualified ? 'Converting ' : 'Advancing ') + shown.name + '…')}>{qualified ? 'Convert to Inspection' : 'Move to next stage'}</Btn>
+          <Btn kind="primary" icon={qualified ? 'arrow-right-circle' : 'chevrons-right'} style={{ width: '100%', justifyContent: 'center' }} onClick={() => {
+            const order = PIPE_COLS.map(c => c.key);
+            const i = order.indexOf(shown.col);
+            if (qualified || i < 0 || i >= order.length - 1) { onToast && onToast((qualified ? 'Converting ' : 'Advancing ') + shown.name + '…'); return; }
+            const next = order[i + 1];
+            if (onMove) onMove(shown.id, next);
+            onToast && onToast(shown.name + ' → ' + next);
+          }}>{qualified ? 'Convert to Inspection' : 'Move to next stage'}</Btn>
         </div>}
       </>}
     </div>;
@@ -29185,7 +29268,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const shown = sel || lastRef.current;
     const captured = shown ? parseInt(shown.fields) : 0;
     const qualified = shown && shown.col === 'Qualified';
-    const move = (id, col) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col } : l));
+    const move = (id, col) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col, status: col } : l));
     const filtered = leads.filter(l => (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && matchKpi(l));
     useEffect(() => { const h = e => { if (e.key === 'Escape') setSelId(null); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, []);
     if (pageLead) return <LeadDetailsPage lead={pageLead} onBack={closePage} onToast={onToast} />;
@@ -29226,7 +29309,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </table>
         </Card>}
       {/* Lead detail side sheet — reuse the full campaign LeadSideSheet (Tasks, Notes, functional) */}
-      <LeadSideSheet lead={sel} onClose={() => setSelId(null)} onToast={onToast} onOpenPage={openPage} onPrev={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i - 1 + filtered.length) % filtered.length].id); } : null} onNext={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i + 1) % filtered.length].id); } : null} />
+      <LeadSideSheet lead={sel} onClose={() => setSelId(null)} onToast={onToast} onMove={move} onOpenPage={openPage} onPrev={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i - 1 + filtered.length) % filtered.length].id); } : null} onNext={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i + 1) % filtered.length].id); } : null} />
     </div>;
   }
 
@@ -29546,7 +29629,22 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   /* ─────────── CAMPAIGN WIZARD (6 steps) ─────────── */
   /* ═══════════ CAMPAIGN WIZARD (fully functional) ═══════════ */
-  const WIZ_STEPS = ['Basic details', 'Audience', 'Communication', 'Speed to Lead', 'Nurture sequence', 'Exit rules', 'Review & Publish'];
+  const WIZ_STEPS = ['Basic details', 'Audience', 'Communication', 'Speed to Lead', 'Nurture sequence', 'Exit rules', 'Notifications', 'Review & Publish'];
+  const NOTIF_EVENTS = [
+    { key: 'reply', icon: 'message-square', t: 'A lead replies', d: 'Someone answers an SMS or email in this campaign.', dflt: true, priority: 'high' },
+    { key: 'status', icon: 'trending-up', t: 'A lead’s status changes', d: 'e.g. New Lead → Qualifying → Qualified.', dflt: true },
+    { key: 'qualified', icon: 'user-check', t: 'A lead becomes qualified', d: 'Nova or a rep marks the lead ready for sales.', dflt: true, priority: 'high' },
+    { key: 'optout', icon: 'ban', t: 'A lead opts out or unsubscribes', d: 'Replies STOP on SMS, or unsubscribes from email.', dflt: true },
+    { key: 'task', icon: 'check-square', t: 'A task is created', d: 'A reply or exit rule spins up a follow-up task.', dflt: false },
+    { key: 'complete', icon: 'flag', t: 'A lead completes the sequence', d: 'The lead reaches the end of the nurture and exits.', dflt: false },
+    { key: 'fail', icon: 'alert-triangle', t: 'A message fails to send', d: 'An SMS/email bounces or a Nova call can’t connect.', dflt: true, priority: 'high' }
+  ];
+  const NOTIF_CHANNELS = [
+    { key: 'inapp', icon: 'bell', t: 'In-app', d: 'Bell + activity feed' },
+    { key: 'email', icon: 'mail', t: 'Email', d: 'To a shared inbox' },
+    { key: 'sms', icon: 'message-square', t: 'SMS', d: 'Text the assigned rep' },
+    { key: 'slack', icon: 'slack', t: 'Slack', d: 'Post to a channel' }
+  ];
 
   const FIELD_DEFS = {
     'customer.lead_source': { module: 'Customer', label: 'Lead Source', type: 'multiselect', options: ['Angi', 'Thumbtack', 'Google LSA', 'Meta'] },
@@ -29824,6 +29922,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [replyTaskOn, setReplyTaskOn] = useState(false);
     const [replyTaskType, setReplyTaskType] = useState('Call back');
     const [replyAssignee, setReplyAssignee] = useState('Assigned to me');
+    // Notifications
+    const [notifEvents, setNotifEvents] = useState(() => NOTIF_EVENTS.reduce((a, e) => { a[e.key] = e.dflt; return a; }, {}));
+    const [notifCh, setNotifCh] = useState({ inapp: true, email: true, sms: false, slack: false });
+    const [notifEmail, setNotifEmail] = useState('lead-alerts@hillroofing.com');
+    const [notifSlack, setNotifSlack] = useState('#lead-alerts');
+    const [notifRep, setNotifRep] = useState(true);
+    const [notifOwner, setNotifOwner] = useState(true);
+    const [notifExtra, setNotifExtra] = useState([]);
+    const [notifDigest, setNotifDigest] = useState(false);
 
     const matchCount = useMemo(() => filterContacts(conds, join).length, [conds, join]);
     const enrolledCount = useMemo(() => filterContacts(conds, join).filter(c => !removedIds.has(c.id)).length, [conds, join, removedIds]);
@@ -30035,7 +30142,50 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
         <div style={{ fontSize: 12.5, color: LH.body, marginTop: 12, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '11px 13px', display: 'flex', gap: 9 }}><Ic name="rotate-ccw" size={15} color={LH.sub} /><span><b style={{ color: LH.ink }}>Automatic stop.</b> Beyond the conditions above, the sequence ends on its own — after the final step on Day {dayCount}, the record is unenrolled.</span></div>
       </div>;
-      // Step 6 — Review & Publish
+      if (step === 6) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="bell" size={19} color={LH.primary} /></div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Who gets notified, and when?</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Pick the incidents worth interrupting your team for, where the alert lands, and who receives it. These fire the moment something happens in this campaign.</div>
+        <Card style={{ padding: 16, marginBottom: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Notify us when…</div>
+          <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 6px' }}>Toggle the events that should raise an alert.</div>
+          {NOTIF_EVENTS.map((e, i) => <div key={e.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '11px 0', borderTop: i ? '1px solid ' + LH.borderSoft : 'none' }}>
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: e.priority === 'high' ? LH.redBg : LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={e.icon} size={15} color={e.priority === 'high' ? LH.red : LH.primary} /></div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink }}>{e.t}</span>{e.priority === 'high' && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.03em', color: LH.red, background: LH.redBg, border: '1px solid ' + LH.redBd, borderRadius: 999, padding: '0 6px' }}>PRIORITY</span>}</div>
+              <div style={{ fontSize: 12, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{e.d}</div>
+            </div>
+            <div style={{ flexShrink: 0, paddingTop: 3 }}><Toggle on={!!notifEvents[e.key]} onChange={v => setNotifEvents({ ...notifEvents, [e.key]: v })} /></div>
+          </div>)}
+        </Card>
+        <Card style={{ padding: 16, marginBottom: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Where should alerts go?</div>
+          <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 12px' }}>Pick one or more delivery channels.</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>
+            {NOTIF_CHANNELS.map(c => { const on = notifCh[c.key]; return <div key={c.key} onClick={() => setNotifCh({ ...notifCh, [c.key]: !on })} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', borderRadius: 10, border: '1px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', cursor: 'pointer' }}>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: '#fff', border: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={c.icon} size={15} color={on ? LH.primary : LH.sub} /></div>
+              <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{c.t}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.d}</div></div>
+              <span style={{ width: 18, height: 18, borderRadius: 6, flexShrink: 0, border: '1.5px solid ' + (on ? LH.primary : LH.border), background: on ? LH.primary : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on && <Ic name="check" size={12} color="#fff" />}</span>
+            </div>; })}
+          </div>
+          {(notifCh.email || notifCh.slack) && <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid ' + LH.borderSoft, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {notifCh.email && <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ width: 96, fontSize: 12.5, color: LH.sub, flexShrink: 0 }}>Email to</span><input value={notifEmail} onChange={e => setNotifEmail(e.target.value)} style={{ flex: 1, height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none' }} /></div>}
+            {notifCh.slack && <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ width: 96, fontSize: 12.5, color: LH.sub, flexShrink: 0 }}>Slack channel</span><input value={notifSlack} onChange={e => setNotifSlack(e.target.value)} style={{ flex: 1, height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none' }} /></div>}
+          </div>}
+        </Card>
+        <Card style={{ padding: 16, marginBottom: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Who should receive them?</div>
+          <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 12px' }}>Route alerts to the right people automatically.</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={notifRep} onChange={setNotifRep} /><span style={{ fontSize: 13, color: LH.body }}>The rep the lead is <b style={{ color: LH.ink, fontWeight: 600 }}>assigned to</b></span></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={notifOwner} onChange={setNotifOwner} /><span style={{ fontSize: 13, color: LH.body }}>The campaign owner</span></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ fontSize: 13, color: LH.body, flexShrink: 0 }}>Also notify</span><div style={{ flex: 1, maxWidth: 320 }}><Dropdown multi value={notifExtra} placeholder="Add teammates…" options={REPS.filter(r => r !== 'Assigned to me').map(o => ({ value: o, label: o }))} onChange={setNotifExtra} /></div></div>
+        </Card>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: '12px 14px' }}>
+          <Toggle on={notifDigest} onChange={setNotifDigest} />
+          <div><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>Bundle low-priority alerts into a daily digest</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1 }}>Priority events still notify instantly; everything else arrives once a day at 8:00 am.</div></div>
+        </div>
+      </div>;
+      // Step 7 — Review & Publish
       const activeDays = Object.keys(days).filter(d => (days[d].active !== false) && days[d].steps && days[d].steps.length).length;
       const summary = [
         { i: 0, icon: 'pencil', t: 'Basic details', lines: ['Name: ' + (name || '—'), 'Time zone: ' + tz, desc ? 'Description set' : 'No description'] },
@@ -30043,7 +30193,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         { i: 2, icon: 'radio', t: 'Communication', lines: ['Number: ' + NUMBERS[numIdx].name + ' · ' + NUMBERS[numIdx].num, 'Voice agent: ' + agent, 'Playbook: ' + playbook.length + ' questions'] },
         { i: 3, icon: 'zap', t: 'Speed to Lead', lines: [s2l.length + ' launch-day step' + (s2l.length !== 1 ? 's' : ''), 'Business hours: ' + (bizHours ? 'on' : 'any time'), 'Weekends: ' + ((weekend.sat || weekend.sun) ? [weekend.sat && 'Sat', weekend.sun && 'Sun'].filter(Boolean).join(', ') : 'off')] },
         { i: 4, icon: 'headphones', t: 'Nurture sequence', lines: [dayCount + '-day sequence', activeDays + ' day' + (activeDays !== 1 ? 's' : '') + ' with steps', 'Send days: ' + sendDaysLabel] },
-        { i: 5, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'On reply: ' + [replyStatusOn && 'status → ' + replyStatus, replyTaskOn && 'create task'].filter(Boolean).join(', ') || 'no action', 'Built-in stops: opt-out, Nova DND'] }
+        { i: 5, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'On reply: ' + [replyStatusOn && 'status → ' + replyStatus, replyTaskOn && 'create task'].filter(Boolean).join(', ') || 'no action', 'Built-in stops: opt-out, Nova DND'] },
+        { i: 6, icon: 'bell', t: 'Notifications', lines: [Object.values(notifEvents).filter(Boolean).length + ' of ' + NOTIF_EVENTS.length + ' events on', 'Via ' + (NOTIF_CHANNELS.filter(c => notifCh[c.key]).map(c => c.t).join(', ') || 'no channel'), 'To ' + ([notifRep && 'assigned rep', notifOwner && 'owner', notifExtra.length && (notifExtra.length + ' more')].filter(Boolean).join(', ') || 'no one') + (notifDigest ? ' · daily digest' : '')] }
       ];
       const problems = []; if (!name.trim()) problems.push('Campaign name is required (Basic details).'); if (!tz) problems.push('Campaign time zone is required (Basic details).'); if (!conds.filter(c => c.field).length) problems.push('Add at least one audience condition.');
       return <div style={{ maxWidth: 720, margin: '0 auto' }}>
