@@ -28743,7 +28743,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { id: 'l1b', col: 'New lead', score: 29, name: 'Kevin Alvarez', note: 'Website form', src: 'Website Booking', age: '5h', status: 'New lead', fields: '2/9' },
     { id: 'l1c', col: 'New lead', score: 41, name: 'Tessa Ward', note: 'Missing shingles', src: 'Meta Ads', age: '2d', status: 'New lead', fields: '1/9' },
     { id: 'l2', col: 'Contacting', score: 76, name: 'Sarah Mitchell', note: 'Roof leak after rain', src: 'Thumbtack', age: '18m', status: 'Contacting', fields: '6/9' },
-    { id: 'l2b', col: 'Contacting', score: 63, name: 'Priya Shah', note: 'Storm damage', src: 'Angi', age: '40m', status: 'Contacting', fields: '4/9' },
+    { id: 'l2b', col: 'Contacting', score: 63, name: 'Paige Sullivan', note: 'Storm damage', src: 'Angi', age: '40m', status: 'Contacting', fields: '4/9' },
     { id: 'l2c', col: 'Contacting', score: 58, name: 'Owen Brooks', note: 'Gutter estimate', src: 'Google LSA', age: '1h', status: 'Contacting', fields: '3/9' },
     { id: 'l3', col: 'Qualifying', score: 81, name: 'Caleb Norris', note: 'Canvassing follow-up', src: 'SalesRabbit', age: '1d', status: 'Qualifying', fields: '5/9' },
     { id: 'l3b', col: 'Qualifying', score: 73, name: 'Nina Foster', note: 'Skylight replacement', src: 'Angi', age: '6h', status: 'Qualifying', fields: '7/9' },
@@ -29463,7 +29463,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { n: 'Nina Foster', src: 'Meta Ads', stage: 'Qualifying', tone: 'New', last: 'Nova call · 4/9 fields', when: '5h ago' },
       { n: 'Grant Wells', src: 'Google LSA', stage: 'Completed', tone: 'Qualified', last: 'Sequence completed', when: '1d ago' }
     ];
-    const R_FIRST = ['Marcus', 'Priya', 'Dana', 'Owen', 'Bianca', 'Trevor', 'Sofia', 'Andre', 'Hannah', 'Leon', 'Mia', 'Caleb', 'Ruby', 'Victor', 'Elena', 'Jonah', 'Tara', 'Wyatt', 'Nadia', 'Gabe', 'Ivy', 'Simon', 'Farah', 'Cole', 'Maya', 'Dylan', 'Zoe', 'Reid', 'Amara', 'Kyle'];
+    const R_FIRST = ['Marcus', 'Paige', 'Dana', 'Owen', 'Bianca', 'Trevor', 'Sofia', 'Andre', 'Hannah', 'Leon', 'Mia', 'Caleb', 'Ruby', 'Victor', 'Elena', 'Jonah', 'Tara', 'Wyatt', 'Nadia', 'Gabe', 'Ivy', 'Simon', 'Farah', 'Cole', 'Maya', 'Dylan', 'Zoe', 'Reid', 'Amara', 'Kyle'];
     const R_LAST = ['Reed', 'Raman', 'Whitfield', 'Castillo', 'Flores', 'Hunt', 'Marin', 'Cole', 'Yates', 'Park', 'Chen', 'Nash', 'Ortiz', 'Popov', 'Singh', 'Brooks', 'Khan', 'Rivera', 'Coleman', 'Wu', 'Aziz', 'Barrett', 'Lin', 'Frost', 'Adams', 'Palmer', 'Beck', 'Dunn', 'Voss', 'Carter'];
     const R_SRC = ['Angi', 'Thumbtack', 'Google LSA', 'Meta Ads', 'Website Booking'];
     const R_STAGE = [['Qualified', 'Qualified', 'Nova call · answered'], ['Contacting', 'New', 'SMS sent'], ['In drip', 'In drip', 'Day 3 SMS'], ['Qualifying', 'New', 'Nova call · 4/9 fields'], ['Completed', 'Qualified', 'Sequence completed'], ['Contacting', 'New', 'Email delivered']];
@@ -29485,7 +29485,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ];
     const needsAttention = [
       { n: 'Kevin Alvarez', src: 'Angi', reason: 'Opted out', tone: 'Paused', detail: 'Replied STOP to SMS', when: '2h ago', icon: 'ban' },
-      { n: 'Priya Raman', src: 'Thumbtack', reason: 'Sent to rep', tone: 'In drip', detail: 'Escalated to human — asked for a callback', when: '4h ago', icon: 'user-check' },
+      { n: 'Rachel Bennett', src: 'Thumbtack', reason: 'Sent to rep', tone: 'In drip', detail: 'Escalated to human — asked for a callback', when: '4h ago', icon: 'user-check' },
       { n: 'Marcus Reed', src: 'Website Booking', reason: 'Sent to rep', tone: 'In drip', detail: 'Nova DND — awaiting human follow-up', when: '6h ago', icon: 'user-check' },
       { n: 'Dana Whitfield', src: 'Meta Ads', reason: 'Delivery failed', tone: 'New', detail: 'Email bounced — invalid address', when: '1d ago', icon: 'alert-triangle' }
     ];
@@ -29643,7 +29643,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
           <button onClick={onBack} style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="arrow-left" size={16} color={LH.body} /></button>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 12, color: LH.muted, marginBottom: 2 }}>Lead Hub · Campaigns</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ fontSize: 20, fontWeight: 700, color: LH.ink }}>{row.name}</span><span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: t.bg, color: t.fg, border: '1px solid ' + t.bd }}>{st}</span></div>
           </div>
         </div>
@@ -29810,7 +29809,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   const SOURCE_SIZE = { Angi: 64, Thumbtack: 41, 'Google LSA': 28, Meta: 33 };
   const STATUS_FRAC = { 'New Lead': 0.55, Nurture: 0.34, Qualified: 0.18, 'Not Qualified': 0.12, Dead: 0.08 };
   const SERVICE_FRAC = { Roofing: 0.6, Gutter: 0.22, Siding: 0.3, Windows: 0.25, Door: 0.15 };
-  const FIRST = ['Marcus', 'Danielle', 'Priya', 'Owen', 'Sofia', 'Trevor', 'Amara', 'Grant', 'Leah', 'Diego', 'Nina', 'Colton', 'Rosa', 'Jared', 'Imani', 'Blake', 'Hana', 'Miles', 'Yara', 'Dean', 'Camille', 'Ravi', 'Tessa', 'Nolan', 'Selena'];
+  const FIRST = ['Marcus', 'Danielle', 'Paige', 'Owen', 'Sofia', 'Trevor', 'Amara', 'Grant', 'Leah', 'Diego', 'Nina', 'Colton', 'Rosa', 'Jared', 'Imani', 'Blake', 'Hana', 'Miles', 'Yara', 'Dean', 'Camille', 'Ravi', 'Tessa', 'Nolan', 'Selena'];
   const LAST = ['Thompson', 'Nguyen', 'Alvarez', 'Patel', 'Walsh', 'Reed', 'Norris', 'Mitchell', 'Blake', 'Cohen', 'Marks', 'Silva', 'Webb', 'Klein', 'Perkins', 'Hart', 'Whitfield', 'Fisher', 'Dawson', 'Bryant'];
   const CH_LIST = [['sms', 'Send SMS'], ['email', 'Send email'], ['call', 'Make a phone call'], ['voice_drop', 'Ringless voice drop'], ['video_drop', 'Video drop (MMS)'], ['task', 'Add a task']];
   const VOICE_DROPS = ['Storm follow-up (0:22)', 'Free inspection offer (0:18)', 'Last-touch reminder (0:15)'];
