@@ -29648,11 +29648,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
-          <Btn icon="pencil" onClick={onEdit}>Edit</Btn>
-          {primaryAction && <Btn kind="primary" icon={primaryAction.icon} onClick={doPrimary}>{primaryAction.label}</Btn>}
-          <button onClick={() => setMenu(m => !m)} style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="more-horizontal" size={17} color={LH.sub} /></button>
-          {menu && <div style={{ position: 'absolute', top: 40, right: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 160 }}>
-            {[['copy', 'Duplicate'], ['download', 'Export enrollments'], ['archive', 'Archive'], ['trash-2', 'Delete']].map(([ic, l]) => <div key={l} onClick={() => { setMenu(false); onToast(l + ' — “' + row.name + '”'); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', borderRadius: 7, fontSize: 13, color: l === 'Delete' ? LH.red : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={l === 'Delete' ? LH.red : LH.sub} />{l}</div>)}
+          <button onClick={() => setMenu(m => !m)} style={{ width: 34, height: 34, borderRadius: 9, border: '1px solid ' + (menu ? LH.primary : LH.border), background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="more-horizontal" size={17} color={LH.sub} /></button>
+          {menu && <div onMouseLeave={() => setMenu(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 180 }}>
+            {[{ ic: 'pencil', l: 'Edit campaign', f: onEdit }]
+              .concat(primaryAction ? [{ ic: primaryAction.icon, l: primaryAction.label + ' campaign', f: doPrimary }] : [])
+              .concat([{ div: true }, { ic: 'copy', l: 'Duplicate' }, { ic: 'download', l: 'Export enrollments' }, { ic: 'archive', l: 'Archive' }, { ic: 'trash-2', l: 'Delete', danger: true }])
+              .map((it, i) => it.div
+                ? <div key={'d' + i} style={{ height: 1, background: LH.borderSoft, margin: '5px 0' }} />
+                : <div key={it.l} onClick={() => { setMenu(false); if (it.f) it.f(); else onToast(it.l + ' — “' + row.name + '”'); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', borderRadius: 7, fontSize: 13, color: it.danger ? LH.red : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={it.ic} size={14} color={it.danger ? LH.red : LH.sub} />{it.l}</div>)}
           </div>}
         </div>
       </div>
