@@ -29370,12 +29370,65 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const url = CAMP_AVATARS[by];
     return <span style={{ width: size, height: size, borderRadius: 999, background: color, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: Math.round(size * 0.44), fontWeight: 700, flexShrink: 0, overflow: 'hidden', position: 'relative' }}>{bi}{url && <img src={url} alt={by} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />}</span>;
   }
+  // Shared notification-preferences UI (controlled) — used in the campaign wizard
+  // and the campaign details Settings tab so both stay identical.
+  function CampaignNotifSettings({ events, setEvents, ch, setCh, email, setEmail, slack, setSlack, rep, setRep, owner, setOwner, extra, setExtra, digest, setDigest }) {
+    return <>
+      <Card style={{ padding: 16, marginBottom: 14 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Notify us when…</div>
+        <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 6px' }}>Toggle the events that should raise an alert.</div>
+        {NOTIF_EVENTS.map((e, i) => <div key={e.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '11px 0', borderTop: i ? '1px solid ' + LH.borderSoft : 'none' }}>
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: e.priority === 'high' ? LH.redBg : LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={e.icon} size={15} color={e.priority === 'high' ? LH.red : LH.primary} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink }}>{e.t}</span>{e.priority === 'high' && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.03em', color: LH.red, background: LH.redBg, border: '1px solid ' + LH.redBd, borderRadius: 999, padding: '0 6px' }}>PRIORITY</span>}</div>
+            <div style={{ fontSize: 12, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{e.d}</div>
+          </div>
+          <div style={{ flexShrink: 0, paddingTop: 3 }}><Toggle on={!!events[e.key]} onChange={v => setEvents({ ...events, [e.key]: v })} /></div>
+        </div>)}
+      </Card>
+      <Card style={{ padding: 16, marginBottom: 14 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Where should alerts go?</div>
+        <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 12px' }}>Pick one or more delivery channels.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>
+          {NOTIF_CHANNELS.map(c => { const on = ch[c.key]; return <div key={c.key} onClick={() => setCh({ ...ch, [c.key]: !on })} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', borderRadius: 10, border: '1px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', cursor: 'pointer' }}>
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: '#fff', border: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={c.icon} size={15} color={on ? LH.primary : LH.sub} /></div>
+            <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{c.t}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.d}</div></div>
+            <span style={{ width: 18, height: 18, borderRadius: 6, flexShrink: 0, border: '1.5px solid ' + (on ? LH.primary : LH.border), background: on ? LH.primary : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on && <Ic name="check" size={12} color="#fff" />}</span>
+          </div>; })}
+        </div>
+        {(ch.email || ch.slack) && <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid ' + LH.borderSoft, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {ch.email && <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ width: 96, fontSize: 12.5, color: LH.sub, flexShrink: 0 }}>Email to</span><input value={email} onChange={e => setEmail(e.target.value)} style={{ flex: 1, height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none' }} /></div>}
+          {ch.slack && <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ width: 96, fontSize: 12.5, color: LH.sub, flexShrink: 0 }}>Slack channel</span><input value={slack} onChange={e => setSlack(e.target.value)} style={{ flex: 1, height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none' }} /></div>}
+        </div>}
+      </Card>
+      <Card style={{ padding: 16, marginBottom: 14 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Who should receive them?</div>
+        <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 12px' }}>Route alerts to the right people automatically.</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={rep} onChange={setRep} /><span style={{ fontSize: 13, color: LH.body }}>The rep the lead is <b style={{ color: LH.ink, fontWeight: 600 }}>assigned to</b></span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={owner} onChange={setOwner} /><span style={{ fontSize: 13, color: LH.body }}>The campaign owner</span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ fontSize: 13, color: LH.body, flexShrink: 0 }}>Also notify</span><div style={{ flex: 1, maxWidth: 320 }}><Dropdown multi value={extra} placeholder="Add teammates…" options={REPS.filter(r => r !== 'Assigned to me').map(o => ({ value: o, label: o }))} onChange={setExtra} /></div></div>
+      </Card>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: '12px 14px' }}>
+        <Toggle on={digest} onChange={setDigest} />
+        <div><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>Bundle low-priority alerts into a daily digest</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1 }}>Priority events still notify instantly; everything else arrives once a day at 8:00 am.</div></div>
+      </div>
+    </>;
+  }
   function CampaignDetail({ row, onBack, onEdit, onToast, stTone, avaColor }) {
     const [menu, setMenu] = useState(false);
     const [st, setSt] = useState(row.status);
     const [tab, setTab] = useState('overview');
     const [nameEdit, setNameEdit] = useState(row.name);
     const [selLead, setSelLead] = useState(null);
+    // Notification preferences (same block as the campaign wizard).
+    const [nEvents, setNEvents] = useState(() => NOTIF_EVENTS.reduce((a, e) => { a[e.key] = e.dflt; return a; }, {}));
+    const [nCh, setNCh] = useState({ inapp: true, email: true, sms: false, slack: false });
+    const [nEmail, setNEmail] = useState('lead-alerts@hillroofing.com');
+    const [nSlack, setNSlack] = useState('#lead-alerts');
+    const [nRep, setNRep] = useState(true);
+    const [nOwner, setNOwner] = useState(true);
+    const [nExtra, setNExtra] = useState([]);
+    const [nDigest, setNDigest] = useState(false);
     const SCORE_BY_STAGE = { Qualified: 86, Completed: 90, Contacting: 62, Qualifying: 58, 'In drip': 48 };
     const openEnrollment = c => setSelLead({
       id: c.n, name: c.n, note: c.last, src: c.src, status: c.stage, col: c.stage,
@@ -29542,6 +29595,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ marginTop: 6, maxWidth: 220 }}><Dropdown value={st} options={['Draft', 'Active', 'Paused', 'Inactive', 'Archived'].map(s => ({ value: s, label: s }))} onChange={v => { setSt(v); updateCampaign(row.name, { status: v }); }} /></div>
           <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 10 }}>Created {row.date} · Version v1</div>
           <div style={{ marginTop: 14 }}><Btn kind="primary" icon="check" onClick={() => { updateCampaign(row.name, { status: st }); onToast('Settings saved.'); }}>Save changes</Btn></div>
+        </Card>
+        <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 26, background: LH.border }} /></div>
+        <Card style={{ padding: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="bell" size={16} color={LH.primary} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Notifications</span></div>
+          <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 14 }}>Alert your team when a lead replies or a key incident happens in this campaign.</div>
+          <CampaignNotifSettings events={nEvents} setEvents={setNEvents} ch={nCh} setCh={setNCh} email={nEmail} setEmail={setNEmail} slack={nSlack} setSlack={setNSlack} rep={nRep} setRep={setNRep} owner={nOwner} setOwner={setNOwner} extra={nExtra} setExtra={setNExtra} digest={nDigest} setDigest={setNDigest} />
+          <div style={{ marginTop: 4 }}><Btn kind="primary" icon="check" onClick={() => onToast('Notification settings saved.')}>Save changes</Btn></div>
         </Card>
         <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 26, background: LH.border }} /></div>
         <Card style={{ padding: 18, borderColor: LH.redBd }}>
@@ -30193,44 +30253,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="bell" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Who gets notified, and when?</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Pick the incidents worth interrupting your team for, where the alert lands, and who receives it. These fire the moment something happens in this campaign.</div>
-        <Card style={{ padding: 16, marginBottom: 14 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Notify us when…</div>
-          <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 6px' }}>Toggle the events that should raise an alert.</div>
-          {NOTIF_EVENTS.map((e, i) => <div key={e.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '11px 0', borderTop: i ? '1px solid ' + LH.borderSoft : 'none' }}>
-            <div style={{ width: 30, height: 30, borderRadius: 8, background: e.priority === 'high' ? LH.redBg : LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={e.icon} size={15} color={e.priority === 'high' ? LH.red : LH.primary} /></div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink }}>{e.t}</span>{e.priority === 'high' && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.03em', color: LH.red, background: LH.redBg, border: '1px solid ' + LH.redBd, borderRadius: 999, padding: '0 6px' }}>PRIORITY</span>}</div>
-              <div style={{ fontSize: 12, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{e.d}</div>
-            </div>
-            <div style={{ flexShrink: 0, paddingTop: 3 }}><Toggle on={!!notifEvents[e.key]} onChange={v => setNotifEvents({ ...notifEvents, [e.key]: v })} /></div>
-          </div>)}
-        </Card>
-        <Card style={{ padding: 16, marginBottom: 14 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Where should alerts go?</div>
-          <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 12px' }}>Pick one or more delivery channels.</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>
-            {NOTIF_CHANNELS.map(c => { const on = notifCh[c.key]; return <div key={c.key} onClick={() => setNotifCh({ ...notifCh, [c.key]: !on })} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', borderRadius: 10, border: '1px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', cursor: 'pointer' }}>
-              <div style={{ width: 30, height: 30, borderRadius: 8, background: '#fff', border: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={c.icon} size={15} color={on ? LH.primary : LH.sub} /></div>
-              <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{c.t}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.d}</div></div>
-              <span style={{ width: 18, height: 18, borderRadius: 6, flexShrink: 0, border: '1.5px solid ' + (on ? LH.primary : LH.border), background: on ? LH.primary : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on && <Ic name="check" size={12} color="#fff" />}</span>
-            </div>; })}
-          </div>
-          {(notifCh.email || notifCh.slack) && <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid ' + LH.borderSoft, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {notifCh.email && <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ width: 96, fontSize: 12.5, color: LH.sub, flexShrink: 0 }}>Email to</span><input value={notifEmail} onChange={e => setNotifEmail(e.target.value)} style={{ flex: 1, height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none' }} /></div>}
-            {notifCh.slack && <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ width: 96, fontSize: 12.5, color: LH.sub, flexShrink: 0 }}>Slack channel</span><input value={notifSlack} onChange={e => setNotifSlack(e.target.value)} style={{ flex: 1, height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none' }} /></div>}
-          </div>}
-        </Card>
-        <Card style={{ padding: 16, marginBottom: 14 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Who should receive them?</div>
-          <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 12px' }}>Route alerts to the right people automatically.</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={notifRep} onChange={setNotifRep} /><span style={{ fontSize: 13, color: LH.body }}>The rep the lead is <b style={{ color: LH.ink, fontWeight: 600 }}>assigned to</b></span></div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={notifOwner} onChange={setNotifOwner} /><span style={{ fontSize: 13, color: LH.body }}>The campaign owner</span></div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ fontSize: 13, color: LH.body, flexShrink: 0 }}>Also notify</span><div style={{ flex: 1, maxWidth: 320 }}><Dropdown multi value={notifExtra} placeholder="Add teammates…" options={REPS.filter(r => r !== 'Assigned to me').map(o => ({ value: o, label: o }))} onChange={setNotifExtra} /></div></div>
-        </Card>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: '12px 14px' }}>
-          <Toggle on={notifDigest} onChange={setNotifDigest} />
-          <div><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>Bundle low-priority alerts into a daily digest</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1 }}>Priority events still notify instantly; everything else arrives once a day at 8:00 am.</div></div>
-        </div>
+        <CampaignNotifSettings events={notifEvents} setEvents={setNotifEvents} ch={notifCh} setCh={setNotifCh} email={notifEmail} setEmail={setNotifEmail} slack={notifSlack} setSlack={setNotifSlack} rep={notifRep} setRep={setNotifRep} owner={notifOwner} setOwner={setNotifOwner} extra={notifExtra} setExtra={setNotifExtra} digest={notifDigest} setDigest={setNotifDigest} />
       </div>;
       // Step 7 — Review & Publish
       const activeDays = Object.keys(days).filter(d => (days[d].active !== false) && days[d].steps && days[d].steps.length).length;
