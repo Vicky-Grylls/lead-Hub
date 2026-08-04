@@ -30109,9 +30109,93 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
 
   /* ─────────── CHANNELS ─────────── */
-  function ChannelsSection() {
+  let CH_CONNECT = () => {};
+  let CH_IMPORT = () => {};
+  const slugify = n => n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  function ChOverlay({ title, sub, onClose, children, foot, width }) {
+    return <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,.42)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: width || 580, maxWidth: '100%', maxHeight: '88vh', background: '#fff', borderRadius: 14, boxShadow: '0 24px 64px rgba(0,0,0,.3)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft }}><div><div style={{ fontSize: 15.5, fontWeight: 700, color: LH.ink }}>{title}</div>{sub && <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>{sub}</div>}</div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>{children}</div>
+        {foot && <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>{foot}</div>}
+      </div>
+    </div>;
+  }
+  function ConnectFlow({ preset, sources, onClose, onConnect, onToast }) {
+    const [step, setStep] = useState(preset ? 1 : 0);
+    const [pick, setPick] = useState(preset || '');
+    const [tested, setTested] = useState(false);
+    const slug = slugify(pick || 'source');
+    const hook = 'hooks.zuper.com/lead/' + slug + '/hill-roofing';
+    const options = sources.concat(['Custom webhook']);
+    return <ChOverlay title="Connect a lead source" sub={step === 0 ? 'Pick a source to start receiving leads.' : pick} onClose={onClose}
+      foot={step === 0 ? <><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" onClick={() => pick && setStep(1)} style={{ opacity: pick ? 1 : 0.5 }}>Continue</Btn></>
+        : step === 1 ? <><Btn onClick={() => setStep(preset ? 1 : 0) || (preset ? onClose() : null)}>{preset ? 'Cancel' : 'Back'}</Btn><Btn kind="primary" icon="check" onClick={() => setStep(2)} style={{ opacity: tested ? 1 : 0.5 }}>Finish</Btn></>
+        : <Btn kind="primary" onClick={() => { onConnect(pick, hook); onToast(pick + ' connected'); onClose(); }}>Done</Btn>}>
+      {step === 0 && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>{options.map(o => <div key={o} onClick={() => setPick(o)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 13, borderRadius: 10, border: '1px solid ' + (pick === o ? LH.ink : LH.border), background: pick === o ? LH.tint : '#fff', cursor: 'pointer' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: LH.sub }}>{o === 'Custom webhook' ? '⚙' : o[0]}</div><span style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink }}>{o}</span>{pick === o && <Ic name="check" size={15} color={LH.ink} style={{ marginLeft: 'auto' }} />}</div>)}</div>}
+      {step === 1 && <div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 6 }}>1 · Add this webhook to {pick}</div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}><div style={{ flex: 1, fontSize: 12, color: LH.body, background: LH.bg, border: '1px solid ' + LH.border, borderRadius: 8, padding: '9px 11px', fontFamily: 'ui-monospace,monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{hook}</div><Btn icon="copy" onClick={() => onToast('Webhook URL copied')}>Copy</Btn></div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 6 }}>2 · Send a test lead</div>
+        <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 10, lineHeight: 1.5 }}>Trigger a test from {pick} (or use the button below). We’ll confirm the payload maps to Contact, Email, Phone, and Source.</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><Btn icon="send" onClick={() => setTested(true)}>Send test lead</Btn>{tested && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: LH.green }}><Ic name="check-circle" size={15} color={LH.green} />Test lead received · mapped OK</span>}</div>
+      </div>}
+      {step === 2 && <div style={{ textAlign: 'center', padding: '20px 0' }}><div style={{ width: 52, height: 52, borderRadius: 999, background: LH.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}><Ic name="check" size={26} color={LH.green} /></div><div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>{pick} is live</div><div style={{ fontSize: 13, color: LH.sub, marginTop: 4, maxWidth: 380, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>New leads from {pick} will land in your pipeline automatically and enter any matching campaigns.</div></div>}
+    </ChOverlay>;
+  }
+  function ImportFlow({ onClose, onToast }) {
+    const [step, setStep] = useState(0);
+    const [name, setName] = useState('');
+    const [headers, setHeaders] = useState([]);
+    const [rows, setRows] = useState([]);
+    const [map, setMap] = useState({ name: '', email: '', phone: '', source: '' });
+    const guess = hs => { const f = (arr) => hs.find(h => arr.some(a => h.toLowerCase().includes(a))) || ''; return { name: f(['name']), email: f(['email']), phone: f(['phone', 'mobile', 'cell']), source: f(['source', 'channel']) }; };
+    const parse = txt => { const ls = txt.trim().split(/\r?\n/).filter(Boolean); const hs = ls[0].split(',').map(s => s.replace(/^"|"$/g, '').trim()); const rs = ls.slice(1).map(l => l.split(',').map(s => s.replace(/^"|"$/g, '').trim())); setHeaders(hs); setRows(rs); setMap(guess(hs)); setStep(1); };
+    const onFile = e => { const file = e.target.files && e.target.files[0]; if (!file) return; setName(file.name); const r = new FileReader(); r.onload = () => parse(String(r.result)); r.readAsText(file); };
+    const sample = () => { setName('sample-leads.csv'); parse('Name,Email,Phone,Source\nLeah Nguyen,leah.nguyen@yahoo.com,469-555-0111,Angi\nNolan Norris,nolan.norris@proton.me,469-555-0112,Thumbtack\nDana Whitfield,dana.w@gmail.com,469-555-0113,Meta Ads\nOwen Castillo,owen.c@gmail.com,469-555-0114,Website'); };
+    const idx = k => headers.indexOf(map[k]);
+    return <ChOverlay title="Import leads" sub={step === 0 ? 'Upload a CSV to add leads in bulk.' : step === 1 ? name + ' · ' + rows.length + ' rows' : ''} onClose={onClose}
+      foot={step === 1 ? <><Btn onClick={() => setStep(0)}>Back</Btn><Btn kind="primary" onClick={() => setStep(2)} style={{ opacity: (map.name && (map.email || map.phone)) ? 1 : 0.5 }}>Preview</Btn></>
+        : step === 2 ? <><Btn onClick={() => setStep(1)}>Back</Btn><Btn kind="primary" icon="download" onClick={() => { onToast(rows.length + ' leads imported into the pipeline'); onClose(); }}>Import {rows.length} leads</Btn></>
+        : <Btn onClick={onClose}>Cancel</Btn>}>
+      {step === 0 && <div>
+        <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, border: '1.5px dashed ' + LH.border, borderRadius: 12, padding: '34px 20px', cursor: 'pointer', textAlign: 'center' }}>
+          <div style={{ width: 44, height: 44, borderRadius: 11, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="upload" size={20} color={LH.ink} /></div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink }}>Drop a CSV here or click to browse</div>
+          <div style={{ fontSize: 12, color: LH.muted }}>Columns: name, email, phone, source</div>
+          <input type="file" accept=".csv,text/csv" onChange={onFile} style={{ display: 'none' }} />
+        </label>
+        <div style={{ textAlign: 'center', marginTop: 14 }}><button onClick={sample} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Use a sample file</button></div>
+      </div>}
+      {step === 1 && <div>
+        <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 12 }}>Map your columns to lead fields.</div>
+        {[['name', 'Full name', true], ['email', 'Email', false], ['phone', 'Phone', false], ['source', 'Source', false]].map(([k, lbl, req]) => <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}><span style={{ width: 110, fontSize: 13, color: LH.body }}>{lbl}{req && <span style={{ color: LH.red }}> *</span>}</span><div style={{ flex: 1 }}><Dropdown value={map[k]} placeholder="— skip —" options={[{ value: '', label: '— skip —' }].concat(headers.map(h => ({ value: h, label: h })))} onChange={v => setMap({ ...map, [k]: v })} /></div></div>)}
+      </div>}
+      {step === 2 && <div>
+        <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 12 }}>{rows.length} leads ready to import. Preview:</div>
+        <Card style={{ padding: 0, overflow: 'hidden' }}>{rows.slice(0, 6).map((r, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: i < Math.min(6, rows.length) - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ width: 28, height: 28, borderRadius: 999, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10.5, fontWeight: 700, color: LH.ink, flexShrink: 0 }}>{(idx('name') > -1 ? r[idx('name')] || '?' : '?').split(' ').map(w => w[0]).join('').slice(0, 2)}</div><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{idx('name') > -1 ? r[idx('name')] : '—'}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{idx('email') > -1 ? r[idx('email')] : ''}{idx('phone') > -1 ? ' · ' + r[idx('phone')] : ''}</div></div>{idx('source') > -1 && <Pill label={r[idx('source')]} tone="New" />}</div>)}</Card>
+        {rows.length > 6 && <div style={{ fontSize: 12, color: LH.muted, textAlign: 'center', marginTop: 8 }}>+{rows.length - 6} more</div>}
+      </div>}
+    </ChOverlay>;
+  }
+  function ConfigureFlow({ src, onClose, onToast }) {
+    const [dedup, setDedup] = useState(true);
+    return <ChOverlay title={'Configure ' + src.n} sub="Webhook, field mapping, and de-duplication." onClose={onClose} foot={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="check" onClick={() => { onToast(src.n + ' settings saved'); onClose(); }}>Save changes</Btn></>}>
+      <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Webhook URL</label>
+      <div style={{ display: 'flex', gap: 8, margin: '6px 0 16px' }}><div style={{ flex: 1, fontSize: 12, color: LH.body, background: LH.bg, border: '1px solid ' + LH.border, borderRadius: 8, padding: '9px 11px', fontFamily: 'ui-monospace,monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{src.hook || ('hooks.zuper.com/lead/' + slugify(src.n) + '/hill-roofing')}</div><Btn icon="copy" onClick={() => onToast('Copied')}>Copy</Btn></div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: LH.body, marginBottom: 8 }}>Field mapping</div>
+      {[['Contact name', 'full_name'], ['Email', 'email_address'], ['Phone', 'phone'], ['Source', 'lead_source']].map(([lbl, def]) => <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}><span style={{ width: 110, fontSize: 12.5, color: LH.sub }}>{lbl}</span><div style={{ flex: 1 }}><Dropdown value={def} options={[def, 'name', 'contact', 'phone_number', 'mobile', 'source', 'channel'].map(o => ({ value: o, label: o }))} onChange={() => {}} /></div></div>)}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, paddingTop: 14, borderTop: '1px solid ' + LH.borderSoft }}><Toggle on={dedup} onChange={setDedup} /><span style={{ fontSize: 13, color: LH.body }}>De-duplicate against existing leads by email + phone</span></div>
+    </ChOverlay>;
+  }
+  function ChannelsSection({ onToast, onNavigate }) {
+    const [srcs, setSrcs] = useState(CHANNELS);
+    const [modal, setModal] = useState(null);
+    const notConnected = srcs.flatMap(g => g.items).filter(i => i.st === 'Not connected').map(i => i.n);
+    const setLive = (name, hook) => setSrcs(gs => gs.map(g => ({ ...g, items: g.items.map(i => i.n === name ? { ...i, st: 'Live', hook: hook || i.hook || ('hooks.zuper.com/lead/' + slugify(name) + '/hill-roofing'), last: 'just now', s: i.s } : i) })));
+    useEffect(() => { CH_CONNECT = () => setModal({ t: 'connect' }); CH_IMPORT = () => setModal({ t: 'import' }); return () => { CH_CONNECT = () => {}; CH_IMPORT = () => {}; }; }, []);
     return <div>
-      {CHANNELS.map(grp => <div key={grp.g} style={{ marginBottom: 22 }}>
+      {srcs.map(grp => <div key={grp.g} style={{ marginBottom: 22 }}>
         <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 10 }}>{grp.g.toUpperCase()}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 12 }}>
           {grp.items.map(it => <Card key={it.n} style={{ padding: 15 }}>
@@ -30125,11 +30209,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             {it.hook ? <div style={{ marginTop: 12 }}>
               <div style={{ fontSize: 11, color: LH.muted, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 7, padding: '6px 9px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'ui-monospace,monospace' }}>{it.hook}</div>
               <div style={{ fontSize: 11, color: LH.muted, margin: '7px 0 10px' }}>Last lead: {it.last}</div>
-              <div style={{ display: 'flex', gap: 6 }}><Btn style={{ height: 30, fontSize: 12 }}>Configure</Btn><Btn kind="ghost" style={{ height: 30, fontSize: 12 }}>Test</Btn><Btn kind="ghost" style={{ height: 30, fontSize: 12 }}>View leads</Btn></div>
-            </div> : <div style={{ marginTop: 12 }}><Btn kind="primary" icon="plus" style={{ height: 30, fontSize: 12 }}>Connect</Btn></div>}
+              <div style={{ display: 'flex', gap: 6 }}><Btn style={{ height: 30, fontSize: 12 }} onClick={() => setModal({ t: 'configure', src: it })}>Configure</Btn><Btn kind="ghost" style={{ height: 30, fontSize: 12 }} onClick={() => onToast('Test lead sent to ' + it.n + ' — received ✓')}>Test</Btn><Btn kind="ghost" style={{ height: 30, fontSize: 12 }} onClick={() => onNavigate('lead-pipeline')}>View leads</Btn></div>
+            </div> : <div style={{ marginTop: 12 }}><Btn kind="primary" icon="plus" style={{ height: 30, fontSize: 12 }} onClick={() => setModal({ t: 'connect', src: it.n })}>Connect</Btn></div>}
           </Card>)}
         </div>
       </div>)}
+      {modal && modal.t === 'connect' && <ConnectFlow preset={modal.src} sources={notConnected} onClose={() => setModal(null)} onConnect={setLive} onToast={onToast} />}
+      {modal && modal.t === 'import' && <ImportFlow onClose={() => setModal(null)} onToast={onToast} />}
+      {modal && modal.t === 'configure' && <ConfigureFlow src={modal.src} onClose={() => setModal(null)} onToast={onToast} />}
     </div>;
   }
 
@@ -30174,7 +30261,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       pipeline: { crumb: 'Lead Hub', title: 'Pipeline', actions: <Btn icon="calendar">Today</Btn> },
       campaigns: { crumb: 'Lead Hub · 3 active', title: 'Campaigns', actions: null },
       workforce: { crumb: 'Lead Hub · AI Workforce', title: 'AI Workforce', actions: <Btn kind="primary" icon="plus">Add agent</Btn> },
-      channels: { crumb: 'Lead Hub · 6 sources connected', title: 'Channels', actions: <Btn kind="primary" icon="plus">Connect source</Btn> },
+      channels: { crumb: 'Lead Hub · 6 sources connected', title: 'Channels', actions: <><Btn icon="upload" onClick={() => CH_IMPORT()}>Import leads</Btn><Btn kind="primary" icon="plus" onClick={() => CH_CONNECT()}>Connect source</Btn></> },
       health: { crumb: 'Last 30 days · 18 issues surfaced · 13 resolved · 5 pending', title: 'Hub Health', actions: <><Btn icon="calendar">Last 30 days</Btn><Btn icon="download">Export log</Btn></> }
     };
     const [wizardOpen, setWizardOpen] = useState(false);
@@ -30190,7 +30277,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {section === 'pipeline' && <PipelineSection onToast={showToast} onFull={setPipeFull} />}
         {section === 'campaigns' && <CampaignsSection onToast={showToast} onNavigate={onNavigate} />}
         {section === 'workforce' && <WorkforceSection onToast={showToast} />}
-        {section === 'channels' && <ChannelsSection />}
+        {section === 'channels' && <ChannelsSection onToast={showToast} onNavigate={onNavigate} />}
         {section === 'health' && <HealthSection />}
       </div>
       {toast && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 300, background: LH.ink, color: '#fff', fontSize: 13, fontWeight: 500, padding: '11px 18px', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="check-circle" size={15} color="#4ade80" />{toast}</div>}
