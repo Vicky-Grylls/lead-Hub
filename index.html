@@ -29597,15 +29597,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic name={icon} size={16} color={danger ? LH.red : LH.primary} /><span style={{ fontSize: 15, fontWeight: 700, color: danger ? LH.red : LH.ink }}>{title}</span></div>
         <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 3 }}>{sub}</div>
       </div>;
-      return <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', maxWidth: 1000, margin: '0 auto' }}>
-        {/* Section rail */}
+      return <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+        {/* Section rail — pinned to the left */}
         <div style={{ width: 208, flexShrink: 0, position: 'sticky', top: 0, alignSelf: 'flex-start' }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, padding: '0 10px 8px' }}>SETTINGS</div>
           {NAV.map(([id, label, icon]) => <div key={id} onClick={() => goto(id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, fontSize: 13, fontWeight: 600, color: id === 'danger' ? LH.red : LH.body, cursor: 'pointer', marginBottom: 2 }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={icon} size={15} color={id === 'danger' ? LH.red : LH.sub} />{label}</div>)}
           <div style={{ marginTop: 14, padding: '0 10px', fontSize: 11, color: LH.muted, lineHeight: 1.5 }}>Created {row.date}<br />Version v1</div>
         </div>
-        {/* Content */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Content — centered in the remaining space */}
+        <div style={{ flex: 1, minWidth: 0, maxWidth: 760, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, position: 'sticky', top: 0, zIndex: 5, background: '#fdfdfc', padding: '2px 0 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
             <div><div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>Settings</div><div style={{ fontSize: 12, color: dirty ? LH.amber : LH.muted, marginTop: 1 }}>{dirty ? 'Unsaved changes' : 'All changes saved'}</div></div>
             <Btn kind="primary" icon="check" onClick={saveSettings} style={{ opacity: dirty ? 1 : 0.45, pointerEvents: dirty ? 'auto' : 'none' }}>Save changes</Btn>
