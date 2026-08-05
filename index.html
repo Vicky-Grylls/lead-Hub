@@ -28637,7 +28637,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     Contacting: { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd },
     Qualifying: { bg: '#f3eefe', fg: '#6d28d9', bd: '#ddd0f7' },
     'Needs human': { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
-    'Inspection job': { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
+    'Converted as Job': { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
     'In drip': { bg: '#f3eefe', fg: '#6d28d9', bd: '#ddd0f7' },
     Draft: { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' }
   };
@@ -28757,8 +28757,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { id: 'l6b', col: 'Qualified', score: 84, name: 'Grant Wells', note: 'Full roof replacement', src: 'Google LSA', age: '1d', status: 'Qualified', fields: '9/9' },
     { id: 'l6c', col: 'Qualified', score: 80, name: 'Yara Haddad', note: 'Insurance-approved repair', src: 'Angi', age: '5h', status: 'Qualified', fields: '8/9' }
   ];
-  const COL_STAGE = { 'New lead': 0, 'Contacting': 1, 'Qualifying': 2, 'Needs human': 3, 'In drip': 4, 'Qualified': 5, 'Inspection job': 6 };
-  const COL_DOT = { 'New lead': '#3b82f6', 'Contacting': '#22c55e', 'Qualifying': '#8b5cf6', 'Needs human': '#f59e0b', 'In drip': '#6d28d9', 'Qualified': '#16a34a', 'Inspection job': '#0ea5e9' };
+  const COL_STAGE = { 'New lead': 0, 'Contacting': 1, 'Qualifying': 2, 'Needs human': 3, 'In drip': 4, 'Qualified': 5, 'Converted as Job': 6 };
+  const COL_DOT = { 'New lead': '#3b82f6', 'Contacting': '#22c55e', 'Qualifying': '#8b5cf6', 'Needs human': '#f59e0b', 'In drip': '#6d28d9', 'Qualified': '#16a34a', 'Converted as Job': '#0ea5e9' };
   const PIPE_COLS = [
     { key: 'New lead', hint: 'Captured from source' },
     { key: 'Contacting', hint: 'Speed-to-lead active' },
@@ -28766,7 +28766,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { key: 'Needs human', hint: 'CSR handoff required' },
     { key: 'In drip', hint: 'Follow-up sequence' },
     { key: 'Qualified', hint: 'Ready for Sales Hub' },
-    { key: 'Inspection job', hint: 'Converted handoff' }
+    { key: 'Converted as Job', hint: 'Converted handoff' }
   ];
   const STAGES = ['New', 'Contacting', 'Qualifying', 'Human', 'Drip', 'Qualified', 'Inspection'];
   const DIANE_FIELDS = ['Property address', 'Roof type', 'Damage type', 'Insurance claim', 'Homeowner name', 'Best contact time', 'Urgency', 'Spouse decision', 'Previous estimates'];
@@ -28847,7 +28847,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { k: 'Converted', ic: 'git-merge', cap: 'To a job' },
       { k: 'Inspection Job', ic: 'briefcase', cap: jobId ? '#' + jobId : 'Scheduled' }
     ];
-    const reached = jobId ? 4 : ({ 'New lead': 0, 'Contacting': 1, 'Qualifying': 1, 'Needs human': 1, 'In drip': 1, 'Qualified': 2, 'Inspection job': 4, 'Completed': 4 }[lead.col] ?? 0);
+    const reached = jobId ? 4 : ({ 'New lead': 0, 'Contacting': 1, 'Qualifying': 1, 'Needs human': 1, 'In drip': 1, 'Qualified': 2, 'Converted as Job': 4, 'Completed': 4 }[lead.col] ?? 0);
     return <Card style={{ padding: '16px 14px', marginBottom: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14, padding: '0 2px' }}><Ic name="route" size={15} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Lead lifecycle</span></div>
       <div style={{ display: 'flex', alignItems: 'flex-start' }}>
@@ -28910,7 +28910,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>;
       // step 3 confirm
       return <div>
-        <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 12 }}>Review the job. Creating it moves <b style={{ color: LH.ink }}>{lead.name}</b> to <b style={{ color: LH.ink }}>Inspection job</b>.</div>
+        <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 12 }}>Review the job. Creating it moves <b style={{ color: LH.ink }}>{lead.name}</b> to <b style={{ color: LH.ink }}>Converted as Job</b>.</div>
         <Card style={{ padding: '10px 14px' }}>
           {rrow('Job type', 'Inspection · ' + service)}
           {rrow('Priority', priority)}
@@ -28926,13 +28926,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ width: 54, height: 54, borderRadius: 999, background: LH.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}><Ic name="check" size={28} color={LH.green} /></div>
           <div style={{ fontSize: 17, fontWeight: 700, color: LH.ink }}>Inspection Job created</div>
           <div style={{ fontSize: 13, color: LH.sub, marginTop: 4 }}>Job <b style={{ color: LH.ink }}>#{done}</b> · {date} · {time} · {tech}</div>
-          <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 8, maxWidth: 380, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>{lead.name} is now an active inspection job. The lead card has moved to the Inspection job stage.</div>
+          <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 8, maxWidth: 380, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>{lead.name} is now an active inspection job. The lead card has moved to the Converted as Job stage.</div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 20 }}><Btn onClick={onClose}>Close</Btn><Btn kind="primary" icon="external-link" onClick={() => onToast && onToast('Opening Job #' + done + '…')}>View job</Btn></div>
         </div>
       : <>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="git-merge" size={15} color={LH.primary} /></div><div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Convert to inspection job</div><div style={{ fontSize: 12, color: LH.muted }}>{lead.name}</div></div></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="git-merge" size={15} color={LH.primary} /></div><div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Convert to job</div><div style={{ fontSize: 12, color: LH.muted }}>{lead.name}</div></div></div>
               <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
             </div>
             <div style={{ display: 'flex', gap: 6, marginTop: 14 }}>{STEPS.map((s, i) => <div key={s} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ width: 20, height: 20, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10.5, fontWeight: 700, background: i < step ? LH.green : i === step ? LH.primary : '#f1f0ec', color: i <= step ? '#fff' : LH.muted }}>{i < step ? '✓' : i + 1}</span><span style={{ fontSize: 11.5, fontWeight: step === i ? 600 : 500, color: step === i ? LH.ink : LH.muted, whiteSpace: 'nowrap' }}>{s}</span></div>)}</div>
@@ -29054,7 +29054,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 const next = order[i + 1];
                 if (onMove) onMove(shown.id, next);
                 onToast && onToast(shown.name + ' → ' + next);
-              }}>{qualified ? 'Convert to inspection job' : 'Move to next stage'}</Btn>}
+              }}>{qualified ? 'Convert to job' : 'Move to next stage'}</Btn>}
         </div>}
       </>}
     </div>;
@@ -29209,7 +29209,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setOverCol(col.key); }}
           onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setOverCol(null); }}
           onDrop={e => { e.preventDefault(); drop(col.key); }}
-          style={{ width: 248, flexShrink: 0, borderRadius: 12, background: over ? '#ece7dd' : '#f5f3ee', padding: '10px 10px 12px', transition: 'background 150ms', outline: over ? '2px dashed #c4b79a' : '2px solid transparent', outlineOffset: '-2px' }}>
+          style={{ width: 248, flexShrink: 0, borderRadius: 12, background: over ? '#e5e7eb' : '#f3f4f6', padding: '10px 10px 12px', transition: 'background 150ms', outline: over ? '2px dashed #cbd5e1' : '2px solid transparent', outlineOffset: '-2px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 250px)' }}>
           <div style={{ marginBottom: 10, padding: '0 2px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ width: 8, height: 8, borderRadius: 999, background: col.dot }} /><span style={{ fontSize: 12.5, fontWeight: 700, color: '#374151' }}>{col.key}</span><span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 17, height: 17, borderRadius: 999, fontSize: 10.5, fontWeight: 600, color: LH.sub, background: 'rgba(0,0,0,.06)', padding: '0 5px' }}>{cj.length}</span></div>
@@ -29217,7 +29217,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             </div>
             <div style={{ fontSize: 10.5, color: LH.muted, marginTop: 2 }}>{col.hint}</div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', maxHeight: 'calc(100vh - 320px)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1, minHeight: 0 }}>
             {cj.length ? cj.map(l => <LeadKanbanCard key={l.id} lead={l} selected={selId === l.id} dragging={dragId === l.id} onClick={onCardClick} onDragStart={setDragId} onDragEnd={() => { setDragId(null); setOverCol(null); }} />)
               : <div style={{ fontSize: 11.5, color: LH.muted, padding: '14px 0', textAlign: 'center' }}>Drop a lead here</div>}
           </div>
@@ -29442,9 +29442,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const qualified = shown && shown.col === 'Qualified';
     const move = (id, col) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col, status: col } : l));
     const [convertLead, setConvertLead] = useState(null);
-    const convertLeadTo = (id, jobId) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col: 'Inspection job', status: 'Inspection job', jobId } : l));
-    // Moving a lead into "Inspection job" runs the conversion flow instead of a silent move.
-    const boardMove = (id, col) => { if (col === 'Inspection job') { const l = leads.find(x => x.id === id); if (l && !l.jobId) { setConvertLead(l); return; } } move(id, col); };
+    const convertLeadTo = (id, jobId) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col: 'Converted as Job', status: 'Converted as Job', jobId } : l));
+    // Moving a lead into "Converted as Job" runs the conversion flow instead of a silent move.
+    const boardMove = (id, col) => { if (col === 'Converted as Job') { const l = leads.find(x => x.id === id); if (l && !l.jobId) { setConvertLead(l); return; } } move(id, col); };
     const filtered = leads.filter(l => (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && matchKpi(l));
     useEffect(() => { const h = e => { if (e.key === 'Escape') setSelId(null); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, []);
     if (pageLead) return <LeadDetailsPage lead={pageLead} onBack={closePage} onToast={onToast} onConvert={convertLeadTo} />;
