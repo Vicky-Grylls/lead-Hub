@@ -13720,15 +13720,16 @@ function CreateJobModal({ onClose = () => {}, onSubmit = () => {}, variant = 'mo
       h(I, { name: 'chevron-right', size: 13, color: '#cbd5e1' }), templateChip, customerCrumb),
     h('div', { style: { display: 'flex', gap: 10 } }, cancelBtn, createBtn));
   if (leadsheet) {
-    return h('div', { style: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: embedBg, height: '100%' } },
-      h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid #e8e7e2', background: '#fff', flexShrink: 0 } },
+    return h('div', { className: 'cj-compact', style: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: embedBg, height: '100%' } },
+      h('style', null, '.cj-compact [style*="1fr 1fr"]{grid-template-columns:1fr !important;}'),
+      h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid #e8e7e2', background: '#fff', flexShrink: 0 } },
         h('span', { style: { fontSize: 15, fontWeight: 700, color: '#1f2937' } }, 'Create Job'),
-        h('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
-          h('button', { onClick: onDetailed, className: 'hover:bg-black/5', style: { border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#4338ca', padding: '6px 8px', borderRadius: 7, display: 'inline-flex', alignItems: 'center', gap: 6 } }, h(I, { name: 'external-link', size: 14, color: '#4338ca' }), 'Create Detailed Job'),
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+          h('button', { onClick: onDetailed, className: 'hover:bg-black/5', style: { border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: '#4338ca', padding: '6px 8px', borderRadius: 7, display: 'inline-flex', alignItems: 'center', gap: 6 } }, h(I, { name: 'external-link', size: 14, color: '#4338ca' }), 'Create Detailed Job'),
           h('button', { onClick: onClose, className: 'w-7 h-7 flex items-center justify-center rounded hover:bg-black/5', style: { border: 'none', background: 'transparent', cursor: 'pointer' } }, h(I, { name: 'x', size: 16, color: '#6b7280' })))),
-      h('div', { ref: scrollRef, onScroll: onBodyScroll, className: 'scr', onClick: () => { setSpOpen(false); setTpOpen(false); setDdOpen(null); setTplOpen(false); setCustOpen(false); setSecDrop(false); }, style: { flex: 1, overflowY: 'auto', padding: '18px 22px' } },
-        h('div', { style: { maxWidth: 720, margin: '0 auto', width: '100%' } }, sectionsArr)),
-      h('div', { style: { padding: '12px 20px', borderTop: '1px solid #e8e7e2', background: '#fff', display: 'flex', justifyContent: 'flex-end', gap: 10, flexShrink: 0 } }, cancelBtn, createBtn),
+      h('div', { ref: scrollRef, onScroll: onBodyScroll, className: 'scr', onClick: () => { setSpOpen(false); setTpOpen(false); setDdOpen(null); setTplOpen(false); setCustOpen(false); setSecDrop(false); }, style: { flex: 1, overflowY: 'auto', padding: '16px 16px' } },
+        h('div', { style: { width: '100%' } }, sectionsArr)),
+      h('div', { style: { padding: '12px 18px', borderTop: '1px solid #e8e7e2', background: '#fff', display: 'flex', justifyContent: 'flex-end', gap: 10, flexShrink: 0 } }, cancelBtn, createBtn),
       overlays);
   }
   if (sidestep) {
@@ -14345,7 +14346,7 @@ function App() {
           onSubmit: () => { if (njLead.onCreated) njLead.onCreated(); setNjLead(null); showToast('Inspection job created from lead'); }
         }))
       : /*#__PURE__*/React.createElement("div", {
-          style: { position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(760px,96vw)', zIndex: 500, display: 'flex', flexDirection: 'column', background: '#fff', boxShadow: '-10px 0 30px rgba(0,0,0,0.16)' }
+          style: { position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(460px,96vw)', zIndex: 500, display: 'flex', flexDirection: 'column', background: '#fff', boxShadow: '-10px 0 30px rgba(0,0,0,0.16)' }
         }, /*#__PURE__*/React.createElement(CreateJobModal, {
           variant: 'leadsheet',
           initial: njLead.initial,
