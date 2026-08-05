@@ -28838,6 +28838,115 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
   // Shared lead header — avatar, name, address, CTA row. Used at the top of both the
   // details page left pane and the side sheet so they stay identical.
+  // Full lead lifecycle: Angi/source capture → speed-to-lead → qualified → converted → inspection job.
+  function LeadLifecycle({ lead, jobId }) {
+    const STAGES = [
+      { k: 'Captured', ic: 'download', cap: 'via ' + (lead.src || 'source') },
+      { k: 'Contacted', ic: 'zap', cap: 'Speed-to-lead' },
+      { k: 'Qualified', ic: 'user-check', cap: 'By Nova' },
+      { k: 'Converted', ic: 'git-merge', cap: 'To a job' },
+      { k: 'Inspection Job', ic: 'briefcase', cap: jobId ? '#' + jobId : 'Scheduled' }
+    ];
+    const reached = jobId ? 4 : ({ 'New lead': 0, 'Contacting': 1, 'Qualifying': 1, 'Needs human': 1, 'In drip': 1, 'Qualified': 2, 'Inspection job': 4, 'Completed': 4 }[lead.col] ?? 0);
+    return <Card style={{ padding: '16px 14px', marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14, padding: '0 2px' }}><Ic name="route" size={15} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Lead lifecycle</span></div>
+      <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+        {STAGES.map((s, i) => { const done = i < reached; const cur = i === reached; const on = done || cur; const bg = done ? LH.green : cur ? LH.primary : '#f1f0ec'; return <div key={s.k} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+          {i > 0 && <div style={{ position: 'absolute', top: 15, right: '50%', width: '100%', height: 2, background: i <= reached ? LH.green : LH.border }} />}
+          <div style={{ position: 'relative', zIndex: 1, width: 32, height: 32, borderRadius: 999, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={done ? 'check' : s.ic} size={15} color={on ? '#fff' : LH.muted} /></div>
+          <div style={{ fontSize: 11.5, fontWeight: 600, color: on ? LH.ink : LH.muted, marginTop: 6, textAlign: 'center', lineHeight: 1.25 }}>{s.k}</div>
+          <div style={{ fontSize: 10, color: LH.muted, marginTop: 1, textAlign: 'center' }}>{s.cap}</div>
+        </div>; })}
+      </div>
+    </Card>;
+  }
+  // Lead → Inspection Job conversion wizard. Carries lead data over, schedules the visit, mints a job #.
+  function ConvertToJobModal({ lead, onClose, onToast, onConverted }) {
+    const STEPS = ['Review lead', 'Job details', 'Schedule', 'Confirm'];
+    const [step, setStep] = useState(0);
+    const [service, setService] = useState(lead.service || 'Roofing');
+    const [priority, setPriority] = useState('Standard');
+    const [desc, setDesc] = useState((lead.note ? lead.note + '. ' : '') + 'Free inspection for ' + lead.name + '.');
+    const [date, setDate] = useState('Tomorrow');
+    const [time, setTime] = useState('9:00 am');
+    const [tech, setTech] = useState('Michael Richardson');
+    const [dur, setDur] = useState('1 hr');
+    const [done, setDone] = useState(null);
+    const jobId = 'JN-2456' + String(78 + (lead.name.length * 7 + (lead.score || 50)) % 21).padStart(2, '0');
+    const address = lead.address || '4821 Oakwood Dr, Plano, TX 75024';
+    const email = lead.email || (lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com');
+    const phone = '469-555-0172';
+    const captured = parseInt(lead.fields || '0') || 0;
+    const SERVICES = ['Roofing', 'Gutter', 'Siding', 'Windows', 'Door'];
+    const CREW = ['Michael Richardson', 'Luke Marks', 'Eli Cohen', 'Monica Klein', 'Tyson Silva', 'Marcus Webb'];
+    const DATES = ['Today', 'Tomorrow', 'In 2 days', 'This weekend', 'Next week'];
+    const TIMESL = ['8:00 am', '9:00 am', '10:30 am', '1:00 pm', '3:00 pm', '4:30 pm'];
+    const DURS = ['30 min', '1 hr', '1.5 hrs', '2 hrs'];
+    const create = () => { setDone(jobId); onConverted && onConverted(jobId); onToast && onToast('Inspection Job ' + jobId + ' created'); };
+    const rrow = (k, v) => <div style={{ display: 'flex', gap: 12, padding: '6px 0' }}><span style={{ width: 116, fontSize: 12, color: LH.muted, flexShrink: 0 }}>{k}</span><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 500, flex: 1, minWidth: 0 }}>{v}</span></div>;
+    const fld = (label, node) => <div style={{ marginBottom: 14 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body, display: 'block', marginBottom: 6 }}>{label}</label>{node}</div>;
+    const body = () => {
+      if (step === 0) return <div>
+        <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 12 }}>Everything below carries over from the lead — no re-entry needed.</div>
+        <Card style={{ padding: '10px 14px' }}>
+          {rrow('Contact', lead.name)}{rrow('Email', email)}{rrow('Mobile', phone)}
+          {rrow('Source', <Pill label={lead.src} tone="New" />)}
+          {rrow('Address', address)}
+          {rrow('Qualification', <span style={{ color: captured >= 9 ? LH.green : LH.body }}>{captured} of 9 fields captured</span>)}
+          {rrow('Lead score', (lead.score || '—') + '/100')}
+        </Card>
+      </div>;
+      if (step === 1) return <div>
+        {fld('Job type', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 8, background: LH.tint, color: LH.primary, fontSize: 13, fontWeight: 600 }}><Ic name="clipboard-check" size={14} color={LH.primary} />Inspection</span>)}
+        {fld('Service type', <Dropdown value={service} options={SERVICES.map(o => ({ value: o, label: o }))} onChange={setService} />)}
+        {fld('Priority', <Dropdown value={priority} options={['Standard', 'High', 'Urgent'].map(o => ({ value: o, label: o }))} onChange={setPriority} />)}
+        {fld('Description', <textarea value={desc} onChange={e => setDesc(e.target.value)} style={{ width: '100%', height: 78, borderRadius: 9, border: '1px solid ' + LH.border, padding: 11, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />)}
+      </div>;
+      if (step === 2) return <div>
+        <div style={{ display: 'flex', gap: 12 }}>{fld('Date', <Dropdown value={date} options={DATES.map(o => ({ value: o, label: o }))} onChange={setDate} />)}{fld('Time', <Dropdown value={time} options={TIMESL.map(o => ({ value: o, label: o }))} onChange={setTime} />)}</div>
+        {fld('Assign technician', <Dropdown value={tech} options={CREW.map(o => ({ value: o, label: o }))} onChange={setTech} />)}
+        {fld('Duration', <Dropdown value={dur} options={DURS.map(o => ({ value: o, label: o }))} onChange={setDur} />)}
+        <div style={{ fontSize: 12, color: LH.sub, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '10px 12px', display: 'flex', gap: 8 }}><Ic name="calendar" size={14} color={LH.sub} /><span>{tech} will be booked for a {dur} inspection at {address}.</span></div>
+      </div>;
+      // step 3 confirm
+      return <div>
+        <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 12 }}>Review the job. Creating it moves <b style={{ color: LH.ink }}>{lead.name}</b> to <b style={{ color: LH.ink }}>Inspection job</b>.</div>
+        <Card style={{ padding: '10px 14px' }}>
+          {rrow('Job type', 'Inspection · ' + service)}
+          {rrow('Priority', priority)}
+          {rrow('Customer', lead.name)}
+          {rrow('Address', address)}
+          {rrow('When', date + ' · ' + time + ' · ' + dur)}
+          {rrow('Technician', tech)}
+        </Card>
+      </div>;
+    };
+    const shell = done
+      ? <div style={{ padding: '30px 24px', textAlign: 'center' }}>
+          <div style={{ width: 54, height: 54, borderRadius: 999, background: LH.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}><Ic name="check" size={28} color={LH.green} /></div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: LH.ink }}>Inspection Job created</div>
+          <div style={{ fontSize: 13, color: LH.sub, marginTop: 4 }}>Job <b style={{ color: LH.ink }}>#{done}</b> · {date} · {time} · {tech}</div>
+          <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 8, maxWidth: 380, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>{lead.name} is now an active inspection job. The lead card has moved to the Inspection job stage.</div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 20 }}><Btn onClick={onClose}>Close</Btn><Btn kind="primary" icon="external-link" onClick={() => onToast && onToast('Opening Job #' + done + '…')}>View job</Btn></div>
+        </div>
+      : <>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="git-merge" size={15} color={LH.primary} /></div><div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Convert to inspection job</div><div style={{ fontSize: 12, color: LH.muted }}>{lead.name}</div></div></div>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
+            </div>
+            <div style={{ display: 'flex', gap: 6, marginTop: 14 }}>{STEPS.map((s, i) => <div key={s} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ width: 20, height: 20, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10.5, fontWeight: 700, background: i < step ? LH.green : i === step ? LH.primary : '#f1f0ec', color: i <= step ? '#fff' : LH.muted }}>{i < step ? '✓' : i + 1}</span><span style={{ fontSize: 11.5, fontWeight: step === i ? 600 : 500, color: step === i ? LH.ink : LH.muted, whiteSpace: 'nowrap' }}>{s}</span></div>)}</div>
+          </div>
+          <div style={{ padding: 20, overflowY: 'auto', flex: 1 }}>{body()}</div>
+          <div style={{ padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go back</Btn>}
+            {step < STEPS.length - 1 ? <Btn kind="primary" onClick={() => setStep(step + 1)}>Continue</Btn> : <Btn kind="primary" icon="rocket" onClick={create}>Create job</Btn>}
+          </div>
+        </>;
+    return <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(20,18,15,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 'min(560px,96vw)', maxHeight: '88vh', background: '#fff', borderRadius: 14, boxShadow: '0 24px 64px rgba(0,0,0,.3)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>{shell}</div>
+    </div>;
+  }
   function LeadHeaderBlock({ lead, onToast }) {
     const [flagged, setFlagged] = useState(false);
     const toast = m => onToast && onToast(m);
@@ -28860,7 +28969,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
     </div>;
   }
-  function LeadSideSheet({ lead, onClose, onToast, onOpenPage, onPrev, onNext, onMove }) {
+  function LeadSideSheet({ lead, onClose, onToast, onOpenPage, onPrev, onNext, onMove, onConvert }) {
     const [tab, setTab] = useState('details');
     const [expanded, setExpanded] = useState(false);
     const [tasks, setTasks] = useState(lead && lead.tasks ? lead.tasks : []);
@@ -28899,6 +29008,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
           {tab === 'details' && <>
             <LeadHeaderBlock lead={shown} onToast={onToast} />
+            {shown.jobId && <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 10, padding: '10px 12px' }}><span style={{ width: 28, height: 28, borderRadius: 7, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={14} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.green }}>Converted to inspection job</div><div style={{ fontSize: 11.5, color: LH.sub }}>Job #{shown.jobId}</div></div><button onClick={() => onToast && onToast('Opening Job #' + shown.jobId + '…')} style={{ fontSize: 12, fontWeight: 600, color: LH.green, background: 'none', border: 'none', cursor: 'pointer' }}>View</button></div>}
+            <div style={{ marginTop: 14 }}><LeadLifecycle lead={shown} jobId={shown.jobId} /></div>
             {(() => { const camp = leadCampaign(shown); return <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 9, border: '1px solid ' + LH.borderSoft, background: camp ? LH.tint : '#fff', display: 'flex', alignItems: 'center', gap: 9 }}>
               <span style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: camp ? '#fff' : '#f1f0ec', border: camp ? '1px solid ' + LH.borderSoft : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="megaphone" size={14} color={camp ? LH.primary : LH.sub} /></span>
               <div style={{ minWidth: 0 }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>CAMPAIGN</div><div style={{ fontSize: 12.5, fontWeight: 600, color: camp ? LH.ink : LH.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{camp || 'Not enrolled in a campaign'}</div></div>
@@ -28934,14 +29045,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <Btn icon="message-square" style={{ flex: 1, justifyContent: 'center', height: 34 }} onClick={() => onToast && onToast('Texting ' + shown.name + '…')}>Text</Btn>
             <Btn icon="mail" style={{ flex: 1, justifyContent: 'center', height: 34 }} onClick={() => onToast && onToast('Emailing ' + shown.name + '…')}>Email</Btn>
           </div>
-          <Btn kind="primary" icon={qualified ? 'arrow-right-circle' : 'chevrons-right'} style={{ width: '100%', justifyContent: 'center' }} onClick={() => {
-            const order = PIPE_COLS.map(c => c.key);
-            const i = order.indexOf(shown.col);
-            if (qualified || i < 0 || i >= order.length - 1) { onToast && onToast((qualified ? 'Converting ' : 'Advancing ') + shown.name + '…'); return; }
-            const next = order[i + 1];
-            if (onMove) onMove(shown.id, next);
-            onToast && onToast(shown.name + ' → ' + next);
-          }}>{qualified ? 'Convert to Inspection' : 'Move to next stage'}</Btn>
+          {shown.jobId
+            ? <Btn kind="primary" icon="external-link" style={{ width: '100%', justifyContent: 'center' }} onClick={() => onToast && onToast('Opening Job #' + shown.jobId + '…')}>View Job #{shown.jobId}</Btn>
+            : <Btn kind="primary" icon={qualified ? 'git-merge' : 'chevrons-right'} style={{ width: '100%', justifyContent: 'center' }} onClick={() => {
+                if (qualified) { if (onConvert) onConvert(shown); else onToast && onToast('Converting ' + shown.name + '…'); return; }
+                const order = PIPE_COLS.map(c => c.key);
+                const i = order.indexOf(shown.col);
+                if (i < 0 || i >= order.length - 1) { onToast && onToast('Advancing ' + shown.name + '…'); return; }
+                const next = order[i + 1];
+                if (onMove) onMove(shown.id, next);
+                onToast && onToast(shown.name + ' → ' + next);
+              }}>{qualified ? 'Convert to inspection job' : 'Move to next stage'}</Btn>}
         </div>}
       </>}
     </div>;
@@ -29113,7 +29227,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </div>;
   }
 
-  function LeadDetailsPage({ lead, onBack, onToast }) {
+  function LeadDetailsPage({ lead, onBack, onToast, onConvert }) {
     const [tab, setTab] = useState('Overview');
     const [msg, setMsg] = useState('');
     const [pd, setPd] = useState(true);
@@ -29124,6 +29238,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [prog, setProg] = useState(18);
     const [moreOpen, setMoreOpen] = useState(false);
     const [panel, setPanel] = useState('chat');
+    const [jobId, setJobId] = useState(lead.jobId || null);
+    const [convOpen, setConvOpen] = useState(false);
+    const canConvert = lead.col === 'Qualified' && !jobId;
     const [status, setStatus] = useState(lead.status);
     const [statusOpen, setStatusOpen] = useState(false);
     const [moreTabsOpen, setMoreTabsOpen] = useState(false);
@@ -29158,6 +29275,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { done: 'partial', title: 'Apply underlayment', dur: '35 min', tag: 'Check for leaks', av: 'https://randomuser.me/api/portraits/women/65.jpg' }
     ];
     const recentJobs = [
+      ...(jobId ? [{ id: jobId, title: (lead.service || 'Roof') + ' inspection', status: 'Scheduled', when: 'Just now' }] : []),
       { id: 'JN-245678', title: 'Roof leak repair', status: 'Completed', when: 'Jun 2025' },
       { id: 'JN-244190', title: 'Gutter cleaning', status: 'Completed', when: 'Apr 2025' }
     ];
@@ -29182,7 +29300,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '15px 24px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}><button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: LH.sub, fontWeight: 600, padding: 0 }}>Pipeline</button><Ic name="chevron-right" size={14} color={LH.muted} /><span style={{ fontWeight: 700, color: LH.ink }}>{lead.name}</span><button onClick={() => { setFav(f => !f); toast(fav ? 'Removed from favourites' : 'Added to favourites'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="star" size={15} color={fav ? '#e8b923' : LH.muted} /></button></div>
-        <div style={{ position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
+          {jobId
+            ? <Btn icon="external-link" onClick={() => toast('Opening Job #' + jobId + '…')}>View Job #{jobId}</Btn>
+            : canConvert && <Btn kind="primary" icon="git-merge" onClick={() => setConvOpen(true)}>Convert to job</Btn>}
           <Btn icon="chevron-down" onClick={() => setMoreOpen(o => !o)}>More Actions</Btn>
           {moreOpen && <div onMouseLeave={() => setMoreOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 40, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 200 }}>
             {[['calendar', 'Schedule inspection'], ['user-check', 'Reassign CSR'], ['git-merge', 'Move stage'], ['copy', 'Duplicate lead'], ['download', 'Export'], ['trash-2', 'Delete lead']].map(([ic, l]) => <div key={l} onClick={() => { setMoreOpen(false); toast(l); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: l === 'Delete lead' ? LH.red : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={l === 'Delete lead' ? LH.red : LH.sub} />{l}</div>)}
@@ -29218,6 +29339,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <Card style={{ padding: 0, overflow: 'hidden' }}>{[['message-square', 'SMS', 'Speed-to-lead drip, step 3', '1 day ago'], ['phone', 'Call', 'Nova qualification call · 4:32', '1 day ago'], ['mail', 'Email', 'Free inspection offer sent', '2 days ago'], ['phone-incoming', 'Call', 'Inbound call · 12s ring', '2 days ago']].map(([ic, ch, txt, t], i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i < 3 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={ic} size={14} color={LH.sub} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{ch}</div><div style={{ fontSize: 12, color: LH.muted }}>{txt}</div></div><span style={{ fontSize: 11, color: LH.muted }}>{t}</span></div>)}</Card>
           </div>}
           {tab === 'Overview' && <>
+          <LeadLifecycle lead={lead} jobId={jobId} />
+          {jobId
+            ? <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 11, padding: '12px 14px', marginBottom: 20 }}><span style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={16} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.green }}>Converted to inspection job #{jobId}</div><div style={{ fontSize: 12, color: LH.sub }}>An inspection is scheduled — this lead is now an active job.</div></div><Btn icon="external-link" onClick={() => toast('Opening Job #' + jobId + '…')}>View job</Btn></div>
+            : canConvert && <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: LH.tint, border: '1px solid ' + LH.border, borderRadius: 11, padding: '12px 14px', marginBottom: 20 }}><span style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="git-merge" size={16} color={LH.primary} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Qualified and ready</div><div style={{ fontSize: 12, color: LH.sub }}>Convert this lead into a scheduled inspection job.</div></div><Btn kind="primary" icon="git-merge" onClick={() => setConvOpen(true)}>Convert to job</Btn></div>}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><Ic name="sparkles" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Highlights</span><Ic name="chevron-right" size={14} color={LH.muted} /></span><Ic name="sliders" size={15} color={LH.sub} /></div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12, marginBottom: 22 }}>{highlights.map(hi => <Card key={hi.label} style={{ padding: 13, display: 'flex', alignItems: 'center', gap: 11 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: hi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={hi.ic} size={16} color={hi.fg} /></div><div><div style={{ fontSize: 11, color: LH.muted }}>{hi.label}</div><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, marginTop: 1 }}>{hi.val}</div></div></Card>)}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="activity" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Activity</span><Ic name="chevron-right" size={14} color={LH.muted} /></div>
@@ -29270,6 +29395,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {[['message-circle', 'chat', 'Chat'], ['link', 'link', 'Associations'], ['clock', 'timeline', 'Timeline'], ['phone', 'calls', 'Calls']].map(([ic, key, lbl]) => <button key={key} onClick={() => setPanel(key)} title={lbl} style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: panel === key ? LH.tint : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => { if (panel !== key) e.currentTarget.style.background = '#f5f2ec'; }} onMouseLeave={e => { if (panel !== key) e.currentTarget.style.background = 'none'; }}><Ic name={ic} size={16} color={panel === key ? LH.ink : LH.sub} /></button>)}
         </div>
       </div>
+      {convOpen && <ConvertToJobModal lead={lead} onClose={() => setConvOpen(false)} onToast={onToast} onConverted={jid => { setJobId(jid); onConvert && onConvert(lead.id, jid); }} />}
     </div>;
   }
 
@@ -29316,9 +29442,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const captured = shown ? parseInt(shown.fields) : 0;
     const qualified = shown && shown.col === 'Qualified';
     const move = (id, col) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col, status: col } : l));
+    const [convertLead, setConvertLead] = useState(null);
+    const convertLeadTo = (id, jobId) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col: 'Inspection job', status: 'Inspection job', jobId } : l));
     const filtered = leads.filter(l => (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && matchKpi(l));
     useEffect(() => { const h = e => { if (e.key === 'Escape') setSelId(null); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, []);
-    if (pageLead) return <LeadDetailsPage lead={pageLead} onBack={closePage} onToast={onToast} />;
+    if (pageLead) return <LeadDetailsPage lead={pageLead} onBack={closePage} onToast={onToast} onConvert={convertLeadTo} />;
     return <div>
       <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
         <StatCard label="Received today" value="28" onClick={() => setKpi(k => k === 'received' ? null : 'received')} active={kpi === 'received'} />
@@ -29356,7 +29484,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </table>
         </Card>}
       {/* Lead detail side sheet — reuse the full campaign LeadSideSheet (Tasks, Notes, functional) */}
-      <LeadSideSheet lead={sel} onClose={() => setSelId(null)} onToast={onToast} onMove={move} onOpenPage={openPage} onPrev={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i - 1 + filtered.length) % filtered.length].id); } : null} onNext={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i + 1) % filtered.length].id); } : null} />
+      <LeadSideSheet lead={sel} onClose={() => setSelId(null)} onToast={onToast} onMove={move} onConvert={l => setConvertLead(l)} onOpenPage={openPage} onPrev={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i - 1 + filtered.length) % filtered.length].id); } : null} onNext={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i + 1) % filtered.length].id); } : null} />
+      {convertLead && <ConvertToJobModal lead={convertLead} onClose={() => setConvertLead(null)} onToast={onToast} onConverted={jid => convertLeadTo(convertLead.id, jid)} />}
     </div>;
   }
 
