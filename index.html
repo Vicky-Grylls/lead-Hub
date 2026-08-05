@@ -29577,19 +29577,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             {notes.length ? notes.map((nt, i) => <div key={i} style={{ padding: '10px 0', borderBottom: i < notes.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.45 }}>{nt.text}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 3 }}>{nt.who} · {nt.when}</div></div>) : <div style={{ padding: '20px 0', textAlign: 'center' }}><Ic name="sticky-note" size={30} color="#d8cdb8" style={{ margin: '0 auto 10px', width: 30, height: 30 }} /><div style={{ fontSize: 13, color: LH.sub }}>No notes yet</div></div>}
           </div>}
         </div>
-        {tab === 'details' && <div style={{ flexShrink: 0, padding: 16, borderTop: '1px solid ' + LH.borderSoft }}>
-          {shown.jobId
-            ? <Btn kind="primary" icon="external-link" style={{ width: '100%', justifyContent: 'center' }} onClick={() => onToast && onToast('Opening Job #' + shown.jobId + '…')}>View Job #{shown.jobId}</Btn>
-            : <Btn kind="primary" icon={qualified ? 'git-merge' : 'chevrons-right'} style={{ width: '100%', justifyContent: 'center' }} onClick={() => {
-                if (qualified) { if (onConvert) onConvert(shown); else onToast && onToast('Converting ' + shown.name + '…'); return; }
-                const order = PIPE_COLS.map(c => c.key);
-                const i = order.indexOf(shown.col);
-                if (i < 0 || i >= order.length - 1) { onToast && onToast('Advancing ' + shown.name + '…'); return; }
-                const next = order[i + 1];
-                if (onMove) onMove(shown.id, next);
-                onToast && onToast(shown.name + ' → ' + next);
-              }}>{qualified ? 'Convert to job' : 'Move to next stage'}</Btn>}
-        </div>}
       </>}
     </div>;
   }
