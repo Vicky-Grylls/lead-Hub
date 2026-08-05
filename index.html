@@ -12875,7 +12875,7 @@ function CJDateTimePicker({ value = '', onChange = () => {}, dateOnly = false, p
 
 /* JobNimbus-style Create Job modal (contact-first, single scrolling form) */
 /* JobNimbus-style Create Job — step 1 pick/add contact, step 2 job details + address */
-function CreateJobModal({ onClose = () => {}, onSubmit = () => {}, variant = 'modal', onManageTemplates = () => {}, initial = null }) {
+function CreateJobModal({ onClose = () => {}, onSubmit = () => {}, variant = 'modal', onManageTemplates = () => {}, initial = null, onDetailed = () => {} }) {
   const h = React.createElement;
   const cmp = true;
   const [form, setForm] = useState(() => {
@@ -13689,6 +13689,7 @@ function CreateJobModal({ onClose = () => {}, onSubmit = () => {}, variant = 'mo
     h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#1f2937' } }, h(I, { name: 'users', size: 14, color: '#6b7280' }), nameFrom(form))) : null;
   const prelude = variant === 'prelude';
   const sidestep = variant === 'sidestep';
+  const leadsheet = variant === 'leadsheet';
   const modalh = variant === 'modalh';
   const modalv = variant === 'modalv';
   const embed = variant === 'embed' || prelude || sidestep;
@@ -13718,6 +13719,18 @@ function CreateJobModal({ onClose = () => {}, onSubmit = () => {}, variant = 'mo
       h('span', { style: { fontSize: 13, fontWeight: 600, color: '#1f2937' } }, 'New Job'),
       h(I, { name: 'chevron-right', size: 13, color: '#cbd5e1' }), templateChip, customerCrumb),
     h('div', { style: { display: 'flex', gap: 10 } }, cancelBtn, createBtn));
+  if (leadsheet) {
+    return h('div', { style: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: embedBg, height: '100%' } },
+      h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid #e8e7e2', background: '#fff', flexShrink: 0 } },
+        h('span', { style: { fontSize: 15, fontWeight: 700, color: '#1f2937' } }, 'Create Job'),
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+          h('button', { onClick: onDetailed, className: 'hover:bg-black/5', style: { border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#4338ca', padding: '6px 8px', borderRadius: 7, display: 'inline-flex', alignItems: 'center', gap: 6 } }, h(I, { name: 'external-link', size: 14, color: '#4338ca' }), 'Create Detailed Job'),
+          h('button', { onClick: onClose, className: 'w-7 h-7 flex items-center justify-center rounded hover:bg-black/5', style: { border: 'none', background: 'transparent', cursor: 'pointer' } }, h(I, { name: 'x', size: 16, color: '#6b7280' })))),
+      h('div', { ref: scrollRef, onScroll: onBodyScroll, className: 'scr', onClick: () => { setSpOpen(false); setTpOpen(false); setDdOpen(null); setTplOpen(false); setCustOpen(false); setSecDrop(false); }, style: { flex: 1, overflowY: 'auto', padding: '18px 22px' } },
+        h('div', { style: { maxWidth: 720, margin: '0 auto', width: '100%' } }, sectionsArr)),
+      h('div', { style: { padding: '12px 20px', borderTop: '1px solid #e8e7e2', background: '#fff', display: 'flex', justifyContent: 'flex-end', gap: 10, flexShrink: 0 } }, cancelBtn, createBtn),
+      overlays);
+  }
   if (sidestep) {
     const vstepper = h('div', { style: { width: 232, flexShrink: 0, borderRight: '1px solid #e8e7e2', background: '#fff', padding: '18px 12px', display: 'flex', flexDirection: 'column' } },
       h('div', { style: { display: 'flex', flexDirection: 'column', gap: 4 } },
@@ -14321,15 +14334,26 @@ function App() {
       style: { background: '#fdfdfc', border: '1px solid #ece4d3', overflow: 'hidden' }
     }, window.LeadHubShell
       ? /*#__PURE__*/React.createElement(window.LeadHubShell, { section: leadSection, onNavigate: handleNavigate })
-      : /*#__PURE__*/React.createElement("div", { style: { padding: 40, color: '#8c7a5a', fontSize: 14 } }, "Loading Lead Hub…"))), njLead && /*#__PURE__*/React.createElement("div", {
-      style: { position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(880px,96vw)', zIndex: 500, display: 'flex', flexDirection: 'column', background: '#fff', boxShadow: '-10px 0 30px rgba(0,0,0,0.16)' }
-    }, /*#__PURE__*/React.createElement(CreateJobModal, {
-      variant: 'sidestep',
-      initial: njLead.initial,
-      onManageTemplates: () => {},
-      onClose: () => setNjLead(null),
-      onSubmit: () => { if (njLead.onCreated) njLead.onCreated(); setNjLead(null); showToast('Inspection job created from lead'); }
-    })), toast && /*#__PURE__*/React.createElement(Toast, {
+      : /*#__PURE__*/React.createElement("div", { style: { padding: 40, color: '#8c7a5a', fontSize: 14 } }, "Loading Lead Hub…"))), njLead && (njLead.full
+      ? /*#__PURE__*/React.createElement("div", {
+          style: { position: 'fixed', inset: 0, zIndex: 500, background: '#f5f1ea', display: 'flex', flexDirection: 'column' }
+        }, /*#__PURE__*/React.createElement(CreateJobModal, {
+          variant: 'embed',
+          initial: njLead.initial,
+          onManageTemplates: () => {},
+          onClose: () => setNjLead(null),
+          onSubmit: () => { if (njLead.onCreated) njLead.onCreated(); setNjLead(null); showToast('Inspection job created from lead'); }
+        }))
+      : /*#__PURE__*/React.createElement("div", {
+          style: { position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(760px,96vw)', zIndex: 500, display: 'flex', flexDirection: 'column', background: '#fff', boxShadow: '-10px 0 30px rgba(0,0,0,0.16)' }
+        }, /*#__PURE__*/React.createElement(CreateJobModal, {
+          variant: 'leadsheet',
+          initial: njLead.initial,
+          onManageTemplates: () => {},
+          onClose: () => setNjLead(null),
+          onDetailed: () => setNjLead(prev => prev && Object.assign({}, prev, { full: true })),
+          onSubmit: () => { if (njLead.onCreated) njLead.onCreated(); setNjLead(null); showToast('Inspection job created from lead'); }
+        }))), toast && /*#__PURE__*/React.createElement(Toast, {
       message: toast,
       onClose: () => setToast(null)
     }));
