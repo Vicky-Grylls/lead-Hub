@@ -13545,7 +13545,7 @@ function CreateJobModal({ onClose = () => {}, onSubmit = () => {}, variant = 'mo
     h('div', null,
       h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 } }, h(I, { name: 'user', size: 15, color: '#6b7280' }), h('span', { style: { fontSize: 13.5, fontWeight: 600, color: '#111827' } }, 'Add contact to job')),
       h('div', { style: { fontSize: 12, color: '#9ca3af' } }, 'Search for an existing customer or create a new one before creating a job.')),
-    custCreateLink);
+    initial ? null : custCreateLink);
   const hasCustomer = !!(form.firstName && form.firstName.trim());
   const contactSection = h('div', { ref: secRefs[0], style: beige },
     contactHead,
