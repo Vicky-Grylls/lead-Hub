@@ -29702,23 +29702,24 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   /* ─────────── PIPELINE ─────────── */
   const LEAD_COLS = PIPE_COLS.map(c => ({ ...c, dot: COL_DOT[c.key] }));
 
-  function LeadKanbanCard({ lead, onClick, onDragStart, onDragEnd, dragging, selected }) {
+  function LeadKanbanCard({ lead, onClick, onDragStart, onDragEnd, dragging, selected, cfg }) {
+    cfg = cfg || { score: true, source: true, age: true, fields: true };
     return <div draggable onClick={() => onClick(lead.id)}
       onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; onDragStart(lead.id); }}
       onDragEnd={onDragEnd}
       style={{ background: '#fff', border: '1px solid ' + (selected ? LH.primary : '#ece4d3'), borderRadius: 12, padding: '10px 12px', boxShadow: selected ? '0 0 0 3px rgba(31,31,29,0.10)' : '0 1px 3px rgba(0,0,0,.04)', cursor: 'grab', opacity: dragging ? 0.4 : 1, transition: 'opacity 150ms, box-shadow 150ms, border-color 150ms' }}
       onMouseEnter={e => { if (!dragging && !selected) { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,.08)'; e.currentTarget.style.borderColor = '#d6cbbf'; } }}
       onMouseLeave={e => { if (!selected) { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,.04)'; e.currentTarget.style.borderColor = '#ece4d3'; } }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <div style={{ width: 26, height: 26, borderRadius: 999, flexShrink: 0, background: lead.score >= 80 ? LH.greenBg : lead.score >= 60 ? LH.amberBg : '#f1f0ec', color: lead.score >= 80 ? LH.green : lead.score >= 60 ? LH.amber : LH.sub, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{lead.score}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: (cfg.source || cfg.age) ? 6 : 0 }}>
+        {cfg.score && <div style={{ width: 26, height: 26, borderRadius: 999, flexShrink: 0, background: lead.score >= 80 ? LH.greenBg : lead.score >= 60 ? LH.amberBg : '#f1f0ec', color: lead.score >= 80 ? LH.green : lead.score >= 60 ? LH.amber : LH.sub, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{lead.score}</div>}
         <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.name}</div><div style={{ fontSize: 10.5, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.note}</div></div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><Pill label={lead.src} tone="New" /><span style={{ fontSize: 10.5, color: LH.muted }}>{lead.age}</span></div>
-      <div style={{ fontSize: 10.5, color: LH.sub, marginTop: 6 }}>{lead.fields} fields</div>
+      {(cfg.source || cfg.age) && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>{cfg.source ? <Pill label={lead.src} tone="New" /> : <span />}{cfg.age && <span style={{ fontSize: 10.5, color: LH.muted }}>{lead.age}</span>}</div>}
+      {cfg.fields && <div style={{ fontSize: 10.5, color: LH.sub, marginTop: 6 }}>{lead.fields} fields</div>}
     </div>;
   }
 
-  function LeadsKanban({ leads, onMove, onCardClick, selId }) {
+  function LeadsKanban({ leads, onMove, onCardClick, selId, cardCfg }) {
     const [dragId, setDragId] = useState(null);
     const [overCol, setOverCol] = useState(null);
     const drop = key => { if (dragId) onMove(dragId, key); setDragId(null); setOverCol(null); };
@@ -29738,7 +29739,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1, minHeight: 0 }}>
-            {cj.length ? cj.map(l => <LeadKanbanCard key={l.id} lead={l} selected={selId === l.id} dragging={dragId === l.id} onClick={onCardClick} onDragStart={setDragId} onDragEnd={() => { setDragId(null); setOverCol(null); }} />)
+            {cj.length ? cj.map(l => <LeadKanbanCard key={l.id} lead={l} cfg={cardCfg} selected={selId === l.id} dragging={dragId === l.id} onClick={onCardClick} onDragStart={setDragId} onDragEnd={() => { setDragId(null); setOverCol(null); }} />)
               : <div style={{ fontSize: 11.5, color: LH.muted, padding: '14px 0', textAlign: 'center' }}>Drop a lead here</div>}
           </div>
         </div>;
@@ -29935,7 +29936,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [kpi, setKpi] = useState(null);
     const [search, setSearch] = useState('');
     const [showKpi, setShowKpi] = useState(true);
-    const matchKpi = l => !kpi || (kpi === 'received' ? ageHours(l.age) < 24 : kpi === 'qualified' ? l.col === 'Qualified' : kpi === 'drip' ? l.col === 'In drip' : kpi === 'human' ? l.col === 'Needs human' : true);
+    const [newOpen, setNewOpen] = useState(false);
+    const [viewOpen, setViewOpen] = useState(false);
+    const [viewName, setViewName] = useState('');
+    const [custOpen, setCustOpen] = useState(false);
+    const [cardCfg, setCardCfg] = useState({ score: true, source: true, age: true, fields: true });
+    const matchKpi = l => !kpi || (kpi === 'received' ? ageHours(l.age) < 24 : kpi === 'qualified' ? l.col === 'Qualified' : kpi === 'drip' ? l.col === 'In drip' : kpi === 'human' ? l.col === 'Needs human' : kpi === 'contacting' ? l.col === 'Contacting' : kpi === 'converted' ? l.col === 'Converted as Job' : true);
     const ASSIGNEES = ['Maria Gonzalez', 'Tyson Silva', 'Michael Richardson', 'Marcus Webb'];
     const assigneeOf = l => ASSIGNEES[(l.id.charCodeAt(1) + l.id.length) % ASSIGNEES.length];
     const CAMPS = ['Speed-to-Lead Drip', 'Estimate Follow-up', 'Storm Season Re-engage', 'Insurance Claim Assist', 'Gutter Season Push'];
@@ -29979,12 +29985,23 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <span style={{ fontSize: 12, fontWeight: 700, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '2px 9px' }}>{leads.length}</span>
           <span style={{ width: 1, height: 20, background: LH.border, margin: '0 2px' }} />
           <button style={{ height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.ink, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.ink, cursor: 'pointer' }}>All Leads</button>
-          <button onClick={() => onToast('Create a view')} title="Create view" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="plus" size={14} color={LH.sub} /></button>
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setViewOpen(o => !o)} title="Create view" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + (viewOpen ? LH.primary : LH.border), background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="plus" size={14} color={LH.sub} /></button>
+            {viewOpen && <div onMouseLeave={() => setViewOpen(false)} style={{ position: 'absolute', top: 36, left: 0, zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 11, boxShadow: '0 12px 32px rgba(0,0,0,.14)', width: 244, padding: 12 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 8 }}>Create a view</div>
+              <input value={viewName} onChange={e => setViewName(e.target.value)} placeholder="View name" autoFocus style={{ width: '100%', height: 32, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 12.5, color: LH.ink, outline: 'none', marginBottom: 10 }} />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}><Btn onClick={() => { setViewOpen(false); setViewName(''); }} style={{ height: 30 }}>Cancel</Btn><Btn kind="primary" onClick={() => { setViewOpen(false); onToast('View “' + (viewName.trim() || 'Untitled') + '” created'); setViewName(''); }} style={{ height: 30, opacity: viewName.trim() ? 1 : 0.5 }}>Create view</Btn></div>
+            </div>}
+          </div>
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           <DateRangePicker />
-          <Btn icon="upload" onClick={() => onToast('Import leads')}>Import leads</Btn>
-          <Btn kind="primary" icon="plus" onClick={() => onToast('New lead')}>New lead</Btn>
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setNewOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 34, padding: '0 13px', borderRadius: 9, border: '1px solid ' + LH.primary, background: LH.primary, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}><Ic name="plus" size={15} color="#fff" />New lead<span style={{ width: 1, height: 16, background: 'rgba(255,255,255,.25)', margin: '0 1px' }} /><Ic name="chevron-down" size={13} color="#fff" /></button>
+            {newOpen && <div onMouseLeave={() => setNewOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 200 }}>
+              {[['user-plus', 'New lead', 'New lead form'], ['upload', 'Import leads', 'Import leads']].map(([ic, l, m]) => <div key={l} onClick={() => { setNewOpen(false); onToast(m); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={LH.sub} />{l}</div>)}
+            </div>}
+          </div>
         </div>
       </div>
       {/* Row 2 — filters, search, customize, KPI toggle, view switch */}
@@ -29996,22 +30013,26 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <FilterDrop id="age" label="Age:" value={fAge} options={AGES} onChange={setFAge} />
         {anyF && <button onClick={clearF} style={{ height: 32, padding: '0 11px', borderRadius: 8, border: '1px solid transparent', background: 'transparent', fontSize: 12.5, color: LH.primary, fontWeight: 600, cursor: 'pointer' }}>Clear filters</button>}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div onClick={() => setShowKpi(k => !k)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer' }}><Toggle on={!showKpi} onChange={() => setShowKpi(k => !k)} /><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.body }}>Hide KPIs</span></div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><Toggle on={!showKpi} onChange={() => setShowKpi(k => !k)} /><span onClick={() => setShowKpi(k => !k)} style={{ fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}>Hide KPIs</span></div>
           <div style={{ position: 'relative', width: 210 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 10, top: 9 }} /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search leads" style={{ width: '100%', height: 32, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px 0 30px', fontSize: 12.5, color: LH.ink, outline: 'none' }} /></div>
-          <Btn icon="sliders" onClick={() => onToast('Customize columns')} style={{ height: 32 }}>Customize</Btn>
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setCustOpen(o => !o)} title="Customize board" style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid ' + (custOpen ? LH.primary : LH.border), background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="sliders" size={15} color={LH.sub} /></button>
+            {custOpen && <div onMouseLeave={() => setCustOpen(false)} style={{ position: 'absolute', top: 36, right: 0, zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 11, boxShadow: '0 12px 32px rgba(0,0,0,.14)', width: 220, padding: 8 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, padding: '4px 8px 2px' }}>Customize board</div>
+              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, padding: '4px 8px 4px' }}>CARD FIELDS</div>
+              {[['score', 'Lead score'], ['source', 'Source'], ['fields', 'Field progress'], ['age', 'Age']].map(([k, l]) => { const on = cardCfg[k]; return <div key={k} onClick={() => setCardCfg(c => ({ ...c, [k]: !c[k] }))} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 8px', borderRadius: 7, fontSize: 12.5, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{l}<span style={{ width: 16, height: 16, borderRadius: 5, flexShrink: 0, border: '1.5px solid ' + (on ? LH.primary : LH.border), background: on ? LH.primary : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on && <Ic name="check" size={11} color="#fff" />}</span></div>; })}
+            </div>}
+          </div>
           <div style={{ display: 'inline-flex', border: '1px solid ' + LH.border, borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
-            {[['kanban', 'layout-grid', 'Board'], ['list', 'list', 'List']].map(([v, ic, lbl]) => <button key={v} onClick={() => setView(v)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 12px', border: 'none', borderLeft: v === 'list' ? '1px solid ' + LH.border : 'none', background: view === v ? LH.tint : '#fff', color: view === v ? LH.ink : LH.sub, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}><Ic name={ic} size={14} color={view === v ? LH.ink : LH.sub} />{lbl}</button>)}
+            {[['kanban', 'layout-grid', 'Board'], ['list', 'list', 'List']].map(([v, ic, lbl]) => <button key={v} onClick={() => setView(v)} title={lbl} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 32, border: 'none', borderLeft: v === 'list' ? '1px solid ' + LH.border : 'none', background: view === v ? LH.tint : '#fff', color: view === v ? LH.ink : LH.sub, cursor: 'pointer' }}><Ic name={ic} size={15} color={view === v ? LH.ink : LH.sub} /></button>)}
           </div>
         </div>
       </div>
-      {showKpi && <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-        <StatCard label="Received today" value="28" onClick={() => setKpi(k => k === 'received' ? null : 'received')} active={kpi === 'received'} />
-        <StatCard label="Qualified today" value="7" onClick={() => setKpi(k => k === 'qualified' ? null : 'qualified')} active={kpi === 'qualified'} />
-        <StatCard label="In drip" value="41" onClick={() => setKpi(k => k === 'drip' ? null : 'drip')} active={kpi === 'drip'} />
-        <StatCard label="Awaiting human" value="3" accent={LH.primary} onClick={() => setKpi(k => k === 'human' ? null : 'human')} active={kpi === 'human'} />
-      </div>}
+      {showKpi && (() => { const KPIS = [{ k: 'received', label: 'Received today', value: '28' }, { k: 'qualified', label: 'Qualified today', value: '7' }, { k: 'contacting', label: 'Contacting', value: leads.filter(l => l.col === 'Contacting').length }, { k: 'drip', label: 'In drip', value: '41' }, { k: 'human', label: 'Awaiting human', value: '3', accent: LH.primary }, { k: 'converted', label: 'Converted', value: leads.filter(l => l.col === 'Converted as Job').length, accent: LH.green }]; return <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 10, marginBottom: 16 }}>
+        {KPIS.map(x => { const on = kpi === x.k; return <div key={x.k} onClick={() => setKpi(k => k === x.k ? null : x.k)} style={{ border: '1px solid ' + (on ? LH.ink : LH.border), background: on ? LH.tint : '#fff', borderRadius: 10, padding: '10px 12px', cursor: 'pointer', transition: 'border-color .12s' }}><div style={{ fontSize: 21, fontWeight: 700, color: x.accent || LH.ink, lineHeight: 1.1 }}>{x.value}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{x.label}</div></div>; })}
+      </div>; })()}
       {view === 'kanban'
-        ? <LeadsKanban leads={filtered} onMove={boardMove} onCardClick={setSelId} selId={selId} />
+        ? <LeadsKanban leads={filtered} onMove={boardMove} onCardClick={setSelId} selId={selId} cardCfg={cardCfg} />
         : <Card style={{ padding: 0, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>{[['Score', 64], ['Lead', 0], ['Stage', 130], ['Source', 130], ['Campaigns', 180], ['Fields', 80], ['Status', 130], ['Age', 70]].map(([h, w]) => <th key={h} style={{ textAlign: h === 'Score' || h === 'Fields' || h === 'Age' ? 'left' : 'left', padding: '10px 16px', fontSize: 12, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w || 'auto' }}>{h}</th>)}</tr></thead>
