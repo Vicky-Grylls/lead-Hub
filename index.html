@@ -31172,12 +31172,61 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
 
   /* ─────────── SHELL ─────────── */
+  function DateRangePicker() {
+    const [open, setOpen] = useState(false);
+    const [mode, setMode] = useState('presets');
+    const [label, setLabel] = useState('Today');
+    const now = new Date();
+    const [view, setView] = useState({ y: now.getFullYear(), m: now.getMonth() });
+    const [pick, setPick] = useState({ s: null, e: null });
+    const ref = useRef(null);
+    useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setMode('presets'); } }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, [open]);
+    const PRESETS = ['Today', 'Yesterday', 'Last 7 days', 'Last 30 days', 'This month', 'Custom range'];
+    const choosePreset = p => { if (p === 'Custom range') { setMode('custom'); return; } setLabel(p); setOpen(false); };
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const fmt = d => MONTHS[d.getMonth()] + ' ' + d.getDate();
+    const daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
+    const firstDow = (y, m) => new Date(y, m, 1).getDay();
+    const shiftMonth = delta => setView(v => { let m = v.m + delta, y = v.y; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } return { y: y, m: m }; });
+    const dayClick = day => { const d = new Date(view.y, view.m, day); if (!pick.s || pick.e) setPick({ s: d, e: null }); else if (d < pick.s) setPick({ s: d, e: pick.s }); else setPick({ s: pick.s, e: d }); };
+    const dOnly = x => new Date(x.getFullYear(), x.getMonth(), x.getDate());
+    const inRange = day => { if (!pick.s) return false; const d = new Date(view.y, view.m, day); return d >= dOnly(pick.s) && d <= dOnly(pick.e || pick.s); };
+    const isEnd = day => { const d = new Date(view.y, view.m, day); const same = x => x && x.getFullYear() === d.getFullYear() && x.getMonth() === d.getMonth() && x.getDate() === d.getDate(); return same(pick.s) || same(pick.e); };
+    const applyCustom = () => { if (!pick.s) return; setLabel(pick.e ? fmt(pick.s) + ' – ' + fmt(pick.e) : fmt(pick.s)); setOpen(false); setMode('presets'); };
+    const navBtn = { width: 26, height: 26, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' };
+    return <div ref={ref} style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 34, padding: '0 12px', borderRadius: 9, border: '1px solid ' + (open ? LH.primary : LH.border), background: '#fff', fontSize: 13, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="calendar" size={15} color={LH.sub} />{label}<Ic name="chevron-down" size={13} color={LH.muted} /></button>
+      {open && <div style={{ position: 'absolute', top: 40, right: 0, zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 11, boxShadow: '0 12px 32px rgba(0,0,0,.14)', width: mode === 'custom' ? 288 : 196, overflow: 'hidden' }}>
+        {mode === 'presets'
+          ? <div style={{ padding: 5 }}>{PRESETS.map(p => <div key={p} onClick={() => choosePreset(p)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', borderRadius: 7, fontSize: 13, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{p}{p === 'Custom range' ? <Ic name="chevron-right" size={13} color={LH.muted} /> : (label === p && <Ic name="check" size={13} color={LH.primary} />)}</div>)}</div>
+          : <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
+              <button onClick={() => shiftMonth(-1)} style={navBtn}><Ic name="chevron-left" size={15} color={LH.sub} /></button>
+              <span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{MONTHS[view.m]} {view.y}</span>
+              <button onClick={() => shiftMonth(1)} style={navBtn}><Ic name="chevron-right" size={15} color={LH.sub} /></button>
+            </div>
+            <div style={{ padding: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2, marginBottom: 4 }}>{DOW.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 10.5, fontWeight: 700, color: LH.muted, padding: '2px 0' }}>{d}</div>)}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2 }}>
+                {Array.from({ length: firstDow(view.y, view.m) }).map((_, i) => <div key={'b' + i} />)}
+                {Array.from({ length: daysIn(view.y, view.m) }).map((_, i) => { const day = i + 1; const sel = isEnd(day); const rng = inRange(day); return <button key={day} onClick={() => dayClick(day)} style={{ height: 30, borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: sel ? 700 : 500, color: sel ? '#fff' : LH.body, background: sel ? LH.primary : (rng ? LH.tint : 'transparent') }} onMouseEnter={e => { if (!sel && !rng) e.currentTarget.style.background = '#f6f4ef'; }} onMouseLeave={e => { if (!sel && !rng) e.currentTarget.style.background = 'transparent'; }}>{day}</button>; })}
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '10px 12px', borderTop: '1px solid ' + LH.borderSoft }}>
+              <button onClick={() => { setMode('presets'); setPick({ s: null, e: null }); }} style={{ fontSize: 12.5, fontWeight: 600, color: LH.sub, background: 'none', border: 'none', cursor: 'pointer' }}>Back</button>
+              <Btn kind="primary" onClick={applyCustom} style={{ height: 30, opacity: pick.s ? 1 : 0.5 }}>Apply</Btn>
+            </div>
+          </div>}
+      </div>}
+    </div>;
+  }
   function LeadHubShell({ section, onNavigate }) {
     const [toast, setToast] = useState(null);
     const showToast = m => { setToast(m); setTimeout(() => setToast(null), 3200); };
     const heads = {
-      overview: { crumb: 'Lead Hub', title: 'Overview', actions: <Btn icon="calendar">Today</Btn> },
-      pipeline: { crumb: 'Lead Hub', title: 'Pipeline', actions: <Btn icon="calendar">Today</Btn> },
+      overview: { crumb: 'Lead Hub', title: 'Overview', actions: <DateRangePicker /> },
+      pipeline: { crumb: 'Lead Hub', title: 'Pipeline', actions: <DateRangePicker /> },
       campaigns: { crumb: 'Lead Hub · 3 active', title: 'Campaigns', actions: null },
       workforce: { crumb: 'Lead Hub · AI Workforce', title: 'AI Workforce', actions: <Btn kind="primary" icon="plus">Add agent</Btn> },
       channels: { crumb: 'Lead Hub · 6 sources connected', title: 'Channels', actions: <><Btn icon="upload" onClick={() => CH_IMPORT()}>Import leads</Btn><Btn kind="primary" icon="plus" onClick={() => CH_CONNECT()}>Connect source</Btn></> },
