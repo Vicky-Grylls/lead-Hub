@@ -29007,6 +29007,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           ? <>
               {iconBtn('mail', 'Compose email')}
               {iconBtn('phone', 'Calling ' + lead.name + '…')}
+              {iconBtn('message-square', 'Texting ' + lead.name + '…')}
               {lead.jobId
                 ? <Btn icon="external-link" style={{ height: 34 }} onClick={() => toast('Opening Job #' + lead.jobId + '…')}>View job</Btn>
                 : <Btn icon="git-merge" style={{ height: 34 }} onClick={() => { if (onConvert) onConvert(lead); else toast('Converting ' + lead.name + '…'); }}>Convert to job</Btn>}
