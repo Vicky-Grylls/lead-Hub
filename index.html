@@ -28989,7 +28989,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div onClick={e => e.stopPropagation()} style={{ width: 'min(560px,96vw)', maxHeight: '88vh', background: '#fff', borderRadius: 14, boxShadow: '0 24px 64px rgba(0,0,0,.3)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>{shell}</div>
     </div>;
   }
-  function LeadHeaderBlock({ lead, onToast }) {
+  function LeadHeaderBlock({ lead, onToast, slim, onConvert }) {
     const [flagged, setFlagged] = useState(false);
     const toast = m => onToast && onToast(m);
     const initials = lead.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -29003,11 +29003,21 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: LH.sub, marginBottom: 14 }}><Ic name="map-pin" size={13} color={LH.muted} />{address}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-        <Btn icon="plus" style={{ height: 34 }} onClick={() => toast('New activity')}>New</Btn>
-        {iconBtn('mail', 'Compose email')}
-        {iconBtn('phone', 'Calling ' + lead.name + '…')}
-        <button onClick={() => { setFlagged(f => !f); toast(flagged ? 'Flag removed' : 'Lead flagged'); }} style={btnStyle(flagged)}><Ic name="flag" size={15} color={flagged ? LH.red : LH.sub} /></button>
-        {iconBtn('bell', 'Reminder set')}
+        {slim
+          ? <>
+              {iconBtn('mail', 'Compose email')}
+              {iconBtn('phone', 'Calling ' + lead.name + '…')}
+              {lead.jobId
+                ? <Btn icon="external-link" style={{ height: 34 }} onClick={() => toast('Opening Job #' + lead.jobId + '…')}>View job</Btn>
+                : <Btn kind="primary" icon="git-merge" style={{ height: 34 }} onClick={() => { if (onConvert) onConvert(lead); else toast('Converting ' + lead.name + '…'); }}>Convert to job</Btn>}
+            </>
+          : <>
+              <Btn icon="plus" style={{ height: 34 }} onClick={() => toast('New activity')}>New</Btn>
+              {iconBtn('mail', 'Compose email')}
+              {iconBtn('phone', 'Calling ' + lead.name + '…')}
+              <button onClick={() => { setFlagged(f => !f); toast(flagged ? 'Flag removed' : 'Lead flagged'); }} style={btnStyle(flagged)}><Ic name="flag" size={15} color={flagged ? LH.red : LH.sub} /></button>
+              {iconBtn('bell', 'Reminder set')}
+            </>}
       </div>
     </div>;
   }
@@ -29049,7 +29059,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
           {tab === 'details' && <>
-            <LeadHeaderBlock lead={shown} onToast={onToast} />
+            <LeadHeaderBlock lead={shown} onToast={onToast} slim onConvert={onConvert} />
             {shown.jobId && <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 10, padding: '10px 12px' }}><span style={{ width: 28, height: 28, borderRadius: 7, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={14} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.green }}>Converted to inspection job</div><div style={{ fontSize: 11.5, color: LH.sub }}>Job #{shown.jobId}</div></div><button onClick={() => onToast && onToast('Opening Job #' + shown.jobId + '…')} style={{ fontSize: 12, fontWeight: 600, color: LH.green, background: 'none', border: 'none', cursor: 'pointer' }}>View</button></div>}
             {(() => { const camp = leadCampaign(shown); return <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 9, border: '1px solid ' + LH.borderSoft, background: camp ? LH.tint : '#fff', display: 'flex', alignItems: 'center', gap: 9 }}>
               <span style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: camp ? '#fff' : '#f1f0ec', border: camp ? '1px solid ' + LH.borderSoft : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="megaphone" size={14} color={camp ? LH.primary : LH.sub} /></span>
@@ -29081,11 +29091,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>}
         </div>
         {tab === 'details' && <div style={{ flexShrink: 0, padding: 16, borderTop: '1px solid ' + LH.borderSoft }}>
-          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-            <Btn icon="phone" style={{ flex: 1, justifyContent: 'center', height: 34 }} onClick={() => onToast && onToast('Calling ' + shown.name + '…')}>Call</Btn>
-            <Btn icon="message-square" style={{ flex: 1, justifyContent: 'center', height: 34 }} onClick={() => onToast && onToast('Texting ' + shown.name + '…')}>Text</Btn>
-            <Btn icon="mail" style={{ flex: 1, justifyContent: 'center', height: 34 }} onClick={() => onToast && onToast('Emailing ' + shown.name + '…')}>Email</Btn>
-          </div>
           {shown.jobId
             ? <Btn kind="primary" icon="external-link" style={{ width: '100%', justifyContent: 'center' }} onClick={() => onToast && onToast('Opening Job #' + shown.jobId + '…')}>View Job #{shown.jobId}</Btn>
             : <Btn kind="primary" icon={qualified ? 'git-merge' : 'chevrons-right'} style={{ width: '100%', justifyContent: 'center' }} onClick={() => {
