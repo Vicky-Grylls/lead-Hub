@@ -28838,18 +28838,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {kv('Lead Score', lead.score + '/100')}
           {kv('Assigned CSR', 'Maria Gonzalez')}{kv('Age', lead.age || '—')}{kv('Auto-qualified', 'Yes — Property Intelligence')}
           {kv('Service Address', '4821 Oakwood Dr')}{kv('City, State, ZIP', 'Plano, TX 75024')}{kv('Score Breakdown', 'Source 20 · Data 22 · Intel 25 · Demo 15')}
+          {kv('Tags', <span style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>{tags.length ? tags.map(tagPill) : <span style={{ fontSize: 12, color: LH.muted }}>No tags yet</span>}</span>)}
         </div>}
       </div>
       <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
         {secHead('Custom Fields', cf, () => setCf(p => !p))}
         {cf && <div style={{ marginTop: 4 }}>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}</div>}
-      </div>
-      <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14, marginTop: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: LH.ink }}>Tags</span>
-          <button onClick={() => toast('Add a tag')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="plus" size={13} color={LH.primary} />Add tag</button>
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>{tags.length ? tags.map(tagPill) : <span style={{ fontSize: 12, color: LH.muted }}>No tags yet</span>}</div>
       </div>
     </div>;
   }
