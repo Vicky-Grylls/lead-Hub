@@ -12875,10 +12875,19 @@ function CJDateTimePicker({ value = '', onChange = () => {}, dateOnly = false, p
 
 /* JobNimbus-style Create Job modal (contact-first, single scrolling form) */
 /* JobNimbus-style Create Job — step 1 pick/add contact, step 2 job details + address */
-function CreateJobModal({ onClose = () => {}, onSubmit = () => {}, variant = 'modal', onManageTemplates = () => {} }) {
+function CreateJobModal({ onClose = () => {}, onSubmit = () => {}, variant = 'modal', onManageTemplates = () => {}, initial = null }) {
   const h = React.createElement;
   const cmp = true;
-  const [form, setForm] = useState({ phoneType: 'Mobile', status: 'Lead', type: 'Retail', leadSource: 'Facebook', country: 'United States', useContactAddr: true, assigned: 'Vicky Grylls' });
+  const [form, setForm] = useState(() => {
+    let base = { phoneType: 'Mobile', status: 'Lead', type: 'Retail', leadSource: 'Facebook', country: 'United States', useContactAddr: true, assigned: 'Vicky Grylls' };
+    if (initial) {
+      const tpl = initial._tpl && JOB_TEMPLATES.flatMap(g => g.items).find(t => t.name === initial._tpl);
+      if (tpl) { const f = tpl.fields; base = { ...base, tplTitle: f.title, priority: f.priority, description: f.description, type: f.type, status: f.status, tradeType: f.tradeType, jobCategory: f.jobCategory, leadSource: f.leadSource || base.leadSource, cfKeys: (f.customFields || []).slice(), appointments: (f.appointments || []).map(a => ({ ...a })) }; }
+      const rest = { ...initial }; delete rest._tpl;
+      base = { ...base, ...rest };
+    }
+    return base;
+  });
   const [sugOpen, setSugOpen] = useState(false);
   const [openSug, setOpenSug] = useState(null);
   const [spOpen, setSpOpen] = useState(false);
@@ -12892,10 +12901,10 @@ function CreateJobModal({ onClose = () => {}, onSubmit = () => {}, variant = 'mo
   const [ddSearch, setDdSearch] = useState('');
   const [mapOpen, setMapOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
-  const [tplName, setTplName] = useState('');
+  const [tplName, setTplName] = useState(initial && initial._tpl ? initial._tpl : '');
   const [billSame, setBillSame] = useState(true);
   const [custOpen, setCustOpen] = useState(false);
-  const [custMode, setCustMode] = useState('picker');
+  const [custMode, setCustMode] = useState(initial && initial.firstName ? 'new' : 'picker');
   const [custQ, setCustQ] = useState('');
   const [custModal, setCustModal] = useState(false);
   const [custModalTab, setCustModalTab] = useState('new');
@@ -14269,10 +14278,12 @@ function App() {
     setPage('detail');
     showToast('“' + (payload.title || 'Job') + '” created');
   };
+  const [njLead, setNjLead] = useState(null);
   useEffect(() => {
     window.__openCustomerDrawer = () => setCustomerDrawerOpen(true);
     window.__editJob = () => setPage('editjob');
-    return () => { delete window.__openCustomerDrawer; delete window.__editJob; };
+    window.__leadHubCreateJob = (initial, onCreated) => setNjLead({ initial: initial, onCreated: onCreated });
+    return () => { delete window.__openCustomerDrawer; delete window.__editJob; delete window.__leadHubCreateJob; };
   }, []);
   if (page === 'lead-campaign-new') {
     return /*#__PURE__*/React.createElement("div", {
@@ -14310,7 +14321,13 @@ function App() {
       style: { background: '#fdfdfc', border: '1px solid #ece4d3', overflow: 'hidden' }
     }, window.LeadHubShell
       ? /*#__PURE__*/React.createElement(window.LeadHubShell, { section: leadSection, onNavigate: handleNavigate })
-      : /*#__PURE__*/React.createElement("div", { style: { padding: 40, color: '#8c7a5a', fontSize: 14 } }, "Loading Lead Hub…"))), toast && /*#__PURE__*/React.createElement(Toast, {
+      : /*#__PURE__*/React.createElement("div", { style: { padding: 40, color: '#8c7a5a', fontSize: 14 } }, "Loading Lead Hub…"))), njLead && /*#__PURE__*/React.createElement(CreateJobModal, {
+      variant: 'modal',
+      initial: njLead.initial,
+      onManageTemplates: () => {},
+      onClose: () => setNjLead(null),
+      onSubmit: () => { if (njLead.onCreated) njLead.onCreated(); setNjLead(null); showToast('Inspection job created from lead'); }
+    }), toast && /*#__PURE__*/React.createElement(Toast, {
       message: toast,
       onClose: () => setToast(null)
     }));
@@ -28838,6 +28855,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
   // Shared lead header — avatar, name, address, CTA row. Used at the top of both the
   // details page left pane and the side sheet so they stay identical.
+  // Bridge to the real (FSM) Create Job flow, prefilled from the lead + the "Lead" job template.
+  const genJobId = lead => 'JN-2456' + String(78 + (lead.name.length * 7 + (lead.score || 50)) % 21).padStart(2, '0');
+  const leadJobPrefill = (lead, jobId) => { const p = lead.name.split(' '); return { firstName: p[0], lastName: p.slice(1).join(' '), displayName: lead.name, email: lead.email || (lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com'), phone: '469-555-0172', address: '4821 Oakwood Dr', city: 'Plano', state: 'TX', zip: '75024', leadSource: lead.src, jobName: (lead.service || 'Roof') + ' Inspection — ' + lead.name, description: (lead.note ? lead.note + '. ' : '') + 'Converted from Lead Hub — free inspection for ' + lead.name + '.', _jobId: jobId, _tpl: 'Lead' }; };
+  const startLeadConvert = (lead, onCreated, fallback) => { const jobId = genJobId(lead); if (typeof window !== 'undefined' && window.__leadHubCreateJob) { window.__leadHubCreateJob(leadJobPrefill(lead, jobId), () => onCreated(jobId)); } else if (fallback) fallback(); };
   // Full lead lifecycle: Angi/source capture → speed-to-lead → qualified → converted → inspection job.
   function LeadLifecycle({ lead, jobId }) {
     const STAGES = [
@@ -29240,6 +29261,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [jobId, setJobId] = useState(lead.jobId || null);
     const [convOpen, setConvOpen] = useState(false);
     const canConvert = lead.col === 'Qualified' && !jobId;
+    const doConvert = () => startLeadConvert(lead, jid => { setJobId(jid); onConvert && onConvert(lead.id, jid); }, () => setConvOpen(true));
     const [status, setStatus] = useState(lead.status);
     const [statusOpen, setStatusOpen] = useState(false);
     const [moreTabsOpen, setMoreTabsOpen] = useState(false);
@@ -29302,7 +29324,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
           {jobId
             ? <Btn icon="external-link" onClick={() => toast('Opening Job #' + jobId + '…')}>View Job #{jobId}</Btn>
-            : canConvert && <Btn kind="primary" icon="git-merge" onClick={() => setConvOpen(true)}>Convert to job</Btn>}
+            : canConvert && <Btn kind="primary" icon="git-merge" onClick={doConvert}>Convert to job</Btn>}
           <Btn icon="chevron-down" onClick={() => setMoreOpen(o => !o)}>More Actions</Btn>
           {moreOpen && <div onMouseLeave={() => setMoreOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 40, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 200 }}>
             {[['calendar', 'Schedule inspection'], ['user-check', 'Reassign CSR'], ['git-merge', 'Move stage'], ['copy', 'Duplicate lead'], ['download', 'Export'], ['trash-2', 'Delete lead']].map(([ic, l]) => <div key={l} onClick={() => { setMoreOpen(false); toast(l); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: l === 'Delete lead' ? LH.red : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={l === 'Delete lead' ? LH.red : LH.sub} />{l}</div>)}
@@ -29341,7 +29363,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <LeadLifecycle lead={lead} jobId={jobId} />
           {jobId
             ? <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 11, padding: '12px 14px', marginBottom: 20 }}><span style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={16} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.green }}>Converted to inspection job #{jobId}</div><div style={{ fontSize: 12, color: LH.sub }}>An inspection is scheduled — this lead is now an active job.</div></div><Btn icon="external-link" onClick={() => toast('Opening Job #' + jobId + '…')}>View job</Btn></div>
-            : canConvert && <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: LH.tint, border: '1px solid ' + LH.border, borderRadius: 11, padding: '12px 14px', marginBottom: 20 }}><span style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="git-merge" size={16} color={LH.primary} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Qualified and ready</div><div style={{ fontSize: 12, color: LH.sub }}>Convert this lead into a scheduled inspection job.</div></div><Btn kind="primary" icon="git-merge" onClick={() => setConvOpen(true)}>Convert to job</Btn></div>}
+            : canConvert && <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: LH.tint, border: '1px solid ' + LH.border, borderRadius: 11, padding: '12px 14px', marginBottom: 20 }}><span style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="git-merge" size={16} color={LH.primary} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Qualified and ready</div><div style={{ fontSize: 12, color: LH.sub }}>Convert this lead into a scheduled inspection job.</div></div><Btn kind="primary" icon="git-merge" onClick={doConvert}>Convert to job</Btn></div>}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><Ic name="sparkles" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Highlights</span><Ic name="chevron-right" size={14} color={LH.muted} /></span><Ic name="sliders" size={15} color={LH.sub} /></div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12, marginBottom: 22 }}>{highlights.map(hi => <Card key={hi.label} style={{ padding: 13, display: 'flex', alignItems: 'center', gap: 11 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: hi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={hi.ic} size={16} color={hi.fg} /></div><div><div style={{ fontSize: 11, color: LH.muted }}>{hi.label}</div><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, marginTop: 1 }}>{hi.val}</div></div></Card>)}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="activity" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Activity</span><Ic name="chevron-right" size={14} color={LH.muted} /></div>
@@ -29444,7 +29466,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [convertLead, setConvertLead] = useState(null);
     const convertLeadTo = (id, jobId) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col: 'Converted as Job', status: 'Converted as Job', jobId } : l));
     // Moving a lead into "Converted as Job" runs the conversion flow instead of a silent move.
-    const boardMove = (id, col) => { if (col === 'Converted as Job') { const l = leads.find(x => x.id === id); if (l && !l.jobId) { setConvertLead(l); return; } } move(id, col); };
+    const boardMove = (id, col) => { if (col === 'Converted as Job') { const l = leads.find(x => x.id === id); if (l && !l.jobId) { startLeadConvert(l, jid => convertLeadTo(id, jid), () => setConvertLead(l)); return; } } move(id, col); };
     const filtered = leads.filter(l => (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && matchKpi(l));
     useEffect(() => { const h = e => { if (e.key === 'Escape') setSelId(null); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, []);
     if (pageLead) return <LeadDetailsPage lead={pageLead} onBack={closePage} onToast={onToast} onConvert={convertLeadTo} />;
@@ -29485,7 +29507,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </table>
         </Card>}
       {/* Lead detail side sheet — reuse the full campaign LeadSideSheet (Tasks, Notes, functional) */}
-      <LeadSideSheet lead={sel} onClose={() => setSelId(null)} onToast={onToast} onMove={boardMove} onConvert={l => setConvertLead(l)} onOpenPage={openPage} onPrev={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i - 1 + filtered.length) % filtered.length].id); } : null} onNext={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i + 1) % filtered.length].id); } : null} />
+      <LeadSideSheet lead={sel} onClose={() => setSelId(null)} onToast={onToast} onMove={boardMove} onConvert={l => startLeadConvert(l, jid => convertLeadTo(l.id, jid), () => setConvertLead(l))} onOpenPage={openPage} onPrev={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i - 1 + filtered.length) % filtered.length].id); } : null} onNext={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i + 1) % filtered.length].id); } : null} />
       {convertLead && <ConvertToJobModal lead={convertLead} onClose={() => setConvertLead(null)} onToast={onToast} onConverted={jid => convertLeadTo(convertLead.id, jid)} />}
     </div>;
   }
