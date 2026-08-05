@@ -29736,7 +29736,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ width: 8, height: 8, borderRadius: 999, background: col.dot }} /><span style={{ fontSize: 12.5, fontWeight: 700, color: '#374151' }}>{col.key}</span><span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 17, height: 17, borderRadius: 999, fontSize: 10.5, fontWeight: 600, color: LH.sub, background: 'rgba(0,0,0,.06)', padding: '0 5px' }}>{cj.length}</span></div>
               <button style={{ width: 20, height: 20, borderRadius: 6, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="plus" size={13} color={LH.muted} /></button>
             </div>
-            <div style={{ fontSize: 10.5, color: LH.muted, marginTop: 2 }}>{col.hint}</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1, minHeight: 0 }}>
             {cj.length ? cj.map(l => <LeadKanbanCard key={l.id} lead={l} selected={selId === l.id} dragging={dragId === l.id} onClick={onCardClick} onDragStart={setDragId} onDragEnd={() => { setDragId(null); setOverCol(null); }} />)
@@ -29934,6 +29933,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [fAge, setFAge] = useState('Any');
     const [fOpen, setFOpen] = useState(null);
     const [kpi, setKpi] = useState(null);
+    const [search, setSearch] = useState('');
+    const [showKpi, setShowKpi] = useState(true);
     const matchKpi = l => !kpi || (kpi === 'received' ? ageHours(l.age) < 24 : kpi === 'qualified' ? l.col === 'Qualified' : kpi === 'drip' ? l.col === 'In drip' : kpi === 'human' ? l.col === 'Needs human' : true);
     const ASSIGNEES = ['Maria Gonzalez', 'Tyson Silva', 'Michael Richardson', 'Marcus Webb'];
     const assigneeOf = l => ASSIGNEES[(l.id.charCodeAt(1) + l.id.length) % ASSIGNEES.length];
@@ -29967,16 +29968,26 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const convertLeadTo = (id, jobId) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col: 'Converted as Job', status: 'Converted as Job', jobId } : l));
     // Moving a lead into "Converted as Job" runs the conversion flow instead of a silent move.
     const boardMove = (id, col) => { if (col === 'Converted as Job') { const l = leads.find(x => x.id === id); if (l && !l.jobId) { startLeadConvert(l, jid => convertLeadTo(id, jid), () => setConvertLead(l)); return; } } move(id, col); };
-    const filtered = leads.filter(l => (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && matchKpi(l));
+    const filtered = leads.filter(l => (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && matchKpi(l) && (!search.trim() || (l.name + ' ' + (l.note || '')).toLowerCase().includes(search.trim().toLowerCase())));
     useEffect(() => { const h = e => { if (e.key === 'Escape') setSelId(null); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, []);
     if (pageLead) return <LeadDetailsPage lead={pageLead} onBack={closePage} onToast={onToast} onConvert={convertLeadTo} />;
     return <div>
-      <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
-        <StatCard label="Received today" value="28" onClick={() => setKpi(k => k === 'received' ? null : 'received')} active={kpi === 'received'} />
-        <StatCard label="Qualified today" value="7" onClick={() => setKpi(k => k === 'qualified' ? null : 'qualified')} active={kpi === 'qualified'} />
-        <StatCard label="In drip" value="41" onClick={() => setKpi(k => k === 'drip' ? null : 'drip')} active={kpi === 'drip'} />
-        <StatCard label="Awaiting human" value="3" accent={LH.primary} onClick={() => setKpi(k => k === 'human' ? null : 'human')} active={kpi === 'human'} />
+      {/* Row 1 — title, quick views, date range + primary CTAs */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          <span style={{ fontSize: 20, fontWeight: 700, color: LH.ink }}>Pipeline</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '2px 9px' }}>{leads.length}</span>
+          <span style={{ width: 1, height: 20, background: LH.border, margin: '0 2px' }} />
+          <button style={{ height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.ink, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.ink, cursor: 'pointer' }}>All Leads</button>
+          <button onClick={() => onToast('Create a view')} title="Create view" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="plus" size={14} color={LH.sub} /></button>
+        </div>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <DateRangePicker />
+          <Btn icon="upload" onClick={() => onToast('Import leads')}>Import leads</Btn>
+          <Btn kind="primary" icon="plus" onClick={() => onToast('New lead')}>New lead</Btn>
+        </div>
       </div>
+      {/* Row 2 — filters, search, customize, KPI toggle, view switch */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16, paddingBottom: 14, borderBottom: '1px solid ' + LH.borderSoft }}>
         <FilterDrop id="src" label="Source:" value={fSource} options={SRCS} onChange={setFSource} />
         <FilterDrop id="stat" label="Status:" value={fStatus} options={STATS} onChange={setFStatus} />
@@ -29984,11 +29995,21 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <FilterDrop id="score" label="Score:" value={fScore} options={SCORES} onChange={setFScore} />
         <FilterDrop id="age" label="Age:" value={fAge} options={AGES} onChange={setFAge} />
         {anyF && <button onClick={clearF} style={{ height: 32, padding: '0 11px', borderRadius: 8, border: '1px solid transparent', background: 'transparent', fontSize: 12.5, color: LH.primary, fontWeight: 600, cursor: 'pointer' }}>Clear filters</button>}
-        <span style={{ fontSize: 12, color: LH.muted }}>{filtered.length} of {leads.length}</span>
-        <div style={{ marginLeft: 'auto', display: 'inline-flex', border: '1px solid ' + LH.border, borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
-          {[['kanban', 'layout-grid', 'Board'], ['list', 'list', 'List']].map(([v, ic, lbl]) => <button key={v} onClick={() => setView(v)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 12px', border: 'none', borderLeft: v === 'list' ? '1px solid ' + LH.border : 'none', background: view === v ? LH.tint : '#fff', color: view === v ? LH.ink : LH.sub, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}><Ic name={ic} size={14} color={view === v ? LH.ink : LH.sub} />{lbl}</button>)}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div onClick={() => setShowKpi(k => !k)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer' }}><Toggle on={!showKpi} onChange={() => setShowKpi(k => !k)} /><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.body }}>Hide KPIs</span></div>
+          <div style={{ position: 'relative', width: 210 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 10, top: 9 }} /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search leads" style={{ width: '100%', height: 32, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px 0 30px', fontSize: 12.5, color: LH.ink, outline: 'none' }} /></div>
+          <Btn icon="sliders" onClick={() => onToast('Customize columns')} style={{ height: 32 }}>Customize</Btn>
+          <div style={{ display: 'inline-flex', border: '1px solid ' + LH.border, borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
+            {[['kanban', 'layout-grid', 'Board'], ['list', 'list', 'List']].map(([v, ic, lbl]) => <button key={v} onClick={() => setView(v)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 12px', border: 'none', borderLeft: v === 'list' ? '1px solid ' + LH.border : 'none', background: view === v ? LH.tint : '#fff', color: view === v ? LH.ink : LH.sub, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}><Ic name={ic} size={14} color={view === v ? LH.ink : LH.sub} />{lbl}</button>)}
+          </div>
         </div>
       </div>
+      {showKpi && <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+        <StatCard label="Received today" value="28" onClick={() => setKpi(k => k === 'received' ? null : 'received')} active={kpi === 'received'} />
+        <StatCard label="Qualified today" value="7" onClick={() => setKpi(k => k === 'qualified' ? null : 'qualified')} active={kpi === 'qualified'} />
+        <StatCard label="In drip" value="41" onClick={() => setKpi(k => k === 'drip' ? null : 'drip')} active={kpi === 'drip'} />
+        <StatCard label="Awaiting human" value="3" accent={LH.primary} onClick={() => setKpi(k => k === 'human' ? null : 'human')} active={kpi === 'human'} />
+      </div>}
       {view === 'kanban'
         ? <LeadsKanban leads={filtered} onMove={boardMove} onCardClick={setSelId} selId={selId} />
         : <Card style={{ padding: 0, overflow: 'hidden' }}>
@@ -31181,7 +31202,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [pick, setPick] = useState({ s: null, e: null });
     const ref = useRef(null);
     useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setMode('presets'); } }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, [open]);
-    const PRESETS = ['Today', 'Yesterday', 'Last 7 days', 'Last 30 days', 'This month', 'Custom range'];
+    const PRESETS = ['Today', 'Tomorrow', 'Yesterday', 'Last 7 days', 'Last 30 days', 'This month', 'Custom range'];
     const choosePreset = p => { if (p === 'Custom range') { setMode('custom'); return; } setLabel(p); setOpen(false); };
     const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -31238,7 +31259,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const h = heads[section] || heads.overview;
     const campaignsAction = <Btn kind="primary" icon="plus" onClick={() => { setCampaignEdit(null); onNavigate('lead-campaign-new'); }}>New campaign</Btn>;
     return <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
-      {section !== 'campaigns' && !(section === 'pipeline' && pipeFull) && <PageHead crumb={h.crumb} title={h.title} actions={h.actions} />}
+      {section !== 'campaigns' && section !== 'pipeline' && <PageHead crumb={h.crumb} title={h.title} actions={h.actions} />}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 26px 34px', background: '#fdfdfc' }}>
         {section === 'overview' && <Hero />}
         {section === 'overview' && <OverviewSection onNavigate={onNavigate} />}
