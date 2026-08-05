@@ -29443,6 +29443,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const move = (id, col) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col, status: col } : l));
     const [convertLead, setConvertLead] = useState(null);
     const convertLeadTo = (id, jobId) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col: 'Inspection job', status: 'Inspection job', jobId } : l));
+    // Moving a lead into "Inspection job" runs the conversion flow instead of a silent move.
+    const boardMove = (id, col) => { if (col === 'Inspection job') { const l = leads.find(x => x.id === id); if (l && !l.jobId) { setConvertLead(l); return; } } move(id, col); };
     const filtered = leads.filter(l => (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && matchKpi(l));
     useEffect(() => { const h = e => { if (e.key === 'Escape') setSelId(null); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, []);
     if (pageLead) return <LeadDetailsPage lead={pageLead} onBack={closePage} onToast={onToast} onConvert={convertLeadTo} />;
@@ -29466,7 +29468,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
       </div>
       {view === 'kanban'
-        ? <LeadsKanban leads={filtered} onMove={move} onCardClick={setSelId} selId={selId} />
+        ? <LeadsKanban leads={filtered} onMove={boardMove} onCardClick={setSelId} selId={selId} />
         : <Card style={{ padding: 0, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>{[['Score', 64], ['Lead', 0], ['Stage', 130], ['Source', 130], ['Campaigns', 180], ['Fields', 80], ['Status', 130], ['Age', 70]].map(([h, w]) => <th key={h} style={{ textAlign: h === 'Score' || h === 'Fields' || h === 'Age' ? 'left' : 'left', padding: '10px 16px', fontSize: 12, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w || 'auto' }}>{h}</th>)}</tr></thead>
@@ -29483,7 +29485,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </table>
         </Card>}
       {/* Lead detail side sheet — reuse the full campaign LeadSideSheet (Tasks, Notes, functional) */}
-      <LeadSideSheet lead={sel} onClose={() => setSelId(null)} onToast={onToast} onMove={move} onConvert={l => setConvertLead(l)} onOpenPage={openPage} onPrev={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i - 1 + filtered.length) % filtered.length].id); } : null} onNext={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i + 1) % filtered.length].id); } : null} />
+      <LeadSideSheet lead={sel} onClose={() => setSelId(null)} onToast={onToast} onMove={boardMove} onConvert={l => setConvertLead(l)} onOpenPage={openPage} onPrev={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i - 1 + filtered.length) % filtered.length].id); } : null} onNext={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i + 1) % filtered.length].id); } : null} />
       {convertLead && <ConvertToJobModal lead={convertLead} onClose={() => setConvertLead(null)} onToast={onToast} onConverted={jid => convertLeadTo(convertLead.id, jid)} />}
     </div>;
   }
