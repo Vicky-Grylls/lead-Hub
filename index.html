@@ -14321,13 +14321,15 @@ function App() {
       style: { background: '#fdfdfc', border: '1px solid #ece4d3', overflow: 'hidden' }
     }, window.LeadHubShell
       ? /*#__PURE__*/React.createElement(window.LeadHubShell, { section: leadSection, onNavigate: handleNavigate })
-      : /*#__PURE__*/React.createElement("div", { style: { padding: 40, color: '#8c7a5a', fontSize: 14 } }, "Loading Lead Hub…"))), njLead && /*#__PURE__*/React.createElement(CreateJobModal, {
-      variant: 'modal',
+      : /*#__PURE__*/React.createElement("div", { style: { padding: 40, color: '#8c7a5a', fontSize: 14 } }, "Loading Lead Hub…"))), njLead && /*#__PURE__*/React.createElement("div", {
+      style: { position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(880px,96vw)', zIndex: 500, display: 'flex', flexDirection: 'column', background: '#fff', boxShadow: '-10px 0 30px rgba(0,0,0,0.16)' }
+    }, /*#__PURE__*/React.createElement(CreateJobModal, {
+      variant: 'sidestep',
       initial: njLead.initial,
       onManageTemplates: () => {},
       onClose: () => setNjLead(null),
       onSubmit: () => { if (njLead.onCreated) njLead.onCreated(); setNjLead(null); showToast('Inspection job created from lead'); }
-    }), toast && /*#__PURE__*/React.createElement(Toast, {
+    })), toast && /*#__PURE__*/React.createElement(Toast, {
       message: toast,
       onClose: () => setToast(null)
     }));
