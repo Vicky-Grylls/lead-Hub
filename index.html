@@ -13484,10 +13484,10 @@ function CreateJobModal({ onClose = () => {}, onSubmit = () => {}, variant = 'mo
     showFooter && h('div', { style: { display: 'flex', borderTop: '1px solid #f3f2ee', background: '#fcfbf9' } },
       h('div', { style: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 8px', borderRight: '1px solid #f3f2ee' } },
         h('span', { style: { fontSize: 11.5, color: '#9ca3af', fontWeight: 500 } }, 'Credits'),
-        h('span', { style: { fontSize: 12.5, fontWeight: 700, color: '#16a34a' } }, '$' + (d.credits || '340.00'))),
+        h('span', { style: { fontSize: 12.5, fontWeight: 700, color: initial ? '#9ca3af' : '#16a34a' } }, initial ? '—' : ('$' + (d.credits || '340.00')))),
       h('div', { style: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 8px' } },
         h('span', { style: { fontSize: 11.5, color: '#9ca3af', fontWeight: 500 } }, 'Receivables'),
-        h('span', { style: { fontSize: 12.5, fontWeight: 700, color: '#e4572e' } }, '$' + (d.receivables || '1,275.50')))));
+        h('span', { style: { fontSize: 12.5, fontWeight: 700, color: initial ? '#9ca3af' : '#e4572e' } }, initial ? '—' : ('$' + (d.receivables || '1,275.50'))))));
   const selectedCustomer = custCard({ name: nameFrom(form), email: form.email, phone: form.phone, org: form.organisation, addr: custAddr }, 'Primary', clearCustomer, true);
   // secondary contacts — multi-select picker (same list as primary) → many cards w/ Secondary badge
   const secList = form.secList || [];
