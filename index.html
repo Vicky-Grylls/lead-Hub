@@ -29761,7 +29761,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   /* ─────────── CAMPAIGN WIZARD (6 steps) ─────────── */
   /* ═══════════ CAMPAIGN WIZARD (fully functional) ═══════════ */
-  const WIZ_STEPS = ['Basic details', 'Audience', 'Communication', 'Speed to Lead', 'Nurture sequence', 'Exit rules', 'Notifications', 'Review & Publish'];
+  const WIZ_STEPS = ['Basic details', 'Audience', 'Communication', 'Speed to Lead', 'Nurture sequence', 'Exit rules', 'Review & Publish'];
   const NOTIF_EVENTS = [
     { key: 'reply', icon: 'message-square', t: 'A lead replies', d: 'Someone answers an SMS or email in this campaign.', dflt: true, priority: 'high' },
     { key: 'status', icon: 'trending-up', t: 'A lead’s status changes', d: 'e.g. New Lead → Qualifying → Qualified.', dflt: true },
@@ -30054,15 +30054,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [replyTaskOn, setReplyTaskOn] = useState(false);
     const [replyTaskType, setReplyTaskType] = useState('Call back');
     const [replyAssignee, setReplyAssignee] = useState('Assigned to me');
-    // Notifications
-    const [notifEvents, setNotifEvents] = useState(() => NOTIF_EVENTS.reduce((a, e) => { a[e.key] = e.dflt; return a; }, {}));
-    const [notifCh, setNotifCh] = useState({ inapp: true, email: true, sms: false, slack: false });
-    const [notifEmail, setNotifEmail] = useState('lead-alerts@hillroofing.com');
-    const [notifSlack, setNotifSlack] = useState('#lead-alerts');
-    const [notifRep, setNotifRep] = useState(true);
-    const [notifOwner, setNotifOwner] = useState(true);
-    const [notifExtra, setNotifExtra] = useState([]);
-    const [notifDigest, setNotifDigest] = useState(false);
 
     const matchCount = useMemo(() => filterContacts(conds, join).length, [conds, join]);
     const enrolledCount = useMemo(() => filterContacts(conds, join).filter(c => !removedIds.has(c.id)).length, [conds, join, removedIds]);
@@ -30274,13 +30265,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
         <div style={{ fontSize: 12.5, color: LH.body, marginTop: 12, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '11px 13px', display: 'flex', gap: 9 }}><Ic name="rotate-ccw" size={15} color={LH.sub} /><span><b style={{ color: LH.ink }}>Automatic stop.</b> Beyond the conditions above, the sequence ends on its own — after the final step on Day {dayCount}, the record is unenrolled.</span></div>
       </div>;
-      if (step === 6) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="bell" size={19} color={LH.primary} /></div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Who gets notified, and when?</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Pick the incidents worth interrupting your team for, where the alert lands, and who receives it. These fire the moment something happens in this campaign.</div>
-        <CampaignNotifSettings events={notifEvents} setEvents={setNotifEvents} ch={notifCh} setCh={setNotifCh} email={notifEmail} setEmail={setNotifEmail} slack={notifSlack} setSlack={setNotifSlack} rep={notifRep} setRep={setNotifRep} owner={notifOwner} setOwner={setNotifOwner} extra={notifExtra} setExtra={setNotifExtra} digest={notifDigest} setDigest={setNotifDigest} />
-      </div>;
-      // Step 7 — Review & Publish
+      // Step 6 — Review & Publish
       const activeDays = Object.keys(days).filter(d => (days[d].active !== false) && days[d].steps && days[d].steps.length).length;
       const summary = [
         { i: 0, icon: 'pencil', t: 'Basic details', lines: ['Name: ' + (name || '—'), 'Time zone: ' + tz, desc ? 'Description set' : 'No description'] },
@@ -30288,8 +30273,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         { i: 2, icon: 'radio', t: 'Communication', lines: ['Number: ' + NUMBERS[numIdx].name + ' · ' + NUMBERS[numIdx].num, 'Voice agent: ' + agent, 'Playbook: ' + playbook.length + ' questions'] },
         { i: 3, icon: 'zap', t: 'Speed to Lead', lines: [s2l.length + ' launch-day step' + (s2l.length !== 1 ? 's' : ''), 'Business hours: ' + (bizHours ? 'on' : 'any time'), 'Weekends: ' + ((weekend.sat || weekend.sun) ? [weekend.sat && 'Sat', weekend.sun && 'Sun'].filter(Boolean).join(', ') : 'off')] },
         { i: 4, icon: 'headphones', t: 'Nurture sequence', lines: [dayCount + '-day sequence', activeDays + ' day' + (activeDays !== 1 ? 's' : '') + ' with steps', 'Send days: ' + sendDaysLabel] },
-        { i: 5, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'On reply: ' + [replyStatusOn && 'status → ' + replyStatus, replyTaskOn && 'create task'].filter(Boolean).join(', ') || 'no action', 'Built-in stops: opt-out, Nova DND'] },
-        { i: 6, icon: 'bell', t: 'Notifications', lines: [Object.values(notifEvents).filter(Boolean).length + ' of ' + NOTIF_EVENTS.length + ' events on', 'Via ' + (NOTIF_CHANNELS.filter(c => notifCh[c.key]).map(c => c.t).join(', ') || 'no channel'), 'To ' + ([notifRep && 'assigned rep', notifOwner && 'owner', notifExtra.length && (notifExtra.length + ' more')].filter(Boolean).join(', ') || 'no one') + (notifDigest ? ' · daily digest' : '')] }
+        { i: 5, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'On reply: ' + [replyStatusOn && 'status → ' + replyStatus, replyTaskOn && 'create task'].filter(Boolean).join(', ') || 'no action', 'Built-in stops: opt-out, Nova DND'] }
       ];
       const problems = []; if (!name.trim()) problems.push('Campaign name is required (Basic details).'); if (!tz) problems.push('Campaign time zone is required (Basic details).'); if (!conds.filter(c => c.field).length) problems.push('Add at least one audience condition.');
       return <div style={{ maxWidth: 720, margin: '0 auto' }}>
