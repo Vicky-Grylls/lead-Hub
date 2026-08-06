@@ -30104,6 +30104,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [search, setSearch] = useState('');
     const [showKpi, setShowKpi] = useState(true);
     const [newOpen, setNewOpen] = useState(false);
+    const [flow, setFlow] = useState(null);
     const [viewOpen, setViewOpen] = useState(false);
     const [viewName, setViewName] = useState('');
     const [custOpen, setCustOpen] = useState(false);
@@ -30139,6 +30140,18 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const move = (id, col) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col, status: col } : l));
     const [convertLead, setConvertLead] = useState(null);
     const convertLeadTo = (id, jobId) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col: 'Converted as Job', status: 'Converted as Job', jobId } : l));
+    const uid = () => 'ln' + Date.now().toString(36) + Math.floor(Math.random() * 46656).toString(36);
+    const addLead = d => {
+      const stage = d.stage || 'New lead';
+      const filled = ['name', 'email', 'phone', 'src', 'note'].filter(k => d[k] && String(d[k]).trim()).length;
+      const lead = { id: uid(), col: stage, status: stage, score: d.score || 32, name: d.name.trim(), note: (d.note || '').trim() || 'Manual entry', src: d.src || 'Manual', age: 'Now', fields: filled + '/9', email: (d.email || '').trim(), phone: (d.phone || '').trim() };
+      setLeads(ls => [lead, ...ls]);
+      return lead;
+    };
+    const addLeads = arr => {
+      const mk = (d, i) => { const filled = ['name', 'email', 'phone', 'source'].filter(k => d[k] && String(d[k]).trim()).length; return { id: uid() + i, col: 'New lead', status: 'New lead', score: 30 + (i * 7) % 40, name: (d.name || 'Unnamed').trim(), note: 'Imported lead', src: (d.source || '').trim() || 'Import', age: 'Now', fields: filled + '/9', email: (d.email || '').trim(), phone: (d.phone || '').trim() }; };
+      setLeads(ls => [...arr.map(mk), ...ls]);
+    };
     // Moving a lead into "Converted as Job" runs the conversion flow instead of a silent move.
     const boardMove = (id, col) => { if (col === 'Converted as Job') { const l = leads.find(x => x.id === id); if (l && !l.jobId) { startLeadConvert(l, jid => convertLeadTo(id, jid), () => setConvertLead(l)); return; } } move(id, col); };
     const filtered = leads.filter(l => (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && matchKpi(l) && (!search.trim() || (l.name + ' ' + (l.note || '')).toLowerCase().includes(search.trim().toLowerCase())));
@@ -30166,7 +30179,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ position: 'relative' }}>
             <button onClick={() => setNewOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 34, padding: '0 13px', borderRadius: 9, border: '1px solid ' + LH.primary, background: LH.primary, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}><Ic name="plus" size={15} color="#fff" />New lead<span style={{ width: 1, height: 16, background: 'rgba(255,255,255,.25)', margin: '0 1px' }} /><Ic name="chevron-down" size={13} color="#fff" /></button>
             {newOpen && <div onMouseLeave={() => setNewOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 200 }}>
-              {[['user-plus', 'New lead', 'New lead form'], ['upload', 'Import leads', 'Import leads']].map(([ic, l, m]) => <div key={l} onClick={() => { setNewOpen(false); onToast(m); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={LH.sub} />{l}</div>)}
+              {[['user-plus', 'New lead', 'new'], ['upload', 'Import leads', 'import']].map(([ic, l, f]) => <div key={l} onClick={() => { setNewOpen(false); setFlow(f); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={LH.sub} />{l}</div>)}
             </div>}
           </div>
         </div>
@@ -30218,6 +30231,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {/* Lead detail side sheet — reuse the full campaign LeadSideSheet (Tasks, Notes, functional) */}
       <LeadSideSheet lead={sel} onClose={() => setSelId(null)} onToast={onToast} onMove={boardMove} onConvert={l => startLeadConvert(l, jid => convertLeadTo(l.id, jid), () => setConvertLead(l))} onOpenPage={openPage} onPrev={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i - 1 + filtered.length) % filtered.length].id); } : null} onNext={filtered.length > 1 ? () => { const i = filtered.findIndex(l => l.id === selId); setSelId(filtered[(i + 1) % filtered.length].id); } : null} />
       {convertLead && <ConvertToJobModal lead={convertLead} onClose={() => setConvertLead(null)} onToast={onToast} onConverted={jid => convertLeadTo(convertLead.id, jid)} />}
+      {flow === 'new' && <NewLeadForm sources={SRCS.filter(s => s !== 'All')} assignees={ASSIGNEES} onClose={() => setFlow(null)} onToast={onToast} onCreate={d => { const lead = addLead(d); setFlow(null); onToast('Lead “' + lead.name + '” added to ' + lead.col); setKpi(null); clearF(); setSelId(lead.id); }} />}
+      {flow === 'import' && <ImportFlow onClose={() => setFlow(null)} onToast={onToast} onImport={rows => { addLeads(rows); setKpi(null); clearF(); }} />}
     </div>;
   }
 
@@ -31271,7 +31286,28 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {step === 2 && <div style={{ textAlign: 'center', padding: '20px 0' }}><div style={{ width: 52, height: 52, borderRadius: 999, background: LH.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}><Ic name="check" size={26} color={LH.green} /></div><div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>{pick} is live</div><div style={{ fontSize: 13, color: LH.sub, marginTop: 4, maxWidth: 380, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>New leads from {pick} will land in your pipeline automatically and enter any matching campaigns.</div></div>}
     </ChOverlay>;
   }
-  function ImportFlow({ onClose, onToast }) {
+  function NewLeadForm({ sources, assignees, onClose, onToast, onCreate }) {
+    const [f, setF] = useState({ name: '', email: '', phone: '', src: (sources && sources[0]) || 'Manual', assignee: (assignees && assignees[0]) || '', note: '', stage: 'New lead', notes: '' });
+    const set = (k, v) => setF(p => ({ ...p, [k]: v }));
+    const inp = { width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
+    const lbl = { fontSize: 12, fontWeight: 600, color: LH.body, marginBottom: 5, display: 'block' };
+    const canSave = !!f.name.trim();
+    const STAGES = ['New lead', 'Contacting', 'Qualifying', 'Needs human'];
+    return <ChOverlay title="New lead" sub="Add a lead to your pipeline manually." onClose={onClose}
+      foot={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="plus" onClick={() => canSave && onCreate(f)} style={{ opacity: canSave ? 1 : 0.5 }}>Create lead</Btn></>}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Full name<span style={{ color: LH.red }}> *</span></label><input value={f.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Jordan Blake" autoFocus style={inp} /></div>
+        <div><label style={lbl}>Email</label><input value={f.email} onChange={e => set('email', e.target.value)} placeholder="name@email.com" style={inp} /></div>
+        <div><label style={lbl}>Phone</label><input value={f.phone} onChange={e => set('phone', e.target.value)} placeholder="(555) 555-5555" style={inp} /></div>
+        <div><label style={lbl}>Lead source</label><Dropdown value={f.src} options={(sources || []).map(s => ({ value: s, label: s }))} onChange={v => set('src', v)} /></div>
+        <div><label style={lbl}>Stage</label><Dropdown value={f.stage} options={STAGES.map(s => ({ value: s, label: s }))} onChange={v => set('stage', v)} /></div>
+        <div><label style={lbl}>Assigned CSR</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
+        <div><label style={lbl}>Service interest</label><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="e.g. Roof inspection" style={inp} /></div>
+        <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Notes</label><textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional context…" style={{ ...inp, height: 70, padding: 10, resize: 'vertical' }} /></div>
+      </div>
+    </ChOverlay>;
+  }
+  function ImportFlow({ onClose, onToast, onImport }) {
     const [step, setStep] = useState(0);
     const [name, setName] = useState('');
     const [headers, setHeaders] = useState([]);
@@ -31284,7 +31320,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const idx = k => headers.indexOf(map[k]);
     return <ChOverlay title="Import leads" sub={step === 0 ? 'Upload a CSV to add leads in bulk.' : step === 1 ? name + ' · ' + rows.length + ' rows' : ''} onClose={onClose}
       foot={step === 1 ? <><Btn onClick={() => setStep(0)}>Back</Btn><Btn kind="primary" onClick={() => setStep(2)} style={{ opacity: (map.name && (map.email || map.phone)) ? 1 : 0.5 }}>Preview</Btn></>
-        : step === 2 ? <><Btn onClick={() => setStep(1)}>Back</Btn><Btn kind="primary" icon="download" onClick={() => { onToast(rows.length + ' leads imported into the pipeline'); onClose(); }}>Import {rows.length} leads</Btn></>
+        : step === 2 ? <><Btn onClick={() => setStep(1)}>Back</Btn><Btn kind="primary" icon="download" onClick={() => { const out = rows.map(r => ({ name: idx('name') > -1 ? r[idx('name')] : '', email: idx('email') > -1 ? r[idx('email')] : '', phone: idx('phone') > -1 ? r[idx('phone')] : '', source: idx('source') > -1 ? r[idx('source')] : '' })).filter(o => o.name); onImport && onImport(out); onToast((out.length || rows.length) + ' leads imported into the pipeline'); onClose(); }}>Import {rows.length} leads</Btn></>
         : <Btn onClick={onClose}>Cancel</Btn>}>
       {step === 0 && <div>
         <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, border: '1.5px dashed ' + LH.border, borderRadius: 12, padding: '34px 20px', cursor: 'pointer', textAlign: 'center' }}>
