@@ -30877,8 +30877,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </div>;
   }
   // Condition builder shared by Audience + Exit rules
-  function Conditions({ rows, setRows, join, setJoin, addLabel, groups, addField }) {
-    groups = groups || FIELD_GROUPS;
+  function Conditions({ rows, setRows, join, setJoin, addLabel, groups, options, addField }) {
+    groups = groups || (options ? undefined : FIELD_GROUPS);
     addField = addField || 'customer.lead_source';
     const update = (id, patch) => setRows(rows.map(r => r.id === id ? { ...r, ...patch } : r));
     const valOptions = f => (FIELD_DEFS[f] && FIELD_DEFS[f].options || []).map(o => ({ value: o, label: o }));
@@ -30891,7 +30891,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         const f = FIELD_DEFS[r.field]; const type = f ? f.type : 'multiselect';
         return <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
           <span style={{ width: 42, fontSize: 12, color: LH.muted, flexShrink: 0 }}>{i === 0 ? 'Where' : (join === 'and' ? 'And' : 'Or')}</span>
-          <div style={{ flex: 1 }}><Dropdown value={r.field} groups={groups} placeholder="Field" onChange={v => update(r.id, { field: v, op: OPS[FIELD_DEFS[v].type][0], val: [] })} /></div>
+          <div style={{ flex: 1 }}><Dropdown value={r.field} groups={groups} options={options} placeholder="Field" onChange={v => update(r.id, { field: v, op: OPS[FIELD_DEFS[v].type][0], val: [] })} /></div>
           <div style={{ width: 130, flexShrink: 0 }}><Dropdown value={r.op} options={OPS[type].map(o => ({ value: o, label: o }))} onChange={v => update(r.id, { op: v })} /></div>
           <div style={{ flex: 1 }}>{type === 'multiselect' || type === 'bool'
             ? <Dropdown multi={type === 'multiselect'} value={type === 'bool' ? (r.val || []) : (r.val || [])} options={valOptions(r.field)} placeholder="Select…" onChange={v => update(r.id, { val: type === 'bool' ? [v].flat().slice(-1) : v })} />
@@ -31079,7 +31079,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {audienceType === 'new'
           ? <>
             <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>Configure which incoming leads qualify — by source and other rules. New leads enrol automatically as they arrive, so there are no existing records to match yet.</div>
-            <Conditions rows={conds} setRows={setConds} join={join} setJoin={setJoin} groups={FIELD_GROUPS.map(g => ({ ...g, items: g.items.filter(it => ['customer.lead_source', 'customer.city', 'customer.state', 'customer.zip', 'customer.type', 'job.service_type', 'job.current_status', 'job.created_date'].includes(it.value)) })).filter(g => g.items.length)} addField="customer.lead_source" />
+            <Conditions rows={conds} setRows={setConds} join={join} setJoin={setJoin} options={['customer.lead_source', 'job.service_type', 'customer.city', 'customer.state', 'customer.zip', 'job.created_date'].map(v => ({ value: v, label: FIELD_DEFS[v].label }))} addField="customer.lead_source" />
             <div style={{ marginTop: 20, display: 'flex', alignItems: 'flex-start', gap: 9, padding: '12px 14px', borderRadius: 10, background: LH.bg, border: '1px solid ' + LH.borderSoft }}><Ic name="inbox" size={15} color={LH.sub} style={{ marginTop: 1 }} /><div style={{ fontSize: 12.5, color: LH.sub, lineHeight: 1.5 }}>Matching leads will appear in the pipeline once these sources start delivering. Nothing to enrol right now — this campaign runs on new arrivals.</div></div>
           </>
           : <>
