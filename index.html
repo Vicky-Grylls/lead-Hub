@@ -29537,7 +29537,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {[]
               .concat(onNext ? [{ i: 'chevron-up', f: onPrev, t: 'Previous lead' }, { i: 'chevron-down', f: onNext, t: 'Next lead' }] : [])
-              .concat([{ i: 'maximize-2', f: () => onOpenPage && onOpenPage(shown), t: 'Open full page' }, { i: 'x', f: onClose, t: 'Close' }])
+              .concat([{ i: 'x', f: onClose, t: 'Close' }])
               .map((b, k) => <button key={k} onClick={b.f} title={b.t} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name={b.i} size={15} color={LH.sub} /></button>)}
           </div>
         </div>
@@ -29625,6 +29625,28 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { ch: 'SMS', icon: 'message-square', t: 'Day 14', body: 'Final touch. We will archive this request unless you want help.' }
   ];
 
+  // Needs-attention items rolled up across all campaigns (overview + dashboard).
+  const ATTENTION_ROLLUP = [
+    { n: 'Kevin Alvarez', src: 'Angi', reason: 'Opted out', detail: 'Replied STOP to SMS', when: '2h ago', icon: 'ban', camp: 'Speed-to-Lead Drip' },
+    { n: 'Rachel Bennett', src: 'Thumbtack', reason: 'Sent to rep', detail: 'Escalated — asked for a callback', when: '4h ago', icon: 'user-check', camp: 'Speed-to-Lead Drip' },
+    { n: 'Marcus Reed', src: 'Website Booking', reason: 'Sent to rep', detail: 'Nova DND — awaiting human follow-up', when: '6h ago', icon: 'user-check', camp: 'Estimate Follow-up' },
+    { n: 'Dana Whitfield', src: 'Meta Ads', reason: 'Delivery failed', detail: 'Email bounced — invalid address', when: '1d ago', icon: 'alert-triangle', camp: 'Storm Season Re-engage' },
+    { n: 'Owen Castillo', src: 'Google LSA', reason: 'Sent to rep', detail: 'Asked for a quote by phone', when: '1d ago', icon: 'user-check', camp: 'Storm Season Re-engage' },
+    { n: 'Nina Foster', src: 'Meta Ads', reason: 'Opted out', detail: 'Unsubscribed from email', when: '2d ago', icon: 'ban', camp: 'Estimate Follow-up' }
+  ];
+  const ATTENTION_TONE = { 'Opted out': { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd }, 'Sent to rep': { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd }, 'Delivery failed': { bg: '#fbeaea', fg: LH.red, bd: '#f2d0d0' } };
+  function AttentionRollupCard({ onNavigate, limit }) {
+    const items = limit ? ATTENTION_ROLLUP.slice(0, limit) : ATTENTION_ROLLUP;
+    return <Card style={{ padding: 0, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><Ic name="alert-circle" size={15} color={LH.primary} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Needs attention</span><span style={{ fontSize: 11.5, fontWeight: 700, color: '#fff', background: LH.primary, borderRadius: 999, padding: '1px 7px' }}>{ATTENTION_ROLLUP.length}</span><span style={{ fontSize: 11.5, color: LH.muted, marginLeft: 'auto' }}>across all campaigns</span></div>
+      {items.map((a, i) => { const rt = ATTENTION_TONE[a.reason] || ATTENTION_TONE['Opted out']; return <div key={i} onClick={() => onNavigate && onNavigate('lead-campaigns')} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < items.length - 1 ? '1px solid ' + LH.borderSoft : 'none', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+        <div style={{ width: 30, height: 30, borderRadius: 8, background: rt.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={a.icon} size={15} color={rt.fg} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{a.n}</div><div style={{ fontSize: 11.5, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.camp} · {a.detail}</div></div>
+        <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 9px', borderRadius: 7, fontSize: 11.5, fontWeight: 600, background: rt.bg, color: rt.fg, border: '1px solid ' + rt.bd, whiteSpace: 'nowrap' }}>{a.reason}</span>
+        <span style={{ fontSize: 11.5, color: LH.muted, width: 54, textAlign: 'right' }}>{a.when}</span>
+      </div>; })}
+    </Card>;
+  }
   /* ─────────── OVERVIEW ─────────── */
   function OverviewSection({ onNavigate }) {
     const [setupTab, setSetupTab] = useState('Setup');
@@ -29678,6 +29700,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </Card>)}
       </div>
+      <div style={{ marginBottom: 24 }}><AttentionRollupCard onNavigate={onNavigate} /></div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start' }}>
         <Card style={{ padding: 18 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink, marginBottom: 14 }}>Recent activity</div>
@@ -30129,7 +30152,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {fOpen === id && <div onMouseLeave={() => setFOpen(null)} style={{ position: 'absolute', top: 36, left: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, minWidth: 170, maxHeight: 280, overflowY: 'auto' }}>{options.map(o => <div key={o} onClick={() => { onChange(o); setFOpen(null); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '7px 10px', borderRadius: 6, fontSize: 12.5, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{o}{value === o && <Ic name="check" size={13} color={LH.ink} />}</div>)}</div>}
     </div>;
     const scoreColor = s => s >= 80 ? LH.primary : s >= 60 ? '#c9922e' : '#9c9b96';
-    const openPage = l => { setSelId(null); setPageLead(l); onFull && onFull(true); };
+    // Full lead detail page is hidden for now — open the side sheet instead.
+    const openPage = l => { setPageLead(null); setSelId(l.id); };
     const closePage = () => { setPageLead(null); onFull && onFull(false); };
     const sel = selId ? leads.find(l => l.id === selId) : null;
     const lastRef = useRef(null);
@@ -30347,6 +30371,37 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { label: 'Enrolled', value: enrolled }, { label: 'Active now', value: active },
       { label: 'Completed', value: completed, accent: LH.green }, { label: 'Exited', value: exited }, { label: 'Reply rate', value: replyRate }
     ];
+    // Goal-based outcomes + KPIs (chosen in the wizard)
+    const goalObj = CAMPAIGN_GOALS.find(g => g.key === row.goal) || CAMPAIGN_GOALS[0];
+    const pctQual = enrolled ? Math.round(qualified / enrolled * 100) : 0;
+    const pctConv = enrolled ? Math.round(converted / enrolled * 100) : 0;
+    const pctReply = enrolled ? Math.round(replied / enrolled * 100) : 0;
+    const goalKpis = goalObj.kpis.map(k => {
+      const L = k.label.toLowerCase();
+      const tnum = parseFloat((k.target + '').replace(/[^0-9.]/g, '')) || 0;
+      let actual = '—', ok = true;
+      if (L.indexOf('qualified in') > -1) { actual = pctQual + '%'; ok = pctQual >= tnum * 0.9; }
+      else if (L === 'qualified') { actual = pctQual + '%'; ok = pctQual >= tnum; }
+      else if (L.indexOf('convert') > -1) { actual = pctConv + '%'; ok = pctConv >= tnum; }
+      else if (L.indexOf('reply') > -1) { actual = pctReply + '%'; ok = pctReply >= tnum; }
+      else if (L.indexOf('first-touch') > -1) { actual = '38s'; ok = true; }
+      else if (L.indexOf('opt-out') > -1) { actual = '1.4%'; ok = true; }
+      else if (L.indexOf('re-engag') > -1) { actual = Math.round(pctReply * 0.5) + '%'; ok = Math.round(pctReply * 0.5) >= tnum; }
+      else if (L.indexOf('rebook') > -1 || L.indexOf('book') > -1) { actual = pctConv + '%'; ok = pctConv >= tnum; }
+      else if (L.indexOf('revenue') > -1) { actual = '$' + Math.round(enrolled * 0.09) + 'k'; ok = true; }
+      return { label: k.label, target: k.target, actual, ok };
+    });
+    const goalCard = <Card style={{ padding: 16, marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <div style={{ width: 34, height: 34, borderRadius: 9, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={goalObj.icon} size={16} color={LH.primary} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Goal · {goalObj.title}</div><div style={{ fontSize: 12, color: LH.sub }}>Outcomes: {goalObj.outcomes.join(' · ')}</div></div>
+      </div>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>{goalKpis.map(k => <div key={k.label} style={{ flex: '1 1 150px', border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: '11px 13px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 6 }}><span style={{ fontSize: 19, fontWeight: 700, color: LH.ink }}>{enrolled ? k.actual : '—'}</span><span style={{ fontSize: 11, fontWeight: 600, color: enrolled ? (k.ok ? LH.green : LH.amber) : LH.muted }}>{enrolled ? (k.ok ? 'on track' : 'below') : '—'}</span></div>
+        <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 2 }}>{k.label}</div>
+        <div style={{ fontSize: 11, color: LH.sub, marginTop: 4 }}>Target {k.target}</div>
+      </div>)}</div>
+    </Card>;
     const RECENT_FIXED = [
       { n: 'Daniel Thompson', src: 'Angi', stage: 'Qualified', tone: 'Qualified', last: 'Nova call · answered', when: '12m ago' },
       { n: 'Rosa Nguyen', src: 'Thumbtack', stage: 'Contacting', tone: 'New', last: 'SMS sent', when: '40m ago' },
@@ -30423,6 +30478,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
     const tabBody = () => {
       if (tab === 'overview') return <>
+        {goalCard}
         <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>{kpis.map(k => <StatCard key={k.label} label={k.label} value={k.value} accent={k.accent} />)}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>{needsCard}{activityCard}</div>
         <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>{tasksCard}<div /></div>
@@ -30651,7 +30707,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   /* ─────────── CAMPAIGN WIZARD (6 steps) ─────────── */
   /* ═══════════ CAMPAIGN WIZARD (fully functional) ═══════════ */
-  const WIZ_STEPS = ['Basic details', 'Audience', 'Communication', 'Speed to Lead', 'Nurture sequence', 'Exit rules', 'Review & Publish'];
+  const WIZ_STEPS = ['Audience type', 'Basic details', 'Audience', 'Nurture sequence', 'Playbook', 'Communication', 'Exit rules', 'Review & Publish'];
+  const AUDIENCE_TYPES = [
+    { key: 'new', icon: 'user-plus', title: 'New Leads', desc: 'Fresh inbound leads from your sources. Speed-to-lead applies — the launch day fires the moment a lead is captured.' },
+    { key: 'existing', icon: 'users', title: 'Existing Customers', desc: 'Past or cold customers you already have. Re-engagement / demand-gen — no speed-to-lead; the launch day is your first re-outreach.' }
+  ];
+  const CAMPAIGN_GOALS = [
+    { key: 'speed', icon: 'zap', title: 'Speed to lead', desc: 'Contact & qualify inbound leads fast.', aud: 'new', outcomes: ['Qualified lead', 'Booked inspection'], kpis: [{ label: 'Qualified in < 2 min', target: '80%' }, { label: 'Median first-touch', target: '45s' }, { label: 'Reply rate', target: '55%' }] },
+    { key: 'nurture', icon: 'headphones', title: 'Nurture & convert', desc: 'Warm slow leads until they are ready to buy.', aud: 'new', outcomes: ['Re-engaged', 'Converted'], kpis: [{ label: 'Reply rate', target: '35%' }, { label: 'Qualified', target: '25%' }, { label: 'Converted', target: '12%' }] },
+    { key: 'reengage', icon: 'rotate-ccw', title: 'Re-engage / demand gen', desc: 'Revive cold leads and past demand.', aud: 'existing', outcomes: ['Re-engaged', 'Booked job'], kpis: [{ label: 'Re-engaged', target: '20%' }, { label: 'Booked jobs', target: '8%' }, { label: 'Opt-out', target: '< 2%' }] },
+    { key: 'rebook', icon: 'calendar-check', title: 'Rebook / maintenance', desc: 'Bring existing customers back for service.', aud: 'existing', outcomes: ['Rebooked'], kpis: [{ label: 'Rebooked', target: '15%' }, { label: 'Reply rate', target: '40%' }, { label: 'Revenue / 100', target: '$9k' }] }
+  ];
   const NOTIF_EVENTS = [
     { key: 'reply', icon: 'message-square', t: 'A lead replies', d: 'Someone answers an SMS or email in this campaign.', dflt: true, priority: 'high' },
     { key: 'status', icon: 'trending-up', t: 'A lead’s status changes', d: 'e.g. New Lead → Qualifying → Qualified.', dflt: true },
@@ -30881,6 +30947,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   function CampaignWizard({ onClose, onCreate, embed, init, editing }) {
     init = init || {};
     const [step, setStep] = useState(0);
+    const [audienceType, setAudienceType] = useState(init.audienceType || 'new');
+    const [goal, setGoal] = useState(init.goal || 'speed');
     const [name, setName] = useState(init.name !== undefined ? init.name : 'Storm Season Re-engage');
     const [desc, setDesc] = useState(init.desc !== undefined ? init.desc : 'Re-engages storm-season leads from Angi and Thumbtack with a 14-day drip.');
     // Audience
@@ -30962,7 +31030,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const sendDaysLabel = Object.keys(sendDays).filter(k => sendDays[k]).map(k => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][k]).join(', ');
 
     const stepBody = () => {
-      if (step === 0) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      if (step === 0) { const goalOpts = CAMPAIGN_GOALS.filter(g => g.aud === audienceType); const goalSel = goalOpts.find(g => g.key === goal) || goalOpts[0]; return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="users" size={19} color={LH.primary} /></div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Who is this campaign for?</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px', maxWidth: 640 }}>This sets how the campaign behaves — new leads get speed-to-lead on the launch day, existing customers get re-engagement.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 26 }}>{AUDIENCE_TYPES.map(a => { const on = audienceType === a.key; return <div key={a.key} onClick={() => { setAudienceType(a.key); const g = CAMPAIGN_GOALS.find(x => x.aud === a.key); if (g && (CAMPAIGN_GOALS.find(x => x.key === goal) || {}).aud !== a.key) setGoal(g.key); }} style={{ padding: 16, borderRadius: 12, border: '1.5px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', cursor: 'pointer' }}><div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', border: '1px solid ' + LH.border, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={a.icon} size={17} color={on ? LH.primary : LH.sub} /></div><span style={{ fontSize: 14.5, fontWeight: 700, color: LH.ink }}>{a.title}</span>{on && <Ic name="check-circle" size={16} color={LH.primary} style={{ marginLeft: 'auto' }} />}</div><div style={{ fontSize: 12.5, color: LH.sub, lineHeight: 1.5 }}>{a.desc}</div></div>; })}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 4 }}>Campaign goal</div>
+        <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 12 }}>Pick a goal — it sets the outcomes this campaign is measured on and the KPIs you’ll track.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>{goalOpts.map(g => { const on = goal === g.key; return <div key={g.key} onClick={() => setGoal(g.key)} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: 13, borderRadius: 10, border: '1px solid ' + (on ? LH.ink : LH.border), background: on ? LH.tint : '#fff', cursor: 'pointer' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={g.icon} size={15} color={on ? LH.primary : LH.sub} /></div><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{g.title}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{g.desc}</div></div>{on && <Ic name="check" size={15} color={LH.ink} />}</div>; })}</div>
+        {goalSel && <Card style={{ padding: 14 }}><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 10 }}>TARGET KPIS FOR THIS GOAL</div><div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>{goalSel.kpis.map(k => <div key={k.label} style={{ flex: '1 1 140px', border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '10px 12px' }}><div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>{k.target}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 1 }}>{k.label}</div></div>)}</div><div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 12, fontSize: 12, color: LH.sub }}><Ic name="flag" size={13} color={LH.sub} />Outcomes: {goalSel.outcomes.join(' · ')}</div></Card>}
+      </div>; }
+      if (step === 1) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="pencil" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Add details to your campaign</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 22px' }}>Name it something your team will recognise in the campaign list.</div>
@@ -30972,7 +31050,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Description</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>auto-written from your rules</span></div>
         <textarea value={desc} onChange={e => setDesc(e.target.value)} style={{ width: '100%', height: 88, borderRadius: 9, border: '1px solid ' + LH.border, padding: 12, fontSize: 13.5, color: LH.body, margin: '6px 0 10px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
       </div>;
-      if (step === 1) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      if (step === 2) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="filter" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Audience</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>Configure which customers qualify for this campaign. Customers are evaluated when they are created — matching customers are enrolled automatically.</div>
@@ -30997,7 +31075,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {matched.length > 60 && <div style={{ padding: '9px 15px', fontSize: 12, color: LH.muted, textAlign: 'center' }}>Showing 60 of {matched.length}</div>}
         </Card>
       </div>;
-      if (step === 2) {
+      if (step === 5) {
         const numberCard = <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Outbound number</label><div style={{ marginTop: 8 }}><Dropdown value={NUMBERS[numIdx].num} options={NUMBERS.map(o => ({ value: o.num, label: o.name + ' · ' + o.num }))} onChange={v => setNumIdx(Math.max(0, NUMBERS.findIndex(o => o.num === v)))} /></div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 8 }}>Shared by SMS and calls. Replies and callbacks come back to this number.</div></Card>;
         const optOutCard = which => {
           const val = which === 'email' ? emailOptOut : smsOptOut;
@@ -31065,7 +31143,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </Card>;
         const TABS = [['sms', 'SMS', 'message-square'], ['email', 'Email', 'mail'], ['call', 'Call', 'phone']];
         const groupTitle = commTab === 'sms' ? 'SMS settings' : commTab === 'email' ? 'Email settings' : 'Call settings';
-        const groupSub = commTab === 'sms' ? 'The number your texts send from, and STOP opt-out handling.' : commTab === 'email' ? 'Sender identity, tracking, and unsubscribe handling.' : 'Voice agent, guidance, and the qualification playbook Nova follows on calls.';
+        const groupSub = commTab === 'sms' ? 'The number your texts send from, and STOP opt-out handling.' : commTab === 'email' ? 'Sender identity, tracking, and unsubscribe handling.' : 'Voice agent and call guidance. The qualification playbook lives in its own step.';
         return <div style={{ maxWidth: 720, margin: '0 auto' }}>
           <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="radio" size={19} color={LH.primary} /></div>
           <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>How this campaign reaches out</div>
@@ -31076,37 +31154,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ marginBottom: 12 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{groupTitle}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 2 }}>{groupSub}</div></div>
           {commTab === 'sms' && <>{numberCard}{optOutCard('sms')}</>}
           {commTab === 'email' && <>{emailCard}{optOutCard('email')}</>}
-          {commTab === 'call' && <>{numberCard}{voiceCard}{instructionsCard}{playbookCard}</>}
+          {commTab === 'call' && <>{numberCard}{voiceCard}{instructionsCard}</>}
         </div>;
       }
-      if (step === 3) { const smsReady = !!(NUMBERS[numIdx] && smsOptOut.trim()); const emailReady = !!(emailFrom.trim() && emailAddr && emailReply.trim()); const stepErr = ch => ch === 'email' ? (emailReady ? null : 'Email sender isn’t set up. Add a from name, sending address, and reply-to in Communication.') : (ch === 'sms' || ch === 'voice_drop' || ch === 'video_drop') ? (smsReady ? null : 'Outbound number / opt-out isn’t set up. Configure SMS in Communication.') : null; const needsSms = s2l.some(s => ['sms', 'voice_drop', 'video_drop'].includes(s.ch)) && !smsReady; const needsEmail = s2l.some(s => s.ch === 'email') && !emailReady; return <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="zap" size={19} color={LH.primary} /></div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Speed to Lead</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px' }}>Launch day. These steps fire the moment a lead is enrolled, each one relative to the step before it.</div>
-        {(needsSms || needsEmail) && <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 16, padding: '12px 14px', borderRadius: 10, background: '#fbeaea', border: '1px solid #f2d0d0' }}>
-          <Ic name="alert-triangle" size={16} color={LH.red} style={{ marginTop: 1 }} />
-          <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.red }}>Communication setup incomplete</div><div style={{ fontSize: 12.5, color: '#8a4b4b', marginTop: 2, lineHeight: 1.45 }}>{[needsSms && 'your SMS outbound number and opt-out message', needsEmail && 'your email sender details'].filter(Boolean).join(' and ')} {(needsSms && needsEmail) ? 'are' : 'is'} not set up. These steps won’t send until it’s fixed.</div></div>
-          <button onClick={() => setStep(2)} style={{ flexShrink: 0, height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.red, background: '#fff', color: LH.red, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Fix in Communication</button>
-        </div>}
-        {s2l.map(s => <StepEditor key={s.id} step={s} timingMode="offset" error={stepErr(s.ch)} onChange={ns => setS2l(s2l.map(x => x.id === s.id ? ns : x))} onRemove={() => setS2l(s2l.filter(x => x.id !== s.id))} />)}
-        <button onClick={() => setS2l([...s2l, { id: wuid(), ch: 'sms', offset: '15', anchor: 'last_message', body: '' }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 10, padding: 12, background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button>
-        <Card style={{ padding: 16, marginTop: 18 }}>
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Business hours for launch day</div>
-          <div style={{ fontSize: 12, color: LH.sub, margin: '4px 0 12px' }}>A lead that arrives outside these hours waits — launch day steps run at the start of the next available window. Nurture days keep their own schedule.</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: bizHours ? 12 : 0 }}><Toggle on={bizHours} onChange={setBizHours} /><span style={{ fontSize: 13, color: LH.body }}>{bizHours ? 'Yes — respect business hours' : 'No — send any time of day'}</span></div>
-          {bizHours && <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><div style={{ width: 130 }}><Dropdown value="9:00 am" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div><span style={{ color: LH.muted, fontSize: 12 }}>to</span><div style={{ width: 130 }}><Dropdown value="8:00 pm" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div></div>}
-          <div style={{ borderTop: '1px solid ' + LH.borderSoft, margin: '14px 0' }} />
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Run launch day on weekends?</div>
-          <div style={{ display: 'flex', gap: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={weekend.sat} onChange={v => setWeekend({ ...weekend, sat: v })} /><span style={{ fontSize: 13, color: LH.body }}>Saturday</span></div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={weekend.sun} onChange={v => setWeekend({ ...weekend, sun: v })} /><span style={{ fontSize: 13, color: LH.body }}>Sunday</span></div>
-          </div>
-        </Card>
-      </div>; }
-      if (step === 4) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      if (step === 3) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="headphones" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Nurture sequence</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Day-by-day follow-ups after launch day. Pick a day on the left, edit its steps on the right.</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Day 0 is <b style={{ color: LH.ink }}>launch day</b> — {audienceType === 'existing' ? 'the first outreach when a customer is enrolled' : 'it fires the moment a lead is captured (speed-to-lead)'}. Days 1+ are the day-by-day follow-up drip.</div>
         <Card style={{ padding: 16, marginBottom: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>TIME ZONE</div>
@@ -31122,19 +31176,61 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </Card>
         <div style={{ display: 'flex', gap: 14 }}>
-          <div style={{ width: 132, flexShrink: 0, maxHeight: 460, overflowY: 'auto' }}>{dayList.map(d => { const o = days[d]; const chs = o ? o.steps.map(s => s.ch) : []; return <div key={d} onClick={() => setSelDay(d)} style={{ padding: '9px 11px', borderRadius: 9, marginBottom: 6, border: '1px solid ' + (selDay === d ? LH.primary : LH.border), background: selDay === d ? LH.tint : '#fff', cursor: 'pointer' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>Day {d}</span>{o && o.active === false && <span style={{ fontSize: 10, color: LH.amber }}>Paused</span>}</div><div style={{ display: 'flex', gap: 5, marginTop: 5, minHeight: 13 }}>{['sms', 'email', 'call', 'voice_drop', 'video_drop'].filter(c => chs.includes(c)).map(c => <Ic key={c} name={CH_ICON[c]} size={12} color={LH.muted} />)}</div></div>; })}</div>
-          <Card style={{ flex: 1, minWidth: 0, padding: 16, alignSelf: 'flex-start' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Day {selDay}</div><div style={{ fontSize: 12, color: LH.sub }}>{dayObj.steps.length ? dayObj.steps.length + (dayObj.steps.length > 1 ? ' steps' : ' step') : 'No steps yet'}</div></div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={dayObj.active !== false} onChange={v => setDays({ ...days, [selDay]: { ...dayObj, active: v } })} /><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 600 }}>{dayObj.active === false ? 'Paused' : 'Active'}</span></div>
-            </div>
-            {dayObj.active === false && <div style={{ fontSize: 12, color: LH.amber, background: LH.amberBg, border: '1px solid ' + LH.amberBd, borderRadius: 8, padding: '9px 12px', marginBottom: 12 }}>This day is paused — nothing sends. Disabled days are skipped and the campaign continues with the next enabled day.</div>}
-            {dayObj.steps.map(s => <StepEditor key={s.id} step={s} timingMode="time" onChange={ns => setDaySteps(dayObj.steps.map(x => x.id === s.id ? ns : x))} onRemove={() => setDaySteps(dayObj.steps.filter(x => x.id !== s.id))} />)}
-            <button onClick={() => setDaySteps([...dayObj.steps, { id: wuid(), ch: 'sms', time: '10:00 am', body: '' }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 10, padding: 11, background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button>
-          </Card>
+          <div style={{ width: 132, flexShrink: 0, maxHeight: 460, overflowY: 'auto' }}>{[0].concat(dayList).map(d => { const isLaunch = d === 0; const o = days[d]; const chs = isLaunch ? s2l.map(s => s.ch) : (o ? o.steps.map(s => s.ch) : []); return <div key={d} onClick={() => setSelDay(d)} style={{ padding: '9px 11px', borderRadius: 9, marginBottom: 6, border: '1px solid ' + (selDay === d ? LH.primary : LH.border), background: selDay === d ? LH.tint : (isLaunch ? LH.bg : '#fff'), cursor: 'pointer' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 12.5, fontWeight: isLaunch ? 700 : 600, color: LH.ink }}>{isLaunch ? 'Launch day' : 'Day ' + d}</span>{isLaunch ? <span style={{ fontSize: 10, fontWeight: 700, color: LH.primary }}>Day 0</span> : (o && o.active === false && <span style={{ fontSize: 10, color: LH.amber }}>Paused</span>)}</div><div style={{ display: 'flex', gap: 5, marginTop: 5, minHeight: 13 }}>{['sms', 'email', 'call', 'voice_drop', 'video_drop'].filter(c => chs.includes(c)).map(c => <Ic key={c} name={CH_ICON[c]} size={12} color={LH.muted} />)}</div></div>; })}</div>
+          {selDay === 0
+            ? <Card style={{ flex: 1, minWidth: 0, padding: 16, alignSelf: 'flex-start' }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Launch day <span style={{ fontSize: 12, fontWeight: 600, color: LH.muted }}>· Day 0</span></div>
+                <div style={{ fontSize: 12, color: LH.sub, margin: '3px 0 14px' }}>These steps fire {audienceType === 'existing' ? 'when the customer is enrolled' : 'the moment the lead is enrolled'}, each one relative to the step before it.</div>
+                {s2l.map(s => <StepEditor key={s.id} step={s} timingMode="offset" onChange={ns => setS2l(s2l.map(x => x.id === s.id ? ns : x))} onRemove={() => setS2l(s2l.filter(x => x.id !== s.id))} />)}
+                <button onClick={() => setS2l([...s2l, { id: wuid(), ch: 'sms', offset: '15', anchor: 'last_message', body: '' }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 10, padding: 11, background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button>
+                <div style={{ borderTop: '1px solid ' + LH.borderSoft, margin: '16px 0 14px' }} />
+                <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Business hours for launch day</div>
+                <div style={{ fontSize: 12, color: LH.sub, margin: '4px 0 12px' }}>A lead that arrives outside these hours waits — launch-day steps run at the start of the next window. Day 1+ keep their own schedule.</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: bizHours ? 12 : 0 }}><Toggle on={bizHours} onChange={setBizHours} /><span style={{ fontSize: 13, color: LH.body }}>{bizHours ? 'Yes — respect business hours' : 'No — send any time of day'}</span></div>
+                {bizHours && <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><div style={{ width: 130 }}><Dropdown value="9:00 am" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div><span style={{ color: LH.muted, fontSize: 12 }}>to</span><div style={{ width: 130 }}><Dropdown value="8:00 pm" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div></div>}
+                <div style={{ display: 'flex', gap: 20, marginTop: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={weekend.sat} onChange={v => setWeekend({ ...weekend, sat: v })} /><span style={{ fontSize: 13, color: LH.body }}>Run Saturdays</span></div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={weekend.sun} onChange={v => setWeekend({ ...weekend, sun: v })} /><span style={{ fontSize: 13, color: LH.body }}>Run Sundays</span></div>
+                </div>
+              </Card>
+            : <Card style={{ flex: 1, minWidth: 0, padding: 16, alignSelf: 'flex-start' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Day {selDay}</div><div style={{ fontSize: 12, color: LH.sub }}>{dayObj.steps.length ? dayObj.steps.length + (dayObj.steps.length > 1 ? ' steps' : ' step') : 'No steps yet'}</div></div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={dayObj.active !== false} onChange={v => setDays({ ...days, [selDay]: { ...dayObj, active: v } })} /><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 600 }}>{dayObj.active === false ? 'Paused' : 'Active'}</span></div>
+                </div>
+                {dayObj.active === false && <div style={{ fontSize: 12, color: LH.amber, background: LH.amberBg, border: '1px solid ' + LH.amberBd, borderRadius: 8, padding: '9px 12px', marginBottom: 12 }}>This day is paused — nothing sends. Disabled days are skipped and the campaign continues with the next enabled day.</div>}
+                {dayObj.steps.map(s => <StepEditor key={s.id} step={s} timingMode="time" onChange={ns => setDaySteps(dayObj.steps.map(x => x.id === s.id ? ns : x))} onRemove={() => setDaySteps(dayObj.steps.filter(x => x.id !== s.id))} />)}
+                <button onClick={() => setDaySteps([...dayObj.steps, { id: wuid(), ch: 'sms', time: '10:00 am', body: '' }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 10, padding: 11, background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button>
+              </Card>}
         </div>
       </div>;
-      if (step === 5) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      if (step === 4) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="book-open" size={19} color={LH.primary} /></div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Qualification playbook</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>One channel-agnostic playbook. Nova asks these on SMS, email, or a call — whichever channel the lead is on — to qualify them consistently.</div>
+        <Card style={{ padding: 15, marginBottom: 12 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Instructions for Nova</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>guidance, not a word-for-word script</span></div><textarea value={instructions} onChange={e => setInstructions(e.target.value)} style={{ width: '100%', height: 64, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', marginTop: 8, lineHeight: 1.5 }} /></Card>
+        <Card style={{ padding: 15 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Qualification questions ({playbook.length})</span>
+            <button onClick={() => pbInputRef.current && pbInputRef.current.click()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="upload" size={14} color={LH.sub} />Upload playbook</button>
+            <input ref={pbInputRef} type="file" accept=".doc,.docx,.pdf,.txt,.csv" style={{ display: 'none' }} onChange={e => { const f = e.target.files && e.target.files[0]; if (f) setPbFile({ name: f.name, size: f.size }); e.target.value = ''; }} />
+          </div>
+          {pbFile && <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, border: '1px solid ' + LH.border, background: LH.bg, marginBottom: 12 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 7, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="file-text" size={15} color={LH.primary} /></div>
+            <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pbFile.name}</div><div style={{ fontSize: 11, color: LH.green }}>Attached · Nova will follow this decision flow</div></div>
+            <button onClick={() => setPbFile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}><Ic name="x" size={15} color={LH.muted} /></button>
+          </div>}
+          <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 10 }}>Upload a decision-flow doc (.docx, .pdf, .csv) or edit the questions below.</div>
+          {playbook.map((p, i) => <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 0', borderBottom: i < playbook.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+            <span style={{ width: 20, height: 20, borderRadius: 999, background: '#f1f0ec', color: LH.sub, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
+            <input value={p.q} onChange={e => setPlaybook(playbook.map(x => x.id === p.id ? { ...x, q: e.target.value } : x))} style={{ flex: 1, fontSize: 12.5, color: LH.body, border: 'none', outline: 'none', background: 'transparent' }} />
+            <button onClick={() => setPlaybook(playbook.map(x => x.id === p.id ? { ...x, req: !x.req } : x))} style={{ fontSize: 10.5, color: p.req ? LH.primary : LH.muted, fontWeight: 600, border: 'none', background: 'none', cursor: 'pointer' }}>{p.req ? 'required' : 'optional'}</button>
+            <button onClick={() => setPlaybook(playbook.filter(x => x.id !== p.id))} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={14} color={LH.muted} /></button>
+          </div>)}
+          <button onClick={() => setPlaybook([...playbook, { id: wuid(), q: 'New question', req: false }])} style={{ marginTop: 10, fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 5 }}><Ic name="plus" size={14} color={LH.primary} />Add a question</button>
+        </Card>
+      </div>;
+      if (step === 6) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="log-out" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>When should we stop reaching out?</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Records are unenrolled as soon as any of these becomes true.</div>
@@ -31155,15 +31251,18 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
         <div style={{ fontSize: 12.5, color: LH.body, marginTop: 12, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '11px 13px', display: 'flex', gap: 9 }}><Ic name="rotate-ccw" size={15} color={LH.sub} /><span><b style={{ color: LH.ink }}>Automatic stop.</b> Beyond the conditions above, the sequence ends on its own — after the final step on Day {dayCount}, the record is unenrolled.</span></div>
       </div>;
-      // Step 6 — Review & Publish
+      // Step 7 — Review & Publish
       const activeDays = Object.keys(days).filter(d => (days[d].active !== false) && days[d].steps && days[d].steps.length).length;
+      const audLabel = (AUDIENCE_TYPES.find(a => a.key === audienceType) || AUDIENCE_TYPES[0]).title;
+      const goalObj = CAMPAIGN_GOALS.find(g => g.key === goal) || CAMPAIGN_GOALS[0];
       const summary = [
-        { i: 0, icon: 'pencil', t: 'Basic details', lines: ['Name: ' + (name || '—'), 'Time zone: ' + tz, desc ? 'Description set' : 'No description'] },
-        { i: 1, icon: 'filter', t: 'Audience', lines: [conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', enrolledCount + ' of ' + CONTACTS.length + ' records will enrol', removedInMatch + ' removed manually'] },
-        { i: 2, icon: 'radio', t: 'Communication', lines: ['Number: ' + NUMBERS[numIdx].name + ' · ' + NUMBERS[numIdx].num, 'Voice agent: ' + agent, 'Playbook: ' + playbook.length + ' questions'] },
-        { i: 3, icon: 'zap', t: 'Speed to Lead', lines: [s2l.length + ' launch-day step' + (s2l.length !== 1 ? 's' : ''), 'Business hours: ' + (bizHours ? 'on' : 'any time'), 'Weekends: ' + ((weekend.sat || weekend.sun) ? [weekend.sat && 'Sat', weekend.sun && 'Sun'].filter(Boolean).join(', ') : 'off')] },
-        { i: 4, icon: 'headphones', t: 'Nurture sequence', lines: [dayCount + '-day sequence', activeDays + ' day' + (activeDays !== 1 ? 's' : '') + ' with steps', 'Send days: ' + sendDaysLabel] },
-        { i: 5, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'On reply: ' + [replyStatusOn && 'status → ' + replyStatus, replyTaskOn && 'create task'].filter(Boolean).join(', ') || 'no action', 'Built-in stops: opt-out, Nova DND'] }
+        { i: 0, icon: 'users', t: 'Audience type & goal', lines: ['Audience: ' + audLabel, 'Goal: ' + goalObj.title, 'KPIs: ' + goalObj.kpis.map(k => k.target + ' ' + k.label).join(' · ')] },
+        { i: 1, icon: 'pencil', t: 'Basic details', lines: ['Name: ' + (name || '—'), 'Time zone: ' + tz, desc ? 'Description set' : 'No description'] },
+        { i: 2, icon: 'filter', t: 'Audience', lines: [conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', enrolledCount + ' of ' + CONTACTS.length + ' records will enrol', removedInMatch + ' removed manually'] },
+        { i: 3, icon: 'headphones', t: 'Nurture sequence', lines: ['Launch day: ' + s2l.length + ' step' + (s2l.length !== 1 ? 's' : '') + (bizHours ? ' · business hours on' : ''), dayCount + '-day drip · ' + activeDays + ' day' + (activeDays !== 1 ? 's' : '') + ' with steps', 'Send days: ' + sendDaysLabel] },
+        { i: 4, icon: 'book-open', t: 'Playbook', lines: [playbook.length + ' qualification question' + (playbook.length !== 1 ? 's' : ''), pbFile ? 'Uploaded: ' + pbFile.name : 'Channel-agnostic — used on every channel'] },
+        { i: 5, icon: 'radio', t: 'Communication', lines: ['Number: ' + NUMBERS[numIdx].name + ' · ' + NUMBERS[numIdx].num, 'Voice agent: ' + agent, 'Email: ' + emailAddr] },
+        { i: 6, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'On reply: ' + [replyStatusOn && 'status → ' + replyStatus, replyTaskOn && 'create task'].filter(Boolean).join(', ') || 'no action', 'Built-in stops: opt-out, Nova DND'] }
       ];
       const problems = []; if (!name.trim()) problems.push('Campaign name is required (Basic details).'); if (!tz) problems.push('Campaign time zone is required (Basic details).'); if (!conds.filter(c => c.field).length) problems.push('Add at least one audience condition.');
       return <div style={{ maxWidth: 720, margin: '0 auto' }}>
@@ -31202,8 +31301,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ display: 'flex', gap: 8 }}>
             {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go back</Btn>}
             {step < WIZ_STEPS.length - 1
-              ? <Btn kind="primary" onClick={() => { if (step === 0 && !name.trim()) return; setStep(step + 1); }}>Continue</Btn>
-              : <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={() => { if (!(name.trim() && tz && conds.some(c => c.field))) return; if (editing) { updateCampaign(editing.name, { name: name.trim(), status, records: enrolledCount }); } else { addCampaign({ name: name.trim(), by: 'Ethan Brooks', bi: 'E', status: status === 'Draft' ? 'Active' : status, records: enrolledCount, date: fmtNow() }); } onCreate(); }} style={{ opacity: (name.trim() && tz && conds.some(c => c.field)) ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Publish campaign'}</Btn>}
+              ? <Btn kind="primary" onClick={() => { if (step === 1 && !name.trim()) return; setStep(step + 1); }}>Continue</Btn>
+              : <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={() => { if (!(name.trim() && tz && conds.some(c => c.field))) return; if (editing) { updateCampaign(editing.name, { name: name.trim(), status, records: enrolledCount, goal, audienceType }); } else { addCampaign({ name: name.trim(), by: 'Ethan Brooks', bi: 'E', status: status === 'Draft' ? 'Active' : status, records: enrolledCount, date: fmtNow(), goal, audienceType }); } onCreate(); }} style={{ opacity: (name.trim() && tz && conds.some(c => c.field)) ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Publish campaign'}</Btn>}
           </div>
         </div>
       </div>;
