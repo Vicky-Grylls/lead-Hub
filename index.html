@@ -30707,7 +30707,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   /* ─────────── CAMPAIGN WIZARD (6 steps) ─────────── */
   /* ═══════════ CAMPAIGN WIZARD (fully functional) ═══════════ */
-  const WIZ_STEPS = ['Audience type', 'Basic details', 'Audience', 'Nurture sequence', 'Playbook', 'Communication', 'Exit rules', 'Review & Publish'];
+  const WIZ_STEPS = ['Campaign setup', 'Audience', 'Nurture sequence', 'Playbook', 'Communication', 'Exit rules', 'Review & Publish'];
   const AUDIENCE_TYPES = [
     { key: 'new', icon: 'user-plus', title: 'New Leads', desc: 'Fresh inbound leads from your sources. Speed-to-lead applies — the launch day fires the moment a lead is captured.' },
     { key: 'existing', icon: 'users', title: 'Existing Customers', desc: 'Past or cold customers you already have. Re-engagement / demand-gen — no speed-to-lead; the launch day is your first re-outreach.' }
@@ -31030,27 +31030,23 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const sendDaysLabel = Object.keys(sendDays).filter(k => sendDays[k]).map(k => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][k]).join(', ');
 
     const stepBody = () => {
-      if (step === 0) { const goalOpts = CAMPAIGN_GOALS.filter(g => g.aud === audienceType); const goalSel = goalOpts.find(g => g.key === goal) || goalOpts[0]; return <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="users" size={19} color={LH.primary} /></div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Who is this campaign for?</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px', maxWidth: 640 }}>This sets how the campaign behaves — new leads get speed-to-lead on the launch day, existing customers get re-engagement.</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 26 }}>{AUDIENCE_TYPES.map(a => { const on = audienceType === a.key; return <div key={a.key} onClick={() => { setAudienceType(a.key); const g = CAMPAIGN_GOALS.find(x => x.aud === a.key); if (g && (CAMPAIGN_GOALS.find(x => x.key === goal) || {}).aud !== a.key) setGoal(g.key); }} style={{ padding: 16, borderRadius: 12, border: '1.5px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', cursor: 'pointer' }}><div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', border: '1px solid ' + LH.border, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={a.icon} size={17} color={on ? LH.primary : LH.sub} /></div><span style={{ fontSize: 14.5, fontWeight: 700, color: LH.ink }}>{a.title}</span>{on && <Ic name="check-circle" size={16} color={LH.primary} style={{ marginLeft: 'auto' }} />}</div><div style={{ fontSize: 12.5, color: LH.sub, lineHeight: 1.5 }}>{a.desc}</div></div>; })}</div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 4 }}>Campaign goal</div>
-        <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 12 }}>Pick a goal — it sets the outcomes this campaign is measured on and the KPIs you’ll track.</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>{goalOpts.map(g => { const on = goal === g.key; return <div key={g.key} onClick={() => setGoal(g.key)} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: 13, borderRadius: 10, border: '1px solid ' + (on ? LH.ink : LH.border), background: on ? LH.tint : '#fff', cursor: 'pointer' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={g.icon} size={15} color={on ? LH.primary : LH.sub} /></div><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{g.title}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{g.desc}</div></div>{on && <Ic name="check" size={15} color={LH.ink} />}</div>; })}</div>
+      if (step === 0) { const goalOpts = CAMPAIGN_GOALS.filter(g => g.aud === audienceType); const goalSel = goalOpts.find(g => g.key === goal) || goalOpts[0]; const audDesc = (AUDIENCE_TYPES.find(a => a.key === audienceType) || {}).desc; return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="send" size={19} color={LH.primary} /></div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Campaign setup</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>Name it, choose who it’s for, and set the goal. New leads get speed-to-lead on the launch day; existing customers get re-engagement.</div>
+        <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign name <span style={{ color: LH.red }}>*</span></label>
+        <input value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', height: 38, borderRadius: 9, border: '1px solid ' + (name.trim() ? LH.border : LH.red), padding: '0 12px', fontSize: 14, color: LH.ink, margin: '6px 0 4px', outline: 'none' }} />
+        {!name.trim() && <div style={{ fontSize: 11.5, color: LH.red, marginBottom: 6 }}>A campaign name is required.</div>}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Description</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>auto-written from your rules</span></div>
+        <textarea value={desc} onChange={e => setDesc(e.target.value)} style={{ width: '100%', height: 74, borderRadius: 9, border: '1px solid ' + LH.border, padding: 12, fontSize: 13.5, color: LH.body, margin: '6px 0 18px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 6 }}>
+          <div><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Audience type</label><div style={{ marginTop: 6 }}><Dropdown value={audienceType} options={AUDIENCE_TYPES.map(a => ({ value: a.key, label: a.title }))} onChange={v => { setAudienceType(v); const g = CAMPAIGN_GOALS.find(x => x.aud === v); if (g && (CAMPAIGN_GOALS.find(x => x.key === goal) || {}).aud !== v) setGoal(g.key); }} /></div></div>
+          <div><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign goal</label><div style={{ marginTop: 6 }}><Dropdown value={goal} options={goalOpts.map(g => ({ value: g.key, label: g.title }))} onChange={setGoal} /></div></div>
+        </div>
+        <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 16 }}>{audDesc}</div>
         {goalSel && <Card style={{ padding: 14 }}><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 10 }}>TARGET KPIS FOR THIS GOAL</div><div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>{goalSel.kpis.map(k => <div key={k.label} style={{ flex: '1 1 140px', border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '10px 12px' }}><div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>{k.target}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 1 }}>{k.label}</div></div>)}</div><div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 12, fontSize: 12, color: LH.sub }}><Ic name="flag" size={13} color={LH.sub} />Outcomes: {goalSel.outcomes.join(' · ')}</div></Card>}
       </div>; }
       if (step === 1) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="pencil" size={19} color={LH.primary} /></div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Add details to your campaign</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 22px' }}>Name it something your team will recognise in the campaign list.</div>
-        <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign name <span style={{ color: LH.red }}>*</span></label>
-        <input value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', height: 38, borderRadius: 9, border: '1px solid ' + (name.trim() ? LH.border : LH.red), padding: '0 12px', fontSize: 14, color: LH.ink, margin: '6px 0 4px', outline: 'none' }} />
-        {!name.trim() && <div style={{ fontSize: 11.5, color: LH.red, marginBottom: 10 }}>A campaign name is required.</div>}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Description</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>auto-written from your rules</span></div>
-        <textarea value={desc} onChange={e => setDesc(e.target.value)} style={{ width: '100%', height: 88, borderRadius: 9, border: '1px solid ' + LH.border, padding: 12, fontSize: 13.5, color: LH.body, margin: '6px 0 10px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
-      </div>;
-      if (step === 2) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="filter" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Audience</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>Configure which customers qualify for this campaign. Customers are evaluated when they are created — matching customers are enrolled automatically.</div>
@@ -31075,7 +31071,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {matched.length > 60 && <div style={{ padding: '9px 15px', fontSize: 12, color: LH.muted, textAlign: 'center' }}>Showing 60 of {matched.length}</div>}
         </Card>
       </div>;
-      if (step === 5) {
+      if (step === 4) {
         const numberCard = <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Outbound number</label><div style={{ marginTop: 8 }}><Dropdown value={NUMBERS[numIdx].num} options={NUMBERS.map(o => ({ value: o.num, label: o.name + ' · ' + o.num }))} onChange={v => setNumIdx(Math.max(0, NUMBERS.findIndex(o => o.num === v)))} /></div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 8 }}>Shared by SMS and calls. Replies and callbacks come back to this number.</div></Card>;
         const optOutCard = which => {
           const val = which === 'email' ? emailOptOut : smsOptOut;
@@ -31157,7 +31153,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {commTab === 'call' && <>{numberCard}{voiceCard}{instructionsCard}</>}
         </div>;
       }
-      if (step === 3) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      if (step === 2) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="headphones" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Nurture sequence</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Day 0 is <b style={{ color: LH.ink }}>launch day</b> — {audienceType === 'existing' ? 'the first outreach when a customer is enrolled' : 'it fires the moment a lead is captured (speed-to-lead)'}. Days 1+ are the day-by-day follow-up drip.</div>
@@ -31204,7 +31200,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               </Card>}
         </div>
       </div>;
-      if (step === 4) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      if (step === 3) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="book-open" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Qualification playbook</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>One channel-agnostic playbook. Nova asks these on SMS, email, or a call — whichever channel the lead is on — to qualify them consistently.</div>
@@ -31230,7 +31226,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <button onClick={() => setPlaybook([...playbook, { id: wuid(), q: 'New question', req: false }])} style={{ marginTop: 10, fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 5 }}><Ic name="plus" size={14} color={LH.primary} />Add a question</button>
         </Card>
       </div>;
-      if (step === 6) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      if (step === 5) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="log-out" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>When should we stop reaching out?</div>
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Records are unenrolled as soon as any of these becomes true.</div>
@@ -31256,13 +31252,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       const audLabel = (AUDIENCE_TYPES.find(a => a.key === audienceType) || AUDIENCE_TYPES[0]).title;
       const goalObj = CAMPAIGN_GOALS.find(g => g.key === goal) || CAMPAIGN_GOALS[0];
       const summary = [
-        { i: 0, icon: 'users', t: 'Audience type & goal', lines: ['Audience: ' + audLabel, 'Goal: ' + goalObj.title, 'KPIs: ' + goalObj.kpis.map(k => k.target + ' ' + k.label).join(' · ')] },
-        { i: 1, icon: 'pencil', t: 'Basic details', lines: ['Name: ' + (name || '—'), 'Time zone: ' + tz, desc ? 'Description set' : 'No description'] },
-        { i: 2, icon: 'filter', t: 'Audience', lines: [conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', enrolledCount + ' of ' + CONTACTS.length + ' records will enrol', removedInMatch + ' removed manually'] },
-        { i: 3, icon: 'headphones', t: 'Nurture sequence', lines: ['Launch day: ' + s2l.length + ' step' + (s2l.length !== 1 ? 's' : '') + (bizHours ? ' · business hours on' : ''), dayCount + '-day drip · ' + activeDays + ' day' + (activeDays !== 1 ? 's' : '') + ' with steps', 'Send days: ' + sendDaysLabel] },
-        { i: 4, icon: 'book-open', t: 'Playbook', lines: [playbook.length + ' qualification question' + (playbook.length !== 1 ? 's' : ''), pbFile ? 'Uploaded: ' + pbFile.name : 'Channel-agnostic — used on every channel'] },
-        { i: 5, icon: 'radio', t: 'Communication', lines: ['Number: ' + NUMBERS[numIdx].name + ' · ' + NUMBERS[numIdx].num, 'Voice agent: ' + agent, 'Email: ' + emailAddr] },
-        { i: 6, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'On reply: ' + [replyStatusOn && 'status → ' + replyStatus, replyTaskOn && 'create task'].filter(Boolean).join(', ') || 'no action', 'Built-in stops: opt-out, Nova DND'] }
+        { i: 0, icon: 'send', t: 'Campaign setup', lines: ['Name: ' + (name || '—') + ' · ' + audLabel, 'Goal: ' + goalObj.title, 'KPIs: ' + goalObj.kpis.map(k => k.target + ' ' + k.label).join(' · ')] },
+        { i: 1, icon: 'filter', t: 'Audience', lines: [conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', enrolledCount + ' of ' + CONTACTS.length + ' records will enrol', removedInMatch + ' removed manually'] },
+        { i: 2, icon: 'headphones', t: 'Nurture sequence', lines: ['Launch day: ' + s2l.length + ' step' + (s2l.length !== 1 ? 's' : '') + (bizHours ? ' · business hours on' : ''), dayCount + '-day drip · ' + activeDays + ' day' + (activeDays !== 1 ? 's' : '') + ' with steps', 'Send days: ' + sendDaysLabel] },
+        { i: 3, icon: 'book-open', t: 'Playbook', lines: [playbook.length + ' qualification question' + (playbook.length !== 1 ? 's' : ''), pbFile ? 'Uploaded: ' + pbFile.name : 'Channel-agnostic — used on every channel'] },
+        { i: 4, icon: 'radio', t: 'Communication', lines: ['Number: ' + NUMBERS[numIdx].name + ' · ' + NUMBERS[numIdx].num, 'Voice agent: ' + agent, 'Email: ' + emailAddr] },
+        { i: 5, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'On reply: ' + [replyStatusOn && 'status → ' + replyStatus, replyTaskOn && 'create task'].filter(Boolean).join(', ') || 'no action', 'Built-in stops: opt-out, Nova DND'] }
       ];
       const problems = []; if (!name.trim()) problems.push('Campaign name is required (Basic details).'); if (!tz) problems.push('Campaign time zone is required (Basic details).'); if (!conds.filter(c => c.field).length) problems.push('Add at least one audience condition.');
       return <div style={{ maxWidth: 720, margin: '0 auto' }}>
@@ -31301,7 +31296,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ display: 'flex', gap: 8 }}>
             {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go back</Btn>}
             {step < WIZ_STEPS.length - 1
-              ? <Btn kind="primary" onClick={() => { if (step === 1 && !name.trim()) return; setStep(step + 1); }}>Continue</Btn>
+              ? <Btn kind="primary" onClick={() => { if (step === 0 && !name.trim()) return; setStep(step + 1); }}>Continue</Btn>
               : <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={() => { if (!(name.trim() && tz && conds.some(c => c.field))) return; if (editing) { updateCampaign(editing.name, { name: name.trim(), status, records: enrolledCount, goal, audienceType }); } else { addCampaign({ name: name.trim(), by: 'Ethan Brooks', bi: 'E', status: status === 'Draft' ? 'Active' : status, records: enrolledCount, date: fmtNow(), goal, audienceType }); } onCreate(); }} style={{ opacity: (name.trim() && tz && conds.some(c => c.field)) ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Publish campaign'}</Btn>}
           </div>
         </div>
