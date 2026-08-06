@@ -30877,7 +30877,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </div>;
   }
   // Condition builder shared by Audience + Exit rules
-  function Conditions({ rows, setRows, join, setJoin, addLabel }) {
+  function Conditions({ rows, setRows, join, setJoin, addLabel, groups, addField }) {
+    groups = groups || FIELD_GROUPS;
+    addField = addField || 'customer.lead_source';
     const update = (id, patch) => setRows(rows.map(r => r.id === id ? { ...r, ...patch } : r));
     const valOptions = f => (FIELD_DEFS[f] && FIELD_DEFS[f].options || []).map(o => ({ value: o, label: o }));
     return <div>
@@ -30889,7 +30891,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         const f = FIELD_DEFS[r.field]; const type = f ? f.type : 'multiselect';
         return <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
           <span style={{ width: 42, fontSize: 12, color: LH.muted, flexShrink: 0 }}>{i === 0 ? 'Where' : (join === 'and' ? 'And' : 'Or')}</span>
-          <div style={{ flex: 1 }}><Dropdown value={r.field} groups={FIELD_GROUPS} placeholder="Field" onChange={v => update(r.id, { field: v, op: OPS[FIELD_DEFS[v].type][0], val: [] })} /></div>
+          <div style={{ flex: 1 }}><Dropdown value={r.field} groups={groups} placeholder="Field" onChange={v => update(r.id, { field: v, op: OPS[FIELD_DEFS[v].type][0], val: [] })} /></div>
           <div style={{ width: 130, flexShrink: 0 }}><Dropdown value={r.op} options={OPS[type].map(o => ({ value: o, label: o }))} onChange={v => update(r.id, { op: v })} /></div>
           <div style={{ flex: 1 }}>{type === 'multiselect' || type === 'bool'
             ? <Dropdown multi={type === 'multiselect'} value={type === 'bool' ? (r.val || []) : (r.val || [])} options={valOptions(r.field)} placeholder="Select…" onChange={v => update(r.id, { val: type === 'bool' ? [v].flat().slice(-1) : v })} />
@@ -30898,7 +30900,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <button onClick={() => setRows(rows.filter(x => x.id !== r.id))} style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: 'transparent', color: LH.muted, cursor: 'pointer', flexShrink: 0 }}><Ic name="x" size={15} color={LH.muted} /></button>
         </div>;
       })}
-      <button onClick={() => setRows([...rows, { id: wuid(), field: 'customer.lead_source', op: 'is any of', val: [] }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 9, padding: '10px', background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4 }}><Ic name="plus" size={15} color={LH.primary} />{addLabel || 'Add filter'}</button>
+      <button onClick={() => setRows([...rows, { id: wuid(), field: addField, op: OPS[FIELD_DEFS[addField].type][0], val: [] }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 9, padding: '10px', background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4 }}><Ic name="plus" size={15} color={LH.primary} />{addLabel || 'Add filter'}</button>
     </div>;
   }
 
@@ -30981,11 +30983,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [desc, setDesc] = useState(init.desc !== undefined ? init.desc : 'Re-engages storm-season leads from Angi and Thumbtack with a 14-day drip.');
     // Audience
     const [join, setJoin] = useState('and');
-    const [conds, setConds] = useState([
-      { id: wuid(), field: 'customer.lead_source', op: 'is any of', val: ['Angi', 'Thumbtack'] },
-      { id: wuid(), field: 'job.current_status', op: 'is any of', val: ['New Lead', 'Nurture'] },
-      { id: wuid(), field: 'job.service_type', op: 'is any of', val: ['Roofing'] }
-    ]);
+    const CAMP_SOURCES = ['Angi', 'Thumbtack', 'Google LSA', 'Meta', 'Website Booking', 'SalesRabbit'];
+    const newLeadConds = () => [{ id: wuid(), field: 'customer.lead_source', op: 'is any of', val: ['Angi', 'Thumbtack'] }];
+    const existingConds = () => [{ id: wuid(), field: 'customer.type', op: 'is any of', val: ['Residential'] }, { id: wuid(), field: 'customer.tags', op: 'is any of', val: ['Repeat customer'] }];
+    const [conds, setConds] = useState(() => (init.audienceType === 'existing' ? existingConds() : newLeadConds()));
     const [search, setSearch] = useState('');
     const [removedIds, setRemovedIds] = useState(() => new Set());
     const [status, setStatus] = useState(init.status || 'Draft');
@@ -31043,6 +31044,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
     const matchCount = useMemo(() => filterContacts(conds, join).length, [conds, join]);
     const enrolledCount = useMemo(() => filterContacts(conds, join).filter(c => !removedIds.has(c.id)).length, [conds, join, removedIds]);
+    // New-lead campaigns configure intake sources (no records exist yet); existing-customer campaigns match records.
+    const srcVal = (conds.find(c => c.field === 'customer.lead_source') || {}).val || [];
+    const toggleSrc = s => { const cur = new Set(srcVal); cur.has(s) ? cur.delete(s) : cur.add(s); const nv = Array.from(cur); setConds(prev => prev.some(c => c.field === 'customer.lead_source') ? prev.map(c => c.field === 'customer.lead_source' ? { ...c, val: nv } : c) : [{ id: wuid(), field: 'customer.lead_source', op: 'is any of', val: nv }, ...prev]); };
     const matched = useMemo(() => {
       const list = filterContacts(conds, join);
       const q = search.trim().toLowerCase();
@@ -31068,36 +31072,47 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Description</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>auto-written from your rules</span></div>
         <textarea value={desc} onChange={e => setDesc(e.target.value)} style={{ width: '100%', height: 74, borderRadius: 9, border: '1px solid ' + LH.border, padding: 12, fontSize: 13.5, color: LH.body, margin: '6px 0 18px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 6 }}>
-          <div><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Audience type</label><div style={{ marginTop: 6 }}><Dropdown value={audienceType} options={AUDIENCE_TYPES.map(a => ({ value: a.key, label: a.title }))} onChange={v => { setAudienceType(v); const g = CAMPAIGN_GOALS.find(x => x.aud === v); if (g && (CAMPAIGN_GOALS.find(x => x.key === goal) || {}).aud !== v) setGoal(g.key); }} /></div></div>
+          <div><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Audience type</label><div style={{ marginTop: 6 }}><Dropdown value={audienceType} options={AUDIENCE_TYPES.map(a => ({ value: a.key, label: a.title }))} onChange={v => { setAudienceType(v); const g = CAMPAIGN_GOALS.find(x => x.aud === v); if (g && (CAMPAIGN_GOALS.find(x => x.key === goal) || {}).aud !== v) setGoal(g.key); setConds(v === 'existing' ? existingConds() : newLeadConds()); setRemovedIds(new Set()); }} /></div></div>
           <div><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign goal</label><div style={{ marginTop: 6 }}><Dropdown value={goal} options={goalOpts.map(g => ({ value: g.key, label: g.title }))} onChange={setGoal} /></div></div>
         </div>
         <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 16 }}>{audDesc}</div>
-        {goalSel && <Card style={{ padding: 14 }}><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 10 }}>TARGET KPIS FOR THIS GOAL</div><div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>{goalSel.kpis.map(k => <div key={k.label} style={{ flex: '1 1 140px', border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '10px 12px' }}><div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>{k.target}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 1 }}>{k.label}</div></div>)}</div><div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 12, fontSize: 12, color: LH.sub }}><Ic name="flag" size={13} color={LH.sub} />Outcomes: {goalSel.outcomes.join(' · ')}</div></Card>}
       </div>; }
       if (step === 1) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="filter" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Audience</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>Configure which customers qualify for this campaign. Customers are evaluated when they are created — matching customers are enrolled automatically.</div>
-        <Conditions rows={conds} setRows={setConds} join={join} setJoin={setJoin} />
-        <Card style={{ marginTop: 20, padding: 0, overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px', borderBottom: '1px solid ' + LH.borderSoft }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Ic name="user-plus" size={15} color={LH.sub} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Matching contacts ({matchCount})</span>{removedInMatch > 0 && <button onClick={() => setRemovedIds(new Set())} style={{ fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Restore all ({removedInMatch})</button>}</div>
-            <div style={{ position: 'relative', width: 260 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 10, top: 9 }} /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, email, phone" style={{ width: '100%', height: 32, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px 0 30px', fontSize: 12.5, color: LH.ink, outline: 'none' }} /></div>
-          </div>
-          <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-            {matched.length ? matched.slice(0, 60).map(c => { const rm = removedIds.has(c.id); return <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 15px', borderBottom: '1px solid ' + LH.borderSoft, opacity: rm ? 0.5 : 1 }}>
-              <div style={{ width: 30, height: 30, borderRadius: 999, background: LH.tint, color: LH.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{(c.first[0] + c.last[0])}</div>
-              <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink, textDecoration: rm ? 'line-through' : 'none' }}>{c.name}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.email}</div></div>
-              <span style={{ fontSize: 11.5, color: LH.sub, width: 80 }}>{c.source}</span>
-              <Pill label={c.status} tone={c.status === 'Qualified' ? 'Qualified' : c.status === 'New Lead' ? 'New' : 'In drip'} />
-              <span style={{ fontSize: 11.5, color: LH.muted, width: 60, textAlign: 'right' }}>{c.service}</span>
-              {rm
-                ? <button onClick={() => restoreContact(c.id)} style={{ fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', width: 62, textAlign: 'right' }}>Restore</button>
-                : <button onClick={() => removeContact(c.id)} title="Remove from audience" style={{ background: 'none', border: 'none', cursor: 'pointer', width: 62, display: 'flex', justifyContent: 'flex-end' }}><Ic name="x" size={15} color={LH.muted} /></button>}
-            </div>; }) : <div style={{ padding: 30, textAlign: 'center', fontSize: 13, color: LH.muted }}>No matching contact for that search.</div>}
-          </div>
-          {matched.length > 60 && <div style={{ padding: '9px 15px', fontSize: 12, color: LH.muted, textAlign: 'center' }}>Showing 60 of {matched.length}</div>}
-        </Card>
+        {audienceType === 'new'
+          ? <>
+            <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>Pick the lead sources that feed this campaign. New leads enrol automatically as they arrive — you’re configuring the intake, so there are no existing records to match yet.</div>
+            <Card style={{ padding: 16, marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 12 }}>LEAD SOURCES</div>
+              <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap' }}>{CAMP_SOURCES.map(s => { const on = srcVal.includes(s); return <button key={s} onClick={() => toggleSrc(s)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 36, padding: '0 13px', borderRadius: 9, border: '1px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', color: LH.ink, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}><span style={{ width: 16, height: 16, borderRadius: 5, flexShrink: 0, border: '1.5px solid ' + (on ? LH.primary : LH.border), background: on ? LH.primary : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on && <Ic name="check" size={11} color="#fff" />}</span>{s}</button>; })}</div>
+              {!srcVal.length && <div style={{ fontSize: 12, color: LH.red, marginTop: 10 }}>Pick at least one lead source.</div>}
+            </Card>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: '12px 14px', borderRadius: 10, background: LH.bg, border: '1px solid ' + LH.borderSoft }}><Ic name="inbox" size={15} color={LH.sub} style={{ marginTop: 1 }} /><div style={{ fontSize: 12.5, color: LH.sub, lineHeight: 1.5 }}>Matching leads will appear in the pipeline once these sources start delivering. Nothing to enrol right now — this campaign runs on new arrivals.</div></div>
+          </>
+          : <>
+            <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>Configure which existing customers qualify. Customers are evaluated on their profile — matching customers are enrolled automatically.</div>
+            <Conditions rows={conds} setRows={setConds} join={join} setJoin={setJoin} groups={FIELD_GROUPS.filter(g => g.title === 'Customer')} addField="customer.type" />
+            <Card style={{ marginTop: 20, padding: 0, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px', borderBottom: '1px solid ' + LH.borderSoft }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Ic name="user-plus" size={15} color={LH.sub} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Matching customers ({matchCount})</span>{removedInMatch > 0 && <button onClick={() => setRemovedIds(new Set())} style={{ fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Restore all ({removedInMatch})</button>}</div>
+                <div style={{ position: 'relative', width: 260 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 10, top: 9 }} /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, email, phone" style={{ width: '100%', height: 32, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px 0 30px', fontSize: 12.5, color: LH.ink, outline: 'none' }} /></div>
+              </div>
+              <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+                {matched.length ? matched.slice(0, 60).map(c => { const rm = removedIds.has(c.id); return <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 15px', borderBottom: '1px solid ' + LH.borderSoft, opacity: rm ? 0.5 : 1 }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 999, background: LH.tint, color: LH.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{(c.first[0] + c.last[0])}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink, textDecoration: rm ? 'line-through' : 'none' }}>{c.name}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.email}</div></div>
+                  <span style={{ fontSize: 11.5, color: LH.sub, width: 80 }}>{c.source}</span>
+                  <Pill label={c.status} tone={c.status === 'Qualified' ? 'Qualified' : c.status === 'New Lead' ? 'New' : 'In drip'} />
+                  <span style={{ fontSize: 11.5, color: LH.muted, width: 60, textAlign: 'right' }}>{c.service}</span>
+                  {rm
+                    ? <button onClick={() => restoreContact(c.id)} style={{ fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', width: 62, textAlign: 'right' }}>Restore</button>
+                    : <button onClick={() => removeContact(c.id)} title="Remove from audience" style={{ background: 'none', border: 'none', cursor: 'pointer', width: 62, display: 'flex', justifyContent: 'flex-end' }}><Ic name="x" size={15} color={LH.muted} /></button>}
+                </div>; }) : <div style={{ padding: 30, textAlign: 'center', fontSize: 13, color: LH.muted }}>No matching customer for that search.</div>}
+              </div>
+              {matched.length > 60 && <div style={{ padding: '9px 15px', fontSize: 12, color: LH.muted, textAlign: 'center' }}>Showing 60 of {matched.length}</div>}
+            </Card>
+          </>}
       </div>;
       if (step === 4) {
         const numberCard = <Card style={{ padding: 15, marginBottom: 12 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Outbound number</label><div style={{ marginTop: 8 }}><Dropdown value={NUMBERS[numIdx].num} options={NUMBERS.map(o => ({ value: o.num, label: o.name + ' · ' + o.num }))} onChange={v => setNumIdx(Math.max(0, NUMBERS.findIndex(o => o.num === v)))} /></div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 8 }}>Shared by SMS and calls. Replies and callbacks come back to this number.</div></Card>;
@@ -31272,7 +31287,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       const goalObj = CAMPAIGN_GOALS.find(g => g.key === goal) || CAMPAIGN_GOALS[0];
       const summary = [
         { i: 0, icon: 'send', t: 'Campaign setup', lines: ['Name: ' + (name || '—') + ' · ' + audLabel, 'Goal: ' + goalObj.title, 'KPIs: ' + goalObj.kpis.map(k => k.target + ' ' + k.label).join(' · ')] },
-        { i: 1, icon: 'filter', t: 'Audience', lines: [conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', enrolledCount + ' of ' + CONTACTS.length + ' records will enrol', removedInMatch + ' removed manually'] },
+        { i: 1, icon: 'filter', t: 'Audience', lines: audienceType === 'new' ? ['Sources: ' + (srcVal.length ? srcVal.join(', ') : 'none selected'), 'New leads auto-enrol as they arrive'] : [conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', enrolledCount + ' of ' + CONTACTS.length + ' customers will enrol', removedInMatch + ' removed manually'] },
         { i: 2, icon: 'headphones', t: 'Nurture sequence', lines: ['Launch day: ' + s2l.length + ' step' + (s2l.length !== 1 ? 's' : '') + (bizHours ? ' · business hours on' : ''), dayCount + '-day drip · ' + activeDays + ' day' + (activeDays !== 1 ? 's' : '') + ' with steps', 'Send days: ' + sendDaysLabel] },
         { i: 3, icon: 'book-open', t: 'Playbook', lines: [playbook.length + ' qualification question' + (playbook.length !== 1 ? 's' : ''), pbFile ? 'Uploaded: ' + pbFile.name : 'Channel-agnostic — used on every channel'] },
         { i: 4, icon: 'radio', t: 'Communication', lines: ['Number: ' + NUMBERS[numIdx].name + ' · ' + NUMBERS[numIdx].num, 'Voice agent: ' + agent, 'Email: ' + emailAddr] },
@@ -31316,7 +31331,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go back</Btn>}
             {step < WIZ_STEPS.length - 1
               ? <Btn kind="primary" onClick={() => { if (step === 0 && !name.trim()) return; setStep(step + 1); }}>Continue</Btn>
-              : <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={() => { if (!(name.trim() && tz && conds.some(c => c.field))) return; if (editing) { updateCampaign(editing.name, { name: name.trim(), status, records: enrolledCount, goal, audienceType }); } else { addCampaign({ name: name.trim(), by: 'Ethan Brooks', bi: 'E', status: status === 'Draft' ? 'Active' : status, records: enrolledCount, date: fmtNow(), goal, audienceType }); } onCreate(); }} style={{ opacity: (name.trim() && tz && conds.some(c => c.field)) ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Publish campaign'}</Btn>}
+              : (() => { const audOk = audienceType === 'new' ? srcVal.length > 0 : conds.some(c => c.field); const ok = name.trim() && tz && audOk; return <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={() => { if (!ok) return; if (editing) { updateCampaign(editing.name, { name: name.trim(), status, records: audienceType === 'new' ? 0 : enrolledCount, goal, audienceType }); } else { addCampaign({ name: name.trim(), by: 'Ethan Brooks', bi: 'E', status: status === 'Draft' ? 'Active' : status, records: audienceType === 'new' ? 0 : enrolledCount, date: fmtNow(), goal, audienceType }); } onCreate(); }} style={{ opacity: ok ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Publish campaign'}</Btn>; })()}
           </div>
         </div>
       </div>;
