@@ -29822,9 +29822,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '15px 24px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}><button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: LH.sub, fontWeight: 600, padding: 0 }}>Pipeline</button><Ic name="chevron-right" size={14} color={LH.muted} /><span style={{ fontWeight: 700, color: LH.ink }}>{lead.name}</span><button onClick={() => { setFav(f => !f); toast(fav ? 'Removed from favourites' : 'Added to favourites'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="star" size={15} color={fav ? '#e8b923' : LH.muted} /></button></div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
-          {jobId
-            ? <Btn icon="external-link" onClick={() => toast('Opening Job #' + jobId + '…')}>View Job #{jobId}</Btn>
-            : <Btn kind="primary" icon="git-merge" onClick={doConvert}>Convert to Job</Btn>}
           <Btn icon="chevron-down" onClick={() => setMoreOpen(o => !o)}>More Actions</Btn>
           {moreOpen && <div onMouseLeave={() => setMoreOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 40, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 200 }}>
             {[['calendar', 'Schedule inspection'], ['user-check', 'Reassign CSR'], ['git-merge', 'Move stage'], ['copy', 'Duplicate lead'], ['download', 'Export'], ['div'], ['user-x', 'Mark as lost'], ['trash-2', 'Delete lead']].map((it, k) => it[0] === 'div'
@@ -29836,7 +29833,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, minHeight: 0 }}>
         {/* Left column */}
         <div style={{ width: 316, flexShrink: 0, padding: '18px 18px', borderRight: '1px solid ' + LH.borderSoft, overflowY: 'auto' }}>
-          <div style={{ marginBottom: 16 }}><LeadHeaderBlock lead={lead} onToast={onToast} /></div>
+          <div style={{ marginBottom: 16 }}><LeadHeaderBlock lead={{ ...lead, jobId }} onToast={onToast} slim onConvert={doConvert} /></div>
           <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}><LeadPrimaryDetails lead={lead} onToast={onToast} /></div>
         </div>
         {/* Center column */}
