@@ -31288,24 +31288,30 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
   function NewLeadForm({ sources, assignees, onClose, onToast, onCreate }) {
     const [f, setF] = useState({ name: '', email: '', phone: '', src: (sources && sources[0]) || 'Manual', assignee: (assignees && assignees[0]) || '', note: '', stage: 'New lead', notes: '' });
+    const [shown, setShown] = useState(false);
+    useEffect(() => { const t = setTimeout(() => setShown(true), 10); const h = e => { if (e.key === 'Escape') onClose(); }; document.addEventListener('keydown', h); return () => { clearTimeout(t); document.removeEventListener('keydown', h); }; }, []);
     const set = (k, v) => setF(p => ({ ...p, [k]: v }));
     const inp = { width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
     const lbl = { fontSize: 12, fontWeight: 600, color: LH.body, marginBottom: 5, display: 'block' };
     const canSave = !!f.name.trim();
     const STAGES = ['New lead', 'Contacting', 'Qualifying', 'Needs human'];
-    return <ChOverlay title="New lead" sub="Add a lead to your pipeline manually." onClose={onClose}
-      foot={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="plus" onClick={() => canSave && onCreate(f)} style={{ opacity: canSave ? 1 : 0.5 }}>Create lead</Btn></>}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Full name<span style={{ color: LH.red }}> *</span></label><input value={f.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Jordan Blake" autoFocus style={inp} /></div>
-        <div><label style={lbl}>Email</label><input value={f.email} onChange={e => set('email', e.target.value)} placeholder="name@email.com" style={inp} /></div>
-        <div><label style={lbl}>Phone</label><input value={f.phone} onChange={e => set('phone', e.target.value)} placeholder="(555) 555-5555" style={inp} /></div>
-        <div><label style={lbl}>Lead source</label><Dropdown value={f.src} options={(sources || []).map(s => ({ value: s, label: s }))} onChange={v => set('src', v)} /></div>
-        <div><label style={lbl}>Stage</label><Dropdown value={f.stage} options={STAGES.map(s => ({ value: s, label: s }))} onChange={v => set('stage', v)} /></div>
-        <div><label style={lbl}>Assigned CSR</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
-        <div><label style={lbl}>Service interest</label><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="e.g. Roof inspection" style={inp} /></div>
-        <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Notes</label><textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional context…" style={{ ...inp, height: 70, padding: 10, resize: 'vertical' }} /></div>
+    // Same right-side sheet chrome as the lead-to-job creation sheet (docked, no dark overlay).
+    return <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 'min(440px,96%)', zIndex: 300, display: 'flex', flexDirection: 'column', background: '#fff', borderLeft: '1px solid ' + LH.borderSoft, boxShadow: '-10px 0 30px rgba(0,0,0,0.16)', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1)', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}><div><div style={{ fontSize: 15.5, fontWeight: 700, color: LH.ink }}>New lead</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Add a lead to your pipeline manually.</div></div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Full name<span style={{ color: LH.red }}> *</span></label><input value={f.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Jordan Blake" autoFocus style={inp} /></div>
+          <div><label style={lbl}>Email</label><input value={f.email} onChange={e => set('email', e.target.value)} placeholder="name@email.com" style={inp} /></div>
+          <div><label style={lbl}>Phone</label><input value={f.phone} onChange={e => set('phone', e.target.value)} placeholder="(555) 555-5555" style={inp} /></div>
+          <div><label style={lbl}>Lead source</label><Dropdown value={f.src} options={(sources || []).map(s => ({ value: s, label: s }))} onChange={v => set('src', v)} /></div>
+          <div><label style={lbl}>Stage</label><Dropdown value={f.stage} options={STAGES.map(s => ({ value: s, label: s }))} onChange={v => set('stage', v)} /></div>
+          <div><label style={lbl}>Assigned CSR</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
+          <div><label style={lbl}>Service interest</label><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="e.g. Roof inspection" style={inp} /></div>
+          <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Notes</label><textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional context…" style={{ ...inp, height: 70, padding: 10, resize: 'vertical' }} /></div>
+        </div>
       </div>
-    </ChOverlay>;
+      <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="plus" onClick={() => canSave && onCreate(f)} style={{ opacity: canSave ? 1 : 0.5 }}>Create lead</Btn></div>
+    </div>;
   }
   function ImportFlow({ onClose, onToast, onImport }) {
     const [step, setStep] = useState(0);
