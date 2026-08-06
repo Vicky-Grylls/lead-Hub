@@ -29824,10 +29824,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
           {jobId
             ? <Btn icon="external-link" onClick={() => toast('Opening Job #' + jobId + '…')}>View Job #{jobId}</Btn>
-            : canConvert && <Btn kind="primary" icon="git-merge" onClick={doConvert}>Convert to job</Btn>}
+            : <Btn kind="primary" icon="git-merge" onClick={doConvert}>Convert to Job</Btn>}
           <Btn icon="chevron-down" onClick={() => setMoreOpen(o => !o)}>More Actions</Btn>
           {moreOpen && <div onMouseLeave={() => setMoreOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 40, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 200 }}>
-            {[['calendar', 'Schedule inspection'], ['user-check', 'Reassign CSR'], ['git-merge', 'Move stage'], ['copy', 'Duplicate lead'], ['download', 'Export'], ['trash-2', 'Delete lead']].map(([ic, l]) => <div key={l} onClick={() => { setMoreOpen(false); toast(l); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: l === 'Delete lead' ? LH.red : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={l === 'Delete lead' ? LH.red : LH.sub} />{l}</div>)}
+            {[['calendar', 'Schedule inspection'], ['user-check', 'Reassign CSR'], ['git-merge', 'Move stage'], ['copy', 'Duplicate lead'], ['download', 'Export'], ['div'], ['user-x', 'Mark as lost'], ['trash-2', 'Delete lead']].map((it, k) => it[0] === 'div'
+              ? <div key={'d' + k} style={{ height: 1, background: LH.borderSoft, margin: '5px 0' }} />
+              : <div key={it[1]} onClick={() => { setMoreOpen(false); toast(it[1] === 'Mark as lost' ? lead.name + ' marked as lost' : it[1]); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: it[1] === 'Delete lead' ? LH.red : it[1] === 'Mark as lost' ? LH.amber : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={it[0]} size={14} color={it[1] === 'Delete lead' ? LH.red : it[1] === 'Mark as lost' ? LH.amber : LH.sub} />{it[1]}</div>)}
           </div>}
         </div>
       </div>
