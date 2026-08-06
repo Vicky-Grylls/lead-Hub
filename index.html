@@ -30995,7 +30995,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     // Nurture
     const [tz, setTz] = useState('America/New_York (ET)');
     const [sendDays, setSendDays] = useState({ 0: false, 1: true, 2: true, 3: true, 4: true, 5: true, 6: false });
-    const [dayCount, setDayCount] = useState(init.dayCount || 14);
+    const [dayCount, setDayCount] = useState(init.dayCount || 7);
     const [selDay, setSelDay] = useState(1);
     const [days, setDays] = useState(init.days ? Object.keys(init.days).reduce((a, k) => { a[k] = { active: init.days[k].active !== false, steps: init.days[k].steps.map(s => ({ id: wuid(), ...s })) }; return a; }, {}) : {
       1: { active: true, steps: [
@@ -31159,35 +31159,25 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Day 0 is <b style={{ color: LH.ink }}>launch day</b> — {audienceType === 'existing' ? 'the first outreach when a customer is enrolled' : 'it fires the moment a lead is captured (speed-to-lead)'}. Days 1+ are the day-by-day follow-up drip.</div>
         <Card style={{ padding: 16, marginBottom: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>TIME ZONE</div>
-            <div style={{ flex: 1 }}><Dropdown value={tz} options={TZS.map(t => ({ value: t, label: t }))} onChange={setTz} /></div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingTop: 14, marginTop: 14, borderTop: '1px solid ' + LH.borderSoft }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>SEND DAYS</div>
             <div style={{ display: 'flex', gap: 5 }}>{DOW.map((d, i) => <button key={i} onClick={() => setSendDays({ ...sendDays, [i]: !sendDays[i] })} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + (sendDays[i] ? LH.primary : LH.border), background: sendDays[i] ? LH.primary : '#fff', color: sendDays[i] ? '#fff' : LH.sub, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>{d}</button>)}</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingTop: 14, marginTop: 14, borderTop: '1px solid ' + LH.borderSoft }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>SEQUENCE LENGTH</div>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12 }}><input type="range" min="1" max="30" value={dayCount} onChange={e => { const v = +e.target.value; setDayCount(v); if (selDay > v) setSelDay(v); }} style={{ flex: 1, accentColor: LH.primary }} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap' }}>{dayCount} days</span></div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>BUSINESS HOURS</div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={bizHours} onChange={setBizHours} /><span style={{ fontSize: 13, color: LH.body }}>{bizHours ? 'Respect business hours' : 'Send any time'}</span></div>
+              {bizHours && <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><div style={{ width: 118 }}><Dropdown value="9:00 am" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div><span style={{ color: LH.muted, fontSize: 12 }}>to</span><div style={{ width: 118 }}><Dropdown value="8:00 pm" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div></div>}
+            </div>
           </div>
         </Card>
         <div style={{ display: 'flex', gap: 14 }}>
-          <div style={{ width: 132, flexShrink: 0, maxHeight: 460, overflowY: 'auto' }}>{[0].concat(dayList).map(d => { const isLaunch = d === 0; const o = days[d]; const chs = isLaunch ? s2l.map(s => s.ch) : (o ? o.steps.map(s => s.ch) : []); return <div key={d} onClick={() => setSelDay(d)} style={{ padding: '9px 11px', borderRadius: 9, marginBottom: 6, border: '1px solid ' + (selDay === d ? LH.primary : LH.border), background: selDay === d ? LH.tint : (isLaunch ? LH.bg : '#fff'), cursor: 'pointer' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 12.5, fontWeight: isLaunch ? 700 : 600, color: LH.ink }}>{isLaunch ? 'Launch day' : 'Day ' + d}</span>{isLaunch ? <span style={{ fontSize: 10, fontWeight: 700, color: LH.primary }}>Day 0</span> : (o && o.active === false && <span style={{ fontSize: 10, color: LH.amber }}>Paused</span>)}</div><div style={{ display: 'flex', gap: 5, marginTop: 5, minHeight: 13 }}>{['sms', 'email', 'call', 'voice_drop', 'video_drop'].filter(c => chs.includes(c)).map(c => <Ic key={c} name={CH_ICON[c]} size={12} color={LH.muted} />)}</div></div>; })}</div>
+          <div style={{ width: 132, flexShrink: 0, maxHeight: 460, overflowY: 'auto' }}>{[0].concat(dayList).map(d => { const isLaunch = d === 0; const o = days[d]; const chs = isLaunch ? s2l.map(s => s.ch) : (o ? o.steps.map(s => s.ch) : []); return <div key={d} onClick={() => setSelDay(d)} style={{ padding: '9px 11px', borderRadius: 9, marginBottom: 6, border: '1px solid ' + (selDay === d ? LH.primary : LH.border), background: selDay === d ? LH.tint : (isLaunch ? LH.bg : '#fff'), cursor: 'pointer' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 12.5, fontWeight: isLaunch ? 700 : 600, color: LH.ink }}>{isLaunch ? 'Launch day' : 'Day ' + d}</span>{isLaunch ? <span style={{ fontSize: 10, fontWeight: 700, color: LH.primary }}>Day 0</span> : (o && o.active === false && <span style={{ fontSize: 10, color: LH.amber }}>Paused</span>)}</div><div style={{ display: 'flex', gap: 5, marginTop: 5, minHeight: 13 }}>{['sms', 'email', 'call', 'voice_drop', 'video_drop'].filter(c => chs.includes(c)).map(c => <Ic key={c} name={CH_ICON[c]} size={12} color={LH.muted} />)}</div></div>; })}<button onClick={() => setDayCount(Math.min(30, dayCount + 1))} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 9, padding: '9px 0', marginTop: 2, background: 'transparent', color: LH.primary, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}><Ic name="plus" size={14} color={LH.primary} />Add a day</button></div>
           {selDay === 0
             ? <Card style={{ flex: 1, minWidth: 0, padding: 16, alignSelf: 'flex-start' }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Launch day <span style={{ fontSize: 12, fontWeight: 600, color: LH.muted }}>· Day 0</span></div>
                 <div style={{ fontSize: 12, color: LH.sub, margin: '3px 0 14px' }}>These steps fire {audienceType === 'existing' ? 'when the customer is enrolled' : 'the moment the lead is enrolled'}, each one relative to the step before it.</div>
                 {s2l.map(s => <StepEditor key={s.id} step={s} timingMode="offset" onChange={ns => setS2l(s2l.map(x => x.id === s.id ? ns : x))} onRemove={() => setS2l(s2l.filter(x => x.id !== s.id))} />)}
                 <button onClick={() => setS2l([...s2l, { id: wuid(), ch: 'sms', offset: '15', anchor: 'last_message', body: '' }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 10, padding: 11, background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button>
-                <div style={{ borderTop: '1px solid ' + LH.borderSoft, margin: '16px 0 14px' }} />
-                <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Business hours for launch day</div>
-                <div style={{ fontSize: 12, color: LH.sub, margin: '4px 0 12px' }}>A lead that arrives outside these hours waits — launch-day steps run at the start of the next window. Day 1+ keep their own schedule.</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: bizHours ? 12 : 0 }}><Toggle on={bizHours} onChange={setBizHours} /><span style={{ fontSize: 13, color: LH.body }}>{bizHours ? 'Yes — respect business hours' : 'No — send any time of day'}</span></div>
-                {bizHours && <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><div style={{ width: 130 }}><Dropdown value="9:00 am" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div><span style={{ color: LH.muted, fontSize: 12 }}>to</span><div style={{ width: 130 }}><Dropdown value="8:00 pm" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div></div>}
-                <div style={{ display: 'flex', gap: 20, marginTop: 14 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={weekend.sat} onChange={v => setWeekend({ ...weekend, sat: v })} /><span style={{ fontSize: 13, color: LH.body }}>Run Saturdays</span></div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={weekend.sun} onChange={v => setWeekend({ ...weekend, sun: v })} /><span style={{ fontSize: 13, color: LH.body }}>Run Sundays</span></div>
-                </div>
               </Card>
             : <Card style={{ flex: 1, minWidth: 0, padding: 16, alignSelf: 'flex-start' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
