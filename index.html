@@ -30740,7 +30740,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     'customer.email': { module: 'Customer', label: 'Email', type: 'text' },
     'customer.created_date': { module: 'Customer', label: 'Created Date', type: 'date' },
     'customer.replied': { module: 'Customer', label: 'Replied to us', type: 'bool', options: ['Yes', 'No'] },
-    'customer.city': { module: 'Customer', label: 'City', type: 'multiselect', options: ['Dallas', 'Houston', 'Austin', 'Phoenix', 'Denver', 'Charlotte', 'Nashville', 'Atlanta', 'Tampa', 'Columbus'] },
+    'customer.city': { module: 'Customer', label: 'City', type: 'multiselect', options: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Dallas', 'Atlanta', 'Denver', 'Seattle', 'Miami', 'Toronto', 'Vancouver', 'Montreal', 'Calgary', 'Mexico City', 'Monterrey', 'Guadalajara'] },
     'customer.state': { module: 'Customer', label: 'State', type: 'multiselect', options: ['TX', 'OK', 'AR', 'LA'] },
     'customer.zip': { module: 'Customer', label: 'ZIP code', type: 'text' },
     'customer.type': { module: 'Customer', label: 'Customer Type', type: 'multiselect', options: ['Residential', 'Commercial'] },
@@ -31055,6 +31055,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const dayList = []; for (let d = 1; d <= dayCount; d++) dayList.push(d);
     const dayObj = days[selDay] || { active: true, steps: [] };
     const setDaySteps = steps => setDays({ ...days, [selDay]: { ...dayObj, steps } });
+    // Remove a day: drop its steps and shift later days down by one, so day numbers stay contiguous.
+    const deleteDay = d => { const nd = {}; Object.keys(days).forEach(k => { const n = +k; if (n < d) nd[n] = days[n]; else if (n > d) nd[n - 1] = days[n]; }); setDays(nd); setDayCount(c => Math.max(1, c - 1)); setSelDay(s => s === d ? Math.max(1, d - 1) : (s > d ? s - 1 : s)); };
     const sendDaysLabel = Object.keys(sendDays).filter(k => sendDays[k]).map(k => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][k]).join(', ');
 
     const stepBody = () => {
@@ -31174,7 +31176,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </Card>;
         const TABS = [['sms', 'SMS', 'message-square'], ['email', 'Email', 'mail'], ['call', 'Call', 'phone']];
         const groupTitle = commTab === 'sms' ? 'SMS settings' : commTab === 'email' ? 'Email settings' : 'Call settings';
-        const groupSub = commTab === 'sms' ? 'The number your texts send from, and STOP opt-out handling.' : commTab === 'email' ? 'Sender identity, tracking, and unsubscribe handling.' : 'Voice agent and call guidance. The qualification playbook lives in its own step.';
+        const groupSub = commTab === 'sms' ? 'The number your texts send from, and STOP opt-out handling.' : commTab === 'email' ? 'Sender identity, tracking, and unsubscribe handling.' : 'Outbound number and voice agent. Guidance and the qualification playbook live in the Playbook step.';
         return <div style={{ maxWidth: 720, margin: '0 auto' }}>
           <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="radio" size={19} color={LH.primary} /></div>
           <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>How this campaign reaches out</div>
@@ -31185,14 +31187,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ marginBottom: 12 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{groupTitle}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 2 }}>{groupSub}</div></div>
           {commTab === 'sms' && <>{numberCard}{optOutCard('sms')}</>}
           {commTab === 'email' && <>{emailCard}{optOutCard('email')}</>}
-          {commTab === 'call' && <>{numberCard}{voiceCard}{instructionsCard}</>}
+          {commTab === 'call' && <>{numberCard}{voiceCard}</>}
         </div>;
       }
       if (step === 2) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="headphones" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Nurture sequence</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 12px' }}>Day 0 is <b style={{ color: LH.ink }}>launch day</b> — {audienceType === 'existing' ? 'the first outreach when a customer is enrolled' : 'it fires the moment a lead is captured (speed-to-lead)'}. Days 1+ are the day-by-day follow-up drip.</div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, marginBottom: 18, padding: '10px 12px', borderRadius: 10, background: LH.tint, border: '1px solid ' + LH.border }}><Ic name="sparkles" size={15} color={LH.primary} style={{ marginTop: 1 }} /><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.5 }}><b style={{ color: LH.ink }}>Nova runs every step.</b> Each message and call is sent by Nova and acts on its outcome automatically. Handing a step to a human is optional — it's always two clicks away.</div></div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Day 0 is <b style={{ color: LH.ink }}>launch day</b> — {audienceType === 'existing' ? 'the first outreach when a customer is enrolled' : 'it fires the moment a lead is captured (speed-to-lead)'}. Days 1+ are the day-by-day follow-up drip.</div>
         <Card style={{ padding: 16, marginBottom: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>SEND DAYS</div>
@@ -31218,7 +31219,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             : <Card style={{ flex: 1, minWidth: 0, padding: 16, alignSelf: 'flex-start' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                   <div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Day {selDay}</div><div style={{ fontSize: 12, color: LH.sub }}>{dayObj.steps.length ? dayObj.steps.length + (dayObj.steps.length > 1 ? ' steps' : ' step') : 'No steps yet'}</div></div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Toggle on={dayObj.active !== false} onChange={v => setDays({ ...days, [selDay]: { ...dayObj, active: v } })} /><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 600 }}>{dayObj.active === false ? 'Paused' : 'Active'}</span></div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Toggle on={dayObj.active !== false} onChange={v => setDays({ ...days, [selDay]: { ...dayObj, active: v } })} /><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 600 }}>{dayObj.active === false ? 'Paused' : 'Active'}</span>{dayCount > 1 && <button onClick={() => deleteDay(selDay)} title="Delete this day" style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#fbeaea'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="trash-2" size={14} color={LH.red} /></button>}</div>
                 </div>
                 {dayObj.active === false && <div style={{ fontSize: 12, color: LH.amber, background: LH.amberBg, border: '1px solid ' + LH.amberBd, borderRadius: 8, padding: '9px 12px', marginBottom: 12 }}>This day is paused — nothing sends. Disabled days are skipped and the campaign continues with the next enabled day.</div>}
                 {dayObj.steps.map(s => <StepEditor key={s.id} step={s} timingMode="time" onChange={ns => setDaySteps(dayObj.steps.map(x => x.id === s.id ? ns : x))} onRemove={() => setDaySteps(dayObj.steps.filter(x => x.id !== s.id))} />)}
