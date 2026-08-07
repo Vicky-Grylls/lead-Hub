@@ -29955,6 +29955,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [statusOpen, setStatusOpen] = useState(false);
     const [moreTabsOpen, setMoreTabsOpen] = useState(false);
     const [reacts, setReacts] = useState({});
+    const CAMPAIGNS = ['Speed-to-Lead Drip', 'Estimate Follow-up', 'Storm Season Re-engage', 'Insurance Claim Assist', 'Gutter Season Push'];
+    const [campaign, setCampaign] = useState('Speed-to-Lead Drip');
+    const [moveOpenC, setMoveOpenC] = useState(false);
     useEffect(() => { if (!playing) return; const id = setInterval(() => setProg(p => { if (p >= 100) { clearInterval(id); return 100; } return p + 2; }), 180); return () => clearInterval(id); }, [playing]);
     const captured = parseInt(lead.fields) || 0;
     const initials = lead.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -30039,8 +30042,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <Card style={{ padding: 0, overflow: 'hidden' }}>{DIANE_FIELDS.map((f, i) => <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '12px 16px', borderBottom: i < DIANE_FIELDS.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><Ic name={i < captured ? 'check-circle' : 'circle'} size={17} color={i < captured ? LH.green : LH.muted} /><span style={{ flex: 1, fontSize: 13, color: i < captured ? LH.ink : LH.muted, fontWeight: i < captured ? 600 : 400 }}>{f}</span>{i < captured ? <span style={{ fontSize: 11, color: LH.muted }}>Captured by Nova</span> : <button onClick={() => toast('Ask Nova to capture')} style={{ fontSize: 11, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Capture</button>}</div>)}</Card>
           </div>}
           {tab === 'Campaign' && <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, marginBottom: 12 }}>Enrolled campaign</div>
-            <Card style={{ padding: 16, marginBottom: 14 }}><div style={{ display: 'flex', alignItems: 'center', gap: 11 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="megaphone" size={16} color={LH.ink} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Speed-to-Lead Drip</div><div style={{ fontSize: 12, color: LH.sub }}>Step 3 of 6 · SMS · next touch in 2 days</div></div><Pill label="Active" tone="Qualified" /></div></Card>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Enrolled campaign</span>
+              <div style={{ position: 'relative' }}>
+                <Btn icon="arrow-right-left" onClick={() => setMoveOpenC(o => !o)}>Move to campaign</Btn>
+                {moveOpenC && <div onMouseLeave={() => setMoveOpenC(false)} style={{ position: 'absolute', top: 38, right: 0, zIndex: 40, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 240 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, padding: '6px 10px 4px' }}>MOVE TO</div>
+                  {CAMPAIGNS.map(c => <div key={c} onClick={() => { if (c !== campaign) { setCampaign(c); toast(lead.name + ' moved to ' + c); } setMoveOpenC(false); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: c === campaign ? LH.muted : LH.body, cursor: c === campaign ? 'default' : 'pointer' }} onMouseEnter={e => { if (c !== campaign) e.currentTarget.style.background = '#f6f4ef'; }} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><Ic name="megaphone" size={13} color={LH.sub} />{c}</span>{c === campaign && <span style={{ fontSize: 11, color: LH.muted }}>current</span>}</div>)}
+                </div>}
+              </div>
+            </div>
+            <Card style={{ padding: 16, marginBottom: 14 }}><div style={{ display: 'flex', alignItems: 'center', gap: 11 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="megaphone" size={16} color={LH.ink} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{campaign}</div><div style={{ fontSize: 12, color: LH.sub }}>Step 3 of 6 · SMS · next touch in 2 days</div></div><Pill label="Active" tone="Qualified" /></div></Card>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>{[['Sent', '3'], ['Opened', '2'], ['Replied', '1']].map(([l, v]) => <Card key={l} style={{ padding: 13 }}><div style={{ fontSize: 20, fontWeight: 700, color: LH.ink }}>{v}</div><div style={{ fontSize: 12, color: LH.muted }}>{l}</div></Card>)}</div>
           </div>}
           {tab === 'Communication' && <div>
