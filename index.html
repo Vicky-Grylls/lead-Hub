@@ -31061,6 +31061,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const setDaySteps = steps => setDays({ ...days, [selDay]: { ...dayObj, steps } });
     // Remove a day: drop its steps and shift later days down by one, so day numbers stay contiguous.
     const deleteDay = d => { const nd = {}; Object.keys(days).forEach(k => { const n = +k; if (n < d) nd[n] = days[n]; else if (n > d) nd[n - 1] = days[n]; }); setDays(nd); setDayCount(c => Math.max(1, c - 1)); setSelDay(s => s === d ? Math.max(1, d - 1) : (s > d ? s - 1 : s)); };
+    // Duplicate a day: copy its steps into a new day right after, shifting later days up.
+    const duplicateDay = d => { const nd = {}; Object.keys(days).forEach(k => { const n = +k; if (n <= d) nd[n] = days[n]; else nd[n + 1] = days[n]; }); const src = days[d]; nd[d + 1] = { active: true, steps: (src && src.steps ? src.steps : []).map(s => ({ ...s, id: wuid() })) }; setDays(nd); setDayCount(c => Math.min(30, c + 1)); setSelDay(d + 1); };
     const sendDaysLabel = Object.keys(sendDays).filter(k => sendDays[k]).map(k => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][k]).join(', ');
 
     const stepBody = () => {
@@ -31216,7 +31218,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             : <Card style={{ flex: 1, minWidth: 0, padding: 16, alignSelf: 'flex-start' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                   <div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Day {selDay}</div><div style={{ fontSize: 12, color: LH.sub }}>{dayObj.steps.length ? dayObj.steps.length + (dayObj.steps.length > 1 ? ' steps' : ' step') : 'No steps yet'}</div></div>
-                  {dayCount > 1 && <button onClick={() => deleteDay(selDay)} title="Delete this day" style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#fbeaea'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="trash-2" size={14} color={LH.red} /></button>}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button onClick={() => duplicateDay(selDay)} title="Duplicate this day" style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="copy" size={14} color={LH.sub} /></button>
+                    {dayCount > 1 && <button onClick={() => deleteDay(selDay)} title="Delete this day" style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#fbeaea'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="trash-2" size={14} color={LH.red} /></button>}
+                  </div>
                 </div>
                 {dayObj.active === false && <div style={{ fontSize: 12, color: LH.amber, background: LH.amberBg, border: '1px solid ' + LH.amberBd, borderRadius: 8, padding: '9px 12px', marginBottom: 12 }}>This day is paused — nothing sends. Disabled days are skipped and the campaign continues with the next enabled day.</div>}
                 {dayObj.steps.map(s => <StepEditor key={s.id} step={s} timingMode="time" onChange={ns => setDaySteps(dayObj.steps.map(x => x.id === s.id ? ns : x))} onRemove={() => setDaySteps(dayObj.steps.filter(x => x.id !== s.id))} />)}
