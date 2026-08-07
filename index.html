@@ -29475,6 +29475,28 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div onClick={e => e.stopPropagation()} style={{ width: 'min(560px,96vw)', maxHeight: '88vh', background: '#fff', borderRadius: 14, boxShadow: '0 24px 64px rgba(0,0,0,.3)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>{shell}</div>
     </div>;
   }
+  function LeadAISummary({ lead }) {
+    if (!lead) return null;
+    const first = (lead.name || 'This lead').split(' ')[0];
+    const src = lead.src || 'an inbound source';
+    const score = lead.score || 0;
+    const temp = score >= 80 ? 'hot' : score >= 60 ? 'warm' : 'cooling';
+    const status = lead.status || lead.col || 'New lead';
+    const svc = (lead.note && !/manual|imported/i.test(lead.note)) ? lead.note.toLowerCase() : 'a roofing project';
+    const summary = first + ' arrived from ' + src + (lead.age && lead.age !== 'Now' ? ' ' + lead.age + ' ago' : '') + ' about ' + svc + '. Scored ' + score + '/100 (' + temp + ') and currently ' + status + '. Nova has engaged over SMS and a call, confirmed storm damage, and is working the lead toward a booked inspection.';
+    const highlights = [
+      'From ' + src + ' · score ' + score + '/100 (' + temp + ')',
+      'Confirmed storm damage on the last call — roof ~15 yrs old',
+      'Next best step: book the free inspection while intent is high'
+    ];
+    return <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #e9d4ff', background: 'linear-gradient(169deg,#faf5ff,#eef4ff)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px 6px' }}><Ic name="sparkles" size={15} color="#7c3aed" /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>AI summary</span><span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: '#7c3aed', background: '#fff', border: '1px solid #e9d4ff', borderRadius: 999, padding: '1px 7px', marginLeft: 'auto' }}>NOVA</span></div>
+      <div style={{ padding: '0 14px 13px' }}>
+        <div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.55 }}>{summary}</div>
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>{highlights.map((h, i) => <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12, color: LH.sub, lineHeight: 1.45 }}><span style={{ width: 5, height: 5, borderRadius: 999, background: '#7c3aed', marginTop: 6, flexShrink: 0 }} />{h}</div>)}</div>
+      </div>
+    </div>;
+  }
   function LeadHeaderBlock({ lead, onToast, slim, onConvert }) {
     const [flagged, setFlagged] = useState(false);
     const toast = m => onToast && onToast(m);
@@ -29552,6 +29574,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <span style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: camp ? '#fff' : '#f1f0ec', border: camp ? '1px solid ' + LH.borderSoft : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="megaphone" size={14} color={camp ? LH.primary : LH.sub} /></span>
               <div style={{ minWidth: 0 }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>CAMPAIGN</div><div style={{ fontSize: 12.5, fontWeight: 600, color: camp ? LH.ink : LH.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{camp || 'Not enrolled in a campaign'}</div></div>
             </div>; })()}
+            <div style={{ marginTop: 16 }}><LeadAISummary lead={shown} /></div>
             <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 16, paddingTop: 14 }}><LeadPrimaryDetails lead={shown} onToast={onToast} onMove={onMove} /></div>
           </>}
           {tab === 'activity' && <div>{act.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: 14 }}>
@@ -30060,6 +30083,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <Card style={{ padding: 0, overflow: 'hidden' }}>{[['message-square', 'SMS', 'Speed-to-lead drip, step 3', '1 day ago'], ['phone', 'Call', 'Nova qualification call · 4:32', '1 day ago'], ['mail', 'Email', 'Free inspection offer sent', '2 days ago'], ['phone-incoming', 'Call', 'Inbound call · 12s ring', '2 days ago']].map(([ic, ch, txt, t], i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i < 3 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={ic} size={14} color={LH.sub} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{ch}</div><div style={{ fontSize: 12, color: LH.muted }}>{txt}</div></div><span style={{ fontSize: 11, color: LH.muted }}>{t}</span></div>)}</Card>
           </div>}
           {tab === 'Overview' && <>
+          <div style={{ marginBottom: 16 }}><LeadAISummary lead={lead} /></div>
           <LeadLifecycle lead={lead} jobId={jobId} />
           {jobId
             ? <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 11, padding: '12px 14px', marginBottom: 20 }}><span style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={16} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.green }}>Converted to inspection job #{jobId}</div><div style={{ fontSize: 12, color: LH.sub }}>An inspection is scheduled — this lead is now an active job.</div></div><Btn icon="external-link" onClick={() => toast('Opening Job #' + jobId + '…')}>View job</Btn></div>
