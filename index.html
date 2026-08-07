@@ -30920,7 +30920,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   };
   const STEP_ACTIONS = ['Nova continues the sequence', 'Nova qualifies & books inspection', 'Nova answers & follows up', 'Wait, then retry', 'Skip to next step', 'Add a tag', 'Mark as Needs attention', 'Exit the campaign', 'Mark qualified → hand to a rep', 'Create a task for a rep'];
   // A single channel step editor (used by Speed to Lead + Nurture)
-  function StepEditor({ step, onChange, onRemove, timingMode, error }) {
+  function StepEditor({ step, onChange, onRemove, onDuplicate, timingMode, error }) {
     const ch = step.ch;
     const outcomeCh = STEP_OUTCOMES[ch] || STEP_OUTCOMES.sms;
     const rules = (step.rules && step.rules.length) ? step.rules : [{ id: 'seed', on: outcomeCh[0], do: STEP_ACTIONS[1] }];
@@ -30950,7 +30950,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ flex: 1, minWidth: 8 }} />
         {(ch === 'sms' || ch === 'email') && <div style={{ width: 150, flexShrink: 0 }}><Dropdown value={step.tpl || ''} placeholder="Choose a template…" height={30} options={(ch === 'sms' ? SMS_TEMPLATES : EMAIL_TEMPLATES).map(tpl => ({ value: tpl.name, label: tpl.name }))} onChange={applyTemplate} /></div>}
         {(ch === 'sms' || ch === 'email') && <div style={{ width: 150, flexShrink: 0 }}><Dropdown value="" placeholder="Insert snippet…" height={30} options={SNIPPETS.map(([v, l]) => ({ value: v, label: l }))} onChange={insertSnippet} /></div>}
-        <button onClick={onRemove} style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 4 }}><Ic name="trash-2" size={15} color={LH.muted} /></button>
+        {onDuplicate && <button onClick={onDuplicate} title="Duplicate step" style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 4 }}><Ic name="copy" size={15} color={LH.muted} /></button>}
+        <button onClick={onRemove} title="Delete step" style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 4 }}><Ic name="trash-2" size={15} color={LH.muted} /></button>
       </div>
       {ch === 'email' && <input value={step.subject || ''} onChange={e => onChange({ ...step, subject: e.target.value })} placeholder="Subject" style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, fontWeight: 600, color: LH.ink, outline: 'none', marginBottom: 8 }} />}
       {ch === 'task' && <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
@@ -31212,7 +31213,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             ? <Card style={{ flex: 1, minWidth: 0, padding: 16, alignSelf: 'flex-start' }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Launch day <span style={{ fontSize: 12, fontWeight: 600, color: LH.muted }}>· Day 0</span></div>
                 <div style={{ fontSize: 12, color: LH.sub, margin: '3px 0 14px' }}>These steps fire {audienceType === 'existing' ? 'when the customer is enrolled' : 'the moment the lead is enrolled'}, each one relative to the step before it.</div>
-                {s2l.map(s => <StepEditor key={s.id} step={s} timingMode="offset" onChange={ns => setS2l(s2l.map(x => x.id === s.id ? ns : x))} onRemove={() => setS2l(s2l.filter(x => x.id !== s.id))} />)}
+                {s2l.map(s => <StepEditor key={s.id} step={s} timingMode="offset" onChange={ns => setS2l(s2l.map(x => x.id === s.id ? ns : x))} onRemove={() => setS2l(s2l.filter(x => x.id !== s.id))} onDuplicate={() => { const i = s2l.findIndex(x => x.id === s.id); setS2l([...s2l.slice(0, i + 1), { ...s, id: wuid() }, ...s2l.slice(i + 1)]); }} />)}
                 <button onClick={() => setS2l([...s2l, { id: wuid(), ch: 'sms', offset: '15', anchor: 'last_message', body: '' }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 10, padding: 11, background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button>
               </Card>
             : <Card style={{ flex: 1, minWidth: 0, padding: 16, alignSelf: 'flex-start' }}>
@@ -31224,7 +31225,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                   </div>
                 </div>
                 {dayObj.active === false && <div style={{ fontSize: 12, color: LH.amber, background: LH.amberBg, border: '1px solid ' + LH.amberBd, borderRadius: 8, padding: '9px 12px', marginBottom: 12 }}>This day is paused — nothing sends. Disabled days are skipped and the campaign continues with the next enabled day.</div>}
-                {dayObj.steps.map(s => <StepEditor key={s.id} step={s} timingMode="time" onChange={ns => setDaySteps(dayObj.steps.map(x => x.id === s.id ? ns : x))} onRemove={() => setDaySteps(dayObj.steps.filter(x => x.id !== s.id))} />)}
+                {dayObj.steps.map(s => <StepEditor key={s.id} step={s} timingMode="time" onChange={ns => setDaySteps(dayObj.steps.map(x => x.id === s.id ? ns : x))} onRemove={() => setDaySteps(dayObj.steps.filter(x => x.id !== s.id))} onDuplicate={() => { const i = dayObj.steps.findIndex(x => x.id === s.id); setDaySteps([...dayObj.steps.slice(0, i + 1), { ...s, id: wuid() }, ...dayObj.steps.slice(i + 1)]); }} />)}
                 <button onClick={() => setDaySteps([...dayObj.steps, { id: wuid(), ch: 'sms', time: '10:00 am', body: '' }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 10, padding: 11, background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button>
               </Card>}
         </div>
