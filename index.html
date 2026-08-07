@@ -29537,7 +29537,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {[]
               .concat(onNext ? [{ i: 'chevron-up', f: onPrev, t: 'Previous lead' }, { i: 'chevron-down', f: onNext, t: 'Next lead' }] : [])
-              .concat([{ i: 'x', f: onClose, t: 'Close' }])
+              .concat([{ i: 'maximize-2', f: () => onOpenPage && onOpenPage(shown), t: 'Open full page' }, { i: 'x', f: onClose, t: 'Close' }])
               .map((b, k) => <button key={k} onClick={b.f} title={b.t} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name={b.i} size={15} color={LH.sub} /></button>)}
           </div>
         </div>
@@ -30152,8 +30152,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {fOpen === id && <div onMouseLeave={() => setFOpen(null)} style={{ position: 'absolute', top: 36, left: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, minWidth: 170, maxHeight: 280, overflowY: 'auto' }}>{options.map(o => <div key={o} onClick={() => { onChange(o); setFOpen(null); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '7px 10px', borderRadius: 6, fontSize: 12.5, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{o}{value === o && <Ic name="check" size={13} color={LH.ink} />}</div>)}</div>}
     </div>;
     const scoreColor = s => s >= 80 ? LH.primary : s >= 60 ? '#c9922e' : '#9c9b96';
-    // Full lead detail page is hidden for now — open the side sheet instead.
-    const openPage = l => { setPageLead(null); setSelId(l.id); };
+    const openPage = l => { setSelId(null); setPageLead(l); onFull && onFull(true); };
     const closePage = () => { setPageLead(null); onFull && onFull(false); };
     const sel = selId ? leads.find(l => l.id === selId) : null;
     const lastRef = useRef(null);
