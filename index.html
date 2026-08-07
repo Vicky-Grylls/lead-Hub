@@ -30817,17 +30817,22 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           email: (first + '.' + last).toLowerCase() + '@' + ['gmail.com', 'outlook.com', 'yahoo.com', 'proton.me'][Math.floor(rnd() * 4)],
           phone: '(+1) ' + (200 + Math.floor(rnd() * 699)) + ' ' + pad(Math.floor(rnd() * 1000), 3) + ' ' + pad(Math.floor(rnd() * 10000), 4),
           source, status: weighted(STATUS_FRAC), service: weighted(SERVICE_FRAC),
-          replied: rnd() < 0.4, attempts: Math.floor(rnd() * 5), createdDay: day
+          replied: rnd() < 0.4, attempts: Math.floor(rnd() * 5), createdDay: day,
+          type: rnd() < 0.75 ? 'Residential' : 'Commercial',
+          tags: ['VIP', 'Repeat customer', 'Membership', 'Warranty', 'Storm area'].filter(() => rnd() < 0.35),
+          city: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Dallas', 'Atlanta', 'Denver', 'Seattle', 'Miami', 'Toronto', 'Vancouver', 'Montreal', 'Calgary', 'Mexico City', 'Monterrey', 'Guadalajara'][Math.floor(rnd() * 17)],
+          state: ['TX', 'OK', 'AR', 'LA'][Math.floor(rnd() * 4)], zip: pad(Math.floor(rnd() * 90000) + 10000, 5),
+          totalJobs: Math.floor(rnd() * 6), ltv: Math.floor(rnd() * 20000), consent: rnd() < 0.85
         });
       }
     });
     return out;
   })();
-  const fieldValue = (c, key) => ({ 'customer.lead_source': c.source, 'customer.first_name': c.first, 'customer.email': c.email, 'customer.replied': c.replied, 'job.current_status': c.status, 'job.service_type': c.service, 'job.attempts': c.attempts })[key];
+  const fieldValue = (c, key) => ({ 'customer.lead_source': c.source, 'customer.first_name': c.first, 'customer.email': c.email, 'customer.replied': c.replied, 'customer.type': c.type, 'customer.tags': c.tags, 'customer.city': c.city, 'customer.state': c.state, 'customer.zip': c.zip, 'customer.total_jobs': c.totalJobs, 'customer.lifetime_value': c.ltv, 'customer.marketing_consent': c.consent, 'customer.has_phone': true, 'customer.has_email': true, 'job.current_status': c.status, 'job.service_type': c.service, 'job.attempts': c.attempts })[key];
   const matchRow = (c, r) => {
     const f = FIELD_DEFS[r.field]; if (!f) return true;
     const v = fieldValue(c, r.field);
-    if (f.type === 'multiselect') { const sel = r.val || []; if (!sel.length) return true; return r.op === 'is none of' ? !sel.includes(v) : sel.includes(v); }
+    if (f.type === 'multiselect') { const sel = r.val || []; if (!sel.length) return true; if (Array.isArray(v)) { const hit = v.some(x => sel.includes(x)); return r.op === 'is none of' ? !hit : hit; } return r.op === 'is none of' ? !sel.includes(v) : sel.includes(v); }
     if (f.type === 'bool') { const sel = r.val || []; if (!sel.length) return true; return (sel[0] === 'Yes') === !!v; }
     if (f.type === 'text') { const q = (Array.isArray(r.val) ? '' : (r.val || '')).trim().toLowerCase(); if (!q) return true; const sv = String(v || '').toLowerCase(); return r.op === 'is not' ? !sv.includes(q) : sv.includes(q); }
     if (f.type === 'number') { const n = Number(r.val); if (isNaN(n)) return true; return r.op === 'less than' ? v < n : r.op === 'equals' ? v === n : v > n; }
