@@ -29700,18 +29700,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </Card>)}
       </div>
-      <div style={{ marginBottom: 24 }}><AttentionRollupCard onNavigate={onNavigate} /></div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start' }}>
-        <Card style={{ padding: 18 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink, marginBottom: 14 }}>Recent activity</div>
-          {DIANE_ACT.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: i < DIANE_ACT.length - 1 ? 12 : 0, marginBottom: i < DIANE_ACT.length - 1 ? 12 : 0, borderBottom: i < DIANE_ACT.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
-            <div style={{ width: 26, height: 26, borderRadius: 7, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={a.who === 'Nova' ? 'sparkles' : 'settings'} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.4 }}>{a.msg}</div>
-              <div style={{ fontSize: 11, color: LH.muted, marginTop: 2 }}>{a.who} · {a.t}</div>
-            </div>
-          </div>)}
-        </Card>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start', marginBottom: 12 }}>
+        <AttentionRollupCard onNavigate={onNavigate} />
         <Card style={{ padding: 18 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink, marginBottom: 14 }}>Active campaigns</div>
           {['Speed-to-Lead Drip', 'Storm Season Re-engage', 'Estimate Follow-up'].map((c, i) => <div key={c} onClick={() => onNavigate('lead-campaigns')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: i < 2 ? '1px solid ' + LH.borderSoft : 'none', cursor: 'pointer' }}>
@@ -29719,6 +29709,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>)}
         </Card>
       </div>
+      <Card style={{ padding: 18 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink, marginBottom: 14 }}>Recent activity</div>
+        {DIANE_ACT.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: i < DIANE_ACT.length - 1 ? 12 : 0, marginBottom: i < DIANE_ACT.length - 1 ? 12 : 0, borderBottom: i < DIANE_ACT.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+          <div style={{ width: 26, height: 26, borderRadius: 7, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={a.who === 'Nova' ? 'sparkles' : 'settings'} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.4 }}>{a.msg}</div>
+            <div style={{ fontSize: 11, color: LH.muted, marginTop: 2 }}>{a.who} · {a.t}</div>
+          </div>
+        </div>)}
+      </Card>
     </div>;
   }
 
