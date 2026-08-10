@@ -29518,6 +29518,131 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div onClick={e => e.stopPropagation()} style={{ width: 'min(560px,96vw)', maxHeight: '88vh', background: '#fff', borderRadius: 14, boxShadow: '0 24px 64px rgba(0,0,0,.3)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>{shell}</div>
     </div>;
   }
+  // §11 AI delighters — deterministic intake intelligence derived from a lead. Stable per lead
+  // so the same homeowner always renders the same enrichment, spam score, dedup, and intent.
+  function intakeIntel(lead) {
+    const seed = (lead && (lead.name || '') + '|' + (lead.src || '')) || 'x';
+    let n = 0; for (let i = 0; i < seed.length; i++) n = (n * 31 + seed.charCodeAt(i)) >>> 0;
+    const pick = (arr, salt) => arr[((n >> (salt || 0)) % arr.length + arr.length) % arr.length];
+    const note = (lead && lead.note ? lead.note : '').toLowerCase();
+    const score = (lead && lead.score) || 0;
+    const src = (lead && lead.src) || 'Website';
+    // Property intelligence enrichment
+    const material = pick(['Asphalt shingle', 'Architectural shingle', 'Metal standing seam', 'Concrete tile', 'Wood shake'], 2);
+    const condition = /storm|hail|damage|leak/.test(note) ? 'Storm-damaged' : pick(['Good', 'Fair', 'Weathered'], 5);
+    const roofAge = 6 + (n % 18);
+    const sqft = 1700 + (n % 17) * 90;
+    const permits = (n % 3 === 0) ? 'No roof permits on record at this address' : (1 + n % 2) + ' roof permit' + (n % 2 ? 's' : '') + ' within 0.4 mi (2023–2024)';
+    // Intent classification from free text
+    const carrier = /insurance|claim|storm|hail|allstate|state farm/.test(note) || (n % 4 === 0)
+      ? pick(['Allstate', 'State Farm', 'Farmers', 'Liberty Mutual', 'USAA', 'Travelers'], 7) : null;
+    const intent = /replac/.test(note) ? 'Full replacement'
+      : /leak|repair/.test(note) ? 'Roof repair'
+      : /inspect/.test(note) ? 'Free inspection'
+      : /insurance|claim|storm|hail|damage/.test(note) ? 'Insurance claim'
+      : /gutter/.test(note) ? 'Gutter work'
+      : pick(['Full replacement', 'Roof repair', 'Free inspection', 'Insurance claim'], 3);
+    const urgency = (/storm|leak|asap|urgent/.test(note) || score >= 78) ? 'High' : score >= 55 ? 'Medium' : 'Low';
+    const insuranceInvolved = !!carrier || intent === 'Insurance claim';
+    const day = pick(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'this weekend', 'next week'], 4);
+    // Spam classification with confidence
+    const highSpam = (n % 9 === 0) || /^manual$/i.test(src);
+    const spam = highSpam ? Math.min(0.97, 0.8 + (n % 15) / 100) : (n % 100) / 1000 + 0.02;
+    const spamReasons = highSpam
+      ? ['Matches a known Angi bot submission pattern', 'Identical free-text seen across 6 Zuper contractors', 'Disposable email domain · phone unreachable']
+      : ['Human-typed free text — not a template', 'Phone verified · valid carrier on file', 'No click-fraud signature detected'];
+    // Cross-source deduplication
+    const dupSrc = pick(['Angi', 'Thumbtack', 'Google LSA', 'Meta Ads'].filter(s => s !== src), 6);
+    const hasDup = (n % 5) < 2;
+    const dupWhen = pick(['2 days ago', '3 days ago', 'last Monday', 'a week ago'], 8);
+    // One-line intent summary
+    const firstName = (lead && lead.name ? lead.name.split(' ')[0] : 'This lead');
+    const lastInit = (lead && lead.name && lead.name.split(' ')[1]) ? ' ' + lead.name.split(' ')[1][0] : '';
+    const oneLine = firstName + lastInit + ' · ' + intent + (carrier ? ', ' + carrier + ' approved' : ', no insurance') + ', wants ' + day;
+    // Lead score breakdown (sums to the lead score)
+    const parts0 = [['Source quality', 0.30], ['Property ICP match', 0.26], ['Intent clarity', 0.20], ['Cross-source', 0.14], ['Spam-clear', 0.10]];
+    let used = 0; const breakdown = parts0.map((p, i) => { const v = i === parts0.length - 1 ? score - used : Math.round(score * p[1]); used += v; return { k: p[0], v: Math.max(0, v) }; });
+    return { material, condition, roofAge, sqft, permits, carrier, intent, urgency, insuranceInvolved, day, spam, highSpam, spamReasons, dupSrc, hasDup, dupWhen, oneLine, breakdown, score, src };
+  }
+  function LeadIntakeIntelligence({ lead, onToast }) {
+    const [open, setOpen] = useState(true);
+    const [disputed, setDisputed] = useState(false);
+    const [dedup, setDedup] = useState(null); // 'merged' | 'separate'
+    const [rawOpen, setRawOpen] = useState(false);
+    const d = intakeIntel(lead);
+    const toast = m => onToast && onToast(m);
+    const spamPct = Math.round(d.spam * 100);
+    const spamTone = d.highSpam ? { fg: LH.red, bg: '#fdecec', bd: '#f6c9c9' } : { fg: LH.green, bg: LH.greenBg, bd: LH.greenBd };
+    const urgTone = d.urgency === 'High' ? { fg: LH.red, bg: '#fdecec' } : d.urgency === 'Medium' ? { fg: LH.amber, bg: LH.amberBg } : { fg: LH.sub, bg: '#f1f0ec' };
+    const chip = (label, tone) => <span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 9px', borderRadius: 999, fontSize: 11, fontWeight: 600, background: (tone && tone.bg) || '#f1f0ec', color: (tone && tone.fg) || LH.sub }}>{label}</span>;
+    const cardHead = (ic, color, title, right) => <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}><span style={{ width: 26, height: 26, borderRadius: 7, background: '#fff', border: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={ic} size={14} color={color} /></span><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, flex: 1 }}>{title}</span>{right}</div>;
+    const kvp = (k, v) => <div style={{ display: 'flex', gap: 10, padding: '4px 0' }}><span style={{ fontSize: 11.5, color: LH.muted, width: 118, flexShrink: 0 }}>{k}</span><span style={{ fontSize: 12, color: LH.body, fontWeight: 500, flex: 1, minWidth: 0 }}>{v}</span></div>;
+    return <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 16, paddingTop: 14 }}>
+      <button onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', marginBottom: open ? 12 : 0 }}>
+        <Ic name={open ? 'chevron-down' : 'chevron-right'} size={14} color={LH.sub} />
+        <span style={{ fontSize: 12, fontWeight: 700, color: LH.ink }}>Intake intelligence</span>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: '#7c3aed', background: '#faf5ff', border: '1px solid #e9d4ff', borderRadius: 999, padding: '1px 7px' }}>AI · SUB-SECOND</span>
+      </button>
+      {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* One-line intent summary */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: '10px 12px', borderRadius: 10, background: 'linear-gradient(169deg,#faf5ff,#eef4ff)', border: '1px solid #e9d4ff' }}>
+          <Ic name="scan-text" size={15} color="#7c3aed" style={{ position: 'relative', top: 1 }} />
+          <div style={{ minWidth: 0 }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: '#7c3aed', marginBottom: 2 }}>ONE-LINE SUMMARY</div><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, lineHeight: 1.4 }}>{d.oneLine}</div></div>
+        </div>
+        {/* Lead score at intake */}
+        <Card style={{ padding: 13 }}>
+          {cardHead('gauge', LH.primary, 'Lead score at intake', <span style={{ fontSize: 15, fontWeight: 800, color: LH.ink }}>{d.score}<span style={{ fontSize: 11, color: LH.muted, fontWeight: 600 }}>/100</span></span>)}
+          <div style={{ display: 'flex', height: 8, borderRadius: 999, overflow: 'hidden', background: '#f1f0ec', marginBottom: 8 }}>
+            {d.breakdown.map((b, i) => <div key={b.k} title={b.k + ': ' + b.v} style={{ width: (b.v) + '%', background: ['#3b82f6', '#8b5cf6', '#0891b2', '#f59e0b', '#16a34a'][i] }} />)}
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 12px' }}>{d.breakdown.map((b, i) => <span key={b.k} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: LH.sub }}><span style={{ width: 7, height: 7, borderRadius: 2, background: ['#3b82f6', '#8b5cf6', '#0891b2', '#f59e0b', '#16a34a'][i] }} />{b.k} {b.v}</span>)}</div>
+        </Card>
+        {/* Property intelligence enrichment */}
+        <Card style={{ padding: 13 }}>
+          {cardHead('house', '#0891b2', 'Property intelligence', chip('Enriched', { fg: LH.green, bg: LH.greenBg }))}
+          {kvp('Roof', d.material + ' · ' + d.condition)}
+          {kvp('Roof age', '~' + d.roofAge + ' yrs (aerial estimate)')}
+          {kvp('Square footage', d.sqft.toLocaleString() + ' sq ft')}
+          {kvp('Permit history', d.permits)}
+          {kvp('Carrier scope norm', (d.carrier || 'Typical local') + ' · full replacement common for hail')}
+        </Card>
+        {/* Spam classification with confidence */}
+        <Card style={{ padding: 13, borderColor: spamTone.bd, background: d.highSpam ? spamTone.bg : '#fff' }}>
+          {cardHead('shield-alert', spamTone.fg, 'Spam classification', <span style={{ fontSize: 12, fontWeight: 700, color: spamTone.fg }}>{d.spam.toFixed(2)} · {d.highSpam ? 'Likely spam' : 'Clean'}</span>)}
+          <div style={{ display: 'flex', height: 6, borderRadius: 999, overflow: 'hidden', background: '#f1f0ec', marginBottom: 9 }}><div style={{ width: spamPct + '%', background: spamTone.fg }} /></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: d.highSpam ? 11 : 0 }}>{d.spamReasons.map((r, i) => <div key={i} style={{ display: 'flex', gap: 7, alignItems: 'flex-start', fontSize: 11.5, color: LH.sub, lineHeight: 1.4 }}><Ic name={d.highSpam ? 'x' : 'check'} size={12} color={spamTone.fg} style={{ position: 'relative', top: 2, flexShrink: 0 }} />{r}</div>)}</div>
+          {d.highSpam && <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {disputed
+              ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: LH.green }}><Ic name="check-circle" size={14} color={LH.green} />Dispute filed with {d.src} · fee credit pending</span>
+              : <Btn kind="primary" icon="flag" onClick={() => { setDisputed(true); toast('Dispute filed with ' + d.src + ' — lead fee credit requested'); }} style={{ height: 30 }}>File lead-fee dispute</Btn>}
+            <span style={{ fontSize: 10.5, color: LH.muted }}>Pattern auto-blocked for 6 Zuper contractors</span>
+          </div>}
+        </Card>
+        {/* Cross-source deduplication */}
+        {d.hasDup && <Card style={{ padding: 13 }}>
+          {cardHead('copy', '#b45309', 'Cross-source duplicate', dedup === 'merged' ? chip('Merged', { fg: LH.green, bg: LH.greenBg }) : chip(dedup === 'separate' ? 'Kept separate' : 'Needs review', { fg: LH.amber, bg: LH.amberBg }))}
+          <div style={{ fontSize: 12, color: LH.body, lineHeight: 1.5, marginBottom: 10 }}>Same homeowner also submitted to <b style={{ color: LH.ink }}>{d.dupSrc}</b> {d.dupWhen}. Matched on name, phone, and address. Cross-source presence adds a scoring signal — and flags a possible double lead fee.</div>
+          {dedup
+            ? <div style={{ fontSize: 11.5, color: LH.sub }}>{dedup === 'merged' ? 'Resolved to one Contact (eager mode). Both source leads now share one timeline.' : 'Shown as related leads (lazy mode). Fees tracked per source.'}</div>
+            : <div style={{ display: 'flex', gap: 8 }}>
+                <Btn kind="primary" icon="git-merge" onClick={() => { setDedup('merged'); toast('Merged into one Contact — ' + d.src + ' + ' + d.dupSrc); }} style={{ height: 30 }}>Merge into one Contact</Btn>
+                <Btn icon="git-branch" onClick={() => { setDedup('separate'); toast('Kept as related leads'); }} style={{ height: 30 }}>Keep as related</Btn>
+              </div>}
+        </Card>}
+        {/* Intent classification from free text */}
+        <Card style={{ padding: 13 }}>
+          {cardHead('sparkles', '#7c3aed', 'Intent classification', <button onClick={() => setRawOpen(o => !o)} style={{ fontSize: 11, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>{rawOpen ? 'Hide' : 'Source text'}</button>)}
+          {rawOpen && <div style={{ fontSize: 11.5, color: LH.sub, fontStyle: 'italic', background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 8, padding: '8px 10px', marginBottom: 10, lineHeight: 1.45 }}>“{(lead && lead.note) || 'Free-text description from the homeowner intake form.'}”</div>}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {chip('Category · ' + d.intent, { fg: '#6d28d9', bg: '#f3e8ff' })}
+            {chip('Urgency · ' + d.urgency, urgTone)}
+            {chip('Insurance · ' + (d.insuranceInvolved ? 'Yes' : 'No'), d.insuranceInvolved ? { fg: '#0e7490', bg: '#e0f2fe' } : null)}
+            {d.carrier && chip('Carrier · ' + d.carrier, { fg: '#0e7490', bg: '#e0f2fe' })}
+          </div>
+        </Card>
+      </div>}
+    </div>;
+  }
   function LeadAISummary({ lead }) {
     if (!lead) return null;
     const first = (lead.name || 'This lead').split(' ')[0];
@@ -29548,6 +29673,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const address = lead.address || '4821 Oakwood Dr, Plano, TX 75024';
     const btnStyle = active => ({ width: 34, height: 34, borderRadius: 9, border: '1px solid ' + (active ? LH.red : LH.border), background: active ? '#fbeaea' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 });
     const iconBtn = (ic, m) => <button onClick={() => toast(m)} style={btnStyle(false)} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name={ic} size={15} color={LH.sub} /></button>;
+    const kebabMsg = a => a === 'Create contact' ? 'Creating contact for ' + lead.name + '…' : a === 'Mark as lost' ? lead.name + ' marked as lost' : a === 'Mark as dead' ? lead.name + ' marked as dead' : a === 'Delete lead' ? 'Delete ' + lead.name + '?' : a === 'Move to campaign' ? 'Choose a campaign to move ' + lead.name : a === 'Duplicate lead' ? lead.name + ' duplicated' : a === 'Export' ? 'Exporting ' + lead.name + '…' : a === 'Schedule inspection' ? 'Scheduling inspection…' : a === 'Reassign CSR' ? 'Reassigning CSR…' : a === 'Move stage' ? 'Move stage…' : a;
+    const KEBAB_ITEMS = [['user-plus', 'Create contact'], ['calendar', 'Schedule inspection'], ['user-check', 'Reassign CSR'], ['git-merge', 'Move stage'], ['arrow-right-left', 'Move to campaign'], ['copy', 'Duplicate lead'], ['download', 'Export'], ['div'], ['user-x', 'Mark as lost'], ['ban', 'Mark as dead'], ['trash-2', 'Delete lead']];
+    const kebabColor = a => a === 'Delete lead' ? LH.red : a === 'Mark as lost' ? LH.amber : LH.body;
+    const kebabIcColor = a => a === 'Delete lead' ? LH.red : a === 'Mark as lost' ? LH.amber : LH.sub;
     return <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 12 }}>
         <div style={{ width: 40, height: 40, borderRadius: 11, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>{initials}</div>
@@ -29565,8 +29694,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 : <Btn icon="briefcase" style={{ height: 34 }} onClick={() => { if (onConvert) onConvert(lead); else toast('Creating job for ' + lead.name + '…'); }}>Create job</Btn>}
               <div style={{ position: 'relative' }}>
                 <button onClick={() => setKebabOpen(o => !o)} title="More" style={btnStyle(false)} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="more-vertical" size={15} color={LH.sub} /></button>
-                {kebabOpen && <div onMouseLeave={() => setKebabOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 180 }}>
-                  <div onClick={() => { setKebabOpen(false); toast('Creating contact for ' + lead.name + '…'); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name="user-plus" size={14} color={LH.sub} />Create contact</div>
+                {kebabOpen && <div onMouseLeave={() => setKebabOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 210 }}>
+                  {KEBAB_ITEMS.map((it, k) => it[0] === 'div'
+                    ? <div key={'d' + k} style={{ height: 1, background: LH.borderSoft, margin: '5px 0' }} />
+                    : <div key={it[1]} onClick={() => { setKebabOpen(false); toast(kebabMsg(it[1])); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: kebabColor(it[1]), cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={it[0]} size={14} color={kebabIcColor(it[1])} />{it[1]}</div>)}
                 </div>}
               </div>
             </>
@@ -29625,6 +29756,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <div style={{ minWidth: 0 }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>CAMPAIGN</div><div style={{ fontSize: 12.5, fontWeight: 600, color: camp ? LH.ink : LH.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{camp || 'Not enrolled in a campaign'}</div></div>
             </div>; })()}
             <div style={{ marginTop: 16 }}><LeadAISummary lead={shown} /></div>
+            <LeadIntakeIntelligence lead={shown} onToast={onToast} />
             <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 16, paddingTop: 14 }}><LeadPrimaryDetails lead={shown} onToast={onToast} onMove={onMove} /></div>
           </>}
           {tab === 'activity' && <div>{act.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: 14 }}>
@@ -30009,7 +30141,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
     </div>;
   }
-  function LeadDetailsPage({ lead, onBack, onToast, onConvert }) {
+  function LeadDetailsPage({ lead, onBack, onToast, onConvert, onNav, hasPrev, hasNext, pos, total }) {
     const [tab, setTab] = useState('Overview');
     const [msg, setMsg] = useState('');
     const [pd, setPd] = useState(true);
@@ -30086,12 +30218,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '15px 24px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}><button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: LH.sub, fontWeight: 600, padding: 0 }}>Pipeline</button><Ic name="chevron-right" size={14} color={LH.muted} /><span style={{ fontWeight: 700, color: LH.ink }}>{lead.name}</span><button onClick={() => { setFav(f => !f); toast(fav ? 'Removed from favourites' : 'Added to favourites'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="star" size={15} color={fav ? '#e8b923' : LH.muted} /></button></div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
-          <Btn icon="chevron-down" onClick={() => setMoreOpen(o => !o)}>More Actions</Btn>
-          {moreOpen && <div onMouseLeave={() => setMoreOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 40, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 200 }}>
-            {[['calendar', 'Schedule inspection'], ['user-check', 'Reassign CSR'], ['git-merge', 'Move stage'], ['copy', 'Duplicate lead'], ['download', 'Export'], ['div'], ['user-x', 'Mark as lost'], ['trash-2', 'Delete lead']].map((it, k) => it[0] === 'div'
-              ? <div key={'d' + k} style={{ height: 1, background: LH.borderSoft, margin: '5px 0' }} />
-              : <div key={it[1]} onClick={() => { setMoreOpen(false); toast(it[1] === 'Mark as lost' ? lead.name + ' marked as lost' : it[1]); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: it[1] === 'Delete lead' ? LH.red : it[1] === 'Mark as lost' ? LH.amber : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={it[0]} size={14} color={it[1] === 'Delete lead' ? LH.red : it[1] === 'Mark as lost' ? LH.amber : LH.sub} />{it[1]}</div>)}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {onNav && <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {total > 0 && <span style={{ fontSize: 12, color: LH.muted, fontWeight: 600 }}>{pos} of {total}</span>}
+            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid ' + LH.border, borderRadius: 9, overflow: 'hidden' }}>
+              <button onClick={() => hasPrev && onNav(-1)} disabled={!hasPrev} title="Previous lead" style={{ width: 34, height: 32, border: 'none', borderRight: '1px solid ' + LH.border, background: '#fff', cursor: hasPrev ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hasPrev ? 1 : 0.4 }} onMouseEnter={e => { if (hasPrev) e.currentTarget.style.background = '#f5f2ec'; }} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="chevron-up" size={16} color={LH.sub} /></button>
+              <button onClick={() => hasNext && onNav(1)} disabled={!hasNext} title="Next lead" style={{ width: 34, height: 32, border: 'none', background: '#fff', cursor: hasNext ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hasNext ? 1 : 0.4 }} onMouseEnter={e => { if (hasNext) e.currentTarget.style.background = '#f5f2ec'; }} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="chevron-down" size={16} color={LH.sub} /></button>
+            </div>
           </div>}
         </div>
       </div>
@@ -30134,6 +30267,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>}
           {tab === 'Overview' && <>
           <div style={{ marginBottom: 16 }}><LeadAISummary lead={lead} /></div>
+          <div style={{ marginBottom: 4 }}><LeadIntakeIntelligence lead={lead} onToast={onToast} /></div>
           <LeadLifecycle lead={lead} jobId={jobId} />
           {jobId
             ? <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 11, padding: '12px 14px', marginBottom: 20 }}><span style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={16} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.green }}>Converted to inspection job #{jobId}</div><div style={{ fontSize: 12, color: LH.sub }}>An inspection is scheduled — this lead is now an active job.</div></div><Btn icon="external-link" onClick={() => toast('Opening Job #' + jobId + '…')}>View job</Btn></div>
@@ -30265,7 +30399,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const boardMove = (id, col) => { if (col === 'Converted as Job') { const l = leads.find(x => x.id === id); if (l && !l.jobId) { startLeadConvert(l, jid => convertLeadTo(id, jid), () => setConvertLead(l)); return; } } move(id, col); };
     const filtered = leads.filter(l => (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && matchKpi(l) && (!search.trim() || (l.name + ' ' + (l.note || '')).toLowerCase().includes(search.trim().toLowerCase())));
     useEffect(() => { const h = e => { if (e.key === 'Escape') setSelId(null); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, []);
-    if (pageLead) return <LeadDetailsPage lead={pageLead} onBack={closePage} onToast={onToast} onConvert={convertLeadTo} />;
+    const pageIdx = pageLead ? filtered.findIndex(l => l.id === pageLead.id) : -1;
+    const navLead = dir => { const ni = pageIdx + dir; if (pageIdx >= 0 && ni >= 0 && ni < filtered.length) setPageLead(filtered[ni]); };
+    if (pageLead) return <LeadDetailsPage key={pageLead.id} lead={pageLead} onBack={closePage} onToast={onToast} onConvert={convertLeadTo} onNav={navLead} hasPrev={pageIdx > 0} hasNext={pageIdx >= 0 && pageIdx < filtered.length - 1} pos={pageIdx + 1} total={filtered.length} />;
     return <div>
       {/* Row 1 — title, quick views, date range + primary CTAs */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
