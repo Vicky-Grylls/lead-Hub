@@ -31309,10 +31309,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>SEND DAYS</div>
             <div style={{ display: 'flex', gap: 5 }}>{DOW.map((d, i) => <button key={i} onClick={() => setSendDays({ ...sendDays, [i]: !sendDays[i] })} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + (sendDays[i] ? LH.primary : LH.border), background: sendDays[i] ? LH.primary : '#fff', color: sendDays[i] ? '#fff' : LH.sub, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>{d}</button>)}</div>
           </div>
-          <div style={{ paddingTop: 14, marginTop: 14, borderTop: '1px solid ' + LH.borderSoft }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 10 }}>BUSINESS HOURS</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: LH.body, cursor: 'pointer' }}><Toggle on={bizHours} onChange={setBizHours} />Only send during set hours</label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', rowGap: 12, paddingTop: 14, marginTop: 14, borderTop: '1px solid ' + LH.borderSoft }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>BUSINESS HOURS</div>
+              <div style={{ fontSize: 13, color: LH.body, marginTop: 4 }}>Only send during set hours</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <Toggle on={bizHours} onChange={setBizHours} />
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', opacity: bizHours ? 1 : 0.4, pointerEvents: bizHours ? 'auto' : 'none' }}><div style={{ width: 118 }}><Dropdown value="9:00 am" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div><span style={{ color: LH.muted, fontSize: 12 }}>to</span><div style={{ width: 118 }}><Dropdown value="8:00 pm" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div></div>
             </div>
           </div>
