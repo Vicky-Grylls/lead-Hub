@@ -31024,6 +31024,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </> : <div style={{ fontSize: 12, color: LH.muted, padding: '6px 2px' }}>Pick a design template to preview and let Nova draft the copy.</div>}
     </div>;
   }
+  const RICH_EMAIL_ENABLED = false; // rich HTML email design flow hidden for now
   function StepEditor({ step, onChange, onRemove, onDuplicate, timingMode, error }) {
     const ch = step.ch;
     const outcomeCh = STEP_OUTCOMES[ch] || STEP_OUTCOMES.sms;
@@ -31058,7 +31059,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <button onClick={onRemove} title="Delete step" style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 4 }}><Ic name="trash-2" size={15} color={LH.muted} /></button>
       </div>
       {ch === 'email' && <input value={step.subject || ''} onChange={e => onChange({ ...step, subject: e.target.value })} placeholder="Subject" style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, fontWeight: 600, color: LH.ink, outline: 'none', marginBottom: 8 }} />}
-      {ch === 'email' && <div style={{ display: 'flex', gap: 6, padding: 4, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, marginBottom: 10, width: 'fit-content' }}>{[['plain', 'Plain text'], ['rich', 'Rich design']].map(([k, l]) => { const on = (step.emode || 'plain') === k; return <button key={k} onClick={() => onChange({ ...step, emode: k })} style={{ height: 30, padding: '0 14px', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, background: on ? '#fff' : 'transparent', color: on ? LH.ink : LH.sub, boxShadow: on ? '0 1px 2px rgba(0,0,0,.06)' : 'none' }}>{l}</button>; })}</div>}
+      {RICH_EMAIL_ENABLED && ch === 'email' && <div style={{ display: 'flex', gap: 6, padding: 4, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, marginBottom: 10, width: 'fit-content' }}>{[['plain', 'Plain text'], ['rich', 'Rich design']].map(([k, l]) => { const on = (step.emode || 'plain') === k; return <button key={k} onClick={() => onChange({ ...step, emode: k })} style={{ height: 30, padding: '0 14px', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, background: on ? '#fff' : 'transparent', color: on ? LH.ink : LH.sub, boxShadow: on ? '0 1px 2px rgba(0,0,0,.06)' : 'none' }}>{l}</button>; })}</div>}
       {ch === 'task' && <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <input value={step.title || ''} onChange={e => onChange({ ...step, title: e.target.value })} placeholder="Task title" style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none' }} />
         <div style={{ width: 150 }}><Dropdown value={step.taskType} options={TASK_TYPES.map(t => ({ value: t, label: t }))} placeholder="Task type" onChange={v => onChange({ ...step, taskType: v })} /></div>
@@ -31073,7 +31074,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         ? <div style={{ marginTop: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 12, color: LH.sub, width: 60 }}>Placed by</span><div style={{ width: 220 }}><Dropdown value={step.callBy || 'nova'} options={[{ value: 'nova', label: 'Nova — AI voice agent' }, { value: 'rep', label: 'Assign to a sales rep' }]} onChange={v => onChange({ ...step, callBy: v })} /></div>{(step.callBy || 'nova') === 'rep' && <div style={{ width: 160 }}><Dropdown value={step.assignee} options={REPS.map(r => ({ value: r, label: r }))} placeholder="Rep" onChange={v => onChange({ ...step, assignee: v })} /></div>}</div>
         </div>
-        : (ch === 'email' && step.emode === 'rich')
+        : (RICH_EMAIL_ENABLED && ch === 'email' && step.emode === 'rich')
         ? <RichEmailEditor step={step} onChange={onChange} />
         : <div>
           <textarea value={step.body || ''} onChange={e => onChange({ ...step, body: e.target.value })} placeholder={ch === 'task' ? 'Description' : 'Message'} style={{ width: '100%', height: 120, borderRadius: 8, border: '1px solid ' + LH.border, padding: 11, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.55 }} />
