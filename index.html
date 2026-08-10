@@ -31121,6 +31121,22 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ]);
     const [pbFile, setPbFile] = useState(null);
     const [pbPreview, setPbPreview] = useState(false);
+    const downloadPlaybookTemplate = () => {
+      const rows = [
+        ['Order', 'Question', 'Required', 'Notes'],
+        ['1', 'Is this for a home or a commercial property?', 'Yes', 'Capture property type'],
+        ['2', 'What is going on with the roof — leak, storm damage, or age?', 'Yes', 'Understand the problem'],
+        ['3', 'How soon are you looking to get this done?', 'Yes', 'Gauge urgency / timeline'],
+        ['4', 'Have you had any other companies out to quote it?', 'No', 'Competitive context'],
+        ['5', 'What day and time works for a free inspection?', 'Yes', 'Book the inspection'],
+        ['', 'Add your own questions below…', '', '']
+      ];
+      const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'qualification-playbook-template.csv'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    };
     const pbInputRef = useRef(null);
     const [commTab, setCommTab] = useState('sms');
     // Speed to Lead
@@ -31266,7 +31282,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         const playbookCard = <Card style={{ padding: 15 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Nova playbook ({playbook.length} questions)</span>
-            <button onClick={() => pbInputRef.current && pbInputRef.current.click()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="upload" size={14} color={LH.sub} />Upload playbook</button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={downloadPlaybookTemplate} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="download" size={14} color={LH.sub} />Download template</button>
+              <button onClick={() => pbInputRef.current && pbInputRef.current.click()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="upload" size={14} color={LH.sub} />Upload playbook</button>
+            </div>
             <input ref={pbInputRef} type="file" accept=".doc,.docx,.pdf,.txt,.csv" style={{ display: 'none' }} onChange={e => { const f = e.target.files && e.target.files[0]; if (f) { const nm = f.name.toLowerCase(); const kind = ((f.type || '').indexOf('image') === 0 || /\.(png|jpe?g|gif|webp|svg)$/.test(nm)) ? 'image' : (f.type === 'application/pdf' || /\.pdf$/.test(nm)) ? 'pdf' : ((f.type || '').indexOf('text') === 0 || /\.(txt|csv)$/.test(nm)) ? 'text' : 'doc'; const base = { name: f.name, size: f.size, kind, url: (typeof URL !== 'undefined' && URL.createObjectURL) ? URL.createObjectURL(f) : null }; if (kind === 'text' && typeof FileReader !== 'undefined') { const r = new FileReader(); r.onload = () => setPbFile({ ...base, text: String(r.result) }); r.readAsText(f); } else { setPbFile(base); } } e.target.value = ''; }} />
           </div>
           {pbFile && <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, border: '1px solid ' + LH.border, background: LH.bg, marginBottom: 12 }}>
@@ -31351,7 +31370,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <Card style={{ padding: 15 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Qualification questions ({playbook.length})</span>
-            <button onClick={() => pbInputRef.current && pbInputRef.current.click()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="upload" size={14} color={LH.sub} />Upload playbook</button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={downloadPlaybookTemplate} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="download" size={14} color={LH.sub} />Download template</button>
+              <button onClick={() => pbInputRef.current && pbInputRef.current.click()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="upload" size={14} color={LH.sub} />Upload playbook</button>
+            </div>
             <input ref={pbInputRef} type="file" accept=".doc,.docx,.pdf,.txt,.csv" style={{ display: 'none' }} onChange={e => { const f = e.target.files && e.target.files[0]; if (f) { const nm = f.name.toLowerCase(); const kind = ((f.type || '').indexOf('image') === 0 || /\.(png|jpe?g|gif|webp|svg)$/.test(nm)) ? 'image' : (f.type === 'application/pdf' || /\.pdf$/.test(nm)) ? 'pdf' : ((f.type || '').indexOf('text') === 0 || /\.(txt|csv)$/.test(nm)) ? 'text' : 'doc'; const base = { name: f.name, size: f.size, kind, url: (typeof URL !== 'undefined' && URL.createObjectURL) ? URL.createObjectURL(f) : null }; if (kind === 'text' && typeof FileReader !== 'undefined') { const r = new FileReader(); r.onload = () => setPbFile({ ...base, text: String(r.result) }); r.readAsText(f); } else { setPbFile(base); } } e.target.value = ''; }} />
           </div>
           {pbFile && <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, border: '1px solid ' + LH.border, background: LH.bg, marginBottom: 12 }}>
