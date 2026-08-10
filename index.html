@@ -30972,6 +30972,58 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   };
   const STEP_ACTIONS = ['Nova continues the sequence', 'Nova qualifies & books inspection', 'Nova answers & follows up', 'Wait, then retry', 'Skip to next step', 'Add a tag', 'Mark as Needs attention', 'Exit the campaign', 'Mark qualified → hand to a rep', 'Create a task for a rep'];
   // A single channel step editor (used by Speed to Lead + Nurture)
+  // HTML-rich email design templates (with AI-regenerated copy variants).
+  const EMAIL_DESIGNS = [
+    { key: 'inspection', name: 'Free inspection', accent: '#15803d', variants: [
+      { subject: 'Your free roof inspection', headline: 'Book your free roof inspection', body: 'Hi {{customer_first_name}}, storm season is rough on roofs. Our team can inspect yours at no cost and flag anything that needs attention — usually within 48 hours.', cta: 'Schedule my inspection' },
+      { subject: 'A free look at your roof — this week', headline: 'Let’s take a look at your roof', body: 'Hi {{customer_first_name}}, a quick, free inspection catches small issues before they get expensive. Pick a time that works and we’ll handle the rest.', cta: 'Grab a time' },
+      { subject: 'Free inspection, zero pressure', headline: 'Free inspection, zero pressure', body: 'Hi {{customer_first_name}}, no obligation — just a clear picture of your roof’s condition, with photos and honest advice.', cta: 'Book now' }
+    ] },
+    { key: 'storm', name: 'Storm response', accent: '#b45309', variants: [
+      { subject: 'Storm damage? We can help fast', headline: 'Storm damage? We move fast', body: 'Hi {{customer_first_name}}, recent storms can cause hidden damage. We document everything for your insurance and can often inspect within 24 hours.', cta: 'Start my claim check' },
+      { subject: 'Don’t let storm damage spread', headline: 'Catch storm damage early', body: 'Hi {{customer_first_name}}, small leaks turn into big repairs fast. Let’s assess the damage and get ahead of it before the next storm.', cta: 'Request an assessment' }
+    ] },
+    { key: 'estimate', name: 'Estimate follow-up', accent: '#2563eb', variants: [
+      { subject: 'Still thinking about your estimate?', headline: 'Your estimate is ready when you are', body: 'Hi {{customer_first_name}}, no rush — your estimate is saved and ready. Happy to walk you through the options whenever it suits you.', cta: 'Review my estimate' },
+      { subject: 'Questions on your roof estimate?', headline: 'Let’s finish your roof project', body: 'Hi {{customer_first_name}}, want to talk financing or timing? A quick call and we can get you on the schedule.', cta: 'Talk it through' }
+    ] },
+    { key: 'seasonal', name: 'Seasonal offer', accent: '#7c3aed', variants: [
+      { subject: 'Roofing season is here', headline: 'Beat the season rush', body: 'Hi {{customer_first_name}}, calendars fill fast this time of year. Lock in your spot now and get priority scheduling.', cta: 'Reserve my spot' },
+      { subject: 'A seasonal tune-up for your roof', headline: 'Seasonal roof tune-up', body: 'Hi {{customer_first_name}}, a seasonal check keeps your roof — and your warranty — in great shape. Let’s get you on the calendar.', cta: 'Book a tune-up' }
+    ] }
+  ];
+  const emailShell = (accent, headline, body, cta) => '<div style="font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff">'
+    + '<div style="background:' + accent + ';padding:18px 24px;color:#ffffff;font-weight:800;font-size:17px">Hill Roofing</div>'
+    + '<div style="padding:28px 24px">'
+    + '<h1 style="font-size:22px;line-height:1.3;color:#1f2937;margin:0 0 12px">' + headline + '</h1>'
+    + '<p style="font-size:14px;color:#4b5563;line-height:1.65;margin:0 0 22px">' + body + '</p>'
+    + '<a href="#" style="display:inline-block;background:' + accent + ';color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px">' + cta + '</a>'
+    + '<p style="font-size:13px;color:#6b7280;margin:22px 0 0">Thanks,<br/>{{user_first_name}} · Hill Roofing</p>'
+    + '</div>'
+    + '<div style="padding:16px 24px;background:#faf8f4;border-top:1px solid #eee;font-size:12px;color:#9ca3af">Hill Roofing · Trusted roofing &amp; storm restoration since 2004<br/>Unsubscribe: {{unsubscribe_link}}</div>'
+    + '</div>';
+  const renderEmailDesign = (key, vi) => { const d = EMAIL_DESIGNS.find(x => x.key === key); if (!d) return ''; const v = d.variants[(vi || 0) % d.variants.length]; return emailShell(d.accent, v.headline, v.body, v.cta); };
+  function RichEmailEditor({ step, onChange }) {
+    const [busy, setBusy] = useState(false);
+    const [prompt, setPrompt] = useState('');
+    const design = EMAIL_DESIGNS.find(d => d.key === step.design);
+    const pick = key => { const d = EMAIL_DESIGNS.find(x => x.key === key); const v = d.variants[0]; onChange({ ...step, design: key, variant: 0, subject: v.subject, html: renderEmailDesign(key, 0) }); };
+    const regenerate = () => { if (!design) return; setBusy(true); setTimeout(() => { const nv = ((step.variant || 0) + 1) % design.variants.length; const v = design.variants[nv]; onChange({ ...step, variant: nv, subject: v.subject, html: renderEmailDesign(step.design, nv) }); setBusy(false); setPrompt(''); }, 850); };
+    return <div style={{ marginTop: 2 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 8 }}>DESIGN TEMPLATE</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8, marginBottom: 12 }}>{EMAIL_DESIGNS.map(d => { const on = step.design === d.key; return <button key={d.key} onClick={() => pick(d.key)} style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, border: '1px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', cursor: 'pointer' }}><span style={{ width: 22, height: 22, borderRadius: 6, background: d.accent, flexShrink: 0 }} /><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{d.name}</span>{on && <Ic name="check" size={14} color={LH.primary} style={{ marginLeft: 'auto' }} />}</button>; })}</div>
+      {design ? <>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <div style={{ flex: 1, position: 'relative' }}><Ic name="sparkles" size={14} color={LH.primary} style={{ position: 'absolute', left: 10, top: 10 }} /><input value={prompt} onChange={e => setPrompt(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') regenerate(); }} placeholder="Tell Nova how to rewrite this email…" style={{ width: '100%', height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px 0 30px', fontSize: 12.5, color: LH.ink, outline: 'none', boxSizing: 'border-box' }} /></div>
+          <button onClick={regenerate} disabled={busy} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', borderRadius: 8, border: 'none', background: LH.primary, color: '#fff', fontSize: 12.5, fontWeight: 600, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1, flexShrink: 0 }}><Ic name={busy ? 'loader' : 'sparkles'} size={14} color="#fff" />{busy ? 'Generating…' : 'Regenerate with AI'}</button>
+        </div>
+        <div style={{ border: '1px solid ' + LH.border, borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ padding: '7px 12px', background: '#faf8f4', borderBottom: '1px solid ' + LH.borderSoft, fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span>PREVIEW</span><span style={{ color: LH.muted }}>{design.name} · variant {(step.variant || 0) + 1}/{design.variants.length}</span></div>
+          <div style={{ maxHeight: 360, overflowY: 'auto', background: '#f1f0ec', padding: 16, opacity: busy ? 0.5 : 1, transition: 'opacity .15s' }}><div dangerouslySetInnerHTML={{ __html: step.html || renderEmailDesign(step.design, step.variant || 0) }} /></div>
+        </div>
+      </> : <div style={{ fontSize: 12, color: LH.muted, padding: '6px 2px' }}>Pick a design template to preview and let Nova draft the copy.</div>}
+    </div>;
+  }
   function StepEditor({ step, onChange, onRemove, onDuplicate, timingMode, error }) {
     const ch = step.ch;
     const outcomeCh = STEP_OUTCOMES[ch] || STEP_OUTCOMES.sms;
@@ -31000,12 +31052,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             {step.offset !== 'launch' && <div style={{ width: 175, flexShrink: 0 }}><Dropdown value={step.anchor} options={ANCHORS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => onChange({ ...step, anchor: v })} /></div>}</>
           : <div style={{ width: 120, flexShrink: 0 }}><Dropdown value={step.time} options={TIMES.map(t => ({ value: t, label: t }))} onChange={v => onChange({ ...step, time: v })} /></div>}
         <div style={{ flex: 1, minWidth: 8 }} />
-        {(ch === 'sms' || ch === 'email') && <div style={{ width: 150, flexShrink: 0 }}><Dropdown value={step.tpl || ''} placeholder="Choose a template…" height={30} options={(ch === 'sms' ? SMS_TEMPLATES : EMAIL_TEMPLATES).map(tpl => ({ value: tpl.name, label: tpl.name }))} onChange={applyTemplate} /></div>}
-        {(ch === 'sms' || ch === 'email') && <div style={{ width: 150, flexShrink: 0 }}><Dropdown value="" placeholder="Insert snippet…" height={30} options={SNIPPETS.map(([v, l]) => ({ value: v, label: l }))} onChange={insertSnippet} /></div>}
+        {(ch === 'sms' || (ch === 'email' && step.emode !== 'rich')) && <div style={{ width: 150, flexShrink: 0 }}><Dropdown value={step.tpl || ''} placeholder="Choose a template…" height={30} options={(ch === 'sms' ? SMS_TEMPLATES : EMAIL_TEMPLATES).map(tpl => ({ value: tpl.name, label: tpl.name }))} onChange={applyTemplate} /></div>}
+        {(ch === 'sms' || (ch === 'email' && step.emode !== 'rich')) && <div style={{ width: 150, flexShrink: 0 }}><Dropdown value="" placeholder="Insert snippet…" height={30} options={SNIPPETS.map(([v, l]) => ({ value: v, label: l }))} onChange={insertSnippet} /></div>}
         {onDuplicate && <button onClick={onDuplicate} title="Duplicate step" style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 4 }}><Ic name="copy" size={15} color={LH.muted} /></button>}
         <button onClick={onRemove} title="Delete step" style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 4 }}><Ic name="trash-2" size={15} color={LH.muted} /></button>
       </div>
       {ch === 'email' && <input value={step.subject || ''} onChange={e => onChange({ ...step, subject: e.target.value })} placeholder="Subject" style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, fontWeight: 600, color: LH.ink, outline: 'none', marginBottom: 8 }} />}
+      {ch === 'email' && <div style={{ display: 'flex', gap: 6, padding: 4, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, marginBottom: 10, width: 'fit-content' }}>{[['plain', 'Plain text'], ['rich', 'Rich design']].map(([k, l]) => { const on = (step.emode || 'plain') === k; return <button key={k} onClick={() => onChange({ ...step, emode: k })} style={{ height: 30, padding: '0 14px', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, background: on ? '#fff' : 'transparent', color: on ? LH.ink : LH.sub, boxShadow: on ? '0 1px 2px rgba(0,0,0,.06)' : 'none' }}>{l}</button>; })}</div>}
       {ch === 'task' && <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <input value={step.title || ''} onChange={e => onChange({ ...step, title: e.target.value })} placeholder="Task title" style={{ flex: 1, height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none' }} />
         <div style={{ width: 150 }}><Dropdown value={step.taskType} options={TASK_TYPES.map(t => ({ value: t, label: t }))} placeholder="Task type" onChange={v => onChange({ ...step, taskType: v })} /></div>
@@ -31020,6 +31073,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         ? <div style={{ marginTop: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 12, color: LH.sub, width: 60 }}>Placed by</span><div style={{ width: 220 }}><Dropdown value={step.callBy || 'nova'} options={[{ value: 'nova', label: 'Nova — AI voice agent' }, { value: 'rep', label: 'Assign to a sales rep' }]} onChange={v => onChange({ ...step, callBy: v })} /></div>{(step.callBy || 'nova') === 'rep' && <div style={{ width: 160 }}><Dropdown value={step.assignee} options={REPS.map(r => ({ value: r, label: r }))} placeholder="Rep" onChange={v => onChange({ ...step, assignee: v })} /></div>}</div>
         </div>
+        : (ch === 'email' && step.emode === 'rich')
+        ? <RichEmailEditor step={step} onChange={onChange} />
         : <div>
           <textarea value={step.body || ''} onChange={e => onChange({ ...step, body: e.target.value })} placeholder={ch === 'task' ? 'Description' : 'Message'} style={{ width: '100%', height: 120, borderRadius: 8, border: '1px solid ' + LH.border, padding: 11, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.55 }} />
         </div>}
