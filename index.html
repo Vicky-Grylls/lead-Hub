@@ -31120,6 +31120,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { id: wuid(), q: 'What day and time works for a free inspection?', req: true }
     ]);
     const [pbFile, setPbFile] = useState(null);
+    const [pbPreview, setPbPreview] = useState(false);
     const pbInputRef = useRef(null);
     const [commTab, setCommTab] = useState('sms');
     // Speed to Lead
@@ -31266,12 +31267,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Nova playbook ({playbook.length} questions)</span>
             <button onClick={() => pbInputRef.current && pbInputRef.current.click()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="upload" size={14} color={LH.sub} />Upload playbook</button>
-            <input ref={pbInputRef} type="file" accept=".doc,.docx,.pdf,.txt,.csv" style={{ display: 'none' }} onChange={e => { const f = e.target.files && e.target.files[0]; if (f) setPbFile({ name: f.name, size: f.size, url: (typeof URL !== 'undefined' && URL.createObjectURL) ? URL.createObjectURL(f) : null }); e.target.value = ''; }} />
+            <input ref={pbInputRef} type="file" accept=".doc,.docx,.pdf,.txt,.csv" style={{ display: 'none' }} onChange={e => { const f = e.target.files && e.target.files[0]; if (f) { const nm = f.name.toLowerCase(); const kind = ((f.type || '').indexOf('image') === 0 || /\.(png|jpe?g|gif|webp|svg)$/.test(nm)) ? 'image' : (f.type === 'application/pdf' || /\.pdf$/.test(nm)) ? 'pdf' : ((f.type || '').indexOf('text') === 0 || /\.(txt|csv)$/.test(nm)) ? 'text' : 'doc'; const base = { name: f.name, size: f.size, kind, url: (typeof URL !== 'undefined' && URL.createObjectURL) ? URL.createObjectURL(f) : null }; if (kind === 'text' && typeof FileReader !== 'undefined') { const r = new FileReader(); r.onload = () => setPbFile({ ...base, text: String(r.result) }); r.readAsText(f); } else { setPbFile(base); } } e.target.value = ''; }} />
           </div>
           {pbFile && <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, border: '1px solid ' + LH.border, background: LH.bg, marginBottom: 12 }}>
             <div style={{ width: 30, height: 30, borderRadius: 7, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="file-text" size={15} color={LH.primary} /></div>
             <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pbFile.name}</div><div style={{ fontSize: 11, color: LH.green }}>Attached · Nova will follow this decision flow</div></div>
-            {pbFile.url && <button onClick={() => window.open(pbFile.url, '_blank')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer', flexShrink: 0 }}><Ic name="eye" size={13} color={LH.sub} />Preview</button>}
+            <button onClick={() => setPbPreview(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer', flexShrink: 0 }}><Ic name="eye" size={13} color={LH.sub} />Preview</button>
             <button onClick={() => setPbFile(null)} title="Remove" style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}><Ic name="x" size={15} color={LH.muted} /></button>
           </div>}
           <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 10 }}>Upload a decision-flow doc (.docx, .pdf, .csv) or edit the questions below.</div>
@@ -31348,12 +31349,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Qualification questions ({playbook.length})</span>
             <button onClick={() => pbInputRef.current && pbInputRef.current.click()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="upload" size={14} color={LH.sub} />Upload playbook</button>
-            <input ref={pbInputRef} type="file" accept=".doc,.docx,.pdf,.txt,.csv" style={{ display: 'none' }} onChange={e => { const f = e.target.files && e.target.files[0]; if (f) setPbFile({ name: f.name, size: f.size, url: (typeof URL !== 'undefined' && URL.createObjectURL) ? URL.createObjectURL(f) : null }); e.target.value = ''; }} />
+            <input ref={pbInputRef} type="file" accept=".doc,.docx,.pdf,.txt,.csv" style={{ display: 'none' }} onChange={e => { const f = e.target.files && e.target.files[0]; if (f) { const nm = f.name.toLowerCase(); const kind = ((f.type || '').indexOf('image') === 0 || /\.(png|jpe?g|gif|webp|svg)$/.test(nm)) ? 'image' : (f.type === 'application/pdf' || /\.pdf$/.test(nm)) ? 'pdf' : ((f.type || '').indexOf('text') === 0 || /\.(txt|csv)$/.test(nm)) ? 'text' : 'doc'; const base = { name: f.name, size: f.size, kind, url: (typeof URL !== 'undefined' && URL.createObjectURL) ? URL.createObjectURL(f) : null }; if (kind === 'text' && typeof FileReader !== 'undefined') { const r = new FileReader(); r.onload = () => setPbFile({ ...base, text: String(r.result) }); r.readAsText(f); } else { setPbFile(base); } } e.target.value = ''; }} />
           </div>
           {pbFile && <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, border: '1px solid ' + LH.border, background: LH.bg, marginBottom: 12 }}>
             <div style={{ width: 30, height: 30, borderRadius: 7, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="file-text" size={15} color={LH.primary} /></div>
             <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pbFile.name}</div><div style={{ fontSize: 11, color: LH.green }}>Attached · Nova will follow this decision flow</div></div>
-            {pbFile.url && <button onClick={() => window.open(pbFile.url, '_blank')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer', flexShrink: 0 }}><Ic name="eye" size={13} color={LH.sub} />Preview</button>}
+            <button onClick={() => setPbPreview(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer', flexShrink: 0 }}><Ic name="eye" size={13} color={LH.sub} />Preview</button>
             <button onClick={() => setPbFile(null)} title="Remove" style={{ background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}><Ic name="x" size={15} color={LH.muted} /></button>
           </div>}
           <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 10 }}>Upload a decision-flow doc (.docx, .pdf, .csv) or edit the questions below.</div>
@@ -31441,8 +31442,24 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </div>
       </div>;
-    if (embed) return shell;
-    return <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(20,18,15,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}><div style={{ width: 'min(1040px,96vw)', height: 'min(700px,92vh)' }}>{shell}</div></div>;
+    const pbModal = pbPreview && pbFile && <ChOverlay title={pbFile.name} sub="Playbook preview" width={780} onClose={() => setPbPreview(false)} foot={<Btn onClick={() => setPbPreview(false)}>Close</Btn>}>
+      {pbFile.kind === 'image'
+        ? <img src={pbFile.url} alt={pbFile.name} style={{ maxWidth: '100%', display: 'block', margin: '0 auto', borderRadius: 8, border: '1px solid ' + LH.borderSoft }} />
+        : pbFile.kind === 'pdf'
+        ? <iframe src={pbFile.url} title={pbFile.name} style={{ width: '100%', height: '68vh', border: '1px solid ' + LH.borderSoft, borderRadius: 8 }} />
+        : pbFile.kind === 'text'
+        ? <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 12.5, color: LH.body, lineHeight: 1.6, fontFamily: 'ui-monospace,monospace', margin: 0, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 8, padding: 16, maxHeight: '68vh', overflowY: 'auto' }}>{pbFile.text || 'Loading…'}</pre>
+        : <div style={{ background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, padding: '34px 38px', maxWidth: 640, margin: '0 auto', boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}><Ic name="file-text" size={15} color={LH.primary} /><span style={{ fontSize: 11.5, color: LH.muted }}>{pbFile.name}</span></div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: LH.ink, marginBottom: 8 }}>Qualification playbook</div>
+            <div style={{ fontSize: 13, color: LH.body, lineHeight: 1.65, marginBottom: 18 }}>{instructions}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 8 }}>QUESTIONS</div>
+            <ol style={{ paddingLeft: 20, margin: 0 }}>{playbook.map(p => <li key={p.id} style={{ fontSize: 13, color: LH.body, lineHeight: 1.7, marginBottom: 6 }}>{p.q}{p.req ? ' *' : ''}</li>)}</ol>
+            <div style={{ marginTop: 20, paddingTop: 12, borderTop: '1px solid ' + LH.borderSoft, fontSize: 11.5, color: LH.muted }}>Rendered preview · .doc/.docx can’t display inline, so this shows the playbook contents.</div>
+          </div>}
+    </ChOverlay>;
+    if (embed) return <>{shell}{pbModal}</>;
+    return <><div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(20,18,15,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}><div style={{ width: 'min(1040px,96vw)', height: 'min(700px,92vh)' }}>{shell}</div></div>{pbModal}</>;
   }
 
   /* ─────────── AI WORKFORCE ─────────── */
