@@ -29318,6 +29318,40 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ['Contacting', 'Qualifying', 'Needs human'].includes(l.col) ? 'Speed-to-Lead Drip'
     : l.col === 'In drip' ? 'Storm Season Re-engage'
     : l.col === 'Qualified' || l.col === 'Completed' ? 'Speed-to-Lead Drip' : null));
+  // Per-source field mapping (from each lead-source schema). Standard lead fields land in
+  // Primary Details; source-specific / source_metadata.* fields land in Custom Fields.
+  const LEAD_SOURCE_SCHEMA = {
+    'Angi': {
+      primary: [['External ID', 'AG-88213'], ['Source cost', '$45.00'], ['Task name', 'Roof repair'], ['Intent summary', 'Storm damage — missing shingles'], ['Match type', 'Lead']],
+      custom: [['Trusted Form URL', 'cert.trustedform.com/2f9a…c31'], ['SP Entity ID', 'sp_017734'], ['Match type', 'Lead']]
+    },
+    'Thumbtack': {
+      primary: [['External ID', 'nt_9f3ac21'], ['Subtype', 'Direct Request'], ['Source cost', '$32.00'], ['Received at', 'Aug 10, 2026 · 3:41 PM'], ['Task name', 'Roof installation'], ['Intent summary', 'Roof leak after heavy rain']],
+      custom: [['Intake responses', '3 Q&A captured'], ['Request ID', 'req_5521'], ['Customer ID', 'cus_8842'], ['Travel preferences', 'Within 25 mi'], ['Attachments', '2 photos']]
+    },
+    'Google LSA': {
+      primary: [['External ID', '8830142277'], ['Subtype', 'MESSAGE'], ['Source cost', '$28.50'], ['Received at', 'Aug 10, 2026 · 1:12 PM'], ['Task name', 'roof_installation_replacement'], ['Intent summary', 'Need a quote for a full re-roof']],
+      custom: [['Charge status', 'CHARGED'], ['Conversations', '1 thread'], ['Locale', 'en-US']]
+    },
+    'Meta Ads': {
+      primary: [['External ID (leadgen)', '146602199283', ], ['Subtype', 'Paid'], ['Received at', 'Aug 9, 2026 · 6:04 PM'], ['Task name', 'Free Roof Inspection — Aug'], ['Intent summary', 'Requested a free roof inspection']],
+      custom: [['Intake responses', '4 form fields'], ['Ad ID', '238811902'], ['Campaign ID', '120210…447'], ['Adset ID', '120210…992'], ['Platform', 'instagram']]
+    },
+    'Instant Estimator': {
+      primary: [['External ID (session)', 'sess_a71f0c'], ['Source cost', '$0.00'], ['Received at', 'Aug 10, 2026 · 9:20 AM'], ['Intent summary', 'Wants full quote after aerial estimate']],
+      custom: [['Estimated low', '$8,400'], ['Estimated high', '$11,200'], ['Roof measurements', '2,140 sq ft · 18 facets'], ['Material selection', 'Architectural shingle'], ['Session duration', '4m 12s'], ['Property intelligence', 'Aerial scan captured']]
+    },
+    'SalesRabbit': {
+      primary: [['External ID', 'sr_44192'], ['Subtype', 'Interested'], ['Received at', 'Aug 10, 2026 · 11:48 AM (knock)'], ['Intent summary', 'Hail damage on north slope — wants inspection'], ['Intent category', 'Storm damage']],
+      custom: [['Canvassing rep', 'Marcus Lee (usr_204)'], ['GPS', '32.9986, -96.7891'], ['Photos', '3 damage photos'], ['Route ID', 'route_88'], ['Rep notes', 'Homeowner home, receptive']]
+    },
+    'Repcard': {
+      primary: [['External ID', 'rc_77120'], ['Subtype', 'QR Tapped'], ['Received at', 'Aug 10, 2026 · 2:05 PM'], ['Intent summary', 'Scanned card at door — requested a callback']],
+      custom: [['Canvassing rep', 'Sarah Chen (usr_211)'], ['GPS', '33.0102, -96.7712'], ['Card ID', 'card_31'], ['Rep notes', 'Shared roofing brochure']]
+    }
+  };
+  const LEAD_SRC_ALIAS = { 'Meta': 'Meta Ads', 'Google': 'Google LSA', 'LSA': 'Google LSA' };
+  const leadSourceSchema = src => LEAD_SOURCE_SCHEMA[src] || LEAD_SOURCE_SCHEMA[LEAD_SRC_ALIAS[src]] || null;
   function LeadPrimaryDetails({ lead, onToast, onMove }) {
     const [pd, setPd] = useState(true);
     const [cf, setCf] = useState(true);
@@ -29334,6 +29368,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const pickStatus = s => { setStatusOpen(false); if (boardMode) { onMove(lead.id, s); toast('Moved to ' + s); } else { setLocalStatus(s); toast('Status → ' + s); } };
     const email = lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com';
     const phone = '469-555-0172';
+    const srcSchema = leadSourceSchema(lead.src);
     // Lead tags are independent of status and keep a fixed neutral color.
     const TAG_POOL = ['Roofing', 'Storm area', 'Homeowner', 'Insurance', 'Repeat customer', 'Referral', 'High intent'];
     const tags = lead.tags || [TAG_POOL[lead.name.length % TAG_POOL.length], TAG_POOL[(lead.score + 3) % TAG_POOL.length]].filter((v, i, a) => a.indexOf(v) === i);
@@ -29352,11 +29387,19 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {kv('Assigned CSR', 'Maria Gonzalez')}{kv('Age', lead.age || '—')}{kv('Auto-qualified', 'Yes — Property Intelligence')}
           {kv('Service Address', '4821 Oakwood Dr')}{kv('City, State, ZIP', 'Plano, TX 75024')}{kv('Score Breakdown', 'Source 20 · Data 22 · Intel 25 · Demo 15')}
           {kv('Tags', <span style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>{tags.length ? tags.map(tagPill) : <span style={{ fontSize: 12, color: LH.muted }}>No tags yet</span>}</span>)}
+          {srcSchema && srcSchema.primary.map(([k, v]) => kv(k, v))}
         </div>}
       </div>
       <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
         {secHead('Custom Fields', cf, () => setCf(p => !p))}
-        {cf && <div style={{ marginTop: 4 }}>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}</div>}
+        {cf && <div style={{ marginTop: 4 }}>
+          {srcSchema
+            ? <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '2px 0 4px' }}><span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: LH.muted }}>From {lead.src}</span></div>
+                {srcSchema.custom.map(([k, v]) => kv(k, v))}
+              </>
+            : <>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}</>}
+        </div>}
       </div>
     </div>;
   }
@@ -29499,6 +29542,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
   function LeadHeaderBlock({ lead, onToast, slim, onConvert }) {
     const [flagged, setFlagged] = useState(false);
+    const [kebabOpen, setKebabOpen] = useState(false);
     const toast = m => onToast && onToast(m);
     const initials = lead.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     const address = lead.address || '4821 Oakwood Dr, Plano, TX 75024';
@@ -29518,7 +29562,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               {iconBtn('message-square', 'Texting ' + lead.name + '…')}
               {lead.jobId
                 ? <Btn icon="external-link" style={{ height: 34 }} onClick={() => toast('Opening Job #' + lead.jobId + '…')}>View job</Btn>
-                : <Btn icon="git-merge" style={{ height: 34 }} onClick={() => { if (onConvert) onConvert(lead); else toast('Converting ' + lead.name + '…'); }}>Convert to job</Btn>}
+                : <Btn icon="briefcase" style={{ height: 34 }} onClick={() => { if (onConvert) onConvert(lead); else toast('Creating job for ' + lead.name + '…'); }}>Create job</Btn>}
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setKebabOpen(o => !o)} title="More" style={btnStyle(false)} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="more-vertical" size={15} color={LH.sub} /></button>
+                {kebabOpen && <div onMouseLeave={() => setKebabOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 180 }}>
+                  <div onClick={() => { setKebabOpen(false); toast('Creating contact for ' + lead.name + '…'); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name="user-plus" size={14} color={LH.sub} />Create contact</div>
+                </div>}
+              </div>
             </>
           : <>
               <Btn icon="plus" style={{ height: 34 }} onClick={() => toast('New activity')}>New</Btn>
@@ -31503,6 +31553,33 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [handoff, setHandoff] = useState('Route low-confidence replies to CSR');
     const [signals, setSignals] = useState('Contact, service type, timeline, decision maker');
     const [instructions, setInstructions] = useState('Introduce yourself as Nova from {{company.company_name}}. Confirm the property address, damage type, and urgency. Offer a free inspection and book the earliest slot. Be warm, concise, and never pushy. If the homeowner is unsure or asks for a person, hand off to a CSR.');
+    // Playbook version history — every save creates a new draft version; publishing freezes it
+    // (immutable). Leads reference the version they were qualified under.
+    const [versions, setVersions] = useState([
+      { n: 3, status: 'draft', at: null, by: null, note: 'Tone → Warm and consultative; added decision-maker signal', created: 'Aug 10, 2026 · 10:04 AM' },
+      { n: 2, status: 'published', at: 'Aug 6, 2026 · 2:14 PM', by: 'Vignesh V', note: 'Added “hand off after 3 attempts” rule', created: 'Aug 6, 2026 · 1:58 PM' },
+      { n: 1, status: 'archived', at: 'Jul 28, 2026 · 9:02 AM', by: 'Maria Gonzalez', note: 'Initial playbook', created: 'Jul 28, 2026 · 8:47 AM' }
+    ]);
+    const [showHistory, setShowHistory] = useState(false);
+    const stamp = () => { try { const d = new Date(); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); } catch (e) { return 'just now'; } };
+    const current = versions[0];
+    const VER_TONE = { draft: { bg: LH.amberBg, fg: LH.amber }, published: { bg: LH.greenBg, fg: LH.green }, archived: { bg: '#f1f0ec', fg: LH.sub } };
+    const verPill = s => { const t = VER_TONE[s] || VER_TONE.archived; return <span style={{ display: 'inline-flex', alignItems: 'center', height: 20, padding: '0 8px', borderRadius: 999, fontSize: 10.5, fontWeight: 700, textTransform: 'capitalize', background: t.bg, color: t.fg }}>{s}</span>; };
+    const savePlaybook = () => {
+      // A save always lands in an editable draft. If the top version is already a draft, update it;
+      // otherwise mint the next draft version (published versions are immutable).
+      setVersions(vs => {
+        if (vs[0] && vs[0].status === 'draft') return [{ ...vs[0], note: 'Edited ' + [tone !== 'Friendly and concise' ? 'tone' : '', 'signals'].filter(Boolean).join(', ') || 'playbook', created: stamp() }, ...vs.slice(1)];
+        return [{ n: vs[0].n + 1, status: 'draft', at: null, by: null, note: 'New draft from v' + vs[0].n, created: stamp() }, ...vs];
+      });
+      onToast && onToast('Draft saved to version history');
+    };
+    const publishPlaybook = () => {
+      setVersions(vs => vs.map((v, i) => i === 0
+        ? { ...v, status: 'published', at: stamp(), by: 'Vignesh V' }
+        : (v.status === 'published' ? { ...v, status: 'archived' } : v)));
+      onToast && onToast('Published v' + current.n + ' — this version is now locked');
+    };
     const toggle = key => setAgents(a => a.map(x => x.key === key ? { ...x, on: !x.on } : x));
     const activeN = agents.filter(a => a.on).length;
     const pbRow = (title, desc, control) => <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '14px 0', borderBottom: '1px solid ' + LH.borderSoft }}><div style={{ minWidth: 0, flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{title}</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{desc}</div></div><div style={{ width: 260, flexShrink: 0 }}>{control}</div></div>;
@@ -31512,8 +31589,24 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
       <div style={{ fontSize: 13, color: LH.sub, marginBottom: 14, maxWidth: 720 }}>Configure your AI workforce right here in the hub — no separate setup. Turn agents on, tune their playbooks, and they start working leads immediately.</div>
       <Card style={{ padding: 18, marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="sparkles" size={16} color={LH.primary} /><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Nova Playbook</span></div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="sparkles" size={16} color={LH.primary} /><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Nova Playbook</span></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700, color: LH.body }}>v{current.n} {verPill(current.status)}</span>
+            <button onClick={() => setShowHistory(h => !h)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="history" size={13} color={LH.sub} />Version history<span style={{ fontSize: 11, color: LH.muted }}>({versions.length})</span></button>
+          </div>
+        </div>
         <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 8 }}>Default qualification and handoff settings for every Lead Hub conversation.</div>
+        {showHistory && <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, background: LH.bg, padding: 12, marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: LH.muted, marginBottom: 8 }}>Version history</div>
+          {versions.map((v, i) => <div key={v.n} style={{ display: 'flex', gap: 11, padding: '9px 0', borderBottom: i < versions.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+            <div style={{ width: 34, flexShrink: 0, fontSize: 13, fontWeight: 700, color: LH.ink }}>v{v.n}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>{verPill(v.status)}<span style={{ fontSize: 12.5, fontWeight: 600, color: LH.body }}>{v.note}</span></div>
+              <div style={{ fontSize: 11.5, color: LH.muted }}>{v.status === 'published' || v.status === 'archived' ? 'Published ' + v.at + ' by ' + v.by : 'Draft · edited ' + v.created}{(v.status === 'published' || v.status === 'archived') && ' · locked'}</div>
+            </div>
+          </div>)}
+        </div>}
         {pbRow('Qualification tone', 'Controls how Nova introduces itself and asks follow-up questions.', <Dropdown value={tone} options={['Friendly and concise', 'Warm and consultative', 'Direct and efficient', 'Formal and professional'].map(o => ({ value: o, label: o }))} onChange={setTone} />)}
         {pbRow('Handoff rule', 'Human review starts when Nova cannot confidently qualify or schedule.', <Dropdown value={handoff} options={['Route low-confidence replies to CSR', 'Always confirm with a human first', 'Never hand off — Nova only', 'Hand off after 3 attempts'].map(o => ({ value: o, label: o }))} onChange={setHandoff} />)}
         {pbRow('Required signals', 'The minimum fields Nova tries to capture before marking a lead ready.', <input value={signals} onChange={e => setSignals(e.target.value)} style={{ width: '100%', height: 60, borderRadius: 8, border: '1px solid ' + LH.border, padding: '8px 10px', fontSize: 12.5, color: LH.body, outline: 'none' }} />)}
@@ -31521,7 +31614,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <label style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Instructions</label>
           <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 8px' }}>Free-form guidance Nova follows on every conversation.</div>
           <textarea value={instructions} onChange={e => setInstructions(e.target.value)} style={{ width: '100%', height: 110, borderRadius: 8, border: '1px solid ' + LH.border, padding: 11, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}><Btn kind="primary" icon="check" onClick={() => onToast && onToast('Nova playbook saved')}>Save playbook</Btn></div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
+            {current.status === 'draft' && <span style={{ fontSize: 11.5, color: LH.muted, marginRight: 'auto' }}>Unpublished draft — publish to make it live for every conversation.</span>}
+            <Btn icon="save" onClick={savePlaybook}>Save draft</Btn>
+            <Btn kind="primary" icon="upload-cloud" onClick={publishPlaybook} style={{ opacity: current.status === 'draft' ? 1 : 0.5, pointerEvents: current.status === 'draft' ? 'auto' : 'none' }}>Publish v{current.n}</Btn>
+          </div>
         </div>
       </Card>
     </div>;
