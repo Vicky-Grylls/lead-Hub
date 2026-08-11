@@ -28766,13 +28766,9 @@ function SettingsLeadsContent({setActiveId}){
   const [view,setView]=useState('grid');
   const cards=[
     {title:'General Lead Settings',desc:'Default owner, assignment, duplicate detection & aging',Icon:TiTool,color:'#3a6ea8',onClick:()=>setActiveId('modules/Leads/general')},
-    {title:'Campaign Settings',desc:'Sending windows, reply handling & the campaign library',Icon:TiSpeakerphone,color:'#d97706',onClick:()=>setActiveId('modules/Leads/campaigns')},
     {title:'Lead Custom Fields',desc:'Field groups triggered by lead source',Icon:TiFilePlus,color:'#b87a2b',badge:'New',onClick:()=>setActiveId('modules/Leads/fields')},
     {title:'Lead Pipeline & Stages',desc:'Manage kanban stages and their order',Icon:TiStack2,color:'#4f46e5',onClick:()=>setActiveId('modules/Leads/pipeline')},
-    {title:'Lead Sources',desc:'Manage the sources leads come in from',Icon:TiTag,color:'#3f8553',onClick:()=>setActiveId('modules/Leads/sources')},
-    {title:'Lead Statuses',desc:'Manage lead statuses and their colors',Icon:TiAdjustments,color:'#6a55b8',onClick:()=>setActiveId('modules/Leads/statuses')},
-    {title:'Lead Notifications',desc:'Choose what to be notified about, and where',Icon:TiChatBubble,color:'#c2569b',onClick:()=>setActiveId('modules/Leads/notifications')},
-    {title:'Lead Scoring',desc:'Tune how leads are scored and prioritized',Icon:TiDashboard,color:'#0891b2',onClick:()=>setActiveId('modules/Leads/scoring')}
+    {title:'Lead Sources',desc:'Manage the sources leads come in from',Icon:TiTag,color:'#3f8553',onClick:()=>setActiveId('modules/Leads/sources')}
   ];
   return RCE(React.Fragment,null,
     RCE("div",{style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 48px',borderBottom:'1px solid #e8e7e2',flexShrink:0,minHeight:40}},
