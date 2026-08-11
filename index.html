@@ -29757,9 +29757,79 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>}
     </div>;
   }
+  // Create Contact from a lead — job-creation-style side sheet, prefilled from lead data.
+  function LeadCreateContactSheet({ lead, onClose, onToast }) {
+    const parts = (lead.name || '').trim().split(' ');
+    const addr = lead.address || '4821 Oakwood Dr, Plano, TX 75024';
+    const ap = addr.split(',').map(s => s.trim());
+    const szp = (ap[2] || 'TX 75024').split(/\s+/);
+    const [firstName, setFirstName] = useState(parts[0] || '');
+    const [lastName, setLastName] = useState(parts.slice(1).join(' ') || '');
+    const [email, setEmail] = useState(lead.email || ((lead.name || '').toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com'));
+    const [phone, setPhone] = useState(lead.phone || '469-555-0172');
+    const [org, setOrg] = useState('');
+    const [src, setSrc] = useState(lead.src || 'Manual');
+    const [line1, setLine1] = useState(ap[0] || '');
+    const [line2, setLine2] = useState('');
+    const [city, setCity] = useState(ap[1] || 'Plano');
+    const [stt, setStt] = useState(szp[0] || 'TX');
+    const [zip, setZip] = useState(szp[1] || '75024');
+    const [tags, setTags] = useState((lead.tags && lead.tags.length) ? lead.tags : ['Referral', 'Homeowner']);
+    const initial = (firstName[0] || 'C').toUpperCase();
+    const inp = { width: '100%', height: 36, borderRadius: 9, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none', background: LH.bg, fontFamily: 'inherit' };
+    const lbl = { fontSize: 12, fontWeight: 600, color: LH.body, display: 'block', marginBottom: 6 };
+    const fld = (label, node) => <div style={{ marginBottom: 13 }}><label style={lbl}>{label}</label>{node}</div>;
+    const secHead = (ic, t) => <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}><Ic name={ic} size={15} color={LH.sub} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{t}</span></div>;
+    const cardSty = { border: '1px solid ' + LH.borderSoft, borderRadius: 12, background: '#fff', padding: 14, marginBottom: 14 };
+    const smallIcon = ic => <button onClick={() => onToast && onToast(ic === 'mail' ? 'Compose email' : 'Calling ' + lead.name + '…')} style={{ width: 30, height: 30, borderRadius: 999, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={ic} size={14} color={LH.sub} /></button>;
+    const create = () => { onToast && onToast('Contact created — ' + (firstName + ' ' + lastName).trim()); onClose(); };
+    return <div style={{ position: 'fixed', top: 44, right: 0, bottom: 0, width: 'min(524px,96vw)', zIndex: 600, display: 'flex', flexDirection: 'column', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,0.10)', animation: 'lcSheetIn .28s cubic-bezier(0.32,0.72,0,1)' }}>
+      <style>{'@keyframes lcSheetIn{from{transform:translateX(101%)}to{transform:translateX(0)}}'}</style>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="user-plus" size={16} color={LH.ink} /><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Create contact</span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button onClick={() => onToast && onToast('Opening full contact form…')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: LH.primary, padding: '6px 8px', borderRadius: 7 }}><Ic name="external-link" size={14} color={LH.primary} />Create detailed contact</button>
+          <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="x" size={16} color={LH.sub} /></button>
+        </div>
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 16, background: LH.bg }}>
+        <div style={cardSty}>
+          {secHead('user', 'Contact from lead')}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 9, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>{initial}</div>
+            <div style={{ flex: 1, minWidth: 0 }}><div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>{(firstName + ' ' + lastName).trim() || 'New contact'}</span><Pill label="PRIMARY" tone="New" /></div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 1 }}>Prefilled from lead · {src}</div></div>
+            {smallIcon('mail')}{smallIcon('phone')}
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>{fld('First name', <input value={firstName} onChange={e => setFirstName(e.target.value)} style={inp} />)}{fld('Last name', <input value={lastName} onChange={e => setLastName(e.target.value)} style={inp} />)}</div>
+          {fld('Email', <input value={email} onChange={e => setEmail(e.target.value)} style={inp} />)}
+          {fld('Mobile phone', <input value={phone} onChange={e => setPhone(e.target.value)} style={inp} />)}
+        </div>
+        <div style={cardSty}>
+          {secHead('briefcase', 'Company & source')}
+          {fld('Organisation', <input value={org} onChange={e => setOrg(e.target.value)} placeholder="Search organisation" style={inp} />)}
+          {fld('Lead source', <Dropdown value={src} options={['Manual', 'Angi', 'Thumbtack', 'Google LSA', 'Meta Ads', 'SalesRabbit', 'Website Booking', 'HomeAdvisor'].map(o => ({ value: o, label: o }))} onChange={setSrc} />)}
+        </div>
+        <div style={cardSty}>
+          {secHead('map-pin', 'Service address')}
+          {fld('Address line 1', <input value={line1} onChange={e => setLine1(e.target.value)} style={inp} />)}
+          {fld('Address line 2', <input value={line2} onChange={e => setLine2(e.target.value)} placeholder="Apt, suite, unit, etc." style={inp} />)}
+          <div style={{ display: 'flex', gap: 10 }}>{fld('City', <input value={city} onChange={e => setCity(e.target.value)} style={inp} />)}{fld('State', <input value={stt} onChange={e => setStt(e.target.value)} style={{ ...inp, width: 90 }} />)}{fld('Zip', <input value={zip} onChange={e => setZip(e.target.value)} style={{ ...inp, width: 110 }} />)}</div>
+        </div>
+        <div style={cardSty}>
+          {secHead('tag', 'Tags')}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{tags.map(t => <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 9px', borderRadius: 999, background: LH.tint, color: LH.body, fontSize: 11.5, fontWeight: 600 }}><Ic name="tag" size={11} color={LH.sub} />{t}<Ic name="x" size={11} color={LH.muted} style={{ cursor: 'pointer' }} onClick={() => setTags(ts => ts.filter(x => x !== t))} /></span>)}<button onClick={() => onToast && onToast('Add a tag')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 24, padding: '0 9px', borderRadius: 999, border: '1px dashed ' + LH.border, background: '#fff', color: LH.sub, fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}><Ic name="plus" size={11} color={LH.sub} />Add</button></div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '12px 18px', borderTop: '1px solid ' + LH.borderSoft, background: '#fff', flexShrink: 0 }}>
+        <Btn onClick={onClose}>Cancel</Btn>
+        <Btn kind="primary" icon="user-plus" onClick={create}>Create contact</Btn>
+      </div>
+    </div>;
+  }
   function LeadHeaderBlock({ lead, onToast, slim, onConvert }) {
     const [flagged, setFlagged] = useState(false);
     const [kebabOpen, setKebabOpen] = useState(false);
+    const [contactOpen, setContactOpen] = useState(false);
     const toast = m => onToast && onToast(m);
     const initials = lead.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     const address = lead.address || '4821 Oakwood Dr, Plano, TX 75024';
@@ -29789,7 +29859,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 {kebabOpen && <div onMouseLeave={() => setKebabOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 210 }}>
                   {KEBAB_ITEMS.map((it, k) => it[0] === 'div'
                     ? <div key={'d' + k} style={{ height: 1, background: LH.borderSoft, margin: '5px 0' }} />
-                    : <div key={it[1]} onClick={() => { setKebabOpen(false); toast(kebabMsg(it[1])); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: kebabColor(it[1]), cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={it[0]} size={14} color={kebabIcColor(it[1])} />{it[1]}</div>)}
+                    : <div key={it[1]} onClick={() => { setKebabOpen(false); if (it[1] === 'Create contact') setContactOpen(true); else toast(kebabMsg(it[1])); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: kebabColor(it[1]), cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={it[0]} size={14} color={kebabIcColor(it[1])} />{it[1]}</div>)}
                 </div>}
               </div>
             </>
@@ -29801,6 +29871,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               {iconBtn('bell', 'Reminder set')}
             </>}
       </div>
+      {contactOpen && <LeadCreateContactSheet lead={lead} onToast={onToast} onClose={() => setContactOpen(false)} />}
     </div>;
   }
   function LeadSideSheet({ lead, onClose, onToast, onOpenPage, onPrev, onNext, onMove, onConvert }) {
