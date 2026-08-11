@@ -29651,7 +29651,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     let used = 0; const breakdown = parts0.map((p, i) => { const v = i === parts0.length - 1 ? score - used : Math.round(score * p[1]); used += v; return { k: p[0], v: Math.max(0, v) }; });
     return { material, condition, roofAge, sqft, permits, carrier, intent, urgency, insuranceInvolved, day, spam, highSpam, spamReasons, dupSrc, hasDup, dupWhen, oneLine, breakdown, score, src };
   }
-  function LeadIntakeIntelligence({ lead, onToast }) {
+  function LeadIntakeIntelligence({ lead, onToast, bare }) {
     const [open, setOpen] = useState(true);
     const [disputed, setDisputed] = useState(false);
     const [dedup, setDedup] = useState(null); // 'merged' | 'separate'
@@ -29664,13 +29664,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const chip = (label, tone) => <span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 9px', borderRadius: 999, fontSize: 11, fontWeight: 600, background: (tone && tone.bg) || '#f1f0ec', color: (tone && tone.fg) || LH.sub }}>{label}</span>;
     const cardHead = (ic, color, title, right) => <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}><span style={{ width: 26, height: 26, borderRadius: 7, background: '#fff', border: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={ic} size={14} color={color} /></span><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, flex: 1 }}>{title}</span>{right}</div>;
     const kvp = (k, v) => <div style={{ display: 'flex', gap: 10, padding: '4px 0' }}><span style={{ fontSize: 11.5, color: LH.muted, width: 118, flexShrink: 0 }}>{k}</span><span style={{ fontSize: 12, color: LH.body, fontWeight: 500, flex: 1, minWidth: 0 }}>{v}</span></div>;
-    return <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 16, paddingTop: 14 }}>
-      <button onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', marginBottom: open ? 12 : 0 }}>
+    return <div style={bare ? {} : { borderTop: '1px solid ' + LH.borderSoft, marginTop: 16, paddingTop: 14 }}>
+      {!bare && <button onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', marginBottom: open ? 12 : 0 }}>
         <Ic name={open ? 'chevron-down' : 'chevron-right'} size={14} color={LH.sub} />
         <span style={{ fontSize: 12, fontWeight: 700, color: LH.ink }}>Intake intelligence</span>
         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: '#7c3aed', background: '#faf5ff', border: '1px solid #e9d4ff', borderRadius: 999, padding: '1px 7px' }}>AI · SUB-SECOND</span>
-      </button>
-      {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      </button>}
+      {(open || bare) && <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {/* One-line intent summary */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: '10px 12px', borderRadius: 10, background: 'linear-gradient(169deg,#faf5ff,#eef4ff)', border: '1px solid #e9d4ff' }}>
           <Ic name="scan-text" size={15} color="#7c3aed" style={{ position: 'relative', top: 1 }} />
@@ -29826,7 +29826,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const addTask = () => { if (!tTitle.trim()) return; setTasks(ts => [{ title: tTitle.trim(), type: tType, who: tWho, due: tDue, done: false }, ...ts]); setTTitle(''); setTaskOpen(false); onToast && onToast('Task created — “' + tTitle.trim() + '”'); };
     const addNote = () => { if (!noteText.trim()) return; setNotes(ns => [{ text: noteText.trim(), who: 'You', when: 'Just now' }, ...ns]); setNoteText(''); };
     const TABS = [['details', 'Primary Details'], ['intel', 'Intelligence'], ['activity', 'Activity'], ['tasks', 'Tasks'], ['notes', 'Notes']];
-    return <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, zIndex: 40, width: expanded ? 560 : 400, maxWidth: '94%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,.10)', display: 'flex', flexDirection: 'column', transform: lead ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s' }}>
+    return <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, zIndex: 40, width: expanded ? 600 : 468, maxWidth: '94%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,.10)', display: 'flex', flexDirection: 'column', transform: lead ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s' }}>
       {shown && <>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}><Ic name="user" size={15} color={LH.sub} /><span style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown.name}</span></div>
@@ -29851,7 +29851,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <div style={{ marginTop: 16 }}><LeadAISummary lead={shown} /></div>
             <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 16, paddingTop: 14 }}><LeadPrimaryDetails lead={shown} onToast={onToast} onMove={onMove} /></div>
           </>}
-          {tab === 'intel' && <LeadIntakeIntelligence lead={shown} onToast={onToast} />}
+          {tab === 'intel' && <LeadIntakeIntelligence lead={shown} onToast={onToast} bare />}
           {tab === 'activity' && <div>{act.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: 14 }}>
             <div style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={a.who === 'Nova' ? 'sparkles' : 'settings'} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div>
             <div style={{ flex: 1 }}><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.45 }}>{a.msg}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 2 }}>{a.who} · {a.t || a.when}</div></div>
