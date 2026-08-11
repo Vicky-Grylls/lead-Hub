@@ -24125,6 +24125,9 @@ function TopNavBar(){
   const[tabs,setTabs]=React.useState(initTabs);
   const[activeId,setActiveId]=React.useState('1');
   const remove=id=>{setTabs(p=>p.filter(t=>t.id!==id));if(activeId===id)setActiveId(tabs[0]?.id??'');};
+  const[acctOpen,setAcctOpen]=React.useState(false);
+  const dsOn=(()=>{try{return localStorage.getItem('zuper_ds')==='1';}catch(e){return false;}})();
+  const setDs=v=>{try{localStorage.setItem('zuper_ds',v?'1':'0');}catch(e){}location.reload();};
   return(
     <div className="h-[44px] flex items-center shrink-0" style={{background:'#f8f5f0'}}>
       {/* Logo — 72px column aligns with sidebar */}
@@ -24166,7 +24169,29 @@ function TopNavBar(){
               <div key={ic} className="w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-black/5"><I name={ic} size={16} color="#737373"/></div>
             ))}
           </div>
-          <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold" style={{fontSize:11,background:'#e4d9c8',color:'#5c4a1e'}}>RG</div>
+          <div style={{position:'relative'}}>
+            <div onClick={()=>setAcctOpen(o=>!o)} title="Account" className="w-8 h-8 rounded-full flex items-center justify-center font-bold cursor-pointer" style={{fontSize:11,background:dsOn?'#E44A19':'#e4d9c8',color:dsOn?'#fff':'#5c4a1e'}}>RG</div>
+            {acctOpen&&<>
+              <div onClick={()=>setAcctOpen(false)} style={{position:'fixed',inset:0,zIndex:60}}/>
+              <div style={{position:'absolute',top:42,right:0,zIndex:61,width:272,background:'#fff',border:'1px solid #E2E8F0',borderRadius:12,boxShadow:'0 16px 40px rgba(0,0,0,.16)',padding:8}}>
+                <div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px 10px'}}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold" style={{fontSize:12,background:dsOn?'#E44A19':'#e4d9c8',color:dsOn?'#fff':'#5c4a1e'}}>RG</div>
+                  <div style={{minWidth:0}}><div style={{fontSize:13,fontWeight:700,color:'#1e293b'}}>Rachel Green</div><div style={{fontSize:11.5,color:'#94a3b8',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>rachel.green@zuper.co</div></div>
+                </div>
+                <div style={{height:1,background:'#eef2f6',margin:'2px 0 6px'}}/>
+                <div style={{fontSize:10.5,fontWeight:700,letterSpacing:'.05em',color:'#94a3b8',padding:'4px 10px 2px'}}>APPEARANCE</div>
+                <div style={{display:'flex',flexDirection:'column',gap:4,padding:'2px 4px 4px'}}>
+                  {[['0','Default','Original Lead Hub theme'],['1','Zuper design system','Orange brand · unified components']].map(([v,t,d])=>{
+                    const on=dsOn===(v==='1');
+                    return <div key={v} onClick={()=>{ if(!on)setDs(v==='1'); else setAcctOpen(false); }} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 8px',borderRadius:9,cursor:'pointer',background:on?'#FCEDE8':'transparent',border:'1px solid '+(on?'#f6cbb9':'transparent')}} onMouseEnter={e=>{if(!on)e.currentTarget.style.background='#f6f4ef';}} onMouseLeave={e=>{if(!on)e.currentTarget.style.background='transparent';}}>
+                      <div style={{width:18,height:18,borderRadius:'50%',border:'2px solid '+(on?'#E44A19':'#cbd5e1'),display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{on&&<div style={{width:8,height:8,borderRadius:'50%',background:'#E44A19'}}/>}</div>
+                      <div><div style={{fontSize:12.5,fontWeight:600,color:'#1e293b'}}>{t}</div><div style={{fontSize:11,color:'#94a3b8'}}>{d}</div></div>
+                    </div>;
+                  })}
+                </div>
+              </div>
+            </>}
+          </div>
         </div>
       </div>
     </div>
@@ -29119,7 +29144,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 (function () {
   const { useState, useEffect, useRef, useMemo } = React;
 
-  const LH = {
+  // Two palettes so the whole Lead Hub can flip between the original look and the
+  // Zuper Pro design system (orange brand). Chosen at load from localStorage; the
+  // profile-avatar switch writes the key and reloads.
+  const LEGACY_LH = {
     primary: '#1f1f1d', primaryDark: '#000000', tint: '#f0eeea',
     ink: '#252A31', body: '#475569', sub: '#64748B', muted: '#94A3B8',
     border: '#e7e2d8', borderSoft: '#efeae0', card: '#ffffff', bg: '#fbf9f5',
@@ -29128,6 +29156,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     red: '#dc2626', redBg: '#fdecec', redBd: '#f6cccc',
     blue: '#2563eb', blueBg: '#eff4ff', blueBd: '#cfe0fb'
   };
+  const ZUPER_LH = {
+    primary: '#E44A19', primaryDark: '#C23D13', tint: '#FCEDE8',
+    ink: '#1E293B', body: '#475569', sub: '#64748B', muted: '#94A3B8',
+    border: '#E2E8F0', borderSoft: '#EEF2F6', card: '#ffffff', bg: '#FDFDFC',
+    green: '#16a34a', greenBg: '#dcfce7', greenBd: '#bbf7d0',
+    amber: '#b45309', amberBg: '#fef3c7', amberBd: '#fde68a',
+    red: '#dc2626', redBg: '#fee2e2', redBd: '#fecaca',
+    blue: '#2563eb', blueBg: '#eff6ff', blueBd: '#dbeafe'
+  };
+  const DS_ON = (() => { try { return localStorage.getItem('zuper_ds') === '1'; } catch (e) { return false; } })();
+  const LH = DS_ON ? ZUPER_LH : LEGACY_LH;
 
   // Icon via lucide (reuse global lucide loaded by the shell)
   function Ic({ name, size = 16, color = 'currentColor', sw = 2, style, className }) {
@@ -31359,6 +31398,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [replyTaskOn, setReplyTaskOn] = useState(false);
     const [replyTaskType, setReplyTaskType] = useState('Call back');
     const [replyAssignee, setReplyAssignee] = useState('Assigned to me');
+    // Actions when the lead finishes the full sequence without exiting earlier.
+    const [doneStatusOn, setDoneStatusOn] = useState(true);
+    const [doneStatus, setDoneStatus] = useState('Nurture — no response');
+    const [doneTaskOn, setDoneTaskOn] = useState(false);
+    const [doneTaskType, setDoneTaskType] = useState('Call back');
+    const [doneAssignee, setDoneAssignee] = useState('Assigned to me');
+    const [doneCampOn, setDoneCampOn] = useState(false);
+    const [doneCamp, setDoneCamp] = useState('Storm Season Re-engage');
 
     const matchCount = useMemo(() => filterContacts(conds, join).length, [conds, join]);
     const enrolledCount = useMemo(() => filterContacts(conds, join).filter(c => !removedIds.has(c.id)).length, [conds, join, removedIds]);
@@ -31595,6 +31642,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={replyStatusOn} onChange={setReplyStatusOn} /><span style={{ fontSize: 13, color: LH.body }}>Change the lead status to</span><div style={{ width: 190, opacity: replyStatusOn ? 1 : 0.5, pointerEvents: replyStatusOn ? 'auto' : 'none' }}><Dropdown value={replyStatus} height={32} options={['Needs attention', 'Contacting', 'Qualifying', 'Qualified', 'Hot lead'].map(o => ({ value: o, label: o }))} onChange={setReplyStatus} /></div></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Toggle on={replyTaskOn} onChange={setReplyTaskOn} /><span style={{ fontSize: 13, color: LH.body }}>Create a task and assign it to a user</span></div>
           {replyTaskOn && <div style={{ display: 'flex', gap: 10, marginTop: 10, marginLeft: 44, flexWrap: 'wrap' }}><div style={{ width: 180 }}><Dropdown value={replyTaskType} height={32} options={TASK_TYPES.map(o => ({ value: o, label: o }))} onChange={setReplyTaskType} /></div><div style={{ width: 200 }}><Dropdown value={replyAssignee} height={32} options={REPS.map(o => ({ value: o, label: o }))} onChange={setReplyAssignee} /></div></div>}
+        </Card>
+        <Card style={{ padding: 16, marginTop: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>When the sequence completes</div>
+          <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 14px' }}>The lead ran the full {dayCount}-day cycle without exiting earlier. Decide what happens next.</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={doneStatusOn} onChange={setDoneStatusOn} /><span style={{ fontSize: 13, color: LH.body }}>Change the lead status to</span><div style={{ width: 210, opacity: doneStatusOn ? 1 : 0.5, pointerEvents: doneStatusOn ? 'auto' : 'none' }}><Dropdown value={doneStatus} height={32} options={['Nurture — no response', 'Needs attention', 'Cold', 'Not qualified', 'Long-term follow-up'].map(o => ({ value: o, label: o }))} onChange={setDoneStatus} /></div></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={doneCampOn} onChange={setDoneCampOn} /><span style={{ fontSize: 13, color: LH.body }}>Move to another campaign</span><div style={{ width: 210, opacity: doneCampOn ? 1 : 0.5, pointerEvents: doneCampOn ? 'auto' : 'none' }}><Dropdown value={doneCamp} height={32} options={['Storm Season Re-engage', 'Estimate Follow-up', 'Gutter Season Push', 'Winback — Cold Leads'].map(o => ({ value: o, label: o }))} onChange={setDoneCamp} /></div></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Toggle on={doneTaskOn} onChange={setDoneTaskOn} /><span style={{ fontSize: 13, color: LH.body }}>Create a task and assign it to a user</span></div>
+          {doneTaskOn && <div style={{ display: 'flex', gap: 10, marginTop: 10, marginLeft: 44, flexWrap: 'wrap' }}><div style={{ width: 180 }}><Dropdown value={doneTaskType} height={32} options={TASK_TYPES.map(o => ({ value: o, label: o }))} onChange={setDoneTaskType} /></div><div style={{ width: 200 }}><Dropdown value={doneAssignee} height={32} options={REPS.map(o => ({ value: o, label: o }))} onChange={setDoneAssignee} /></div></div>}
         </Card>
         <div style={{ marginTop: 14, border: '1px solid ' + LH.borderSoft, borderRadius: 10, background: LH.bg, padding: '12px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}><Ic name="shield-check" size={13} color={LH.muted} /><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: LH.muted }}>Built-in stop conditions · always on</span></div>
