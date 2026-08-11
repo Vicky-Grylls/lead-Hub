@@ -31074,7 +31074,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { key: 'speed', icon: 'zap', title: 'Speed to lead', desc: 'Contact & qualify inbound leads fast.', aud: 'new', outcomes: ['Qualified lead', 'Booked inspection'], kpis: [{ label: 'Qualified in < 2 min', target: '80%' }, { label: 'Median first-touch', target: '45s' }, { label: 'Reply rate', target: '55%' }] },
     { key: 'nurture', icon: 'headphones', title: 'Nurture & convert', desc: 'Warm slow leads until they are ready to buy.', aud: 'new', outcomes: ['Re-engaged', 'Converted'], kpis: [{ label: 'Reply rate', target: '35%' }, { label: 'Qualified', target: '25%' }, { label: 'Converted', target: '12%' }] },
     { key: 'reengage', icon: 'rotate-ccw', title: 'Re-engage / demand gen', desc: 'Revive cold leads and past demand.', aud: 'existing', outcomes: ['Re-engaged', 'Booked job'], kpis: [{ label: 'Re-engaged', target: '20%' }, { label: 'Booked jobs', target: '8%' }, { label: 'Opt-out', target: '< 2%' }] },
-    { key: 'rebook', icon: 'calendar-check', title: 'Rebook / maintenance', desc: 'Bring existing customers back for service.', aud: 'existing', outcomes: ['Rebooked'], kpis: [{ label: 'Rebooked', target: '15%' }, { label: 'Reply rate', target: '40%' }, { label: 'Revenue / 100', target: '$9k' }] }
+    { key: 'rebook', icon: 'calendar-check', title: 'Rebook / maintenance', desc: 'Bring existing customers back for service.', aud: 'existing', outcomes: ['Rebooked'], kpis: [{ label: 'Rebooked', target: '15%' }, { label: 'Reply rate', target: '40%' }, { label: 'Revenue / 100', target: '$9k' }] },
+    { key: 'estimate', icon: 'file-text', title: 'Estimate follow-up', desc: 'Chase sent estimates and quotes until they close.', aud: 'new', outcomes: ['Estimate viewed', 'Won'], kpis: [{ label: 'Estimate open rate', target: '70%' }, { label: 'Reply rate', target: '40%' }, { label: 'Close rate', target: '22%' }] },
+    { key: 'winback', icon: 'undo-2', title: 'Win back lost deals', desc: 'Revive lost or dead opportunities.', aud: 'existing', outcomes: ['Re-opened', 'Won'], kpis: [{ label: 'Re-opened', target: '12%' }, { label: 'Reply rate', target: '30%' }, { label: 'Won', target: '6%' }] },
+    { key: 'seasonal', icon: 'calendar', title: 'Seasonal promo', desc: 'Push a seasonal offer or maintenance reminder.', aud: 'existing', outcomes: ['Booked job'], kpis: [{ label: 'Offer CTR', target: '18%' }, { label: 'Booked jobs', target: '10%' }, { label: 'Revenue / 100', target: '$12k' }] },
+    { key: 'review', icon: 'star', title: 'Reviews & referrals', desc: 'Ask happy customers for reviews and referrals.', aud: 'existing', outcomes: ['Review left', 'Referral'], kpis: [{ label: 'Review rate', target: '25%' }, { label: 'Referrals', target: '8%' }, { label: '5-star share', target: '90%' }] }
   ];
   const NOTIF_EVENTS = [
     { key: 'reply', icon: 'message-square', t: 'A lead replies', d: 'Someone answers an SMS or email in this campaign.', dflt: true, priority: 'high' },
@@ -31506,20 +31510,19 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const sendDaysLabel = Object.keys(sendDays).filter(k => sendDays[k]).map(k => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][k]).join(', ');
 
     const stepBody = () => {
-      if (step === 0) { const goalOpts = CAMPAIGN_GOALS.filter(g => g.aud === audienceType); const goalSel = goalOpts.find(g => g.key === goal) || goalOpts[0]; const audDesc = (AUDIENCE_TYPES.find(a => a.key === audienceType) || {}).desc; return <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      if (step === 0) { const goalSel = CAMPAIGN_GOALS.find(g => g.key === goal) || CAMPAIGN_GOALS[0]; const audDesc = (AUDIENCE_TYPES.find(a => a.key === goalSel.aud) || {}).desc; const pickGoal = v => { setGoal(v); const g = CAMPAIGN_GOALS.find(x => x.key === v); if (g && g.aud !== audienceType) { setAudienceType(g.aud); setConds(g.aud === 'existing' ? existingConds() : newLeadConds()); setRemovedIds(new Set()); } }; return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="send" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Campaign setup</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>Name it, choose who it’s for, and set the goal. New leads get speed-to-lead on the launch day; existing customers get re-engagement.</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>Name it and set the goal. The goal decides who the campaign is for and how the next steps are configured.</div>
         <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign name <span style={{ color: LH.red }}>*</span></label>
         <input value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', height: 38, borderRadius: 9, border: '1px solid ' + (name.trim() ? LH.border : LH.red), padding: '0 12px', fontSize: 14, color: LH.ink, margin: '6px 0 4px', outline: 'none' }} />
         {!name.trim() && <div style={{ fontSize: 11.5, color: LH.red, marginBottom: 6 }}>A campaign name is required.</div>}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Description</label><span style={{ fontSize: 11, color: LH.muted, background: '#f1f0ec', borderRadius: 6, padding: '2px 7px' }}>auto-written from your rules</span></div>
         <textarea value={desc} onChange={e => setDesc(e.target.value)} style={{ width: '100%', height: 74, borderRadius: 9, border: '1px solid ' + LH.border, padding: 12, fontSize: 13.5, color: LH.body, margin: '6px 0 18px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 6 }}>
-          <div><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Audience type</label><div style={{ marginTop: 6 }}><Dropdown value={audienceType} options={AUDIENCE_TYPES.map(a => ({ value: a.key, label: a.title }))} onChange={v => { setAudienceType(v); const g = CAMPAIGN_GOALS.find(x => x.aud === v); if (g && (CAMPAIGN_GOALS.find(x => x.key === goal) || {}).aud !== v) setGoal(g.key); setConds(v === 'existing' ? existingConds() : newLeadConds()); setRemovedIds(new Set()); }} /></div></div>
-          <div><label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign goal</label><div style={{ marginTop: 6 }}><Dropdown value={goal} options={goalOpts.map(g => ({ value: g.key, label: g.title }))} onChange={setGoal} /></div></div>
+        <div style={{ marginBottom: 6 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign goal</label><div style={{ marginTop: 6 }}><Dropdown value={goal} options={CAMPAIGN_GOALS.map(g => ({ value: g.key, label: g.title }))} onChange={pickGoal} /></div>
         </div>
-        <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 16 }}>{audDesc}</div>
+        <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 16 }}>{goalSel.desc} {audDesc}</div>
       </div>; }
       if (step === 1) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="filter" size={19} color={LH.primary} /></div>
