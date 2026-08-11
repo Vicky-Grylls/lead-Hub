@@ -29805,6 +29805,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
   function LeadSideSheet({ lead, onClose, onToast, onOpenPage, onPrev, onNext, onMove, onConvert }) {
     const [tab, setTab] = useState('details');
+    const [moreTabOpen, setMoreTabOpen] = useState(false);
     const [expanded, setExpanded] = useState(false);
     const [tasks, setTasks] = useState(lead && lead.tasks ? lead.tasks : []);
     const [taskOpen, setTaskOpen] = useState(false);
@@ -29824,8 +29825,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const act = (shown && shown.act) || DIANE_ACT;
     const addTask = () => { if (!tTitle.trim()) return; setTasks(ts => [{ title: tTitle.trim(), type: tType, who: tWho, due: tDue, done: false }, ...ts]); setTTitle(''); setTaskOpen(false); onToast && onToast('Task created — “' + tTitle.trim() + '”'); };
     const addNote = () => { if (!noteText.trim()) return; setNotes(ns => [{ text: noteText.trim(), who: 'You', when: 'Just now' }, ...ns]); setNoteText(''); };
-    const TABS = [['details', 'Primary Details'], ['intel', 'Intake intelligence'], ['activity', 'Activity'], ['tasks', 'Tasks'], ['notes', 'Notes']];
-    return <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, zIndex: 40, width: expanded ? 600 : 468, maxWidth: '94%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,.10)', display: 'flex', flexDirection: 'column', transform: lead ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s' }}>
+    const PRIMARY_TABS = [['details', 'Primary Details'], ['intel', 'Intake intelligence'], ['activity', 'Activity'], ['tasks', 'Tasks']];
+    const MORE_TABS = [['notes', 'Notes'], ['qualification', 'Qualification'], ['campaign', 'Campaign'], ['communication', 'Communication'], ['files', 'Files'], ['emails', 'Emails'], ['estimates', 'Estimates'], ['invoices', 'Invoices'], ['automations', 'Automations']];
+    const moreActive = MORE_TABS.some(([k]) => k === tab);
+    const moreLabel = moreActive ? (MORE_TABS.find(([k]) => k === tab)[1]) : ('+' + MORE_TABS.length + ' More');
+    return <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, zIndex: 40, width: expanded ? 680 : 524, maxWidth: '94%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,.10)', display: 'flex', flexDirection: 'column', transform: lead ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s' }}>
       {shown && <>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}><Ic name="user" size={15} color={LH.sub} /><span style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown.name}</span></div>
@@ -29836,8 +29840,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               .map((b, k) => <button key={k} onClick={b.f} title={b.t} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name={b.i} size={15} color={LH.sub} /></button>)}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 2, padding: '0 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
-          {TABS.map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ padding: '11px 10px', fontSize: 13, fontWeight: 600, color: tab === k ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (tab === k ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{l}</button>)}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '0 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0, whiteSpace: 'nowrap' }}>
+          {PRIMARY_TABS.map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ padding: '11px 10px', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', color: tab === k ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (tab === k ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{l}</button>)}
+          <div style={{ position: 'relative', marginLeft: 'auto' }}>
+            <button onClick={() => setMoreTabOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '11px 10px', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', color: moreActive ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (moreActive ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{moreLabel}<Ic name={moreTabOpen ? 'chevron-up' : 'chevron-down'} size={13} color={LH.muted} /></button>
+            {moreTabOpen && <div onMouseLeave={() => setMoreTabOpen(false)} style={{ position: 'absolute', top: 42, right: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 190 }}>
+              {MORE_TABS.map(([k, l]) => <div key={k} onClick={() => { setTab(k); setMoreTabOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, fontWeight: 500, color: tab === k ? LH.ink : LH.body, background: tab === k ? LH.tint : 'transparent', cursor: 'pointer' }} onMouseEnter={e => { if (tab !== k) e.currentTarget.style.background = '#f6f4ef'; }} onMouseLeave={e => { if (tab !== k) e.currentTarget.style.background = 'transparent'; }}>{l}</div>)}
+            </div>}
+          </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
           {tab === 'details' && <>
@@ -29873,6 +29883,22 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8, marginBottom: 14 }}><Btn kind="primary" icon="plus" onClick={addNote} style={{ opacity: noteText.trim() ? 1 : 0.5 }}>Add note</Btn></div>
             {notes.length ? notes.map((nt, i) => <div key={i} style={{ padding: '10px 0', borderBottom: i < notes.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.45 }}>{nt.text}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 3 }}>{nt.who} · {nt.when}</div></div>) : <div style={{ padding: '20px 0', textAlign: 'center' }}><Ic name="sticky-note" size={30} color="#d8cdb8" style={{ margin: '0 auto 10px', width: 30, height: 30 }} /><div style={{ fontSize: 13, color: LH.sub }}>No notes yet</div></div>}
           </div>}
+          {tab === 'qualification' && <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Qualification checklist</span><span style={{ fontSize: 12, fontWeight: 600, color: LH.green }}>{captured} of 9 captured</span></div>
+            <div style={{ height: 7, borderRadius: 999, background: '#efece6', overflow: 'hidden', marginBottom: 16 }}><div style={{ width: Math.round(captured / 9 * 100) + '%', height: '100%', background: LH.green, borderRadius: 999, transition: 'width .3s' }} /></div>
+            <Card style={{ padding: 0, overflow: 'hidden' }}>{DIANE_FIELDS.map((f, i) => <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 14px', borderBottom: i < DIANE_FIELDS.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><Ic name={i < captured ? 'check-circle' : 'circle'} size={16} color={i < captured ? LH.green : LH.muted} /><span style={{ flex: 1, fontSize: 12.5, color: i < captured ? LH.ink : LH.muted, fontWeight: i < captured ? 600 : 400 }}>{f}</span>{i < captured ? <span style={{ fontSize: 11, color: LH.muted }}>Captured by Nova</span> : <button onClick={() => onToast && onToast('Ask Nova to capture')} style={{ fontSize: 11, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Capture</button>}</div>)}</Card>
+          </div>}
+          {tab === 'campaign' && (() => { const camp = leadCampaign(shown); return <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, marginBottom: 12 }}>Enrolled campaign</div>
+            {camp ? <><Card style={{ padding: 14, marginBottom: 14 }}><div style={{ display: 'flex', alignItems: 'center', gap: 11 }}><div style={{ width: 32, height: 32, borderRadius: 9, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="megaphone" size={15} color={LH.primary} /></div><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{camp}</div><div style={{ fontSize: 12, color: LH.sub }}>Step 3 of 6 · SMS · next touch in 2 days</div></div><Pill label="Active" tone="Qualified" /></div></Card>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>{[['Sent', '3'], ['Opened', '2'], ['Replied', '1']].map(([l, v]) => <Card key={l} style={{ padding: 12 }}><div style={{ fontSize: 19, fontWeight: 700, color: LH.ink }}>{v}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{l}</div></Card>)}</div></>
+              : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.sub }}>Not enrolled in a campaign</div>}
+          </div>; })()}
+          {tab === 'communication' && <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, marginBottom: 12 }}>Communication log</div>
+            <Card style={{ padding: 0, overflow: 'hidden' }}>{[['message-square', 'SMS', 'Speed-to-lead drip, step 3', '1 day ago'], ['phone', 'Call', 'Nova qualification call · 4:32', '1 day ago'], ['mail', 'Email', 'Free inspection offer sent', '2 days ago'], ['phone-incoming', 'Call', 'Inbound call · 12s ring', '2 days ago']].map(([ic, ch, txt, t], i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: i < 3 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={ic} size={14} color={LH.sub} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{ch}</div><div style={{ fontSize: 12, color: LH.muted }}>{txt}</div></div><span style={{ fontSize: 11, color: LH.muted }}>{t}</span></div>)}</Card>
+          </div>}
+          {['files', 'emails', 'estimates', 'invoices', 'automations'].includes(tab) && <div style={{ padding: '40px 0', textAlign: 'center' }}><Ic name={tab === 'files' ? 'folder' : tab === 'emails' ? 'mail' : tab === 'estimates' ? 'file-text' : tab === 'invoices' ? 'receipt' : 'workflow'} size={30} color="#d8cdb8" style={{ margin: '0 auto 10px', width: 30, height: 30 }} /><div style={{ fontSize: 13, color: LH.sub }}>No {tab} yet</div></div>}
         </div>
       </>}
     </div>;
