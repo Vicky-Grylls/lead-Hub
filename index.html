@@ -29644,6 +29644,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </div>;
   }
   function LeadAISummary({ lead }) {
+    const [open, setOpen] = useState(true);
     if (!lead) return null;
     const first = (lead.name || 'This lead').split(' ')[0];
     const src = lead.src || 'an inbound source';
@@ -29658,11 +29659,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       'Next best step: book the free inspection while intent is high'
     ];
     return <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #e9d4ff', background: 'linear-gradient(169deg,#faf5ff,#eef4ff)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px 6px' }}><Ic name="sparkles" size={15} color="#7c3aed" /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>AI summary</span><span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: '#7c3aed', background: '#fff', border: '1px solid #e9d4ff', borderRadius: 999, padding: '1px 7px', marginLeft: 'auto' }}>NOVA</span></div>
-      <div style={{ padding: '0 14px 13px' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+        <Ic name="sparkles" size={15} color="#7c3aed" />
+        <span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>AI summary</span>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: '#7c3aed', background: '#fff', border: '1px solid #e9d4ff', borderRadius: 999, padding: '1px 7px' }}>NOVA</span>
+        <Ic name={open ? 'chevron-up' : 'chevron-down'} size={16} color="#7c3aed" style={{ marginLeft: 'auto' }} />
+      </button>
+      {open && <div style={{ padding: '0 14px 13px' }}>
         <div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.55 }}>{summary}</div>
         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>{highlights.map((h, i) => <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12, color: LH.sub, lineHeight: 1.45 }}><span style={{ width: 5, height: 5, borderRadius: 999, background: '#7c3aed', marginTop: 6, flexShrink: 0 }} />{h}</div>)}</div>
-      </div>
+      </div>}
     </div>;
   }
   function LeadHeaderBlock({ lead, onToast, slim, onConvert }) {
@@ -29732,7 +29738,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const act = (shown && shown.act) || DIANE_ACT;
     const addTask = () => { if (!tTitle.trim()) return; setTasks(ts => [{ title: tTitle.trim(), type: tType, who: tWho, due: tDue, done: false }, ...ts]); setTTitle(''); setTaskOpen(false); onToast && onToast('Task created — “' + tTitle.trim() + '”'); };
     const addNote = () => { if (!noteText.trim()) return; setNotes(ns => [{ text: noteText.trim(), who: 'You', when: 'Just now' }, ...ns]); setNoteText(''); };
-    const TABS = [['details', 'Primary Details'], ['activity', 'Activity'], ['tasks', 'Tasks'], ['notes', 'Notes']];
+    const TABS = [['details', 'Primary Details'], ['intel', 'Intelligence'], ['activity', 'Activity'], ['tasks', 'Tasks'], ['notes', 'Notes']];
     return <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, zIndex: 40, width: expanded ? 560 : 400, maxWidth: '94%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,.10)', display: 'flex', flexDirection: 'column', transform: lead ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s' }}>
       {shown && <>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
@@ -29756,9 +29762,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <div style={{ minWidth: 0 }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>CAMPAIGN</div><div style={{ fontSize: 12.5, fontWeight: 600, color: camp ? LH.ink : LH.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{camp || 'Not enrolled in a campaign'}</div></div>
             </div>; })()}
             <div style={{ marginTop: 16 }}><LeadAISummary lead={shown} /></div>
-            <LeadIntakeIntelligence lead={shown} onToast={onToast} />
             <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 16, paddingTop: 14 }}><LeadPrimaryDetails lead={shown} onToast={onToast} onMove={onMove} /></div>
           </>}
+          {tab === 'intel' && <LeadIntakeIntelligence lead={shown} onToast={onToast} />}
           {tab === 'activity' && <div>{act.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: 14 }}>
             <div style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={a.who === 'Nova' ? 'sparkles' : 'settings'} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div>
             <div style={{ flex: 1 }}><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.45 }}>{a.msg}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 2 }}>{a.who} · {a.t || a.when}</div></div>
