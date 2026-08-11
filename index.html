@@ -30448,7 +30448,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </div>;
   }
 
-  function PipelineSection({ onToast, onFull }) {
+  function PipelineSection({ onToast, onFull, onNavigate }) {
     const [leads, setLeads] = useState(PIPE_LEADS);
     const [selId, setSelId] = useState(null);
     const [tab, setTab] = useState('details');
@@ -30542,7 +30542,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ position: 'relative' }}>
             <button onClick={() => setNewOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 34, padding: '0 13px', borderRadius: 9, border: '1px solid ' + LH.primary, background: LH.primary, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}><Ic name="plus" size={15} color="#fff" />New lead<span style={{ width: 1, height: 16, background: 'rgba(255,255,255,.25)', margin: '0 1px' }} /><Ic name="chevron-down" size={13} color="#fff" /></button>
             {newOpen && <div onMouseLeave={() => setNewOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 200 }}>
-              {[['user-plus', 'New lead', 'new'], ['upload', 'Import leads', 'import']].map(([ic, l, f]) => <div key={l} onClick={() => { setNewOpen(false); setFlow(f); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={LH.sub} />{l}</div>)}
+              {[['user-plus', 'New lead', 'new'], ['upload', 'Import leads', 'import'], ['div'], ['radio', 'Connect source', 'channels']].map(([ic, l, f], k) => ic === 'div'
+                ? <div key={'d' + k} style={{ height: 1, background: LH.borderSoft, margin: '5px 0' }} />
+                : <div key={l} onClick={() => { setNewOpen(false); if (f === 'channels') { onNavigate ? onNavigate('lead-channels') : (onToast && onToast('Opening Channels…')); } else setFlow(f); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={LH.sub} />{l}</div>)}
             </div>}
           </div>
         </div>
@@ -32136,7 +32138,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 26px 34px', background: '#fdfdfc' }}>
         {section === 'overview' && <Hero />}
         {section === 'overview' && <OverviewSection onNavigate={onNavigate} />}
-        {section === 'pipeline' && <PipelineSection onToast={showToast} onFull={setPipeFull} />}
+        {section === 'pipeline' && <PipelineSection onToast={showToast} onFull={setPipeFull} onNavigate={onNavigate} />}
         {section === 'campaigns' && <CampaignsSection onToast={showToast} onNavigate={onNavigate} />}
         {section === 'workforce' && <WorkforceSection onToast={showToast} />}
         {section === 'channels' && <ChannelsSection onToast={showToast} onNavigate={onNavigate} />}
