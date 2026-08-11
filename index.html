@@ -13567,8 +13567,7 @@ function CreateJobModal({ onClose = () => {}, onSubmit = () => {}, variant = 'mo
     h(I, { name: 'plus', size: 14, color: '#5b57d1' }), 'Create New Customer');
   const contactHead = h('div', { style: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: cmp ? 12 : 14 } },
     h('div', null,
-      h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 } }, h(I, { name: 'user', size: 15, color: '#6b7280' }), h('span', { style: { fontSize: 13.5, fontWeight: 600, color: '#111827' } }, 'Add contact to job')),
-      h('div', { style: { fontSize: 12, color: '#9ca3af' } }, 'Search for an existing customer or create a new one before creating a job.')),
+      h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } }, h(I, { name: 'user', size: 15, color: '#6b7280' }), h('span', { style: { fontSize: 13.5, fontWeight: 600, color: '#111827' } }, 'Add contact to job'))),
     initial ? null : custCreateLink);
   const hasCustomer = !!(form.firstName && form.firstName.trim());
   const contactSection = h('div', { ref: secRefs[0], style: beige },
@@ -29825,7 +29824,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const act = (shown && shown.act) || DIANE_ACT;
     const addTask = () => { if (!tTitle.trim()) return; setTasks(ts => [{ title: tTitle.trim(), type: tType, who: tWho, due: tDue, done: false }, ...ts]); setTTitle(''); setTaskOpen(false); onToast && onToast('Task created — “' + tTitle.trim() + '”'); };
     const addNote = () => { if (!noteText.trim()) return; setNotes(ns => [{ text: noteText.trim(), who: 'You', when: 'Just now' }, ...ns]); setNoteText(''); };
-    const TABS = [['details', 'Primary Details'], ['intel', 'Intelligence'], ['activity', 'Activity'], ['tasks', 'Tasks'], ['notes', 'Notes']];
+    const TABS = [['details', 'Primary Details'], ['intel', 'Intake intelligence'], ['activity', 'Activity'], ['tasks', 'Tasks'], ['notes', 'Notes']];
     return <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, zIndex: 40, width: expanded ? 600 : 468, maxWidth: '94%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,.10)', display: 'flex', flexDirection: 'column', transform: lead ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s' }}>
       {shown && <>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
@@ -30262,7 +30261,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const email = lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com';
     const phone = '469-555-0172';
     const toast = m => onToast && onToast(m);
-    const TABS = ['Overview', 'Qualification', 'Campaign', 'Communication'];
+    const TABS = ['Overview', 'Intake intelligence', 'Qualification', 'Campaign', 'Communication'];
     const kv = (k, v) => <div style={{ display: 'flex', gap: 12, padding: '7px 0' }}><span style={{ fontSize: 11, color: LH.muted, width: 92, flexShrink: 0 }}>{k}</span><span style={{ fontSize: 12, color: LH.body, fontWeight: 500, flex: 1, minWidth: 0 }}>{v}</span></div>;
     const iconBtn = (ic, m) => <button onClick={() => toast(m)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name={ic} size={15} color={LH.sub} /></button>;
     const secHead = (label, open, onT) => <button onClick={onT} style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', marginBottom: open ? 4 : 0 }}><Ic name={open ? 'chevron-down' : 'chevron-right'} size={14} color={LH.sub} /><span style={{ fontSize: 12, fontWeight: 700, color: LH.ink }}>{label}</span></button>;
@@ -30358,9 +30357,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, marginBottom: 12 }}>Communication log</div>
             <Card style={{ padding: 0, overflow: 'hidden' }}>{[['message-square', 'SMS', 'Speed-to-lead drip, step 3', '1 day ago'], ['phone', 'Call', 'Nova qualification call · 4:32', '1 day ago'], ['mail', 'Email', 'Free inspection offer sent', '2 days ago'], ['phone-incoming', 'Call', 'Inbound call · 12s ring', '2 days ago']].map(([ic, ch, txt, t], i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i < 3 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={ic} size={14} color={LH.sub} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{ch}</div><div style={{ fontSize: 12, color: LH.muted }}>{txt}</div></div><span style={{ fontSize: 11, color: LH.muted }}>{t}</span></div>)}</Card>
           </div>}
+          {tab === 'Intake intelligence' && <LeadIntakeIntelligence lead={lead} onToast={onToast} bare />}
           {tab === 'Overview' && <>
           <div style={{ marginBottom: 16 }}><LeadAISummary lead={lead} /></div>
-          <div style={{ marginBottom: 4 }}><LeadIntakeIntelligence lead={lead} onToast={onToast} /></div>
           <LeadLifecycle lead={lead} jobId={jobId} />
           {jobId
             ? <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 11, padding: '12px 14px', marginBottom: 20 }}><span style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={16} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.green }}>Converted to inspection job #{jobId}</div><div style={{ fontSize: 12, color: LH.sub }}>An inspection is scheduled — this lead is now an active job.</div></div><Btn icon="external-link" onClick={() => toast('Opening Job #' + jobId + '…')}>View job</Btn></div>
