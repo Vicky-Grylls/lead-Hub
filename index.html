@@ -14369,8 +14369,8 @@ function App() {
           onSubmit: () => { if (njLead.onCreated) njLead.onCreated(); setNjLead(null); showToast('Inspection job created from lead'); }
         }))
       : /*#__PURE__*/React.createElement("div", {
-          style: { position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(460px,96vw)', zIndex: 500, display: 'flex', flexDirection: 'column', background: '#fff', boxShadow: '-10px 0 30px rgba(0,0,0,0.16)' }
-        }, /*#__PURE__*/React.createElement(CreateJobModal, {
+          style: { position: 'fixed', top: 44, right: 0, bottom: 0, width: 'min(524px,96vw)', zIndex: 500, display: 'flex', flexDirection: 'column', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,0.10)', animation: 'cjSheetIn .28s cubic-bezier(0.32,0.72,0,1)' }
+        }, /*#__PURE__*/React.createElement("style", null, '@keyframes cjSheetIn{from{transform:translateX(101%)}to{transform:translateX(0)}}'), /*#__PURE__*/React.createElement(CreateJobModal, {
           variant: 'leadsheet',
           initial: njLead.initial,
           onManageTemplates: () => {},
