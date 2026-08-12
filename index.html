@@ -32366,7 +32366,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {section !== 'campaigns' && section !== 'pipeline' && <PageHead crumb={h.crumb} title={h.title} actions={h.actions} />}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 26px 34px', background: '#fdfdfc' }}>
         {section === 'overview' && nudge && <HomeCampaignNudge onCreate={startCampaign} onDismiss={() => { try { localStorage.removeItem('lhCampaignNudge'); } catch (e) {} setNudge(false); }} />}
-        {section === 'overview' && <Hero />}
         {section === 'overview' && <OverviewSection onNavigate={onNavigate} />}
         {section === 'pipeline' && <PipelineSection onToast={showToast} onFull={setPipeFull} onNavigate={onNavigate} />}
         {section === 'campaigns' && <CampaignsSection onToast={showToast} onNavigate={onNavigate} />}
