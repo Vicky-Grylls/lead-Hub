@@ -32200,13 +32200,27 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   // Onboarding palette mapped to the app's design language (light, warm neutrals, dark primary).
   const OB = { bg: LH.card, panel: LH.bg, card: LH.tint, line: LH.border, soft: LH.borderSoft, text: LH.ink, sub: LH.sub, dim: LH.muted, orange: LH.primary, orangeDk: LH.primary };
   function ObHero() {
-    // Beige brand panel — warm neutral surface with a dark-ink funnel graphic.
-    return <div style={{ position: 'relative', flex: 1, minWidth: 0, overflow: 'hidden', background: 'radial-gradient(120% 120% at 82% 14%, #f4efe4 0%, #ece5d6 46%, #e5ddcc 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '28px 30px' }}>
-      <div style={{ zIndex: 1 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.14em', color: '#9a8f79', marginBottom: 8 }}>GET THE WORK</div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#2c2a24', lineHeight: 1.32, letterSpacing: '-0.01em' }}>Grow your roofing business<br />with <span style={{ fontWeight: 800 }}>Zuper</span></div>
+    // Beige brand panel — warm growth-arrow scene (rising arrow over bars + a roofline).
+    return <div style={{ position: 'relative', flex: 1, minWidth: 0, overflow: 'hidden', background: 'radial-gradient(130% 120% at 84% 16%, #f6f1e6 0%, #efe7d8 44%, #e6dcc8 100%)' }}>
+      <svg viewBox="0 0 520 520" preserveAspectRatio="xMidYMax slice" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+        <defs>
+          <linearGradient id="obArrow" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stopColor="#e0651a" /><stop offset="0.55" stopColor="#f59e0b" /><stop offset="1" stopColor="#ffe7bf" /></linearGradient>
+          <filter id="obArrowGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        </defs>
+        {/* bar chart — warm translucent */}
+        {[[300, 356, 36, 120], [351, 314, 36, 162], [402, 262, 36, 214], [453, 206, 36, 270]].map((b, i) => <rect key={i} x={b[0]} y={b[1]} width={b[2]} height={b[3]} rx="5" fill="rgba(96,64,36,0.10)" />)}
+        {/* roofline + chimney silhouette */}
+        <path d="M70 520 L250 392 L300 420 L470 520 Z" fill="rgba(74,50,30,0.26)" />
+        <path d="M250 392 L300 420 L300 520 L250 520 Z" fill="rgba(60,40,24,0.14)" />
+        <g fill="rgba(58,38,22,0.30)"><rect x="430" y="430" width="34" height="90" rx="2" /><rect x="424" y="422" width="46" height="12" rx="3" /></g>
+        {/* growth arrow with glow */}
+        <path d="M20 498 L150 472 Q198 462 224 450 Q262 432 292 392 L444 172" fill="none" stroke="url(#obArrow)" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" filter="url(#obArrowGlow)" />
+        <path d="M444 172 L406 176 M444 172 L448 212" fill="none" stroke="url(#obArrow)" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" filter="url(#obArrowGlow)" />
+      </svg>
+      <div style={{ position: 'absolute', top: 28, left: 30, right: 56, zIndex: 1 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.14em', color: '#a2957c', marginBottom: 8 }}>GET THE WORK</div>
+        <div style={{ fontSize: 21, fontWeight: 700, color: '#2c2a24', lineHeight: 1.3, letterSpacing: '-0.01em' }}>Grow your roofing business<br />with <span style={{ fontWeight: 800 }}>Zuper Lead Hub</span></div>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', flex: 1, minHeight: 0 }}><HeroFlask c="#3d3a33" cardFill="#e7dfce" /></div>
     </div>;
   }
   function ObFeature({ icon, title, body }) {
