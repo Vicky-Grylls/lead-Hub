@@ -32196,21 +32196,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
   // ── Lead Hub onboarding (Figma flow 251-647, visual style 255-623) ──
   // Welcome popup → Lead source → Webhook → Validation → Success + campaign nudge.
-  const OB = { bg: '#141110', panel: '#1c1815', card: '#221d19', line: '#312a25', text: '#f6f4f2', sub: '#a8a29e', dim: '#78716c', orange: '#f97316', orangeDk: '#ea580c' };
+  // Onboarding palette mapped to the app's design language (light, warm neutrals, dark primary).
+  const OB = { bg: LH.card, panel: LH.bg, card: LH.tint, line: LH.border, soft: LH.borderSoft, text: LH.ink, sub: LH.sub, dim: LH.muted, orange: LH.primary, orangeDk: LH.primary };
   function ObHero() {
-    return <div style={{ position: 'relative', flex: 1, minWidth: 0, overflow: 'hidden', background: 'radial-gradient(130% 120% at 82% 18%, #f97316 0%, #ef4444 26%, #b91c1c 48%, #5b1111 72%, #1c0808 100%)' }}>
-      <div style={{ position: 'absolute', top: 26, left: 30, right: 60, fontSize: 21, fontWeight: 600, color: '#fde9dc', lineHeight: 1.3, letterSpacing: '-0.01em' }}>Grow your roofing business<br />with <span style={{ fontWeight: 800, color: '#fff' }}>Zuper Grow</span></div>
-      <svg viewBox="0 0 520 520" preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-        <defs>
-          <linearGradient id="obArrow" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stopColor="#fbbf24" /><stop offset="0.5" stopColor="#fb923c" /><stop offset="1" stopColor="#fff7ed" /></linearGradient>
-          <filter id="obGlow"><feGaussianBlur stdDeviation="6" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-        </defs>
-        {[[300, 430, 34, 70], [345, 405, 34, 95], [390, 360, 34, 140], [435, 300, 34, 200]].map((b, i) => <rect key={i} x={b[0]} y={b[1]} width={b[2]} height={b[3]} rx="4" fill="rgba(0,0,0,0.28)" />)}
-        <path d="M60 470 L150 430 L210 445 L300 360 L420 150" fill="none" stroke="url(#obArrow)" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" filter="url(#obGlow)" />
-        <path d="M420 150 L392 176 M420 150 L394 122 M420 150 L458 168 M420 150 L446 122" fill="none" stroke="url(#obArrow)" strokeWidth="12" strokeLinecap="round" filter="url(#obGlow)" />
-        <path d="M120 520 L300 405 L480 520 Z" fill="rgba(0,0,0,0.42)" />
-        <rect x="330" y="392" width="26" height="70" fill="rgba(0,0,0,0.5)" />
-      </svg>
+    // Charcoal brand panel — same visual language as the Lead Hub Overview hero.
+    return <div style={{ position: 'relative', flex: 1, minWidth: 0, overflow: 'hidden', background: 'radial-gradient(120% 120% at 82% 14%, #34332f 0%, #24231f 44%, #1a1a18 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '28px 30px' }}>
+      <div style={{ zIndex: 1 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.14em', color: 'rgba(255,255,255,.55)', marginBottom: 8 }}>GET THE WORK</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', lineHeight: 1.32, letterSpacing: '-0.01em' }}>Grow your roofing business<br />with <span style={{ fontWeight: 800 }}>Zuper</span></div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', flex: 1, minHeight: 0 }}><HeroFlask /></div>
     </div>;
   }
   function ObFeature({ icon, title, body }) {
@@ -32237,7 +32232,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const STEPS = [{ n: 'Lead source', ic: 'plug' }, { n: 'Webhook', ic: 'link' }, { n: 'Validation', ic: 'check-circle' }, { n: 'All set', ic: 'rocket' }];
     const obBtn = (label, opts = {}) => <button onClick={opts.onClick} disabled={opts.disabled} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 40, padding: '0 18px', borderRadius: 9, border: opts.ghost ? '1px solid ' + OB.line : 'none', background: opts.ghost ? 'transparent' : OB.orange, color: opts.ghost ? OB.text : '#fff', fontSize: 13.5, fontWeight: 700, cursor: opts.disabled ? 'not-allowed' : 'pointer', opacity: opts.disabled ? 0.45 : 1 }}>{label}{opts.icon && <Ic name={opts.icon} size={15} color={opts.ghost ? OB.sub : '#fff'} />}</button>;
     const brand = <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}><span style={{ width: 26, height: 26, borderRadius: 7, background: OB.card, border: '1px solid ' + OB.line, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="trending-up" size={15} color={OB.orange} /></span><span style={{ fontSize: 15, fontWeight: 800, color: OB.text, letterSpacing: '-0.01em' }}>Lead Hub</span></div>;
-    const closeBtn = <button onClick={() => onFinish(true)} title="Close" style={{ position: 'absolute', top: 16, right: 16, zIndex: 3, width: 30, height: 30, borderRadius: 999, border: 'none', background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Ic name="x" size={15} color="#fff" /></button>;
+    const closeBtn = <button onClick={() => onFinish(true)} title="Close" style={{ position: 'absolute', top: 14, right: 14, zIndex: 3, width: 30, height: 30, borderRadius: 8, border: '1px solid ' + OB.line, background: OB.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Ic name="x" size={15} color={OB.sub} /></button>;
     // Shared shell for setup steps 1-3 and success 4.
     const setupShell = (title, sub, body, footer) => <div style={{ display: 'flex', width: 'min(940px,96vw)', height: 'min(580px,92vh)', background: OB.bg, borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.5)', position: 'relative' }}>
       {closeBtn}
@@ -32282,7 +32277,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>;
     } else if (step === 1) {
       content = setupShell('Where do your leads come from?', 'Pick the sources you want to bring into Lead Hub. You can add more anytime from Channels.',
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>{SRC.map(s => { const on = picked.includes(s.k); return <button key={s.k} onClick={() => toggleSrc(s.k)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 13, borderRadius: 11, border: '1px solid ' + (on ? OB.orange : OB.line), background: on ? 'rgba(249,115,22,0.10)' : OB.panel, cursor: 'pointer', textAlign: 'left' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>{SRC.map(s => { const on = picked.includes(s.k); return <button key={s.k} onClick={() => toggleSrc(s.k)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 13, borderRadius: 11, border: '1px solid ' + (on ? OB.orange : OB.line), background: on ? OB.card : OB.bg, cursor: 'pointer', textAlign: 'left' }}>
           <span style={{ width: 34, height: 34, borderRadius: 9, background: OB.card, border: '1px solid ' + OB.line, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: on ? OB.orange : OB.sub, flexShrink: 0 }}>{s.ic}</span>
           <span style={{ minWidth: 0, flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: OB.text }}>{s.k}</div><div style={{ fontSize: 11.5, color: OB.sub }}>{s.d}</div></span>
           <span style={{ width: 20, height: 20, borderRadius: 999, border: '1px solid ' + (on ? OB.orange : OB.line), background: on ? OB.orange : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{on && <Ic name="check" size={13} color="#fff" />}</span>
@@ -32306,7 +32301,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       content = setupShell('Send a test lead', 'Fire a test payload from ' + primary + ' (or use the button below). We confirm it maps to Contact, Email, Phone, and Source.',
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 16, borderRadius: 12, border: '1px solid ' + OB.line, background: OB.panel }}>
-            <span style={{ width: 42, height: 42, borderRadius: 11, background: OB.card, border: '1px solid ' + OB.line, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={tested ? 'check-circle' : 'send'} size={19} color={tested ? '#4ade80' : OB.orange} /></span>
+            <span style={{ width: 42, height: 42, borderRadius: 11, background: OB.card, border: '1px solid ' + OB.line, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={tested ? 'check-circle' : 'send'} size={19} color={tested ? LH.green : OB.orange} /></span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13.5, fontWeight: 700, color: OB.text }}>{tested ? 'Test lead received — mapped OK' : 'Waiting for a test lead'}</div>
               <div style={{ fontSize: 12, color: OB.sub, marginTop: 1 }}>{tested ? 'Contact · Email · Phone · Source all matched.' : 'Listening on your ' + primary + ' webhook…'}</div>
@@ -32320,10 +32315,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       content = setupShell('You’re all set! 🎉', primary + ' is live and validated. Leads now land in your pipeline automatically. The best next move: turn them into a campaign so Nova starts working every lead.',
         <div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{[['plug', (picked.length || 1) + ' source' + (picked.length > 1 ? 's' : '') + ' connected', picked.join(', ') || primary], ['link', 'Webhook live', hook], ['check-circle', 'Test lead validated', 'Contact, email, phone & source mapped']].map(r => <div key={r[1]} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', borderRadius: 10, border: '1px solid ' + OB.line, background: OB.panel }}>
-            <span style={{ width: 30, height: 30, borderRadius: 8, background: OB.card, border: '1px solid ' + OB.line, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={r[0]} size={15} color="#4ade80" /></span>
+            <span style={{ width: 30, height: 30, borderRadius: 8, background: OB.card, border: '1px solid ' + OB.line, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={r[0]} size={15} color={LH.green} /></span>
             <div style={{ minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: OB.text }}>{r[1]}</div><div style={{ fontSize: 11.5, color: OB.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r[2]}</div></div>
           </div>)}</div>
-          <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', marginTop: 16, padding: 14, borderRadius: 11, border: '1px solid ' + OB.orange, background: 'rgba(249,115,22,0.10)' }}>
+          <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', marginTop: 16, padding: 14, borderRadius: 11, border: '1px solid ' + OB.line, background: OB.card }}>
             <Ic name="sparkles" size={17} color={OB.orange} style={{ position: 'relative', top: 1, flexShrink: 0 }} />
             <div><div style={{ fontSize: 13.5, fontWeight: 700, color: OB.text }}>Create your first campaign</div><div style={{ fontSize: 12.5, color: OB.sub, marginTop: 1, lineHeight: 1.45 }}>Speed-to-lead, nurture, or storm response — Nova texts, calls, and emails every new lead automatically.</div></div>
           </div>
@@ -32333,11 +32328,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     return ReactDOM.createPortal(<div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(8,6,5,0.62)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: "'Inter',ui-sans-serif,system-ui" }}>{content}</div>, document.body);
   }
   function HomeCampaignNudge({ onCreate, onDismiss }) {
-    return <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 14, marginBottom: 18, background: 'linear-gradient(120deg,#1c1815,#2a1a10)', border: '1px solid ' + OB.orangeDk, position: 'relative', overflow: 'hidden' }}>
-      <span style={{ width: 40, height: 40, borderRadius: 11, background: 'rgba(249,115,22,0.16)', border: '1px solid ' + OB.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="sparkles" size={19} color={OB.orange} /></span>
-      <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>Finish setup — create your first campaign</div><div style={{ fontSize: 12.5, color: '#d6cfc9', marginTop: 1 }}>Your sources are live. Put Nova to work on every new lead.</div></div>
+    return <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 12, marginBottom: 18, background: LH.card, border: '1px solid ' + LH.border }}>
+      <span style={{ width: 38, height: 38, borderRadius: 10, background: LH.tint, border: '1px solid ' + LH.border, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="sparkles" size={18} color={LH.primary} /></span>
+      <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Finish setup — create your first campaign</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 1 }}>Your sources are live. Put Nova to work on every new lead.</div></div>
       <Btn kind="primary" icon="arrow-right" onClick={onCreate}>Create a campaign</Btn>
-      <button onClick={onDismiss} title="Dismiss" style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="x" size={15} color="#a8a29e" /></button>
+      <button onClick={onDismiss} title="Dismiss" style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="x" size={15} color={LH.muted} /></button>
     </div>;
   }
   function LeadHubShell({ section, onNavigate }) {
@@ -32354,7 +32349,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const finishOnboarding = (completed, opts) => { setOnbOpen(false); try { localStorage.setItem('lhOnboarded', '1'); if (opts && opts.nudge) { localStorage.setItem('lhCampaignNudge', '1'); } } catch (e) {} if (opts && opts.nudge) setNudge(true); };
     const startCampaign = () => { try { localStorage.removeItem('lhCampaignNudge'); } catch (e) {} setNudge(false); setCampaignEdit(null); onNavigate('lead-campaign-new'); };
     const heads = {
-      overview: { crumb: 'Lead Hub', title: 'Overview', actions: <><button onClick={() => setOnbOpen(true)} title="Take the Lead Hub tour" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 12px', borderRadius: 8, border: '1px solid ' + OB.orange, background: 'rgba(249,115,22,0.08)', color: OB.orangeDk, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}><Ic name="sparkles" size={14} color={OB.orange} />Onboarding</button><DateRangePicker /></> },
+      overview: { crumb: 'Lead Hub', title: 'Overview', actions: <><Btn icon="sparkles" onClick={() => setOnbOpen(true)}>Onboarding</Btn><DateRangePicker /></> },
       pipeline: { crumb: 'Lead Hub', title: 'Pipeline', actions: <DateRangePicker /> },
       campaigns: { crumb: 'Lead Hub · 3 active', title: 'Campaigns', actions: null },
       workforce: { crumb: 'Lead Hub · AI Workforce', title: 'AI Workforce', actions: <Btn kind="primary" icon="plus">Add agent</Btn> },
