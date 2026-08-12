@@ -29286,31 +29286,32 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </div>;
   }
 
-  function HeroFlask() {
+  function HeroFlask({ c = '#ffffff', cardFill = '#2f2c28' } = {}) {
+    const sfx = c.replace('#', '');
     return <svg width="380" height="190" viewBox="0 0 380 190" fill="none" style={{ display: 'block' }}>
       <defs>
-        <linearGradient id="lhFunnel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" stopOpacity="0.22" /><stop offset="1" stopColor="#ffffff" stopOpacity="0.06" /></linearGradient>
-        <radialGradient id="lhGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stopColor="#ffffff" stopOpacity="0.16" /><stop offset="1" stopColor="#ffffff" stopOpacity="0" /></radialGradient>
+        <linearGradient id={'lhFunnel' + sfx} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={c} stopOpacity="0.22" /><stop offset="1" stopColor={c} stopOpacity="0.06" /></linearGradient>
+        <radialGradient id={'lhGlow' + sfx} cx="0.5" cy="0.5" r="0.5"><stop offset="0" stopColor={c} stopOpacity="0.16" /><stop offset="1" stopColor={c} stopOpacity="0" /></radialGradient>
       </defs>
       {/* faint grid */}
-      <g stroke="#ffffff" strokeOpacity="0.05">{[30, 70, 110, 150, 190, 230, 270, 310, 350].map(x => <line key={'v' + x} x1={x} y1="0" x2={x} y2="190" />)}{[30, 70, 110, 150].map(y => <line key={'h' + y} x1="0" y1={y} x2="380" y2={y} />)}</g>
+      <g stroke={c} strokeOpacity="0.05">{[30, 70, 110, 150, 190, 230, 270, 310, 350].map(x => <line key={'v' + x} x1={x} y1="0" x2={x} y2="190" />)}{[30, 70, 110, 150].map(y => <line key={'h' + y} x1="0" y1={y} x2="380" y2={y} />)}</g>
       {/* glow under funnel */}
-      <ellipse cx="225" cy="168" rx="60" ry="13" fill="url(#lhGlow)" />
+      <ellipse cx="225" cy="168" rx="60" ry="13" fill={'url(#lhGlow' + sfx + ')'} />
       {/* leads flowing in */}
-      {[[198, 42], [225, 34], [252, 44], [212, 54], [240, 56]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r={i % 2 ? 3 : 4} fill="#ffffff" opacity={0.35 + (i % 3) * 0.2} />)}
-      <path d="M205 60 q20 6 40 0" stroke="#ffffff" strokeOpacity="0.18" strokeWidth="1.5" fill="none" strokeDasharray="2 5" />
+      {[[198, 42], [225, 34], [252, 44], [212, 54], [240, 56]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r={i % 2 ? 3 : 4} fill={c} opacity={0.35 + (i % 3) * 0.2} />)}
+      <path d="M205 60 q20 6 40 0" stroke={c} strokeOpacity="0.18" strokeWidth="1.5" fill="none" strokeDasharray="2 5" />
       {/* funnel */}
-      <ellipse cx="225" cy="70" rx="47" ry="9" fill="url(#lhFunnel)" stroke="#ffffff" strokeOpacity="0.4" strokeWidth="1.5" />
-      <path d="M178 70 L272 70 L236 120 L236 156 a6 6 0 0 1 -6 6 h-10 a6 6 0 0 1 -6 -6 L214 120 Z" fill="url(#lhFunnel)" stroke="#ffffff" strokeOpacity="0.4" strokeWidth="1.5" strokeLinejoin="round" />
+      <ellipse cx="225" cy="70" rx="47" ry="9" fill={'url(#lhFunnel' + sfx + ')'} stroke={c} strokeOpacity="0.4" strokeWidth="1.5" />
+      <path d="M178 70 L272 70 L236 120 L236 156 a6 6 0 0 1 -6 6 h-10 a6 6 0 0 1 -6 -6 L214 120 Z" fill={'url(#lhFunnel' + sfx + ')'} stroke={c} strokeOpacity="0.4" strokeWidth="1.5" strokeLinejoin="round" />
       {/* a qualified lead dropping out */}
-      <circle cx="225" cy="176" r="4.5" fill="#ffffff" opacity="0.85" />
-      <circle cx="225" cy="140" r="3" fill="#ffffff" opacity="0.5" />
+      <circle cx="225" cy="176" r="4.5" fill={c} opacity="0.85" />
+      <circle cx="225" cy="140" r="3" fill={c} opacity="0.5" />
       {/* floating cards (neutral) */}
-      <g><rect x="70" y="70" width="86" height="46" rx="9" fill="#2f2c28" stroke="#ffffff" strokeOpacity="0.12" /><text x="82" y="88" fill="#ffffff" fillOpacity="0.7" fontSize="11" fontFamily="monospace">&lt;/&gt;</text><rect x="82" y="94" width="60" height="4" rx="2" fill="#ffffff" fillOpacity="0.25" /><rect x="82" y="103" width="40" height="4" rx="2" fill="#ffffff" fillOpacity="0.15" /></g>
-      <g><rect x="286" y="66" width="70" height="34" rx="9" fill="#2f2c28" stroke="#ffffff" strokeOpacity="0.12" /><rect x="298" y="76" width="34" height="14" rx="7" fill="#ffffff" fillOpacity="0.25" /><circle cx="325" cy="83" r="5" fill="#fff" /></g>
-      <g><rect x="286" y="112" width="80" height="46" rx="9" fill="#2f2c28" stroke="#ffffff" strokeOpacity="0.12" /><path d="M296 146 l14 -12 l10 8 l16 -18" stroke="#ffffff" strokeOpacity="0.7" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><rect x="296" y="150" width="60" height="3" rx="1.5" fill="#ffffff" fillOpacity="0.12" /></g>
+      <g><rect x="70" y="70" width="86" height="46" rx="9" fill={cardFill} stroke={c} strokeOpacity="0.12" /><text x="82" y="88" fill={c} fillOpacity="0.7" fontSize="11" fontFamily="monospace">&lt;/&gt;</text><rect x="82" y="94" width="60" height="4" rx="2" fill={c} fillOpacity="0.25" /><rect x="82" y="103" width="40" height="4" rx="2" fill={c} fillOpacity="0.15" /></g>
+      <g><rect x="286" y="66" width="70" height="34" rx="9" fill={cardFill} stroke={c} strokeOpacity="0.12" /><rect x="298" y="76" width="34" height="14" rx="7" fill={c} fillOpacity="0.25" /><circle cx="325" cy="83" r="5" fill={c} /></g>
+      <g><rect x="286" y="112" width="80" height="46" rx="9" fill={cardFill} stroke={c} strokeOpacity="0.12" /><path d="M296 146 l14 -12 l10 8 l16 -18" stroke={c} strokeOpacity="0.7" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><rect x="296" y="150" width="60" height="3" rx="1.5" fill={c} fillOpacity="0.12" /></g>
       {/* sparkles */}
-      {[[280, 52], [168, 132], [286, 108]].map(([x, y], i) => <path key={i} d={'M' + x + ' ' + (y - 6) + ' q1 5 6 6 q-5 1 -6 6 q-1 -5 -6 -6 q5 -1 6 -6 z'} fill="#ffffff" opacity="0.6" />)}
+      {[[280, 52], [168, 132], [286, 108]].map(([x, y], i) => <path key={i} d={'M' + x + ' ' + (y - 6) + ' q1 5 6 6 q-5 1 -6 6 q-1 -5 -6 -6 q5 -1 6 -6 z'} fill={c} opacity="0.6" />)}
     </svg>;
   }
   function Hero() {
@@ -32199,13 +32200,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   // Onboarding palette mapped to the app's design language (light, warm neutrals, dark primary).
   const OB = { bg: LH.card, panel: LH.bg, card: LH.tint, line: LH.border, soft: LH.borderSoft, text: LH.ink, sub: LH.sub, dim: LH.muted, orange: LH.primary, orangeDk: LH.primary };
   function ObHero() {
-    // Charcoal brand panel — same visual language as the Lead Hub Overview hero.
-    return <div style={{ position: 'relative', flex: 1, minWidth: 0, overflow: 'hidden', background: 'radial-gradient(120% 120% at 82% 14%, #34332f 0%, #24231f 44%, #1a1a18 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '28px 30px' }}>
+    // Beige brand panel — warm neutral surface with a dark-ink funnel graphic.
+    return <div style={{ position: 'relative', flex: 1, minWidth: 0, overflow: 'hidden', background: 'radial-gradient(120% 120% at 82% 14%, #f4efe4 0%, #ece5d6 46%, #e5ddcc 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '28px 30px' }}>
       <div style={{ zIndex: 1 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.14em', color: 'rgba(255,255,255,.55)', marginBottom: 8 }}>GET THE WORK</div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', lineHeight: 1.32, letterSpacing: '-0.01em' }}>Grow your roofing business<br />with <span style={{ fontWeight: 800 }}>Zuper</span></div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.14em', color: '#9a8f79', marginBottom: 8 }}>GET THE WORK</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#2c2a24', lineHeight: 1.32, letterSpacing: '-0.01em' }}>Grow your roofing business<br />with <span style={{ fontWeight: 800 }}>Zuper</span></div>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', flex: 1, minHeight: 0 }}><HeroFlask /></div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', flex: 1, minHeight: 0 }}><HeroFlask c="#3d3a33" cardFill="#e7dfce" /></div>
     </div>;
   }
   function ObFeature({ icon, title, body }) {
