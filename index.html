@@ -14292,6 +14292,7 @@ function App() {
   const [customerDrawerOpen, setCustomerDrawerOpen] = useState(false);
   const [createdJob, setCreatedJob] = useState(null);
   const [toast, setToast] = useState(null);
+  const [campaignDone, setCampaignDone] = useState(false);
   const toastTimerRef = useRef(null);
   const showToast = msg => {
     setToast(msg);
@@ -30785,7 +30786,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const funnel = [['Enrolled', enrolled], ['Contacted', contacted], ['Replied', replied], ['Qualified', qualified], ['Converted', converted]];
     const kpis = [
       { label: 'Enrolled', value: enrolled }, { label: 'Active now', value: active },
-      { label: 'Completed', value: completed, accent: LH.green }, { label: 'Exited', value: exited }, { label: 'Reply rate', value: replyRate }
+      { label: 'Completed', value: completed, accent: LH.green }, { label: 'Exited', value: exited }
     ];
     // Goal-based outcomes + KPIs (chosen in the wizard)
     const goalObj = CAMPAIGN_GOALS.find(g => g.key === row.goal) || CAMPAIGN_GOALS[0];
@@ -30798,7 +30799,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       let actual = '—', ok = true;
       if (L.indexOf('qualified in') > -1) { actual = pctQual + '%'; ok = pctQual >= tnum * 0.9; }
       else if (L === 'qualified') { actual = pctQual + '%'; ok = pctQual >= tnum; }
-      else if (L.indexOf('convert') > -1) { actual = pctConv + '%'; ok = pctConv >= tnum; }
+      else if (L.indexOf('conver') > -1) { actual = pctConv + '%'; ok = pctConv >= tnum; }
       else if (L.indexOf('reply') > -1) { actual = pctReply + '%'; ok = pctReply >= tnum; }
       else if (L.indexOf('first-touch') > -1) { actual = '38s'; ok = true; }
       else if (L.indexOf('opt-out') > -1) { actual = '1.4%'; ok = true; }
@@ -30807,17 +30808,22 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       else if (L.indexOf('revenue') > -1) { actual = '$' + Math.round(enrolled * 0.09) + 'k'; ok = true; }
       return { label: k.label, target: k.target, actual, ok };
     });
-    const goalCard = <Card style={{ padding: 16, marginBottom: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+    // One consistent KPI card, shared by the goal metrics and the operational stats.
+    const kpiCard = o => <Card key={o.label} style={{ padding: '13px 15px', flex: '1 1 0', minWidth: 0, border: '1px solid ' + LH.border }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 6 }}>
+        <span style={{ fontSize: 26, fontWeight: 700, color: o.accent || LH.ink, lineHeight: 1.1 }}>{o.value}</span>
+        {o.status ? <span style={{ fontSize: 11, fontWeight: 600, color: o.statusOk ? LH.green : LH.amber }}>{o.status}</span> : null}
+      </div>
+      <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 4 }}>{o.label}</div>
+      <div style={{ fontSize: 11, color: LH.muted, marginTop: 3, minHeight: 14 }}>{o.target ? 'Target ' + o.target : ''}</div>
+    </Card>;
+    const goalCard = <div style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
         <div style={{ width: 34, height: 34, borderRadius: 9, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={goalObj.icon} size={16} color={LH.primary} /></div>
         <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Goal · {goalObj.title}</div><div style={{ fontSize: 12, color: LH.sub }}>Outcomes: {goalObj.outcomes.join(' · ')}</div></div>
       </div>
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>{goalKpis.map(k => <div key={k.label} style={{ flex: '1 1 150px', border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: '11px 13px' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 6 }}><span style={{ fontSize: 19, fontWeight: 700, color: LH.ink }}>{enrolled ? k.actual : '—'}</span><span style={{ fontSize: 11, fontWeight: 600, color: enrolled ? (k.ok ? LH.green : LH.amber) : LH.muted }}>{enrolled ? (k.ok ? 'on track' : 'below') : '—'}</span></div>
-        <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 2 }}>{k.label}</div>
-        <div style={{ fontSize: 11, color: LH.sub, marginTop: 4 }}>Target {k.target}</div>
-      </div>)}</div>
-    </Card>;
+      <div style={{ display: 'flex', gap: 12 }}>{goalKpis.map(k => kpiCard({ label: k.label, value: enrolled ? k.actual : '—', target: k.target, status: enrolled ? (k.ok ? 'on track' : 'below') : null, statusOk: k.ok }))}</div>
+    </div>;
     const RECENT_FIXED = [
       { n: 'Daniel Thompson', src: 'Angi', stage: 'Qualified', tone: 'Qualified', last: 'Nova call · answered', when: '12m ago' },
       { n: 'Rosa Nguyen', src: 'Thumbtack', stage: 'Contacting', tone: 'New', last: 'SMS sent', when: '40m ago' },
@@ -30921,7 +30927,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const tabBody = () => {
       if (tab === 'overview') return <>
         {goalCard}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>{kpis.map(k => <StatCard key={k.label} label={k.label} value={k.value} accent={k.accent} />)}</div>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>{kpis.map(k => kpiCard({ label: k.label, value: k.value, accent: k.accent }))}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>{needsCard}{underperfCard}</div>
         <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>{activityCard}{tasksCard}</div>
       </>;
@@ -30948,7 +30954,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {node('log-out', '#f1f0ec', LH.sub, 'Exit — Qualified or Dead', 'Also exits on reply, opt-out, or Nova DND')}
         </div>;
       }
-      if (tab === 'leads') return <><div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>{kpis.map(k => <StatCard key={k.label} label={k.label} value={k.value} accent={k.accent} />)}</div>{recentCard}</>;
+      if (tab === 'leads') return <><div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>{kpis.map(k => kpiCard({ label: k.label, value: k.value, accent: k.accent }))}</div>{recentCard}</>;
       if (tab === 'reports') return <><div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>{[{ label: 'Delivered', value: '98%' }, { label: 'Open rate', value: '42%' }, { label: 'Reply rate', value: replyRate }, { label: 'Opt-outs', value: enrolled ? Math.max(1, Math.round(enrolled * 0.03)) : 0 }].map(k => <StatCard key={k.label} {...k} />)}</div><div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>{perfCard}<div /></div></>;
       if (tab === 'editor') return <><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}><div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Campaign setup</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Edit any section, or open the full step-by-step editor.</div></div><Btn kind="primary" icon="pencil" onClick={onEdit}>Open full editor</Btn></div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12 }}>{config.map(c => <Card key={c.title} style={{ padding: 14 }}><div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={c.icon} size={15} color={LH.ink} /></div><div style={{ flex: 1, minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{c.title}</span><button onClick={onEdit} style={{ fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Edit</button></div>{c.lines.map((l, k) => <div key={k} style={{ fontSize: 12, color: LH.sub, marginTop: 2 }}>{l}</div>)}</div></div></Card>)}</div></>;
@@ -31146,7 +31152,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { key: 'existing', icon: 'users', title: 'Existing Customers', desc: 'Past or cold customers you already have. Re-engagement / demand-gen — no speed-to-lead; the launch day is your first re-outreach.' }
   ];
   const CAMPAIGN_GOALS = [
-    { key: 'speed', icon: 'zap', title: 'Speed to lead', desc: 'Contact & qualify inbound leads fast.', aud: 'new', outcomes: ['Qualified lead', 'Booked inspection'], kpis: [{ label: 'Qualified in < 2 min', target: '80%' }, { label: 'Median first-touch', target: '45s' }, { label: 'Reply rate', target: '55%' }] },
+    { key: 'speed', icon: 'zap', title: 'Speed to lead', desc: 'Contact & qualify inbound leads fast.', aud: 'new', outcomes: ['Qualified lead', 'Booked inspection'], kpis: [{ label: 'Qualified in < 2 min', target: '80%' }, { label: 'Reply rate', target: '55%' }, { label: 'Conversion rate', target: '20%' }] },
     { key: 'nurture', icon: 'headphones', title: 'Nurture & convert', desc: 'Warm slow leads until they are ready to buy.', aud: 'new', outcomes: ['Re-engaged', 'Converted'], kpis: [{ label: 'Reply rate', target: '35%' }, { label: 'Qualified', target: '25%' }, { label: 'Converted', target: '12%' }] },
     { key: 'reengage', icon: 'rotate-ccw', title: 'Re-engage / demand gen', desc: 'Revive cold leads and past demand.', aud: 'existing', outcomes: ['Re-engaged', 'Booked job'], kpis: [{ label: 'Re-engaged', target: '20%' }, { label: 'Booked jobs', target: '8%' }, { label: 'Opt-out', target: '< 2%' }] },
     { key: 'rebook', icon: 'calendar-check', title: 'Rebook / maintenance', desc: 'Bring existing customers back for service.', aud: 'existing', outcomes: ['Rebooked'], kpis: [{ label: 'Rebooked', target: '15%' }, { label: 'Reply rate', target: '40%' }, { label: 'Revenue / 100', target: '$9k' }] },
