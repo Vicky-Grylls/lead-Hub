@@ -14323,6 +14323,17 @@ function App() {
     window.__leadHubCreateJob = (initial, onCreated) => setNjLead({ initial: initial, onCreated: onCreated });
     return () => { delete window.__openCustomerDrawer; delete window.__editJob; delete window.__leadHubCreateJob; };
   }, []);
+  const campaignSuccessModal = campaignDone && ReactDOM.createPortal(
+    /*#__PURE__*/React.createElement("div", { onClick: () => setCampaignDone(false), style: { position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(15,15,14,0.5)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: "'Inter',ui-sans-serif,system-ui" } },
+      /*#__PURE__*/React.createElement("div", { onClick: e => e.stopPropagation(), style: { width: 'min(430px,94vw)', background: '#fff', borderRadius: 16, padding: '32px 30px', boxShadow: '0 24px 64px rgba(0,0,0,0.28)', textAlign: 'center', animation: 'cjSheetIn .2s ease' } },
+        /*#__PURE__*/React.createElement("div", { style: { width: 58, height: 58, borderRadius: 999, background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' } },
+          /*#__PURE__*/React.createElement("svg", { width: 30, height: 30, viewBox: "0 0 24 24", fill: "none", stroke: "#16a34a", strokeWidth: "2.4", strokeLinecap: "round", strokeLinejoin: "round" }, /*#__PURE__*/React.createElement("path", { d: "M20 6 9 17l-5-5" }))),
+        /*#__PURE__*/React.createElement("div", { style: { fontSize: 20, fontWeight: 800, color: '#1f2937', letterSpacing: '-0.01em' } }, "Campaign created 🎉"),
+        /*#__PURE__*/React.createElement("div", { style: { fontSize: 13.5, color: '#6b7280', lineHeight: 1.55, margin: '8px 0 24px' } }, "Your campaign is live. Nova starts working every matching lead automatically — texting, calling, and emailing on schedule."),
+        /*#__PURE__*/React.createElement("div", { style: { display: 'flex', gap: 10, justifyContent: 'center' } },
+          /*#__PURE__*/React.createElement("button", { onClick: () => { setCampaignDone(false); setPage('lead-campaign-new'); }, style: { height: 40, padding: '0 16px', borderRadius: 9, border: '1px solid #e2ddd2', background: '#fff', color: '#3f3f46', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' } }, "Create another"),
+          /*#__PURE__*/React.createElement("button", { onClick: () => setCampaignDone(false), style: { height: 40, padding: '0 20px', borderRadius: 9, border: 'none', background: '#1f1f1d', color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' } }, "View campaigns")))),
+    document.body);
   if (page === 'lead-campaign-new') {
     return /*#__PURE__*/React.createElement("div", {
       className: "flex flex-col h-screen w-screen overflow-hidden",
@@ -14337,7 +14348,7 @@ function App() {
       className: "flex flex-col flex-1 overflow-hidden rounded-2xl",
       style: { background: '#fdfdfc', border: '1px solid #ece4d3', overflow: 'hidden' }
     }, window.LeadHubCampaignCreate
-      ? /*#__PURE__*/React.createElement(window.LeadHubCampaignCreate, { embed: true, onClose: () => setPage('lead-campaigns'), onCreate: () => { setPage('lead-campaigns'); showToast('Campaign created.'); } })
+      ? /*#__PURE__*/React.createElement(window.LeadHubCampaignCreate, { embed: true, onClose: () => setPage('lead-campaigns'), onCreate: () => { setPage('lead-campaigns'); setCampaignDone(true); } })
       : /*#__PURE__*/React.createElement("div", { style: { padding: 40, color: '#8c7a5a', fontSize: 14 } }, "Loading…"))), toast && /*#__PURE__*/React.createElement(Toast, {
       message: toast,
       onClose: () => setToast(null)
@@ -14381,7 +14392,7 @@ function App() {
         }))), toast && /*#__PURE__*/React.createElement(Toast, {
       message: toast,
       onClose: () => setToast(null)
-    }));
+    }), campaignSuccessModal);
   }
   if (page === 'list' || page === 'newjob' || page === 'recurringjob' || page === 'calendar' || page === 'dispatch' || page === 'maps') {
     return /*#__PURE__*/React.createElement("div", {
@@ -29252,7 +29263,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     'Needs human': { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
     'Converted as Job': { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
     'In drip': { bg: '#f3eefe', fg: '#6d28d9', bd: '#ddd0f7' },
-    Draft: { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' }
+    Draft: { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' },
+    Paused: { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
+    Completed: { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd }
   };
   function Pill({ label, tone }) {
     const t = TONE[tone || label] || TONE.Draft;
@@ -30092,14 +30105,28 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </Card>)}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start', marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'stretch', marginBottom: 12 }}>
         <AttentionRollupCard onNavigate={onNavigate} />
-        <Card style={{ padding: 18 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink, marginBottom: 14 }}>Active campaigns</div>
-          {['Speed-to-Lead Drip', 'Storm Season Re-engage', 'Estimate Follow-up'].map((c, i) => <div key={c} onClick={() => onNavigate('lead-campaigns')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: i < 2 ? '1px solid ' + LH.borderSoft : 'none', cursor: 'pointer' }}>
-            <span style={{ fontSize: 13, color: LH.body }}>{c}</span><Pill label="Active" />
-          </div>)}
-        </Card>
+        {(() => {
+          const RECENT = [
+            { name: 'Speed-to-Lead Campaign', status: 'Active', when: '2h ago' },
+            { name: 'Speed-to-Lead Drip', status: 'Active', when: 'Jul 28' },
+            { name: 'Storm Season Re-engage', status: 'Draft', when: 'Jul 27' },
+            { name: 'Estimate Follow-up', status: 'Active', when: 'Jul 24' },
+            { name: 'Angi Lead Nurture', status: 'Paused', when: 'Jul 3' },
+            { name: 'Winback — Cold Leads', status: 'Completed', when: 'Jul 2' }
+          ];
+          return <Card style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><Ic name="megaphone" size={15} color={LH.primary} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Recent campaigns</span><span style={{ fontSize: 11.5, color: LH.muted, marginLeft: 'auto', cursor: 'pointer' }} onClick={() => onNavigate('lead-campaigns')}>View all</span></div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              {RECENT.map((c, i) => <div key={c.name} onClick={() => onNavigate('lead-campaigns')} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px', borderBottom: i < RECENT.length - 1 ? '1px solid ' + LH.borderSoft : 'none', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="megaphone" size={14} color={LH.primary} /></div>
+                <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</div><div style={{ fontSize: 11.5, color: LH.muted }}>Created {c.when}</div></div>
+                <Pill label={c.status} />
+              </div>)}
+            </div>
+          </Card>;
+        })()}
       </div>
       <Card style={{ padding: 18 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink, marginBottom: 14 }}>Recent activity</div>
@@ -30748,6 +30775,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [menu, setMenu] = useState(false);
     const [st, setSt] = useState(row.status);
     const [tab, setTab] = useState('overview');
+    const [hideKpi, setHideKpi] = useState(false);
     const [nameEdit, setNameEdit] = useState(row.name);
     const [selLead, setSelLead] = useState(null);
     // Notification preferences (same block as the campaign wizard).
