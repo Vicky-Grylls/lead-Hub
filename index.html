@@ -32248,6 +32248,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const obBtn = (label, opts = {}) => <button onClick={opts.onClick} disabled={opts.disabled} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 40, padding: '0 18px', borderRadius: 9, border: opts.ghost ? '1px solid ' + OB.line : 'none', background: opts.ghost ? 'transparent' : OB.orange, color: opts.ghost ? OB.text : '#fff', fontSize: 13.5, fontWeight: 700, cursor: opts.disabled ? 'not-allowed' : 'pointer', opacity: opts.disabled ? 0.45 : 1 }}>{label}{opts.icon && <Ic name={opts.icon} size={15} color={opts.ghost ? OB.sub : '#fff'} />}</button>;
     const brand = <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}><span style={{ width: 26, height: 26, borderRadius: 7, background: OB.card, border: '1px solid ' + OB.line, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="trending-up" size={15} color={OB.orange} /></span><span style={{ fontSize: 15, fontWeight: 800, color: OB.text, letterSpacing: '-0.01em' }}>Lead Hub</span></div>;
     const closeBtn = <button onClick={() => onFinish(true)} title="Close" style={{ position: 'absolute', top: 14, right: 14, zIndex: 3, width: 30, height: 30, borderRadius: 8, border: '1px solid ' + OB.line, background: OB.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Ic name="x" size={15} color={OB.sub} /></button>;
+    // Full-bleed brand image panel (welcome/success). The artwork carries its own heading + close glyph,
+    // so we overlay a transparent hotspot at the top-right to make that baked-in close button work.
+    const imagePanel = src => <div style={{ flex: 1, minWidth: 0, alignSelf: 'stretch', backgroundImage: 'url(' + src + ')', backgroundSize: 'cover', backgroundPosition: 'center' }} />;
+    const imgClose = <button onClick={() => onFinish(true)} title="Close" style={{ position: 'absolute', top: 8, right: 8, zIndex: 4, width: 56, height: 56, borderRadius: 999, border: 'none', background: 'transparent', cursor: 'pointer' }} />;
+    const splitModal = (left, img) => <div style={{ display: 'flex', width: 'min(960px,96vw)', height: 'min(560px,92vh)', background: OB.bg, borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.45)', position: 'relative' }}>{left}{imagePanel(img)}{imgClose}</div>;
     // Shared shell for setup steps 1-3 and success 4.
     const setupShell = (title, sub, body, footer) => <div style={{ display: 'flex', width: 'min(940px,96vw)', height: 'min(580px,92vh)', background: OB.bg, borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.5)', position: 'relative' }}>
       {closeBtn}
@@ -32272,24 +32277,22 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </div>;
     let content;
     if (step === 0) {
-      content = <div style={{ display: 'flex', width: 'min(940px,96vw)', height: 'min(520px,90vh)', background: OB.bg, borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.5)', position: 'relative' }}>
-        {closeBtn}
-        <div style={{ width: '52%', flexShrink: 0, padding: '38px 40px', display: 'flex', flexDirection: 'column' }}>
+      content = splitModal(
+        <div style={{ width: '52%', flexShrink: 0, padding: '40px 42px', display: 'flex', flexDirection: 'column' }}>
           {brand}
-          <div style={{ fontSize: 33, fontWeight: 800, color: OB.text, lineHeight: 1.12, letterSpacing: '-0.02em', marginTop: 26 }}>Capture more leads.<br />Build <span style={{ color: OB.orange }}>stronger pipelines.</span></div>
-          <div style={{ fontSize: 13.5, color: OB.sub, lineHeight: 1.55, margin: '14px 0 22px', maxWidth: 420 }}>Lead Hub helps roofing businesses generate, qualify, and convert more leads — so your team can focus on closing jobs.</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
+          <div style={{ fontSize: 33, fontWeight: 800, color: OB.text, lineHeight: 1.12, letterSpacing: '-0.02em', marginTop: 28 }}>Capture more leads.<br />Build <span style={{ color: OB.orange }}>stronger pipelines.</span></div>
+          <div style={{ fontSize: 13.5, color: OB.sub, lineHeight: 1.55, margin: '16px 0 26px', maxWidth: 420 }}>Lead Hub helps roofing businesses generate, qualify, and convert more leads — so your team can focus on closing jobs.</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             <ObFeature icon="users" title="More qualified leads" body="Attract high-intent homeowners actively looking for roofing solutions." />
             <ObFeature icon="filter" title="Stronger pipelines" body="Qualify, nurture, and organize leads so nothing slips through the cracks." />
             <ObFeature icon="target" title="More jobs won" body="Convert conversations into booked inspections and closed deals." />
           </div>
-          <div style={{ display: 'flex', gap: 12, marginTop: 'auto', paddingTop: 24 }}>
+          <div style={{ display: 'flex', gap: 12, marginTop: 'auto', paddingTop: 26 }}>
             {obBtn('Get started', { icon: 'arrow-right', onClick: () => setStep(1) })}
             {obBtn('Maybe later', { ghost: true, onClick: () => onFinish(true) })}
           </div>
-        </div>
-        <ObHero />
-      </div>;
+        </div>,
+        'assets/ob-welcome.png');
     } else if (step === 1) {
       content = setupShell('Where do your leads come from?', 'Pick the sources you want to bring into Lead Hub. You can add more anytime from Channels.',
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>{SRC.map(s => { const on = picked.includes(s.k); return <button key={s.k} onClick={() => toggleSrc(s.k)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 13, borderRadius: 11, border: '1px solid ' + (on ? OB.orange : OB.line), background: on ? OB.card : OB.bg, cursor: 'pointer', textAlign: 'left' }}>
@@ -32327,18 +32330,21 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>,
         <>{obBtn('Back', { ghost: true, onClick: () => setStep(2) })}{obBtn(tested ? 'Continue' : 'Import to continue', { icon: 'arrow-right', disabled: !tested, onClick: () => setStep(4) })}</>);
     } else {
-      content = setupShell('You’re all set! 🎉', primary + ' is live and validated. Leads now land in your pipeline automatically. The best next move: turn them into a campaign so Nova starts working every lead.',
-        <div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{[['plug', (picked.length || 1) + ' source' + (picked.length > 1 ? 's' : '') + ' connected', picked.join(', ') || primary], ['link', 'Webhook live', hook], ['check-circle', '128 leads imported', 'Contact, email, phone & source mapped']].map(r => <div key={r[1]} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', borderRadius: 10, border: '1px solid ' + OB.line, background: OB.panel }}>
+      content = splitModal(
+        <div style={{ width: '52%', flexShrink: 0, padding: '36px 40px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          {brand}
+          <div style={{ fontSize: 26, fontWeight: 800, color: OB.text, lineHeight: 1.15, letterSpacing: '-0.02em', marginTop: 22 }}>You’re all set! 🎉</div>
+          <div style={{ fontSize: 13, color: OB.sub, lineHeight: 1.5, margin: '8px 0 18px', maxWidth: 400 }}>{primary} is live and validated. Leads now land in your pipeline automatically — the best next move is a campaign so Nova starts working every lead.</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{[['plug', (picked.length || 1) + ' source' + (picked.length > 1 ? 's' : '') + ' connected', picked.join(', ') || primary], ['link', 'Webhook live', hook], ['check-circle', '128 leads imported', 'Contact, email, phone & source mapped']].map(r => <div key={r[1]} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, border: '1px solid ' + OB.line, background: OB.panel }}>
             <span style={{ width: 30, height: 30, borderRadius: 8, background: OB.card, border: '1px solid ' + OB.line, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={r[0]} size={15} color={LH.green} /></span>
             <div style={{ minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: OB.text }}>{r[1]}</div><div style={{ fontSize: 11.5, color: OB.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r[2]}</div></div>
           </div>)}</div>
-          <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', marginTop: 16, padding: 14, borderRadius: 11, border: '1px solid ' + OB.line, background: OB.card }}>
-            <Ic name="sparkles" size={17} color={OB.orange} style={{ position: 'relative', top: 1, flexShrink: 0 }} />
-            <div><div style={{ fontSize: 13.5, fontWeight: 700, color: OB.text }}>Create your first campaign</div><div style={{ fontSize: 12.5, color: OB.sub, marginTop: 1, lineHeight: 1.45 }}>Speed-to-lead, nurture, or storm response — Nova texts, calls, and emails every new lead automatically.</div></div>
+          <div style={{ display: 'flex', gap: 12, marginTop: 'auto', paddingTop: 22 }}>
+            {obBtn('Maybe later', { ghost: true, onClick: () => onFinish(true, { nudge: true }) })}
+            {obBtn('Create a campaign', { icon: 'arrow-right', onClick: () => { onFinish(true); onCreateCampaign(); } })}
           </div>
         </div>,
-        <>{obBtn('Maybe later', { ghost: true, onClick: () => onFinish(true, { nudge: true }) })}{obBtn('Create a campaign', { icon: 'arrow-right', onClick: () => { onFinish(true); onCreateCampaign(); } })}</>);
+        'assets/ob-success.png');
     }
     return ReactDOM.createPortal(<div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(8,6,5,0.62)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: "'Inter',ui-sans-serif,system-ui" }}>{content}</div>, document.body);
   }
