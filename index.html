@@ -32354,7 +32354,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const finishOnboarding = (completed, opts) => { setOnbOpen(false); try { localStorage.setItem('lhOnboarded', '1'); if (opts && opts.nudge) { localStorage.setItem('lhCampaignNudge', '1'); } } catch (e) {} if (opts && opts.nudge) setNudge(true); };
     const startCampaign = () => { try { localStorage.removeItem('lhCampaignNudge'); } catch (e) {} setNudge(false); setCampaignEdit(null); onNavigate('lead-campaign-new'); };
     const heads = {
-      overview: { crumb: 'Lead Hub', title: 'Overview', actions: <DateRangePicker /> },
+      overview: { crumb: 'Lead Hub', title: 'Overview', actions: <><button onClick={() => setOnbOpen(true)} title="Take the Lead Hub tour" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 12px', borderRadius: 8, border: '1px solid ' + OB.orange, background: 'rgba(249,115,22,0.08)', color: OB.orangeDk, fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}><Ic name="sparkles" size={14} color={OB.orange} />Onboarding</button><DateRangePicker /></> },
       pipeline: { crumb: 'Lead Hub', title: 'Pipeline', actions: <DateRangePicker /> },
       campaigns: { crumb: 'Lead Hub · 3 active', title: 'Campaigns', actions: null },
       workforce: { crumb: 'Lead Hub · AI Workforce', title: 'AI Workforce', actions: <Btn kind="primary" icon="plus">Add agent</Btn> },
