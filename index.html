@@ -32288,7 +32288,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const closeBtn = <button onClick={() => onFinish(true)} title="Close" style={{ position: 'absolute', top: 14, right: 14, zIndex: 3, width: 30, height: 30, borderRadius: 8, border: '1px solid ' + OB.line, background: OB.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Ic name="x" size={15} color={OB.sub} /></button>;
     // Full-bleed brand image panel (welcome/success). The artwork carries its own heading + close glyph,
     // so we overlay a transparent hotspot at the top-right to make that baked-in close button work.
-    const imagePanel = src => <div style={{ flex: 1, minWidth: 0, alignSelf: 'stretch', background: '#160b08', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}><img src={src} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block', borderRadius: 10 }} /></div>;
+    const imagePanel = src => <div style={{ flex: 1, minWidth: 0, alignSelf: 'stretch', backgroundImage: 'url(' + src + ')', backgroundSize: 'cover', backgroundPosition: 'center' }} />;
     // The artwork has a baked-in close glyph that the modal's rounded corner clips. Mask the top-right
     // corner (blends into the dark art) and draw our own clean, always-clickable close button.
     const imgClose = <>
