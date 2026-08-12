@@ -32288,14 +32288,19 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const closeBtn = <button onClick={() => onFinish(true)} title="Close" style={{ position: 'absolute', top: 14, right: 14, zIndex: 3, width: 30, height: 30, borderRadius: 8, border: '1px solid ' + OB.line, background: OB.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Ic name="x" size={15} color={OB.sub} /></button>;
     // Full-bleed brand image panel (welcome/success). The artwork carries its own heading + close glyph,
     // so we overlay a transparent hotspot at the top-right to make that baked-in close button work.
-    const imagePanel = src => <div style={{ flex: 1, minWidth: 0, alignSelf: 'stretch', backgroundImage: 'url(' + src + ')', backgroundSize: 'cover', backgroundPosition: 'center' }} />;
+    // `contain` shows the full artwork uncropped with dark padding (used for the success banner so its
+    // baked-in text/close aren't clipped); default is full-bleed cover.
+    const imagePanel = (src, contain) => <div style={{ flex: 1, minWidth: 0, alignSelf: 'stretch', background: contain ? '#3a1207' : undefined, backgroundImage: 'url(' + src + ')', backgroundSize: contain ? 'contain' : 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} />;
     // The artwork has a baked-in close glyph that the modal's rounded corner clips. Mask the top-right
     // corner (blends into the dark art) and draw our own clean, always-clickable close button.
     const imgClose = <>
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 3, width: 170, height: 170, pointerEvents: 'none', background: 'radial-gradient(190px 190px at 100% 0%, rgba(22,11,8,1) 46%, rgba(22,11,8,0) 100%)' }} />
       <button onClick={() => onFinish(true)} title="Close" style={{ position: 'absolute', top: 15, right: 15, zIndex: 4, width: 36, height: 36, borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Ic name="x" size={17} color="#fff" /></button>
     </>;
-    const splitModal = (left, img) => <div style={{ display: 'flex', width: 'min(960px,96vw)', height: 'min(560px,92vh)', background: OB.bg, borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.45)', position: 'relative' }}>{left}{imagePanel(img)}{imgClose}</div>;
+    // For the contained (uncropped) banner the artwork keeps its own ✕ glyph — overlay a transparent
+    // hotspot over it so it closes, instead of drawing a duplicate button.
+    const imgHotspot = <button onClick={() => onFinish(true)} title="Close" style={{ position: 'absolute', top: 24, right: 8, zIndex: 4, width: 96, height: 96, background: 'transparent', border: 'none', cursor: 'pointer' }} />;
+    const splitModal = (left, img, contain) => <div style={{ display: 'flex', width: 'min(960px,96vw)', height: 'min(560px,92vh)', background: OB.bg, borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.45)', position: 'relative' }}>{left}{imagePanel(img, contain)}{contain ? imgHotspot : imgClose}</div>;
     // Shared shell for setup steps 1-3 and success 4.
     const setupShell = (title, sub, body, footer) => <div style={{ display: 'flex', width: 'min(940px,96vw)', height: 'min(580px,92vh)', background: OB.bg, borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.5)', position: 'relative' }}>
       {closeBtn}
@@ -32398,7 +32403,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             {obBtn('Create a campaign', { icon: 'arrow-right', onClick: () => { onFinish(true); onCreateCampaign(); } })}
           </div>
         </div>,
-        'assets/ob-success.png');
+        'assets/ob-success.png', true);
     }
     return ReactDOM.createPortal(<div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(8,6,5,0.62)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: "'Inter',ui-sans-serif,system-ui" }}>{content}</div>, document.body);
   }
