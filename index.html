@@ -32233,7 +32233,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [step, setStep] = useState(0);
     const [picked, setPicked] = useState([]);
     const [tested, setTested] = useState(false);
-    const [copied, setCopied] = useState(false);
+    const [copiedKey, setCopiedKey] = useState(null);
     useEffect(() => { const h = e => { if (e.key === 'Escape') onFinish(true); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, [onFinish]);
     const SRC = [
       { k: 'Angi', d: 'Marketplace leads', ic: 'A' }, { k: 'Thumbtack', d: 'Marketplace leads', ic: 'T' },
@@ -32242,8 +32242,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { k: 'Website', d: 'Your contact form', ic: 'W' }, { k: 'Custom webhook', d: 'Any other source', ic: '⚙' }
     ];
     const primary = picked[0] || 'your source';
-    const slug = (picked[0] || 'source').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const hook = 'hooks.zuper.com/lead/' + slug + '/hill-roofing';
+    const hookFor = s => 'hooks.zuper.com/lead/' + (s || 'source').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '/hill-roofing';
+    const hook = hookFor(picked[0] || 'source');
+    const hookSources = picked.length ? picked : [primary];
     const toggleSrc = k => setPicked(p => p.includes(k) ? p.filter(x => x !== k) : [...p, k]);
     const STEPS = [{ n: 'Lead source', ic: 'plug' }, { n: 'Webhook', ic: 'link' }, { n: 'Import leads', ic: 'import' }, { n: 'All set', ic: 'rocket' }];
     const obBtn = (label, opts = {}) => <button onClick={opts.onClick} disabled={opts.disabled} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 40, padding: '0 18px', borderRadius: 9, border: opts.ghost ? '1px solid ' + OB.line : 'none', background: opts.ghost ? 'transparent' : OB.orange, color: opts.ghost ? OB.text : '#fff', fontSize: 13.5, fontWeight: 700, cursor: opts.disabled ? 'not-allowed' : 'pointer', opacity: opts.disabled ? 0.45 : 1 }}>{label}{opts.icon && <Ic name={opts.icon} size={15} color={opts.ghost ? OB.sub : '#fff'} />}</button>;
@@ -32252,7 +32253,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     // Full-bleed brand image panel (welcome/success). The artwork carries its own heading + close glyph,
     // so we overlay a transparent hotspot at the top-right to make that baked-in close button work.
     const imagePanel = src => <div style={{ flex: 1, minWidth: 0, alignSelf: 'stretch', backgroundImage: 'url(' + src + ')', backgroundSize: 'cover', backgroundPosition: 'center' }} />;
-    const imgClose = <button onClick={() => onFinish(true)} title="Close" style={{ position: 'absolute', top: 8, right: 8, zIndex: 4, width: 56, height: 56, borderRadius: 999, border: 'none', background: 'transparent', cursor: 'pointer' }} />;
+    // The artwork has a baked-in close glyph that the modal's rounded corner clips. Mask the top-right
+    // corner (blends into the dark art) and draw our own clean, always-clickable close button.
+    const imgClose = <>
+      <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 3, width: 170, height: 170, pointerEvents: 'none', background: 'radial-gradient(190px 190px at 100% 0%, rgba(22,11,8,1) 46%, rgba(22,11,8,0) 100%)' }} />
+      <button onClick={() => onFinish(true)} title="Close" style={{ position: 'absolute', top: 15, right: 15, zIndex: 4, width: 36, height: 36, borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Ic name="x" size={17} color="#fff" /></button>
+    </>;
     const splitModal = (left, img) => <div style={{ display: 'flex', width: 'min(960px,96vw)', height: 'min(560px,92vh)', background: OB.bg, borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.45)', position: 'relative' }}>{left}{imagePanel(img)}{imgClose}</div>;
     // Shared shell for setup steps 1-3 and success 4.
     const setupShell = (title, sub, body, footer) => <div style={{ display: 'flex', width: 'min(940px,96vw)', height: 'min(580px,92vh)', background: OB.bg, borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.5)', position: 'relative' }}>
@@ -32303,14 +32309,21 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </button>; })}</div>,
         <>{obBtn('Back', { ghost: true, onClick: () => setStep(0) })}{obBtn(picked.length ? 'Continue · ' + picked.length + ' selected' : 'Select a source', { icon: 'arrow-right', disabled: !picked.length, onClick: () => setStep(2) })}</>);
     } else if (step === 2) {
-      content = setupShell('Connect ' + primary + ' with a webhook', 'Add this webhook URL to ' + primary + '. New leads will flow straight into your pipeline — no code needed.',
+      content = setupShell(
+        hookSources.length > 1 ? 'Connect your sources with webhooks' : 'Connect ' + primary + ' with a webhook',
+        hookSources.length > 1 ? 'Add each webhook URL to its matching source. New leads flow straight into your pipeline — no code needed.' : 'Add this webhook URL to ' + primary + '. New leads will flow straight into your pipeline — no code needed.',
         <div>
-          <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: OB.dim, marginBottom: 8 }}>Your webhook URL</div>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 22 }}>
-            <div style={{ flex: 1, fontSize: 12.5, color: OB.text, background: OB.panel, border: '1px solid ' + OB.line, borderRadius: 9, padding: '11px 13px', fontFamily: 'ui-monospace,monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{hook}</div>
-            <button onClick={() => { setCopied(true); onToast && onToast('Webhook URL copied'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 42, padding: '0 14px', borderRadius: 9, border: '1px solid ' + OB.line, background: OB.card, color: OB.text, fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}><Ic name={copied ? 'check' : 'copy'} size={14} color={copied ? OB.orange : OB.sub} />{copied ? 'Copied' : 'Copy'}</button>
+          <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: OB.dim, marginBottom: 8 }}>{hookSources.length > 1 ? 'Your webhook URLs' : 'Your webhook URL'}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+            {hookSources.map(src => { const h = hookFor(src); const isC = copiedKey === src; return <div key={src}>
+              {hookSources.length > 1 && <div style={{ fontSize: 12, fontWeight: 700, color: OB.text, marginBottom: 5 }}>{src}</div>}
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ flex: 1, fontSize: 12.5, color: OB.text, background: OB.panel, border: '1px solid ' + OB.line, borderRadius: 9, padding: '11px 13px', fontFamily: 'ui-monospace,monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h}</div>
+                <button onClick={() => { setCopiedKey(src); onToast && onToast(src + ' webhook URL copied'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 42, padding: '0 14px', borderRadius: 9, border: '1px solid ' + OB.line, background: OB.card, color: OB.text, fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}><Ic name={isC ? 'check' : 'copy'} size={14} color={isC ? OB.orange : OB.sub} />{isC ? 'Copied' : 'Copy'}</button>
+              </div>
+            </div>; })}
           </div>
-          {[['1', 'Open ' + primary + ' settings', 'Find the Webhooks or Integrations section in your ' + primary + ' account.'], ['2', 'Paste the URL', 'Add the webhook above and save it.'], ['3', 'Send a test', 'Trigger a lead — we validate the mapping in the next step.']].map(s => <div key={s[0]} style={{ display: 'flex', gap: 12, padding: '9px 0', borderTop: '1px solid ' + OB.line }}>
+          {[['1', 'Open each source’s settings', 'Find the Webhooks or Integrations section in each connected source.'], ['2', 'Paste the matching URL', 'Add the webhook above and save it.'], ['3', 'Send a test', 'Trigger a lead — we validate the mapping in the next step.']].map(s => <div key={s[0]} style={{ display: 'flex', gap: 12, padding: '9px 0', borderTop: '1px solid ' + OB.line }}>
             <span style={{ width: 22, height: 22, borderRadius: 999, background: OB.card, border: '1px solid ' + OB.line, color: OB.orange, fontSize: 11.5, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{s[0]}</span>
             <div><div style={{ fontSize: 13, fontWeight: 700, color: OB.text }}>{s[1]}</div><div style={{ fontSize: 12, color: OB.sub, marginTop: 1, lineHeight: 1.45 }}>{s[2]}</div></div>
           </div>)}
@@ -32332,11 +32345,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <>{obBtn('Back', { ghost: true, onClick: () => setStep(2) })}{obBtn(tested ? 'Continue' : 'Import to continue', { icon: 'arrow-right', disabled: !tested, onClick: () => setStep(4) })}</>);
     } else {
       content = splitModal(
-        <div style={{ width: '52%', flexShrink: 0, padding: '36px 40px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div style={{ width: '52%', flexShrink: 0, padding: '40px 48px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
           {brand}
           <div style={{ fontSize: 26, fontWeight: 800, color: OB.text, lineHeight: 1.15, letterSpacing: '-0.02em', marginTop: 22 }}>You’re all set! 🎉</div>
-          <div style={{ fontSize: 13, color: OB.sub, lineHeight: 1.5, margin: '8px 0 18px', maxWidth: 400 }}>{primary} is live and validated. Leads now land in your pipeline automatically — the best next move is a campaign so Nova starts working every lead.</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{[['plug', (picked.length || 1) + ' source' + (picked.length > 1 ? 's' : '') + ' connected', picked.join(', ') || primary], ['link', 'Webhook live', hook], ['check-circle', '128 leads imported', 'Contact, email, phone & source mapped']].map(r => <div key={r[1]} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, border: '1px solid ' + OB.line, background: OB.panel }}>
+          <div style={{ fontSize: 13, color: OB.sub, lineHeight: 1.5, margin: '8px 0 18px', maxWidth: 400 }}>{picked.length > 1 ? 'Your sources are' : primary + ' is'} live and validated. Leads now land in your pipeline automatically — the best next move is a campaign so Nova starts working every lead.</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{[['plug', (picked.length || 1) + ' source' + (picked.length > 1 ? 's' : '') + ' connected', picked.join(', ') || primary], ['link', hookSources.length > 1 ? hookSources.length + ' webhooks live' : 'Webhook live', hookSources.length > 1 ? 'One URL per source' : hook], ['check-circle', '128 leads imported', 'Contact, email, phone & source mapped']].map(r => <div key={r[1]} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, border: '1px solid ' + OB.line, background: OB.panel }}>
             <span style={{ width: 30, height: 30, borderRadius: 8, background: OB.card, border: '1px solid ' + OB.line, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={r[0]} size={15} color={LH.green} /></span>
             <div style={{ minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: OB.text }}>{r[1]}</div><div style={{ fontSize: 11.5, color: OB.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r[2]}</div></div>
           </div>)}</div>
