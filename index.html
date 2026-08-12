@@ -32238,6 +32238,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const SRC = [
       { k: 'Angi', d: 'Marketplace leads', ic: 'A' }, { k: 'Thumbtack', d: 'Marketplace leads', ic: 'T' },
       { k: 'Google LSA', d: 'Local Services Ads', ic: 'G' }, { k: 'Meta Ads', d: 'Facebook / Instagram', ic: 'M' },
+      { k: 'Instant Estimator', d: 'Self-serve roof estimate', lucide: 'calculator' }, { k: 'Online Booking', d: 'Book an inspection online', lucide: 'calendar-check' },
       { k: 'Website', d: 'Your contact form', ic: 'W' }, { k: 'Custom webhook', d: 'Any other source', ic: '⚙' }
     ];
     const primary = picked[0] || 'your source';
@@ -32296,7 +32297,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     } else if (step === 1) {
       content = setupShell('Where do your leads come from?', 'Pick the sources you want to bring into Lead Hub. You can add more anytime from Channels.',
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>{SRC.map(s => { const on = picked.includes(s.k); return <button key={s.k} onClick={() => toggleSrc(s.k)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 13, borderRadius: 11, border: '1px solid ' + (on ? OB.orange : OB.line), background: on ? OB.card : OB.bg, cursor: 'pointer', textAlign: 'left' }}>
-          <span style={{ width: 34, height: 34, borderRadius: 9, background: OB.card, border: '1px solid ' + OB.line, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: on ? OB.orange : OB.sub, flexShrink: 0 }}>{s.ic}</span>
+          <span style={{ width: 34, height: 34, borderRadius: 9, background: OB.card, border: '1px solid ' + OB.line, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: on ? OB.orange : OB.sub, flexShrink: 0 }}>{s.lucide ? <Ic name={s.lucide} size={16} color={on ? OB.orange : OB.sub} /> : s.ic}</span>
           <span style={{ minWidth: 0, flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: OB.text }}>{s.k}</div><div style={{ fontSize: 11.5, color: OB.sub }}>{s.d}</div></span>
           <span style={{ width: 20, height: 20, borderRadius: 999, border: '1px solid ' + (on ? OB.orange : OB.line), background: on ? OB.orange : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{on && <Ic name="check" size={13} color="#fff" />}</span>
         </button>; })}</div>,
