@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script crossorigin="" src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin="" src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -30156,85 +30158,80 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   // Self-contained lead map (no external tiles) — plots leads across a stylised DFW metro by a
   // deterministic per-lead position, coloured by source. Click a pin to open the lead; legend filters.
-  // Rich, self-contained North-America lead map (no external tiles). Map/Satellite/Street base styles,
-  // colour pins by source or by city, click a pin to open the lead. Height fills the view.
+  // Real interactive lead map — Leaflet + OpenStreetMap (streets/buildings) with an Esri satellite
+  // layer. Pins are real geo-coordinates coloured by source; the source/city lists on the right filter.
   const NA_CITIES = [
-    { name: 'Vancouver', x: 13, y: 17 }, { name: 'Seattle', x: 14, y: 21 }, { name: 'Portland', x: 13, y: 26 },
-    { name: 'San Francisco', x: 10, y: 42 }, { name: 'Los Angeles', x: 14, y: 50 }, { name: 'San Diego', x: 15, y: 53 },
-    { name: 'Las Vegas', x: 18, y: 45 }, { name: 'Phoenix', x: 21, y: 52 }, { name: 'Denver', x: 31, y: 41 },
-    { name: 'Dallas', x: 41, y: 58 }, { name: 'Houston', x: 43, y: 64 }, { name: 'Chicago', x: 53, y: 35 },
-    { name: 'Minneapolis', x: 47, y: 28 }, { name: 'Kansas City', x: 44, y: 42 }, { name: 'Atlanta', x: 59, y: 55 },
-    { name: 'Miami', x: 67, y: 74 }, { name: 'New York', x: 73, y: 34 }, { name: 'Boston', x: 76, y: 30 },
-    { name: 'Washington DC', x: 70, y: 39 }, { name: 'Toronto', x: 64, y: 31 }, { name: 'Montreal', x: 71, y: 26 }
+    { name: 'Vancouver', lat: 49.28, lng: -123.12 }, { name: 'Seattle', lat: 47.61, lng: -122.33 }, { name: 'Portland', lat: 45.52, lng: -122.68 },
+    { name: 'San Francisco', lat: 37.77, lng: -122.42 }, { name: 'Los Angeles', lat: 34.05, lng: -118.24 }, { name: 'San Diego', lat: 32.72, lng: -117.16 },
+    { name: 'Las Vegas', lat: 36.17, lng: -115.14 }, { name: 'Phoenix', lat: 33.45, lng: -112.07 }, { name: 'Denver', lat: 39.74, lng: -104.99 },
+    { name: 'Dallas', lat: 32.78, lng: -96.80 }, { name: 'Houston', lat: 29.76, lng: -95.37 }, { name: 'Chicago', lat: 41.88, lng: -87.63 },
+    { name: 'Minneapolis', lat: 44.98, lng: -93.27 }, { name: 'Kansas City', lat: 39.10, lng: -94.58 }, { name: 'Atlanta', lat: 33.75, lng: -84.39 },
+    { name: 'Miami', lat: 25.76, lng: -80.19 }, { name: 'New York', lat: 40.71, lng: -74.01 }, { name: 'Boston', lat: 42.36, lng: -71.06 },
+    { name: 'Washington DC', lat: 38.90, lng: -77.04 }, { name: 'Toronto', lat: 43.65, lng: -79.38 }, { name: 'Montreal', lat: 45.50, lng: -73.57 }
   ];
-  const NA_ROADS = [[1, 2], [2, 3], [3, 4], [4, 5], [4, 6], [6, 7], [7, 9], [8, 13], [13, 9], [9, 10], [13, 11], [11, 12], [11, 19], [19, 20], [11, 16], [16, 17], [16, 18], [18, 14], [14, 15], [8, 4], [13, 14], [1, 0], [8, 11]];
-  const NA_PATH = 'M6,16 L30,11 L58,10 L86,12 L92,16 L90,24 L82,27 L80,33 L83,38 L76,40 L74,46 L78,52 L72,58 L69,52 L64,60 L67,70 L63,80 L59,70 L55,60 L46,66 L42,72 L37,65 L31,61 L23,61 L18,68 L15,58 L10,50 L8,40 L9,30 Z';
-  const CITY_PAL = ['#2563eb', '#16a34a', '#d97706', '#7c3aed', '#dc2626', '#0891b2', '#db2777', '#0d9488', '#ca8a04', '#4f46e5', '#ea580c', '#0ea5e9', '#65a30d', '#9333ea', '#e11d48', '#0369a1', '#b45309', '#15803d', '#7c2d12', '#1d4ed8', '#be123c'];
-  const MAP_BASES = {
-    map: { water: '#e8eef2', land: '#f5f8f6', land2: '#eef3f0', road: '#d3ddd6', hwy: '#c7d3cb', grid: '#dde5e0', label: '#8a938d', labelSh: 'rgba(255,255,255,.75)', border: '#cdd8d2', chrome: 'rgba(255,255,255,.92)' },
-    satellite: { water: '#0a1a24', land: '#17362a', land2: '#1e4634', road: '#2f5142', hwy: '#3c6a52', grid: 'rgba(255,255,255,.06)', label: '#cfded4', labelSh: 'rgba(0,0,0,.55)', border: '#274a3a', chrome: 'rgba(12,26,22,.86)' },
-    street: { water: '#dbe6ee', land: '#fbfaf7', land2: '#f1eee7', road: '#e6ddc7', hwy: '#f4c56a', grid: '#e8e3da', label: '#6b7280', labelSh: 'rgba(255,255,255,.85)', border: '#e2ddd3', chrome: 'rgba(255,255,255,.92)' }
-  };
+  const MAP_SRC_COLOR = { Angi: '#16a34a', Thumbtack: '#2563eb', 'Google LSA': '#d97706', 'Meta Ads': '#7c3aed', SalesRabbit: '#dc2626', 'Website Booking': '#0891b2', 'Website form': '#0891b2', Manual: '#64748b', 'Instant Estimator': '#db2777', 'Online Booking': '#0d9488', RepCard: '#ca8a04', HomeAdvisor: '#4f46e5' };
   function LeadsMapView({ leads, onOpen, onToast, showKpi }) {
-    const [hov, setHov] = useState(null);
-    const [hidden, setHidden] = useState({});
-    const [base, setBase] = useState('map');
-    const [colorBy, setColorBy] = useState('source');
-    const B = MAP_BASES[base];
-    const SRC_COLOR = { Angi: '#16a34a', Thumbtack: '#2563eb', 'Google LSA': '#d97706', 'Meta Ads': '#7c3aed', SalesRabbit: '#dc2626', 'Website Booking': '#0891b2', 'Website form': '#0891b2', Manual: '#64748b', 'Instant Estimator': '#db2777', 'Online Booking': '#0d9488', RepCard: '#ca8a04', HomeAdvisor: '#4f46e5' };
-    const srcCol = s => SRC_COLOR[s] || '#64748b';
-    const cityCol = c => { const i = NA_CITIES.findIndex(x => x.name === c); return CITY_PAL[(i < 0 ? 0 : i) % CITY_PAL.length]; };
+    const mapEl = useRef(null);
+    const mapRef = useRef(null);
+    const layerRef = useRef(null);
+    const fitRef = useRef(false);
+    const [hidSrc, setHidSrc] = useState({});
+    const [hidCity, setHidCity] = useState({});
+    const srcCol = s => MAP_SRC_COLOR[s] || '#64748b';
     const hash = s => { let h = 0; s = String(s || ''); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
-    const geo = l => { const key = l.id || l.name; const c = NA_CITIES[hash(key) % NA_CITIES.length]; const jx = ((hash(key + 'x') % 100) / 100 - 0.5) * 4.5; const jy = ((hash(key + 'y') % 100) / 100 - 0.5) * 4.5; return { city: c.name, x: c.x + jx, y: c.y + jy }; };
+    const geo = l => { const key = l.id || l.name; const c = NA_CITIES[hash(key) % NA_CITIES.length]; const jx = ((hash(key + 'x') % 100) / 100 - 0.5) * 0.3; const jy = ((hash(key + 'y') % 100) / 100 - 0.5) * 0.3; return { city: c.name, lat: c.lat + jy, lng: c.lng + jx }; };
     const pts = leads.map(l => ({ l, ...geo(l) }));
-    const dimVal = p => colorBy === 'source' ? p.l.src : p.city;
-    const pinCol = p => colorBy === 'source' ? srcCol(p.l.src) : cityCol(p.city);
-    const isOn = p => !hidden[colorBy + ':' + dimVal(p)];
     const bySrc = {}; pts.forEach(p => { bySrc[p.l.src] = (bySrc[p.l.src] || 0) + 1; });
     const byCity = {}; pts.forEach(p => { byCity[p.city] = (byCity[p.city] || 0) + 1; });
     const srcList = Object.keys(bySrc).sort((a, b) => bySrc[b] - bySrc[a]);
     const cityList = Object.keys(byCity).sort((a, b) => byCity[b] - byCity[a]);
-    const visN = pts.filter(isOn).length;
+    const vis = p => !hidSrc[p.l.src] && !hidCity[p.city];
+    const visN = pts.filter(vis).length;
     const H = showKpi ? 'calc(100vh - 348px)' : 'calc(100vh - 250px)';
-    const seg = (val, set, opts) => <div style={{ display: 'inline-flex', background: B.chrome, border: '1px solid ' + B.border, borderRadius: 9, padding: 3, gap: 2, backdropFilter: 'blur(4px)' }}>{opts.map(([v, l, ic]) => { const on = val === v; return <button key={v} onClick={() => set(v)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 26, padding: '0 10px', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: on ? LH.ink : 'transparent', color: on ? '#fff' : (base === 'satellite' ? B.label : LH.body) }}>{ic && <Ic name={ic} size={13} color={on ? '#fff' : (base === 'satellite' ? B.label : LH.sub)} />}{l}</button>; })}</div>;
-    const legendRow = (label, colr, count, key) => { const off = hidden[key]; return <div key={key} onClick={() => setHidden(h => ({ ...h, [key]: !h[key] }))} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 8px', borderRadius: 8, cursor: 'pointer', opacity: off ? 0.5 : 1 }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+    useEffect(() => {
+      if (!window.L || !mapEl.current || mapRef.current) return;
+      const L = window.L;
+      const map = L.map(mapEl.current, { center: [39.5, -96], zoom: 4, scrollWheelZoom: true, zoomControl: false, worldCopyJump: true });
+      const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' });
+      const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles © Esri' });
+      streets.addTo(map);
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      L.control.layers({ 'Streets': streets, 'Satellite': sat }, null, { position: 'topright' }).addTo(map);
+      layerRef.current = L.layerGroup().addTo(map);
+      mapRef.current = map;
+      setTimeout(() => map.invalidateSize(), 60);
+      return () => { map.remove(); mapRef.current = null; };
+    }, []);
+    useEffect(() => { const m = mapRef.current; if (m) setTimeout(() => m.invalidateSize(), 80); }, [showKpi]);
+    useEffect(() => {
+      const L = window.L, lg = layerRef.current; if (!L || !lg) return;
+      lg.clearLayers();
+      const shown = pts.filter(vis);
+      shown.forEach(p => {
+        const m = L.circleMarker([p.lat, p.lng], { radius: 7, color: '#fff', weight: 2, fillColor: srcCol(p.l.src), fillOpacity: 1 });
+        m.bindTooltip('<b>' + p.l.name + '</b><br>' + p.city + ' · ' + p.l.src + '<br>Score ' + p.l.score + ' · ' + p.l.col, { direction: 'top', offset: [0, -6] });
+        m.on('click', () => onOpen(p.l.id));
+        m.addTo(lg);
+      });
+      if (mapRef.current && shown.length && !fitRef.current) { try { mapRef.current.fitBounds(shown.map(p => [p.lat, p.lng]), { padding: [50, 50], maxZoom: 6 }); } catch (e) {} fitRef.current = true; }
+    }, [leads, hidSrc, hidCity]);
+    const legendRow = (label, colr, count, on, toggle) => <div key={label} onClick={toggle} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 8px', borderRadius: 8, cursor: 'pointer', opacity: on ? 1 : 0.45 }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
       <span style={{ width: 11, height: 11, borderRadius: 3, background: colr, flexShrink: 0 }} />
-      <span style={{ flex: 1, fontSize: 12.5, color: LH.body, textDecoration: off ? 'line-through' : 'none' }}>{label}</span>
+      <span style={{ flex: 1, fontSize: 12.5, color: LH.body, textDecoration: on ? 'none' : 'line-through' }}>{label}</span>
       <span style={{ fontSize: 12, fontWeight: 700, color: LH.ink }}>{count}</span>
-    </div>; };
-    const plainRow = (label, count) => <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 8px' }}><Ic name="map-pin" size={13} color={LH.sub} /><span style={{ flex: 1, fontSize: 12.5, color: LH.body }}>{label}</span><span style={{ fontSize: 12, fontWeight: 700, color: LH.ink }}>{count}</span></div>;
-    const roadPts = ([i, j]) => NA_CITIES[i].x + ',' + NA_CITIES[i].y + ' ' + NA_CITIES[j].x + ',' + NA_CITIES[j].y;
+    </div>;
     return <Card style={{ padding: 0, overflow: 'hidden' }}>
       <div style={{ display: 'flex', height: H, minHeight: 460 }}>
-        <div style={{ flex: 1, minWidth: 0, position: 'relative', background: B.water, borderRight: '1px solid ' + LH.borderSoft, overflow: 'hidden' }}>
-          <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-            <path d={NA_PATH} fill={B.land} stroke={B.border} strokeWidth="0.4" strokeLinejoin="round" />
-            <ellipse cx="54" cy="30" rx="6" ry="2.6" fill={B.water} opacity="0.9" />
-            <ellipse cx="60" cy="32" rx="3.5" ry="1.8" fill={B.water} opacity="0.9" />
-            {[...Array(9)].map((_, i) => <line key={'v' + i} x1={(i + 1) * 10} y1="0" x2={(i + 1) * 10} y2="100" stroke={B.grid} strokeWidth="0.12" />)}
-            {[...Array(9)].map((_, i) => <line key={'h' + i} x1="0" y1={(i + 1) * 10} x2="100" y2={(i + 1) * 10} stroke={B.grid} strokeWidth="0.12" />)}
-            {NA_ROADS.map((r, i) => <polyline key={i} points={roadPts(r)} fill="none" stroke={base === 'street' ? B.hwy : B.road} strokeWidth={base === 'street' ? 0.55 : 0.4} strokeLinecap="round" opacity={base === 'satellite' ? 0.6 : 0.85} />)}
-            {NA_CITIES.map(c => <circle key={c.name} cx={c.x} cy={c.y} r="0.7" fill={B.label} opacity="0.7" />)}
-          </svg>
-          {NA_CITIES.map(c => <div key={c.name} style={{ position: 'absolute', left: c.x + '%', top: (c.y + 2.4) + '%', transform: 'translate(-50%,0)', fontSize: 10, fontWeight: 600, color: B.label, pointerEvents: 'none', whiteSpace: 'nowrap', textShadow: '0 1px 2px ' + B.labelSh }}>{c.name}</div>)}
-          {pts.map((p, i) => { const on = isOn(p); const c = pinCol(p); const act = hov && hov.l.id === p.l.id; return <button key={p.l.id || i} onClick={() => onOpen(p.l.id)} onMouseEnter={() => setHov(p)} onMouseLeave={() => setHov(h => h && h.l.id === p.l.id ? null : h)} title={p.l.name} style={{ position: 'absolute', left: p.x + '%', top: p.y + '%', transform: 'translate(-50%,-50%)', width: act ? 18 : 14, height: act ? 18 : 14, borderRadius: '50%', background: c, border: '2px solid #fff', boxShadow: '0 1px 5px rgba(0,0,0,.4)', cursor: 'pointer', padding: 0, opacity: on ? 1 : 0.1, pointerEvents: on ? 'auto' : 'none', zIndex: act ? 5 : 3, transition: 'width .1s, height .1s' }} />; })}
-          <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 2, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ background: B.chrome, border: '1px solid ' + B.border, borderRadius: 9, padding: '7px 11px', backdropFilter: 'blur(4px)' }}><div style={{ fontSize: 12.5, fontWeight: 700, color: base === 'satellite' ? '#fff' : LH.ink }}>Lead map · North America</div><div style={{ fontSize: 11, color: base === 'satellite' ? B.label : LH.muted, marginTop: 1 }}>{visN} of {leads.length} shown · {cityList.length} cities · by {colorBy}</div></div>
-            {seg(colorBy, setColorBy, [['source', 'By source'], ['city', 'By city']])}
-          </div>
-          <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>{seg(base, setBase, [['map', 'Map', 'map'], ['satellite', 'Satellite', 'globe'], ['street', 'Street', 'signpost']])}</div>
-          {hov && <div style={{ position: 'absolute', left: hov.x + '%', top: hov.y + '%', transform: 'translate(-50%,-150%)', zIndex: 6, background: LH.ink, color: '#fff', borderRadius: 9, padding: '8px 11px', minWidth: 150, pointerEvents: 'none', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700 }}>{hov.l.name}</div>
-            <div style={{ fontSize: 11, color: '#cbd5e1', marginTop: 2 }}>{hov.city} · {hov.l.src}</div>
-            <div style={{ fontSize: 11, color: '#cbd5e1', marginTop: 1 }}>Score {hov.l.score} · {hov.l.col}</div>
-          </div>}
+        <div style={{ flex: 1, minWidth: 0, position: 'relative', borderRight: '1px solid ' + LH.borderSoft }}>
+          <div ref={mapEl} style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
+          <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 500, background: 'rgba(255,255,255,.94)', border: '1px solid ' + LH.border, borderRadius: 9, padding: '7px 11px', boxShadow: '0 2px 8px rgba(0,0,0,.08)' }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Lead map · North America</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 1 }}>{visN} of {leads.length} shown · {cityList.length} cities</div></div>
         </div>
         <div style={{ width: 264, flexShrink: 0, padding: 16, overflowY: 'auto' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 8 }}>BY SOURCE{colorBy === 'source' ? '' : ''}</div>
-          {srcList.map(s => colorBy === 'source' ? legendRow(s, srcCol(s), bySrc[s], 'source:' + s) : plainRow(s, bySrc[s]))}
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 8 }}>BY SOURCE</div>
+          {srcList.map(s => legendRow(s, srcCol(s), bySrc[s], !hidSrc[s], () => setHidSrc(h => ({ ...h, [s]: !h[s] }))))}
           <div style={{ height: 1, background: LH.borderSoft, margin: '12px 0' }} />
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 8 }}>BY CITY</div>
-          {cityList.map(c => colorBy === 'city' ? legendRow(c, cityCol(c), byCity[c], 'city:' + c) : plainRow(c, byCity[c]))}
+          {cityList.map(c => legendRow(c, '#94a3b8', byCity[c], !hidCity[c], () => setHidCity(h => ({ ...h, [c]: !h[c] }))))}
         </div>
       </div>
     </Card>;
