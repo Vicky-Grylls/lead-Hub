@@ -982,11 +982,16 @@ function Sidebar({
         id: 'lead-channels',
         icon: 'radio',
         label: 'Channels'
+      }, {
+        id: 'lead-settings-page',
+        icon: 'settings',
+        label: 'Lead Settings',
+        settings: true
       }].map(s => /*#__PURE__*/React.createElement("div", {
         key: s.id,
         onClick: () => {
           setShowLeadhubSubmenu(false);
-          onNavigate(s.id);
+          if (s.settings) { setAppSettingsOpen('modules/Leads'); } else onNavigate(s.id);
         },
         className: "flex items-center gap-3 px-3 py-2 mx-1 cursor-pointer hover:bg-black/[0.03] rounded-lg"
       }, /*#__PURE__*/React.createElement(I, {
@@ -1035,7 +1040,7 @@ function Sidebar({
   })))),
   appSettingsOpen && window.UnifiedSettingsPage && /*#__PURE__*/React.createElement("div", {
     style: { position: 'fixed', inset: 0, zIndex: 300, background: '#fff', display: 'flex', flexDirection: 'column' }
-  }, /*#__PURE__*/React.createElement(window.UnifiedSettingsPage, { onBack: () => setAppSettingsOpen(false) })),
+  }, /*#__PURE__*/React.createElement(window.UnifiedSettingsPage, { initialActiveId: typeof appSettingsOpen === 'string' ? appSettingsOpen : undefined, onBack: () => setAppSettingsOpen(false) })),
   jobTplOpen && /*#__PURE__*/React.createElement("div", {
     style: { position: 'fixed', inset: 0, zIndex: 320, background: '#f8f5f0', display: 'flex', flexDirection: 'column' }
   }, /*#__PURE__*/React.createElement(ManageTemplatesPage, { onClose: () => setJobTplOpen(false) })),
@@ -15617,7 +15622,7 @@ function Sidebar() {
   })))),
   appSettingsOpen && window.UnifiedSettingsPage && /*#__PURE__*/React.createElement("div", {
     style: { position: 'fixed', inset: 0, zIndex: 300, background: '#fff', display: 'flex', flexDirection: 'column' }
-  }, /*#__PURE__*/React.createElement(window.UnifiedSettingsPage, { onBack: () => setAppSettingsOpen(false) })),
+  }, /*#__PURE__*/React.createElement(window.UnifiedSettingsPage, { initialActiveId: typeof appSettingsOpen === 'string' ? appSettingsOpen : undefined, onBack: () => setAppSettingsOpen(false) })),
   jobTplOpen && /*#__PURE__*/React.createElement("div", {
     style: { position: 'fixed', inset: 0, zIndex: 320, background: '#f8f5f0', display: 'flex', flexDirection: 'column' }
   }, /*#__PURE__*/React.createElement(ManageTemplatesPage, { onClose: () => setJobTplOpen(false) })),
@@ -32705,18 +32710,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
   // Settings groups AI Workforce + Channels under one nav item, switchable via tabs.
   function SettingsSection({ onToast, onNavigate, initialTab }) {
-    const [tab, setTab] = useState(initialTab || 'workforce');
-    const TABS = [['workforce', 'AI Workforce', 'bot'], ['channels', 'Channels', 'radio']];
+    const tab = initialTab || 'workforce';
     return <div style={{ fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, borderBottom: '1px solid ' + LH.borderSoft, marginBottom: 18 }}>
-        {TABS.map(([k, l, ic]) => { const on = tab === k; return <button key={k} onClick={() => setTab(k)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 14px', fontSize: 13, fontWeight: 600, color: on ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (on ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}><Ic name={ic} size={15} color={on ? LH.ink : LH.sub} />{l}</button>; })}
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, paddingBottom: 6 }}>
-          {tab === 'workforce' ? <Btn kind="primary" icon="plus" onClick={() => onToast && onToast('Add a new AI agent')}>Add agent</Btn>
-            : <><Btn icon="upload" onClick={() => CH_IMPORT()}>Import leads</Btn><Btn kind="primary" icon="plus" onClick={() => CH_CONNECT()}>Connect source</Btn></>}
-        </div>
-      </div>
-      {tab === 'workforce' && <WorkforceSection onToast={onToast} />}
-      {tab === 'channels' && <ChannelsSection onToast={onToast} onNavigate={onNavigate} />}
+      {tab === 'workforce' ? <WorkforceSection onToast={onToast} /> : <ChannelsSection onToast={onToast} onNavigate={onNavigate} />}
     </div>;
   }
   function LeadHubShell({ section, settingsTab, onNavigate }) {
@@ -32736,7 +32732,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       overview: { crumb: 'Lead Hub', title: 'Overview', actions: <><Btn icon="sparkles" onClick={() => setOnbOpen(true)}>Onboarding</Btn><DateRangePicker /></> },
       pipeline: { crumb: 'Lead Hub', title: 'Pipeline', actions: <DateRangePicker /> },
       campaigns: { crumb: 'Lead Hub · 3 active', title: 'Campaigns', actions: null },
-      settings: { crumb: settingsTab === 'channels' ? 'Lead Hub · Channels' : 'Lead Hub · AI Workforce', title: settingsTab === 'channels' ? 'Channels' : 'AI Workforce', actions: null },
+      settings: { crumb: settingsTab === 'channels' ? 'Lead Hub · Channels' : 'Lead Hub · AI Workforce', title: settingsTab === 'channels' ? 'Channels' : 'AI Workforce', actions: settingsTab === 'channels' ? <><Btn icon="upload" onClick={() => CH_IMPORT()}>Import leads</Btn><Btn kind="primary" icon="plus" onClick={() => CH_CONNECT()}>Connect source</Btn></> : <Btn kind="primary" icon="plus" onClick={() => showToast('Add a new AI agent')}>Add agent</Btn> },
       health: { crumb: 'Last 30 days · 18 issues surfaced · 13 resolved · 5 pending', title: 'Hub Health', actions: <><Btn icon="calendar">Last 30 days</Btn><Btn icon="download">Export log</Btn></> }
     };
     const [wizardOpen, setWizardOpen] = useState(false);
