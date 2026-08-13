@@ -28775,7 +28775,8 @@ function SettingsLeadsContent({setActiveId}){
     {title:'General Lead Settings',desc:'Default owner, assignment, duplicate detection & aging',Icon:TiTool,color:'#3a6ea8',onClick:()=>setActiveId('modules/Leads/general')},
     {title:'Lead Custom Fields',desc:'Field groups triggered by lead source',Icon:TiFilePlus,color:'#b87a2b',badge:'New',onClick:()=>setActiveId('modules/Leads/fields')},
     {title:'Lead Pipeline & Stages',desc:'Manage kanban stages and their order',Icon:TiStack2,color:'#4f46e5',onClick:()=>setActiveId('modules/Leads/pipeline')},
-    {title:'Lead Sources',desc:'Manage the sources leads come in from',Icon:TiTag,color:'#3f8553',onClick:()=>setActiveId('modules/Leads/sources')}
+    {title:'Lead Sources',desc:'Manage the sources leads come in from',Icon:TiTag,color:'#3f8553',onClick:()=>setActiveId('modules/Leads/sources')},
+    {title:'Lead Notification Settings',desc:'Choose which lead events notify you, and how',Icon:TiChatBubble,color:'#c2410c',onClick:()=>setActiveId('modules/Leads/notifications')}
   ];
   return RCE(React.Fragment,null,
     RCE("div",{style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 48px',borderBottom:'1px solid #e8e7e2',flexShrink:0,minHeight:40}},
@@ -28904,9 +28905,10 @@ function LeadPipelineSettings({setActiveId}){
   const [name,setName]=useState('');
   const [dragI,setDragI]=useState(null);
   const [editId,setEditId]=useState(null);
+  const [colorId,setColorId]=useState(null);
   const palette=['#3b82f6','#8b5cf6','#f59e0b','#06b6d4','#a855f7','#16a34a','#0891b2','#ef4444','#ec4899','#14b8a6'];
   const del=id=>{LEAD_STAGE_STORE=LEAD_STAGE_STORE.filter(s=>s.id!==id);rr();};
-  const cycleColor=id=>{const s=LEAD_STAGE_STORE.find(x=>x.id===id);if(!s)return;const i=palette.indexOf(s.color);s.color=palette[(i+1)%palette.length];rr();};
+  const setColor=(id,c)=>{const s=LEAD_STAGE_STORE.find(x=>x.id===id);if(s)s.color=c;setColorId(null);rr();};
   const add=()=>{const n=name.trim();if(!n)return;LEAD_STAGE_STORE.push({id:leadUid(),name:n,color:palette[LEAD_STAGE_STORE.length%palette.length]});setName('');rr();};
   const reorder=(from,to)=>{const a=LEAD_STAGE_STORE;if(from===to||from<0||to<0||from>=a.length||to>=a.length)return;const [m]=a.splice(from,1);a.splice(to,0,m);};
   const iconBtn={width:28,height:28,border:'none',background:'transparent',borderRadius:7,cursor:'pointer',display:'inline-flex',alignItems:'center',justifyContent:'center',flexShrink:0};
@@ -28924,7 +28926,10 @@ function LeadPipelineSettings({setActiveId}){
             onDragEnd:()=>setDragI(null),
             style:{display:'flex',alignItems:'center',gap:12,padding:'11px 16px',borderBottom:i<LEAD_STAGE_STORE.length-1?'1px solid #f0eeea':'none',opacity:dragI===i?0.5:1,background:dragI===i?'#faf8f4':undefined}},
           RCE("span",{title:"Drag to reorder",style:{width:20,display:'inline-flex',alignItems:'center',justifyContent:'center',cursor:'grab',flexShrink:0}},RCE(Grip,null)),
-          RCE("button",{onClick:()=>cycleColor(s.id),title:"Change color",style:{width:14,height:14,borderRadius:'50%',background:s.color,border:'2px solid #fff',boxShadow:'0 0 0 1px #e5e5e5',cursor:'pointer',padding:0,flexShrink:0}}),
+          RCE("div",{style:{position:'relative',flexShrink:0}},
+            RCE("button",{onClick:()=>setColorId(colorId===s.id?null:s.id),title:"Change color",style:{width:14,height:14,borderRadius:'50%',background:s.color,border:'2px solid #fff',boxShadow:'0 0 0 1px #e5e5e5',cursor:'pointer',padding:0}}),
+            colorId===s.id&&RCE("div",{onMouseLeave:()=>setColorId(null),style:{position:'absolute',top:24,left:-6,zIndex:50,background:'#fff',border:'1px solid #e8e7e2',borderRadius:10,boxShadow:'0 12px 30px rgba(0,0,0,.16)',padding:9,display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:9,width:186}},
+              palette.map(c=>RCE("button",{key:c,onClick:()=>setColor(s.id,c),title:c,style:{width:22,height:22,borderRadius:'50%',background:c,border:s.color===c?'2px solid #1f1f1d':'2px solid #fff',boxShadow:'0 0 0 1px #e5e5e5',cursor:'pointer',padding:0}})))),
           editId===s.id
             ? RCE("input",{autoFocus:true,value:s.name,onChange:e=>{s.name=e.target.value;rr();},onKeyDown:e=>{if(e.key==='Enter'||e.key==='Escape')setEditId(null);},onBlur:()=>setEditId(null),style:{flex:1,height:30,border:'1px solid '+'#d8d6cf',borderRadius:7,padding:'0 10px',fontSize:12.5,fontWeight:600,color:'#1f1f1d',outline:'none'}})
             : RCE("span",{style:{flex:1,fontSize:12.5,fontWeight:600,color:'#1f1f1d'}},s.name),
@@ -29427,6 +29432,27 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ['Contacting', 'Qualifying', 'Needs human'].includes(l.col) ? 'Speed-to-Lead Drip'
     : l.col === 'In drip' ? 'Storm Season Re-engage'
     : l.col === 'Qualified' || l.col === 'Completed' ? 'Speed-to-Lead Drip' : null));
+  const LEAD_CAMPAIGN_OPTS = ['Speed-to-Lead Drip', 'Storm Season Re-engage', 'Estimate Follow-up', 'Insurance Claim Assist', 'Gutter Season Push', 'Winback — Cold Leads'];
+  // Campaign card in the lead side sheet — shows the enrolled campaign with an edit action to move it.
+  function LeadCampaignCard({ lead, onToast }) {
+    const [camp, setCamp] = useState(leadCampaign(lead));
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+    useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, [open]);
+    const pick = c => { lead.campaign = c || undefined; setCamp(c); setOpen(false); onToast && onToast(c ? 'Moved to ' + c : 'Removed from campaign'); };
+    return <div ref={ref} style={{ position: 'relative', marginTop: 16 }}>
+      <div style={{ padding: '10px 12px', borderRadius: 9, border: '1px solid ' + LH.borderSoft, background: camp ? LH.tint : '#fff', display: 'flex', alignItems: 'center', gap: 9 }}>
+        <span style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: camp ? '#fff' : '#f1f0ec', border: camp ? '1px solid ' + LH.borderSoft : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="megaphone" size={14} color={camp ? LH.primary : LH.sub} /></span>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>CAMPAIGN</div><div style={{ fontSize: 12.5, fontWeight: 600, color: camp ? LH.ink : LH.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{camp || 'Not enrolled in a campaign'}</div></div>
+        <button onClick={() => setOpen(o => !o)} title={camp ? 'Change campaign' : 'Add to campaign'} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.background = '#fff'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={camp ? 'pencil' : 'plus'} size={14} color={LH.sub} /></button>
+      </div>
+      {open && <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 40, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, maxHeight: 260, overflowY: 'auto' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, padding: '6px 9px 4px' }}>MOVE TO CAMPAIGN</div>
+        {LEAD_CAMPAIGN_OPTS.map(c => <div key={c} onClick={() => pick(c)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 9px', borderRadius: 7, fontSize: 12.5, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name="megaphone" size={13} color={LH.sub} /><span style={{ flex: 1 }}>{c}</span>{camp === c && <Ic name="check" size={13} color={LH.primary} />}</div>)}
+        {camp && <div onClick={() => pick(null)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 9px', borderRadius: 7, fontSize: 12.5, color: LH.red, cursor: 'pointer', borderTop: '1px solid ' + LH.borderSoft, marginTop: 4 }} onMouseEnter={e => e.currentTarget.style.background = '#fbeaea'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name="x" size={13} color={LH.red} />Remove from campaign</div>}
+      </div>}
+    </div>;
+  }
   // Per-source field mapping (from each lead-source schema). Standard lead fields land in
   // Primary Details; source-specific / source_metadata.* fields land in Custom Fields.
   const LEAD_SOURCE_SCHEMA = {
@@ -29947,10 +29973,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {tab === 'details' && <>
             <LeadHeaderBlock lead={shown} onToast={onToast} slim onConvert={onConvert} />
             {shown.jobId && <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 10, padding: '10px 12px' }}><span style={{ width: 28, height: 28, borderRadius: 7, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={14} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.green }}>Converted to inspection job</div><div style={{ fontSize: 11.5, color: LH.sub }}>Job #{shown.jobId}</div></div><button onClick={() => onToast && onToast('Opening Job #' + shown.jobId + '…')} style={{ fontSize: 12, fontWeight: 600, color: LH.green, background: 'none', border: 'none', cursor: 'pointer' }}>View</button></div>}
-            {(() => { const camp = leadCampaign(shown); return <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 9, border: '1px solid ' + LH.borderSoft, background: camp ? LH.tint : '#fff', display: 'flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: camp ? '#fff' : '#f1f0ec', border: camp ? '1px solid ' + LH.borderSoft : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="megaphone" size={14} color={camp ? LH.primary : LH.sub} /></span>
-              <div style={{ minWidth: 0 }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>CAMPAIGN</div><div style={{ fontSize: 12.5, fontWeight: 600, color: camp ? LH.ink : LH.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{camp || 'Not enrolled in a campaign'}</div></div>
-            </div>; })()}
+            <LeadCampaignCard key={shown.id} lead={shown} onToast={onToast} />
+
             <div style={{ marginTop: 16 }}><LeadAISummary lead={shown} /></div>
             <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 16, paddingTop: 14 }}><LeadPrimaryDetails lead={shown} onToast={onToast} onMove={onMove} /></div>
           </>}
