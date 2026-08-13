@@ -28727,7 +28727,17 @@ const LEAD_NOTIF_EVENTS=[
   {key:'qualified',t:'A lead becomes qualified',d:'Marked ready for sales.'},
   {key:'optout',t:'A lead opts out',d:'Replies STOP or unsubscribes.'}
 ];
-const LEAD_NOTIF_CHANNELS=[{key:'inapp',t:'In-app'},{key:'email',t:'Email'},{key:'sms',t:'SMS'},{key:'slack',t:'Slack'}];
+const LEAD_NOTIF_CHANNELS=[{key:'inapp',t:'In-app'},{key:'email',t:'Email'},{key:'sms',t:'SMS'}];
+const NOTIF_RECIPIENTS=['Assigned rep','Lead owner','Me','Sales team','Managers','Custom email…'];
+const NOTIF_TOKENS=['{lead_name}','{lead_source}','{lead_status}','{lead_score}','{assigned_csr}','{city}','{event}'];
+const NOTIF_DEFAULT_TPL={
+  new:'New lead {lead_name} from {lead_source} just landed.',
+  assigned:'{lead_name} was assigned to {assigned_csr}.',
+  reply:'{lead_name} replied — jump in.',
+  status:'{lead_name} moved to {lead_status}.',
+  qualified:'{lead_name} is qualified (score {lead_score}). Ready for sales.',
+  optout:'{lead_name} opted out — suppress further messages.'
+};
 let LEAD_NOTIF_STORE=null;
 const LEAD_TYPE_META={
   text:{Icon:TiListLines,label:'Single Line Text'},textarea:{Icon:TiListLines,label:'Multi Line Text'},
@@ -28965,24 +28975,51 @@ function LeadStatusSettings({setActiveId}){
 
 /* ─── Notifications ─── */
 function LeadNotifSettings({setActiveId}){
-  if(!LEAD_NOTIF_STORE){const o={};LEAD_NOTIF_EVENTS.forEach(e=>{o[e.key]={inapp:true,email:e.key==='qualified'||e.key==='assigned',sms:false,slack:e.key==='reply'||e.key==='qualified'};});LEAD_NOTIF_STORE=o;}
+  if(!LEAD_NOTIF_STORE){const o={};LEAD_NOTIF_EVENTS.forEach(e=>{o[e.key]={inapp:true,email:e.key==='qualified'||e.key==='assigned',sms:false,to:'Assigned rep',tpl:NOTIF_DEFAULT_TPL[e.key]||''};});LEAD_NOTIF_STORE=o;}
   const [,force]=useState(0);const rr=()=>force(x=>x+1);
+  const [editEv,setEditEv]=useState(null);
   const toggle=(ev,ch)=>{LEAD_NOTIF_STORE[ev][ch]=!LEAD_NOTIF_STORE[ev][ch];rr();};
   const th={textAlign:'center',padding:'10px 8px',fontSize:11,fontWeight:600,color:'#737373',background:'#fafaf8',borderBottom:'1px solid #e8e7e2',whiteSpace:'nowrap'};
+  const iconBtn={width:28,height:28,border:'1px solid #e8e7e2',background:'#fff',borderRadius:7,cursor:'pointer',display:'inline-flex',alignItems:'center',justifyContent:'center'};
+  const cfg=editEv?LEAD_NOTIF_STORE[editEv]:null;
+  const evMeta=editEv?LEAD_NOTIF_EVENTS.find(e=>e.key===editEv):null;
+  const insertTok=t=>{if(!cfg)return;cfg.tpl=(cfg.tpl||'')+(cfg.tpl&&!cfg.tpl.endsWith(' ')?' ':'')+t;rr();};
+  const modal=editEv?RCE("div",{onClick:()=>setEditEv(null),style:{position:'fixed',inset:0,zIndex:400,background:'rgba(0,0,0,.42)',display:'flex',alignItems:'center',justifyContent:'center',padding:24}},
+    RCE("div",{onClick:e=>e.stopPropagation(),style:{width:560,maxWidth:'100%',maxHeight:'88vh',background:'#fff',borderRadius:14,boxShadow:'0 24px 64px rgba(0,0,0,.3)',display:'flex',flexDirection:'column',overflow:'hidden'}},
+      RCE("div",{style:{display:'flex',alignItems:'flex-start',justifyContent:'space-between',padding:'16px 20px',borderBottom:'1px solid #f0eeea'}},
+        RCE("div",null,RCE("div",{style:{fontSize:15.5,fontWeight:700,color:'#1f1f1d'}},"Customize notification"),RCE("div",{style:{fontSize:12.5,color:'#737373',marginTop:2}},evMeta&&evMeta.t)),
+        RCE("button",{onClick:()=>setEditEv(null),style:{background:'none',border:'none',cursor:'pointer',padding:4}},RCE(TiX,{size:18,color:"#737373"}))),
+      RCE("div",{style:{flex:1,overflowY:'auto',padding:20}},
+        RCE("label",{style:{fontSize:12,fontWeight:600,color:'#3f3f3a',display:'block',marginBottom:6}},"Send to"),
+        RCE("select",{value:cfg.to,onChange:e=>{cfg.to=e.target.value;rr();},style:{...leadSelectStyle,maxWidth:'100%',marginBottom:16}},NOTIF_RECIPIENTS.map(r=>RCE("option",{key:r},r))),
+        cfg.to==='Custom email…'&&RCE("input",{value:cfg.customTo||'',onChange:e=>{cfg.customTo=e.target.value;rr();},placeholder:'name@company.com',style:{...leadInput,width:'100%',marginBottom:16}}),
+        RCE("label",{style:{fontSize:12,fontWeight:600,color:'#3f3f3a',display:'block',marginBottom:6}},"Alert template"),
+        RCE("textarea",{value:cfg.tpl,onChange:e=>{cfg.tpl=e.target.value;rr();},style:{width:'100%',height:96,borderRadius:9,border:'1px solid #d8d6cf',padding:11,fontSize:13,color:'#3f3f3a',outline:'none',resize:'vertical',fontFamily:'inherit',lineHeight:1.5}}),
+        RCE("div",{style:{fontSize:11,fontWeight:600,color:'#9c9b96',letterSpacing:'.04em',margin:'14px 0 8px'}},"AVAILABLE COMPONENTS"),
+        RCE("div",{style:{display:'flex',flexWrap:'wrap',gap:6}},NOTIF_TOKENS.map(t=>RCE("button",{key:t,onClick:()=>insertTok(t),style:{height:26,padding:'0 10px',borderRadius:999,border:'1px solid #e8e7e2',background:'#faf8f4',color:'#4a4a46',fontSize:11.5,fontWeight:600,cursor:'pointer',fontFamily:'ui-monospace,monospace'}},t)))),
+      RCE("div",{style:{padding:'12px 20px',borderTop:'1px solid #f0eeea',display:'flex',justifyContent:'flex-end',gap:8}},
+        RCE("button",{onClick:()=>setEditEv(null),style:leadBtnGhost},"Done"))))
+    :null;
   return RCE(React.Fragment,null,
-    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiChatBubble,title:'Lead Notifications',sub:'Pick which lead events notify you and on which channel',onSave:()=>setActiveId('modules/Leads')}),
+    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiChatBubble,title:'Lead Notifications',sub:'Pick which lead events notify you, who is alerted, and the message',onSave:()=>setActiveId('modules/Leads')}),
     leadScroll(RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden',background:'#fff'}},
       RCE("table",{style:{width:'100%',borderCollapse:'collapse'}},
         RCE("thead",null,RCE("tr",null,
           RCE("th",{style:{...th,textAlign:'left',paddingLeft:16}},"Event"),
-          LEAD_NOTIF_CHANNELS.map(c=>RCE("th",{key:c.key,style:{...th,width:80}},c.t)))),
-        RCE("tbody",null,LEAD_NOTIF_EVENTS.map((e,i)=>RCE("tr",{key:e.key,className:"hover-warm"},
-          RCE("td",{style:{padding:'12px 16px',borderBottom:i<LEAD_NOTIF_EVENTS.length-1?'1px solid #f0eeea':'none'}},
+          LEAD_NOTIF_CHANNELS.map(c=>RCE("th",{key:c.key,style:{...th,width:76}},c.t)),
+          RCE("th",{style:{...th,width:120}},"Recipient"),
+          RCE("th",{style:{...th,width:56}},""))),
+        RCE("tbody",null,LEAD_NOTIF_EVENTS.map((e,i)=>{const bb=i<LEAD_NOTIF_EVENTS.length-1?'1px solid #f0eeea':'none';return RCE("tr",{key:e.key,className:"hover-warm"},
+          RCE("td",{style:{padding:'12px 16px',borderBottom:bb}},
             RCE("div",{style:{fontSize:12.5,fontWeight:600,color:'#1f1f1d'}},e.t),
             RCE("div",{style:{fontSize:11,color:'#9c9b96'}},e.d)),
-          LEAD_NOTIF_CHANNELS.map(c=>RCE("td",{key:c.key,style:{textAlign:'center',borderBottom:i<LEAD_NOTIF_EVENTS.length-1?'1px solid #f0eeea':'none'}},
-            RCE("div",{style:{display:'inline-flex'}},RCE(LeadCheck,{on:LEAD_NOTIF_STORE[e.key][c.key],onToggle:()=>toggle(e.key,c.key)})))))))
-    )),820));
+          LEAD_NOTIF_CHANNELS.map(c=>RCE("td",{key:c.key,style:{textAlign:'center',borderBottom:bb}},
+            RCE("div",{style:{display:'inline-flex'}},RCE(LeadCheck,{on:LEAD_NOTIF_STORE[e.key][c.key],onToggle:()=>toggle(e.key,c.key)})))),
+          RCE("td",{style:{textAlign:'center',borderBottom:bb,fontSize:11.5,color:'#737373'}},LEAD_NOTIF_STORE[e.key].to),
+          RCE("td",{style:{textAlign:'center',borderBottom:bb}},
+            RCE("button",{onClick:()=>setEditEv(e.key),title:"Customize recipient & template",className:"hover-subtle",style:iconBtn},RCE(TiPencil,{size:14,color:"#737373"}))));}))
+    )),980),
+    modal);
 }
 
 /* ─── Scoring ─── */
