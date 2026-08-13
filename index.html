@@ -30230,13 +30230,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     return <Card style={{ padding: 0, overflow: 'hidden' }}>
       <div style={{ position: 'relative', height: H, minHeight: 460 }}>
         <div ref={mapEl} style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
-        <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 500, background: 'rgba(255,255,255,.94)', border: '1px solid ' + LH.border, borderRadius: 9, padding: '7px 11px', boxShadow: '0 2px 8px rgba(0,0,0,.08)' }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Lead map · North America</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 1 }}>{visN} of {leads.length} shown · {cityList.length} cities</div></div>
-        <div style={{ position: 'absolute', top: 66, left: 12, zIndex: 500 }}>
+        <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 500 }}>
           {panelOpen
             ? <div style={{ width: 234, background: 'rgba(255,255,255,.97)', border: '1px solid ' + LH.border, borderRadius: 11, boxShadow: '0 6px 20px rgba(0,0,0,.14)', overflow: 'hidden' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
                   <Ic name="filter" size={14} color={LH.sub} />
-                  <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, flex: 1 }}>Filters</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, flex: 1 }}>Filter by color</span>
                   {activeHidden > 0 && <span style={{ fontSize: 10.5, fontWeight: 700, color: LH.primary, background: LH.tint, borderRadius: 999, padding: '1px 7px' }}>{activeHidden} hidden</span>}
                   <button onClick={() => setPanelOpen(false)} title="Collapse filters" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="chevron-up" size={15} color={LH.sub} /></button>
                 </div>
@@ -30248,7 +30247,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 </div>
                 {activeHidden > 0 && <div style={{ borderTop: '1px solid ' + LH.borderSoft, padding: '7px 12px' }}><button onClick={() => { setHidSrc({}); setHidCity({}); }} style={{ fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Reset filters</button></div>}
               </div>
-            : <button onClick={() => setPanelOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 34, padding: '0 12px', background: 'rgba(255,255,255,.97)', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 4px 14px rgba(0,0,0,.12)', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: LH.ink }}><Ic name="filter" size={14} color={LH.sub} />Filters{activeHidden > 0 && <span style={{ fontSize: 10.5, fontWeight: 700, color: '#fff', background: LH.primary, borderRadius: 999, padding: '1px 6px' }}>{activeHidden}</span>}</button>}
+            : <button onClick={() => setPanelOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 34, padding: '0 12px', background: 'rgba(255,255,255,.97)', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 4px 14px rgba(0,0,0,.12)', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: LH.ink }}><Ic name="filter" size={14} color={LH.sub} />Filter by color{activeHidden > 0 && <span style={{ fontSize: 10.5, fontWeight: 700, color: '#fff', background: LH.primary, borderRadius: 999, padding: '1px 6px' }}>{activeHidden}</span>}</button>}
         </div>
       </div>
     </Card>;
@@ -32054,6 +32053,21 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { key: 'review', name: 'Reputation Agent', role: 'Requests & manages reviews', icon: 'star', on: false, channels: ['SMS', 'Email'], metric: 'Not running', cfg: [['Trigger', 'On job complete'], ['Platforms', 'Google, Facebook'], ['Delay', '2 hours'], ['Follow-up', '1 reminder']] },
     { key: 'winback', name: 'Winback Agent', role: 'Revives lost & aged leads', icon: 'rotate-ccw', on: false, channels: ['Email', 'Voice drop'], metric: 'Not running', cfg: [['Audience', 'Lost > 60 days'], ['Offer', 'Seasonal discount'], ['Cadence', '21-day drip'], ['Cap', '2 touches/week']] }
   ];
+  // Per-agent detail data for the full agent details page.
+  const AGENT_DETAIL = {
+    csr: { about: 'Nova’s front-line agent. Responds to every new lead within seconds over SMS, voice, and email, qualifies intent against the active playbook, and hands complex or low-confidence cases to a human CSR.',
+      kpis: [{ label: 'Leads engaged', value: '312' }, { label: 'Reply rate', value: '57%', accent: LH.green }, { label: 'Avg first response', value: '42s' }, { label: 'Escalations', value: '7', accent: LH.primary }],
+      activity: [{ who: 'Nova', msg: 'Texted a new Angi storm lead in 28 seconds', t: '2m ago' }, { who: 'Nova', msg: 'Qualified Sarah Mitchell — booked a free inspection', t: '14m ago' }, { who: 'System', msg: 'Escalated Marcus Reed to a CSR after 3 attempts', t: '1h ago' }, { who: 'Nova', msg: 'Confirmed damage type and urgency on a Thumbtack lead', t: '3h ago' }] },
+    demand: { about: 'Sources and re-warms demand. Runs re-engagement and winback sequences against aged and cold leads, staying inside budget and cadence guardrails, and routes replies back to the CSR agent.',
+      kpis: [{ label: 'Campaigns live', value: '4' }, { label: 'Re-engaged', value: '128', accent: LH.green }, { label: 'Reply rate', value: '31%' }, { label: 'Opt-out', value: '1.2%', accent: LH.primary }],
+      activity: [{ who: 'Nova', msg: 'Sent Storm Season Re-engage step 3 to 42 leads', t: '20m ago' }, { who: 'Nova', msg: 'Re-opened a 45-day-old Meta lead — replied', t: '1h ago' }, { who: 'System', msg: 'Paused Winback drip — monthly budget cap hit', t: '5h ago' }] },
+    sched: { about: 'Books and confirms inspections. Offers the earliest open slots from team availability, sends reminders, and lets homeowners self-serve reschedule — keeping the calendar full without a coordinator.',
+      kpis: [{ label: 'Inspections booked', value: '89' }, { label: 'Confirm rate', value: '92%', accent: LH.green }, { label: 'Reschedules', value: '11' }, { label: 'No-shows', value: '4%', accent: LH.primary }],
+      activity: [{ who: 'Nova', msg: 'Booked an inspection for Diane Walsh — Tue 9:00 AM', t: '8m ago' }, { who: 'Nova', msg: 'Sent T-24h reminders to 6 homeowners', t: '2h ago' }, { who: 'Nova', msg: 'Handled a self-serve reschedule for Grant Wells', t: '4h ago' }] },
+    qual: { about: 'Scores and routes new leads. Silently captures the 9 property-intelligence signals across the conversation, scores intent, and routes hot leads to a rep while sending cold ones to nurture.',
+      kpis: [{ label: 'Auto-qualified', value: '82%', accent: LH.green }, { label: 'Fields captured', value: '9 / 9' }, { label: 'Routed hot', value: '64' }, { label: 'Routed to nurture', value: '118' }],
+      activity: [{ who: 'Nova', msg: 'Scored a Google LSA lead 89 — routed to a rep', t: '5m ago' }, { who: 'Nova', msg: 'Captured roof age & material from free text', t: '32m ago' }, { who: 'System', msg: 'Sent 3 low-score leads to the nurture campaign', t: '2h ago' }] }
+  };
   // Playbook editor overlay — edit a library playbook's tone, handoff, instructions and questions.
   function PlaybookEditorOverlay({ pb, onClose, onSave, onToast }) {
     const [name, setName] = useState(pb.name);
@@ -32089,12 +32103,81 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [lib, setLib] = useState(PLAYBOOK_LIBRARY);
     const [libFilter, setLibFilter] = useState('all');
     const [editPb, setEditPb] = useState(null);
+    const [detailAgent, setDetailAgent] = useState(null);
     const activeN = Object.values(agentOn).filter(Boolean).length;
     const pbCount = key => lib.filter(p => p.agent === key).length;
     const shown = libFilter === 'all' ? lib : lib.filter(p => p.agent === libFilter);
     const stTone = s => s === 'published' ? { bg: LH.greenBg, fg: LH.green } : { bg: LH.amberBg, fg: LH.amber };
     const agentName = key => (LIB_AGENTS.find(a => a.key === key) || {}).name || key;
     const newPlaybook = () => { const agent = libFilter === 'all' ? 'csr' : libFilter; const p = { id: 'pb-' + Date.now(), agent, name: 'New playbook', desc: 'Describe what this playbook does.', tone: 'Friendly and concise', handoff: 'Route low-confidence replies to CSR', version: 1, status: 'draft', updated: 'Just now', instructions: '', questions: [{ q: 'New question', req: false }] }; setLib(ls => [p, ...ls]); setEditPb(p); };
+    // ── Full agent details page ──
+    if (detailAgent) {
+      const a = LIB_AGENTS.find(x => x.key === detailAgent) || LIB_AGENTS[0];
+      const cfg = (AGENTS0.find(x => x.key === detailAgent) || {}).cfg || [];
+      const d = AGENT_DETAIL[detailAgent] || { about: '', kpis: [], activity: [] };
+      const pbs = lib.filter(p => p.agent === detailAgent);
+      const on = agentOn[detailAgent];
+      return <div style={{ fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+        <button onClick={() => setDetailAgent(null)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 10px 0 6px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer', marginBottom: 16 }}><Ic name="chevron-left" size={15} color={LH.sub} />AI Workforce</button>
+        <Card style={{ padding: 18, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={a.icon} size={22} color={LH.primary} /></div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: LH.ink, letterSpacing: '-0.01em' }}>{a.name}</div>
+              <div style={{ fontSize: 13, color: LH.sub, marginTop: 1 }}>{a.role}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>{a.channels.map(c => <span key={c} style={{ fontSize: 11, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 6, padding: '2px 8px' }}>{c}</span>)}</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', height: 24, padding: '0 10px', borderRadius: 999, fontSize: 11.5, fontWeight: 700, background: on ? LH.greenBg : '#f1f0ec', color: on ? LH.green : LH.sub }}>{on ? 'Active' : 'Paused'}</span>
+              <Toggle on={on} onChange={() => setAgentOn(o => ({ ...o, [detailAgent]: !o[detailAgent] }))} />
+            </div>
+          </div>
+        </Card>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>{d.kpis.map(k => <StatCard key={k.label} label={k.label} value={on ? k.value : '—'} accent={k.accent} />)}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: 12, alignItems: 'start' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <Card style={{ padding: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 8 }}>About this agent</div>
+              <div style={{ fontSize: 13, color: LH.body, lineHeight: 1.55 }}>{d.about}</div>
+            </Card>
+            <Card style={{ padding: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 6 }}>Configuration</div>
+              {cfg.map(([k, v], i) => <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: i < cfg.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+                <span style={{ fontSize: 12.5, color: LH.muted, width: 150, flexShrink: 0 }}>{k}</span>
+                <span style={{ fontSize: 12.5, color: LH.body, fontWeight: 600, flex: 1, minWidth: 0 }}>{v}</span>
+              </div>)}
+            </Card>
+            <Card style={{ padding: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 12 }}>Recent activity</div>
+              {d.activity.map((ac, i) => <div key={i} style={{ display: 'flex', gap: 11, paddingBottom: i < d.activity.length - 1 ? 12 : 0, marginBottom: i < d.activity.length - 1 ? 12 : 0, borderBottom: i < d.activity.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+                <div style={{ width: 26, height: 26, borderRadius: 7, background: ac.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={ac.who === 'Nova' ? 'sparkles' : 'settings'} size={13} color={ac.who === 'Nova' ? LH.primary : LH.sub} /></div>
+                <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.4 }}>{ac.msg}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 2 }}>{ac.who} · {ac.t}</div></div>
+              </div>)}
+            </Card>
+          </div>
+          <Card style={{ padding: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="library" size={15} color={LH.primary} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Playbooks</span><span style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '2px 8px' }}>{pbs.length}</span></div>
+              <Btn icon="plus" onClick={() => { const p = { id: 'pb-' + Date.now(), agent: detailAgent, name: 'New playbook', desc: 'Describe what this playbook does.', tone: 'Friendly and concise', handoff: 'Route low-confidence replies to CSR', version: 1, status: 'draft', updated: 'Just now', instructions: '', questions: [{ q: 'New question', req: false }] }; setLib(ls => [p, ...ls]); setEditPb(p); }}>New</Btn>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {pbs.map(p => <div key={p.id} style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 11, padding: 13 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{p.name}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1, lineHeight: 1.45 }}>{p.desc}</div></div>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}><span style={{ fontSize: 11.5, fontWeight: 700, color: LH.body }}>v{p.version}</span><span style={{ display: 'inline-flex', height: 20, padding: '0 8px', borderRadius: 999, fontSize: 10.5, fontWeight: 700, textTransform: 'capitalize', alignItems: 'center', background: stTone(p.status).bg, color: stTone(p.status).fg }}>{p.status}</span></span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 14px', margin: '10px 0 4px' }}>
+                  {[['Tone', p.tone], ['Handoff', p.handoff], ['Questions', p.questions.length + ''], ['Updated', p.updated]].map(([k, v]) => <span key={k} style={{ fontSize: 11.5, color: LH.sub }}><span style={{ color: LH.muted }}>{k}: </span><span style={{ fontWeight: 600, color: LH.body }}>{v}</span></span>)}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}><button onClick={() => setEditPb(p)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="pencil" size={13} color={LH.sub} />Edit playbook</button></div>
+              </div>)}
+              {!pbs.length && <div style={{ padding: 22, textAlign: 'center', fontSize: 13, color: LH.muted }}>No playbooks yet.</div>}
+            </div>
+          </Card>
+        </div>
+        {editPb && <PlaybookEditorOverlay pb={editPb} onClose={() => setEditPb(null)} onToast={onToast} onSave={upd => setLib(ls => ls.map(p => p.id === upd.id ? { ...upd, updated: 'Just now' } : p))} />}
+      </div>;
+    }
     return <div style={{ fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
         <StatCard label="Agents active" value={activeN} /><StatCard label="Leads engaged today" value="146" /><StatCard label="Auto-qualified" value="82%" accent={LH.green} /><StatCard label="Human escalations" value="7" accent={LH.primary} />
@@ -32110,9 +32193,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '11px 0 9px' }}>{a.channels.map(c => <span key={c} style={{ fontSize: 11, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 6, padding: '2px 8px' }}>{c}</span>)}</div>
           <div style={{ fontSize: 11.5, color: LH.muted }}>{on ? a.metric : 'Paused'}</div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingTop: 10, borderTop: '1px solid ' + LH.borderSoft }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: LH.body }}><Ic name="book-open" size={13} color={LH.sub} />{pbCount(a.key)} playbook{pbCount(a.key) !== 1 ? 's' : ''}</span>
-            <button onClick={() => setLibFilter(a.key)} style={{ fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>View playbooks →</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: LH.sub, marginTop: 9, minWidth: 0 }}><Ic name="book-open" size={13} color={LH.muted} /><span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pbCount(a.key)} playbook{pbCount(a.key) !== 1 ? 's' : ''} · {lib.filter(p => p.agent === a.key).map(p => p.name).join(', ') || 'None yet'}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10, paddingTop: 10, borderTop: '1px solid ' + LH.borderSoft }}>
+            <button onClick={() => setDetailAgent(a.key)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer' }}>View details<Ic name="arrow-right" size={13} color={LH.sub} /></button>
           </div>
         </Card>; })}
       </div>
