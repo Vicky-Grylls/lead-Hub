@@ -28837,10 +28837,10 @@ function LeadGeneralSettings({setActiveId}){
         RCE("div",{style:{display:'flex',alignItems:'center',gap:8}},RCE("input",{type:'number',value:aging,onChange:e=>setAging(e.target.value),style:{...leadInput,width:90}}),RCE("span",{style:{fontSize:12.5,color:'#737373'}},"days"))),
       RCE(SettingsFormRow,{label:'Default pipeline',sub:'Pipeline new leads enter unless overridden.'},
         RCE("select",{value:defPipeline,onChange:e=>setDefPipeline(e.target.value),style:leadSelectStyle},['Roofing Sales','Storm Response','Commercial'].map(r=>RCE("option",{key:r},r)))),
-      leadRowToggle('Auto-convert qualified leads','Automatically move a lead to a set status when it is marked Qualified.',autoConvert,()=>setAutoConvert(v=>!v),autoConvert),
+      leadRowToggle('Nudge to create contact','Prompt to create a contact when a lead is marked Qualified.',autoConvert,()=>setAutoConvert(v=>!v),autoConvert),
       autoConvert&&RCE(SettingsFormRow,{label:'Convert to status',sub:'Status the lead is moved to on qualify.',tightTop:true},
         RCE("select",{value:convertStatus,onChange:e=>setConvertStatus(e.target.value),style:leadSelectStyle},LEAD_STATUS_OPTS.map(r=>RCE("option",{key:r},r)))),
-      leadRowToggle('Auto-create job','Create a job automatically when a lead is qualified.',autoJob,()=>setAutoJob(v=>!v),autoJob),
+      leadRowToggle('Nudge to create job','Prompt to create a job when a lead is qualified.',autoJob,()=>setAutoJob(v=>!v),autoJob),
       autoJob&&RCE(SettingsFormRow,{label:'Create job in status',sub:'Status the new job is created in.',tightTop:true},
         RCE("select",{value:jobStatus,onChange:e=>setJobStatus(e.target.value),style:leadSelectStyle},JOB_STATUS_OPTS.map(r=>RCE("option",{key:r},r))))
     )));
