@@ -30314,7 +30314,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             ? <div style={{ width: 234, background: 'rgba(255,255,255,.97)', border: '1px solid ' + LH.border, borderRadius: 11, boxShadow: '0 6px 20px rgba(0,0,0,.14)', overflow: 'hidden' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
                   <Ic name="filter" size={14} color={LH.sub} />
-                  <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, flex: 1 }}>Filter by color</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, flex: 1 }}>Filter</span>
                   {activeHidden > 0 && <span style={{ fontSize: 10.5, fontWeight: 700, color: LH.primary, background: LH.tint, borderRadius: 999, padding: '1px 7px' }}>{activeHidden} hidden</span>}
                   <button onClick={() => setPanelOpen(false)} title="Collapse filters" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="chevron-up" size={15} color={LH.sub} /></button>
                 </div>
@@ -30326,7 +30326,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 </div>
                 {activeHidden > 0 && <div style={{ borderTop: '1px solid ' + LH.borderSoft, padding: '7px 12px' }}><button onClick={() => { setHidSrc({}); setHidCity({}); }} style={{ fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Reset filters</button></div>}
               </div>
-            : <button onClick={() => setPanelOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 34, padding: '0 12px', background: 'rgba(255,255,255,.97)', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 4px 14px rgba(0,0,0,.12)', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: LH.ink }}><Ic name="filter" size={14} color={LH.sub} />Filter by color{activeHidden > 0 && <span style={{ fontSize: 10.5, fontWeight: 700, color: '#fff', background: LH.primary, borderRadius: 999, padding: '1px 6px' }}>{activeHidden}</span>}</button>}
+            : <button onClick={() => setPanelOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 34, padding: '0 12px', background: 'rgba(255,255,255,.97)', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 4px 14px rgba(0,0,0,.12)', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: LH.ink }}><Ic name="filter" size={14} color={LH.sub} />Filter{activeHidden > 0 && <span style={{ fontSize: 10.5, fontWeight: 700, color: '#fff', background: LH.primary, borderRadius: 999, padding: '1px 6px' }}>{activeHidden}</span>}</button>}
         </div>
       </div>
     </Card>;
