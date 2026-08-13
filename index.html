@@ -28799,6 +28799,11 @@ function LeadGeneralSettings({setActiveId}){
   const [aging,setAging]=useState('3');
   const [defPipeline,setDefPipeline]=useState('Roofing Sales');
   const [autoConvert,setAutoConvert]=useState(false);
+  const [convertStatus,setConvertStatus]=useState('Qualified');
+  const [autoJob,setAutoJob]=useState(false);
+  const [jobStatus,setJobStatus]=useState('Scheduled');
+  const LEAD_STATUS_OPTS=['New lead','Contacting','Qualifying','Qualified','In drip','Needs human','Converted','Nurture','Lost'];
+  const JOB_STATUS_OPTS=['New','Scheduled','Assigned','In Progress','On Hold','Completed','Cancelled'];
   return RCE(React.Fragment,null,
     RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiTool,title:'General Lead Settings',sub:'How leads are owned, assigned and de-duplicated',onSave:()=>setActiveId('modules/Leads')}),
     leadScroll(RCE("div",{style:{borderTop:'1px solid #e8e7e2'}},
@@ -28812,7 +28817,12 @@ function LeadGeneralSettings({setActiveId}){
         RCE("div",{style:{display:'flex',alignItems:'center',gap:8}},RCE("input",{type:'number',value:aging,onChange:e=>setAging(e.target.value),style:{...leadInput,width:90}}),RCE("span",{style:{fontSize:12.5,color:'#737373'}},"days"))),
       RCE(SettingsFormRow,{label:'Default pipeline',sub:'Pipeline new leads enter unless overridden.'},
         RCE("select",{value:defPipeline,onChange:e=>setDefPipeline(e.target.value),style:leadSelectStyle},['Roofing Sales','Storm Response','Commercial'].map(r=>RCE("option",{key:r},r)))),
-      leadRowToggle('Auto-convert qualified leads','Create an inspection job automatically when a lead is marked Qualified.',autoConvert,()=>setAutoConvert(v=>!v))
+      leadRowToggle('Auto-convert qualified leads','Automatically move a lead to a set status when it is marked Qualified.',autoConvert,()=>setAutoConvert(v=>!v)),
+      autoConvert&&RCE(SettingsFormRow,{label:'Convert to status',sub:'Status the lead is moved to on qualify.'},
+        RCE("select",{value:convertStatus,onChange:e=>setConvertStatus(e.target.value),style:leadSelectStyle},LEAD_STATUS_OPTS.map(r=>RCE("option",{key:r},r)))),
+      leadRowToggle('Auto-create job','Create a job automatically when a lead is qualified.',autoJob,()=>setAutoJob(v=>!v)),
+      autoJob&&RCE(SettingsFormRow,{label:'Create job in status',sub:'Status the new job is created in.'},
+        RCE("select",{value:jobStatus,onChange:e=>setJobStatus(e.target.value),style:leadSelectStyle},JOB_STATUS_OPTS.map(r=>RCE("option",{key:r},r))))
     )));
 }
 
