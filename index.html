@@ -28838,10 +28838,10 @@ function LeadGeneralSettings({setActiveId}){
       RCE(SettingsFormRow,{label:'Default pipeline',sub:'Pipeline new leads enter unless overridden.'},
         RCE("select",{value:defPipeline,onChange:e=>setDefPipeline(e.target.value),style:leadSelectStyle},['Roofing Sales','Storm Response','Commercial'].map(r=>RCE("option",{key:r},r)))),
       leadRowToggle('Nudge to create contact','Prompt to create a contact when a lead is marked Qualified.',autoConvert,()=>setAutoConvert(v=>!v),autoConvert),
-      autoConvert&&RCE(SettingsFormRow,{label:'Convert to status',sub:'Status the lead is moved to on qualify.',tightTop:true},
+      autoConvert&&RCE(SettingsFormRow,{label:'Status',tightTop:true},
         RCE("select",{value:convertStatus,onChange:e=>setConvertStatus(e.target.value),style:leadSelectStyle},LEAD_STATUS_OPTS.map(r=>RCE("option",{key:r},r)))),
       leadRowToggle('Nudge to create job','Prompt to create a job when a lead is qualified.',autoJob,()=>setAutoJob(v=>!v),autoJob),
-      autoJob&&RCE(SettingsFormRow,{label:'Create job in status',sub:'Status the new job is created in.',tightTop:true},
+      autoJob&&RCE(SettingsFormRow,{label:'Status',tightTop:true},
         RCE("select",{value:jobStatus,onChange:e=>setJobStatus(e.target.value),style:leadSelectStyle},JOB_STATUS_OPTS.map(r=>RCE("option",{key:r},r))))
     )));
 }
