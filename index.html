@@ -30503,6 +30503,48 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
     </div>;
   }
+  // Right-pane communication history — last calls / SMS / emails for this lead, filterable by channel.
+  function LeadCommHistoryPanel({ lead, onToast }) {
+    const [chFilter, setChFilter] = useState('all');
+    const first = (lead && lead.name ? lead.name.split(' ')[0] : 'there');
+    const CH_META = { call: { ic: 'phone', fg: LH.green, bg: LH.greenBg, label: 'Call' }, sms: { ic: 'message-square', fg: LH.blue, bg: LH.blueBg, label: 'SMS' }, email: { ic: 'mail', fg: LH.amber, bg: LH.amberBg, label: 'Email' } };
+    const items = [
+      { ch: 'sms', dir: 'out', who: 'Nova', title: 'Speed-to-lead drip · step 3', preview: 'Hi ' + first + ', still keen on that free roof inspection this week?', t: '1 day ago' },
+      { ch: 'call', dir: 'out', who: 'Nova', title: 'Nova qualification call', preview: 'Answered · 4:32 · confirmed storm damage, roof ~15 yrs', t: '1 day ago' },
+      { ch: 'email', dir: 'out', who: 'System', title: 'Free inspection offer', preview: 'Delivered · opened · clicked “Book inspection”', t: '2 days ago' },
+      { ch: 'call', dir: 'in', who: first, title: 'Inbound call', preview: '12s ring · left a voicemail', t: '2 days ago' },
+      { ch: 'sms', dir: 'in', who: first, title: 'Reply', preview: '“Yes, tomorrow evening would be fine.”', t: '3 days ago' },
+      { ch: 'email', dir: 'out', who: 'System', title: 'Welcome — how Nova works', preview: 'Delivered · opened', t: '4 days ago' }
+    ];
+    const shown = chFilter === 'all' ? items : items.filter(x => x.ch === chFilter);
+    const FILTERS = [['all', 'All'], ['call', 'Calls'], ['sms', 'SMS'], ['email', 'Email']];
+    return <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px', height: 48, borderBottom: '1px solid ' + LH.borderSoft }}>
+        <span style={{ fontSize: 13, color: LH.ink, fontWeight: 700 }}>Communication history</span>
+        <span style={{ fontSize: 11, color: LH.muted }}>{items.length} events</span>
+      </div>
+      <div style={{ flexShrink: 0, display: 'flex', gap: 6, padding: '10px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
+        {FILTERS.map(([k, l]) => { const on = chFilter === k; return <button key={k} onClick={() => setChFilter(k)} style={{ height: 26, padding: '0 10px', borderRadius: 999, border: '1px solid ' + (on ? LH.ink : LH.border), background: on ? LH.ink : '#fff', color: on ? '#fff' : LH.body, fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}>{l}</button>; })}
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '6px 0' }}>
+        {shown.map((x, i) => { const m = CH_META[x.ch]; return <div key={i} style={{ display: 'flex', gap: 11, padding: '11px 14px', borderBottom: i < shown.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={x.dir === 'in' && x.ch === 'call' ? 'phone-incoming' : m.ic} size={14} color={m.fg} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>{m.label}</span><span style={{ fontSize: 10, fontWeight: 600, color: x.dir === 'in' ? LH.green : LH.sub, background: x.dir === 'in' ? LH.greenBg : '#f1f0ec', borderRadius: 999, padding: '1px 6px' }}>{x.dir === 'in' ? 'Inbound' : 'Outbound'}</span><span style={{ flex: 1 }} /><span style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap' }}>{x.t}</span></div>
+            <div style={{ fontSize: 12, color: LH.body, fontWeight: 600 }}>{x.title}</div>
+            <div style={{ fontSize: 11.5, color: LH.muted, lineHeight: 1.45, marginTop: 1 }}>{x.preview}</div>
+            <div style={{ fontSize: 10.5, color: LH.muted, marginTop: 3 }}>{x.who}</div>
+          </div>
+        </div>; })}
+        {!shown.length && <div style={{ padding: '30px 16px', textAlign: 'center', fontSize: 12.5, color: LH.muted }}>No {chFilter} history yet.</div>}
+      </div>
+      <div style={{ flexShrink: 0, borderTop: '1px solid ' + LH.borderSoft, padding: 10, display: 'flex', gap: 8 }}>
+        <Btn icon="phone" style={{ flex: 1, justifyContent: 'center' }} onClick={() => onToast && onToast('Calling ' + (lead && lead.name) + '…')}>Call</Btn>
+        <Btn icon="message-square" style={{ flex: 1, justifyContent: 'center' }} onClick={() => onToast && onToast('New SMS')}>SMS</Btn>
+        <Btn icon="mail" style={{ flex: 1, justifyContent: 'center' }} onClick={() => onToast && onToast('Compose email')}>Email</Btn>
+      </div>
+    </div>;
+  }
   function LeadChatsPanel() {
     const [subTab, setSubTab] = useState('messages');
     return <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -30543,7 +30585,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [playing, setPlaying] = useState(false);
     const [prog, setProg] = useState(18);
     const [moreOpen, setMoreOpen] = useState(false);
-    const [panel, setPanel] = useState('connect');
+    const [panel, setPanel] = useState('comm');
     const [jobId, setJobId] = useState(lead.jobId || null);
     const [convOpen, setConvOpen] = useState(false);
     const canConvert = lead.col === 'Qualified' && !jobId;
@@ -30561,7 +30603,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const email = lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com';
     const phone = '469-555-0172';
     const toast = m => onToast && onToast(m);
-    const TABS = ['Overview', 'Intake intelligence', 'Qualification', 'Campaign', 'Communication'];
+    const TABS = ['Overview', 'Intake intelligence', 'Qualification', 'Campaign'];
     const kv = (k, v) => <div style={{ display: 'flex', gap: 12, padding: '7px 0' }}><span style={{ fontSize: 11, color: LH.muted, width: 92, flexShrink: 0 }}>{k}</span><span style={{ fontSize: 12, color: LH.body, fontWeight: 500, flex: 1, minWidth: 0 }}>{v}</span></div>;
     const iconBtn = (ic, m) => <button onClick={() => toast(m)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name={ic} size={15} color={LH.sub} /></button>;
     const secHead = (label, open, onT) => <button onClick={onT} style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', marginBottom: open ? 4 : 0 }}><Ic name={open ? 'chevron-down' : 'chevron-right'} size={14} color={LH.sub} /><span style={{ fontSize: 12, fontWeight: 700, color: LH.ink }}>{label}</span></button>;
@@ -30653,10 +30695,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <Card style={{ padding: 16, marginBottom: 14 }}><div style={{ display: 'flex', alignItems: 'center', gap: 11 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="megaphone" size={16} color={LH.ink} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{campaign}</div><div style={{ fontSize: 12, color: LH.sub }}>Step 3 of 6 · SMS · next touch in 2 days</div></div><Pill label="Active" tone="Qualified" /></div></Card>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>{[['Sent', '3'], ['Opened', '2'], ['Replied', '1']].map(([l, v]) => <Card key={l} style={{ padding: 13 }}><div style={{ fontSize: 20, fontWeight: 700, color: LH.ink }}>{v}</div><div style={{ fontSize: 12, color: LH.muted }}>{l}</div></Card>)}</div>
           </div>}
-          {tab === 'Communication' && <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, marginBottom: 12 }}>Communication log</div>
-            <Card style={{ padding: 0, overflow: 'hidden' }}>{[['message-square', 'SMS', 'Speed-to-lead drip, step 3', '1 day ago'], ['phone', 'Call', 'Nova qualification call · 4:32', '1 day ago'], ['mail', 'Email', 'Free inspection offer sent', '2 days ago'], ['phone-incoming', 'Call', 'Inbound call · 12s ring', '2 days ago']].map(([ic, ch, txt, t], i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i < 3 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ width: 30, height: 30, borderRadius: 8, background: '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={ic} size={14} color={LH.sub} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{ch}</div><div style={{ fontSize: 12, color: LH.muted }}>{txt}</div></div><span style={{ fontSize: 11, color: LH.muted }}>{t}</span></div>)}</Card>
-          </div>}
           {tab === 'Intake intelligence' && <LeadIntakeIntelligence lead={lead} onToast={onToast} bare />}
           {tab === 'Overview' && <>
           <div style={{ marginBottom: 16 }}><LeadAISummary lead={lead} /></div>
@@ -30706,6 +30744,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}><Btn kind="primary" icon="send" onClick={send}>Send</Btn></div>
               </div>
             </div>}
+            {panel === 'comm' && <LeadCommHistoryPanel lead={lead} onToast={onToast} />}
             {panel === 'history' && <LeadStatusHistoryPanel lead={lead} onToast={onToast} />}
             {panel === 'assoc' && <LeadAssociationsPanel lead={lead} onToast={onToast} />}
             {panel === 'chats' && <LeadChatsPanel />}
@@ -30714,7 +30753,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {/* Mini sidebar */}
         <div style={{ width: 46, flexShrink: 0, borderLeft: '1px solid ' + LH.borderSoft, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {[['phone', 'connect', 'Zuper Connect'], ['clock', 'history', 'Status History'], ['link', 'assoc', 'Associations'], ['message-circle', 'chats', 'Chats'], ['sparkles', 'sense', 'Sense AI']].map(([ic, key, lbl], i) => <Fragment key={key}>
+            {[['phone', 'connect', 'Zuper Connect'], ['message-square', 'comm', 'Communication'], ['clock', 'history', 'Status History'], ['link', 'assoc', 'Associations'], ['message-circle', 'chats', 'Chats'], ['sparkles', 'sense', 'Sense AI']].map(([ic, key, lbl], i) => <Fragment key={key}>
               <button onClick={() => setPanel(key)} title={lbl} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: panel === key ? '#f8f5f0' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '2px 0' }} onMouseEnter={e => { if (panel !== key) e.currentTarget.style.background = '#f5f2ec'; }} onMouseLeave={e => { if (panel !== key) e.currentTarget.style.background = 'transparent'; }}><Ic name={ic} size={16} color={panel === key ? '#262626' : '#a3a3a3'} /></button>
               {i === 0 && <div style={{ width: 24, height: 1, background: '#e5e7eb', margin: '4px 0' }} />}
             </Fragment>)}
