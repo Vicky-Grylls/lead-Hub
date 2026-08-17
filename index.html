@@ -33116,54 +33116,97 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   function ZuperConnectCTI({ onClose }) {
     const [phase, setPhase] = useState('incoming'); // incoming | connected
     const [secs, setSecs] = useState(0);
-    const [hiOpen, setHiOpen] = useState(true);
-    const [leadOpen, setLeadOpen] = useState(false);
+    const [mode, setMode] = useState('lead'); // lead | customer
+    const [open, setOpen] = useState({ highlights: true, jobs: false, conv: false, quotes: false, invoices: false, form: true, playbook: true });
+    const [leadFull, setLeadFull] = useState(false);
     const [toast, setToast] = useState(null);
+    const [lf, setLf] = useState({ name: 'David Moore', phone: '(+1) 206 234 2124', email: '', service: '' });
+    const [pb, setPb] = useState({ q1: 'Within service territory', q2: '', q3: '', q4: '', roofType: '', sidingType: '', q6: '', q6other: '', q7: '', q8: '', owner: '', when: '' });
     const caller = { name: 'David Moore', phone: '(+1) 206 234 2124', avatar: 'D' };
     useEffect(() => { if (phase !== 'connected') return; const t = setInterval(() => setSecs(s => s + 1), 1000); return () => clearInterval(t); }, [phase]);
     const mmss = ('0' + Math.floor(secs / 60)).slice(-2) + ':' + ('0' + (secs % 60)).slice(-2);
     const showToast = m => { setToast(m); setTimeout(() => setToast(null), 2800); };
+    const tog = k => setOpen(o => ({ ...o, [k]: !o[k] }));
+    const setQ = (k, v) => setPb(p => ({ ...p, [k]: v }));
     const HL = [['Outstanding balance', '$790'], ['Lifetime Value', '$4,369'], ['Last Service Date', '11/01/2025'], ['Customer Since', '05/08/2024'], ['Account Manager', 'Lewis Hamilton']];
-    const SECTIONS = ['Jobs', 'Recent Conversation', 'Quotes', 'Invoices'];
-    const navy = '#0f1d2e', navy2 = '#16283d', line = 'rgba(255,255,255,.12)', sub = 'rgba(255,255,255,.6)';
-    const circleBtn = (bg, ic, col, label, onClick) => <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}><button onClick={onClick} style={{ width: 46, height: 46, borderRadius: 999, border: 'none', background: bg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={ic} size={20} color={col} /></button><span style={{ fontSize: 11, color: sub }}>{label}</span></div>;
-    return <div style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 2600, display: 'flex', alignItems: 'stretch', fontFamily: "'Inter',ui-sans-serif,system-ui", boxShadow: '0 24px 60px rgba(0,0,0,.28)', borderRadius: 14 }}>
+    const navy = '#0f1d2e', navy2 = '#16283d', sub = 'rgba(255,255,255,.6)';
+    const circleBtn = (bg, ic, col, label, onClick) => <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}><button onClick={onClick} style={{ width: 44, height: 44, borderRadius: 999, border: 'none', background: bg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={ic} size={18} color={col} /></button><span style={{ fontSize: 10.5, color: sub }}>{label}</span></div>;
+    const acc = (key, icon, title, body) => <div style={{ borderBottom: '1px solid ' + LH.borderSoft }}>
+      <button onClick={() => tog(key)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 14px', background: 'none', border: 'none', cursor: 'pointer' }}><Ic name={icon} size={14} color={LH.sub} /><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, flex: 1, textAlign: 'left' }}>{title}</span><Ic name={open[key] ? 'chevron-up' : 'chevron-down'} size={15} color={LH.sub} /></button>
+      {open[key] && <div style={{ padding: '0 14px 12px' }}>{body}</div>}
+    </div>;
+    const emptyBlock = (label, cta) => <div style={{ textAlign: 'center', padding: '6px 0 2px' }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>No {label} Yet</div><div style={{ fontSize: 11, color: LH.muted, margin: '2px 0 10px' }}>{label} will appear here once it is created.</div><button onClick={() => showToast('New ' + label.toLowerCase() + '…')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.primary, cursor: 'pointer' }}><Ic name="plus" size={13} color={LH.primary} />{cta}</button></div>;
+    const oc = pbOutcome(pb);
+    const ocT = oc.tone === 'green' ? { bg: LH.greenBg, fg: LH.green } : oc.tone === 'red' ? { bg: '#fdecec', fg: LH.red } : oc.tone === 'amber' ? { bg: LH.amberBg, fg: LH.amber } : { bg: '#f1f0ec', fg: LH.sub };
+    const inp = { width: '100%', height: 32, borderRadius: 7, border: '1px solid ' + LH.border, padding: '0 9px', fontSize: 12.5, color: LH.ink, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
+    const flbl = { fontSize: 11, fontWeight: 600, color: LH.body, margin: '0 0 4px', display: 'block' };
+    const seg = (k, l) => <button onClick={() => setMode(k)} style={{ flex: 1, height: 28, borderRadius: 7, border: 'none', background: mode === k ? '#fff' : 'transparent', color: mode === k ? LH.ink : LH.sub, fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: mode === k ? '0 1px 2px rgba(0,0,0,.08)' : 'none' }}>{l}</button>;
+    return <div style={{ position: 'fixed', top: 52, right: 16, zIndex: 2600, display: 'flex', alignItems: 'stretch', fontFamily: "'Inter',ui-sans-serif,system-ui", boxShadow: '0 24px 60px rgba(0,0,0,.28)', borderRadius: 14, maxHeight: 'calc(100vh - 68px)' }}>
       {/* Screen-pop context card */}
-      <div style={{ width: 292, background: '#fff', borderRadius: '14px 0 0 14px', border: '1px solid ' + LH.border, borderRight: 'none', overflow: 'hidden', maxHeight: 540, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ width: 320, background: '#fff', borderRadius: '14px 0 0 14px', border: '1px solid ' + LH.border, borderRight: 'none', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '10px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
+          <div style={{ display: 'flex', gap: 3, padding: 3, background: '#f1f0ec', borderRadius: 9 }}>{seg('lead', 'New lead')}{seg('customer', 'Known customer')}</div>
+        </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          <button onClick={() => setHiOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '12px 14px', background: 'none', border: 'none', borderBottom: '1px solid ' + LH.borderSoft, cursor: 'pointer' }}><Ic name="user" size={14} color={LH.sub} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink, flex: 1, textAlign: 'left' }}>Customer Highlights</span><Ic name={hiOpen ? 'chevron-up' : 'chevron-down'} size={15} color={LH.sub} /></button>
-          {hiOpen && <div style={{ padding: '10px 14px', borderBottom: '1px solid ' + LH.borderSoft }}>
-            {HL.map(([k, v]) => <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '5px 0' }}><span style={{ fontSize: 12, color: LH.muted }}>{k}</span><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{v}</span></div>)}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}><span style={{ fontSize: 12, color: LH.muted }}>Tags</span><span style={{ fontSize: 10.5, fontWeight: 700, color: '#dc2626', background: '#fdecec', borderRadius: 999, padding: '2px 9px' }}>VIP</span></div>
-            <button onClick={() => showToast('Opening customer profile…')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.blue, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0 0' }}>View Full Details<Ic name="external-link" size={12} color={LH.blue} /></button>
-          </div>}
-          {SECTIONS.map(s => <button key={s} onClick={() => showToast(s + ' — opening…')} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 14px', background: 'none', border: 'none', borderBottom: '1px solid ' + LH.borderSoft, cursor: 'pointer' }}><Ic name={s === 'Jobs' ? 'briefcase' : s === 'Quotes' ? 'file-text' : s === 'Invoices' ? 'receipt' : 'message-square'} size={14} color={LH.sub} /><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, flex: 1, textAlign: 'left' }}>{s}</span><Ic name="chevron-down" size={14} color={LH.muted} /></button>)}
+          {mode === 'customer' ? <>
+            {acc('highlights', 'user', 'Customer Highlights', <>
+              {HL.map(([k, v]) => <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '5px 0' }}><span style={{ fontSize: 12, color: LH.muted }}>{k}</span><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{v}</span></div>)}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}><span style={{ fontSize: 12, color: LH.muted }}>Tags</span><span style={{ fontSize: 10.5, fontWeight: 700, color: '#dc2626', background: '#fdecec', borderRadius: 999, padding: '2px 9px' }}>VIP</span></div>
+              <button onClick={() => showToast('Opening customer profile…')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.blue, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0 0' }}>View Full Details<Ic name="external-link" size={12} color={LH.blue} /></button>
+            </>)}
+            {acc('jobs', 'briefcase', 'Jobs', emptyBlock('Jobs', 'Create Job'))}
+            {acc('conv', 'message-square', 'Recent Conversation', <div style={{ fontSize: 12, color: LH.muted, padding: '4px 0' }}>No recent conversation with this customer.</div>)}
+            {acc('quotes', 'file-text', 'Quotes', emptyBlock('Quotes', 'Create Quote'))}
+            {acc('invoices', 'receipt', 'Invoices', emptyBlock('Invoices', 'Create Invoice'))}
+          </> : <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderBottom: '1px solid ' + LH.borderSoft, background: LH.bg }}>
+              <span style={{ width: 26, height: 26, borderRadius: 7, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="user-plus" size={14} color={LH.primary} /></span>
+              <div style={{ minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>New caller · not in Zuper</div><div style={{ fontSize: 11, color: LH.muted }}>Capture &amp; qualify this lead on the call.</div></div>
+            </div>
+            {acc('form', 'user', 'Lead details', <div style={{ display: 'flex', flexDirection: 'column', gap: 9, paddingTop: 2 }}>
+              <div><label style={flbl}>Full name<span style={{ color: LH.red }}> *</span></label><input value={lf.name} onChange={e => setLf(s => ({ ...s, name: e.target.value }))} style={inp} /></div>
+              <div style={{ display: 'flex', gap: 8 }}><div style={{ flex: 1 }}><label style={flbl}>Phone</label><input value={lf.phone} onChange={e => setLf(s => ({ ...s, phone: e.target.value }))} style={inp} /></div><div style={{ flex: 1 }}><label style={flbl}>Email</label><input value={lf.email} onChange={e => setLf(s => ({ ...s, email: e.target.value }))} placeholder="name@email.com" style={inp} /></div></div>
+              <div><label style={flbl}>Service interest</label><input value={lf.service} onChange={e => setLf(s => ({ ...s, service: e.target.value }))} placeholder="e.g. Roof inspection" style={inp} /></div>
+              <button onClick={() => setLeadFull(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}><Ic name="external-link" size={12} color={LH.primary} />Open full form (address, map…)</button>
+            </div>)}
+            {acc('playbook', 'book-open', 'Qualification playbook', <div style={{ paddingTop: 2 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '9px 10px', borderRadius: 9, background: ocT.bg, marginBottom: 10 }}>
+                <Ic name={oc.state === 'qualified' ? 'check-circle' : oc.state === 'disqualified' ? 'x-circle' : oc.state === 'hold' ? 'pause-circle' : 'circle-dashed'} size={15} color={ocT.fg} style={{ position: 'relative', top: 1, flexShrink: 0 }} />
+                <div style={{ minWidth: 0 }}><div style={{ fontSize: 12, fontWeight: 700, color: ocT.fg }}>{oc.label}</div><div style={{ fontSize: 11, color: LH.sub, marginTop: 1, lineHeight: 1.4 }}>{oc.detail}</div></div>
+              </div>
+              {PB_QUESTIONS.map(qq => <div key={qq.k} style={{ marginBottom: 9 }}><label style={{ ...flbl, display: 'flex', gap: 5 }}><span style={{ color: LH.muted, fontWeight: 700 }}>{qq.n}</span>{qq.label}</label><Dropdown value={pb[qq.k] || ''} placeholder="Select…" height={32} options={qq.opts.map(o => ({ value: o, label: o }))} onChange={v => setQ(qq.k, v)} /></div>)}
+            </div>)}
+          </>}
         </div>
-        <div style={{ padding: 12, borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}>
-          <div style={{ fontSize: 11, color: LH.muted, marginBottom: 8, lineHeight: 1.4 }}>New enquiry on this call? Capture &amp; qualify it against the playbook.</div>
-          <Btn kind="primary" icon="book-open" onClick={() => setLeadOpen(true)} style={{ width: '100%', justifyContent: 'center' }}>Create lead from call</Btn>
-        </div>
+        {mode === 'lead' && <div style={{ padding: 12, borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}>
+          <Btn kind="primary" icon="plus" onClick={() => { showToast('Lead created & ' + (oc.state === 'qualified' ? 'qualified' : oc.state === 'disqualified' ? 'disqualified' : 'held') + ' from the call'); }} style={{ width: '100%', justifyContent: 'center' }}>Create lead from call</Btn>
+        </div>}
       </div>
       {/* Call panel */}
-      <div style={{ width: 276, background: navy, borderRadius: '0 14px 14px 0', color: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ width: 268, background: navy, borderRadius: '0 14px 14px 0', color: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: navy2 }}><span style={{ fontSize: 12.5, fontWeight: 700 }}>Sales</span><button onClick={onClose} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Ic name="minimize-2" size={15} color={sub} /></button></div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '22px 16px 8px' }}>
-          <div style={{ width: 58, height: 58, borderRadius: 999, background: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, marginBottom: 12 }}>{caller.avatar}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 16, fontWeight: 700 }}>{caller.name}<Ic name="external-link" size={14} color={sub} /></div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,.8)', marginTop: 3 }}>{caller.phone}</div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 16px 8px' }}>
+          <div style={{ width: 54, height: 54, borderRadius: 999, background: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{caller.avatar}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15.5, fontWeight: 700 }}>{caller.name}<Ic name="external-link" size={13} color={sub} /></div>
+          <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.8)', marginTop: 3 }}>{caller.phone}</div>
           <div style={{ fontSize: 12, color: sub, marginTop: 3 }}>{phase === 'incoming' ? 'Incoming call…' : 'On call · ' + mmss}</div>
-          <div style={{ flex: 1 }} />
+          <div style={{ flex: 1, minHeight: 12 }} />
           {phase === 'incoming'
             ? <div style={{ display: 'flex', gap: 34, padding: '10px 0 14px' }}>{circleBtn('#dc2626', 'phone-off', '#fff', 'Ignore', onClose)}{circleBtn('#16a34a', 'phone', '#fff', 'Accept', () => setPhase('connected'))}</div>
-            : <div style={{ display: 'flex', gap: 26, padding: '10px 0 14px' }}>{circleBtn('rgba(255,255,255,.12)', 'mic-off', '#fff', 'Mute')}{circleBtn('rgba(255,255,255,.12)', 'pause', '#fff', 'Hold')}{circleBtn('#dc2626', 'phone-off', '#fff', 'End', onClose)}</div>}
+            : <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '14px 8px', width: '100%', padding: '4px 6px' }}>
+                {[['pause', 'Hold'], ['circle-dot', 'Record'], ['mic-off', 'Mute'], ['file-text', 'Notes'], ['phone-forwarded', 'Transfer'], ['more-horizontal', 'More']].map(([ic, l]) => circleBtn('rgba(255,255,255,.1)', ic, '#fff', l, () => showToast(l)))}
+              </div>
+              <div style={{ padding: '8px 0 12px' }}>{circleBtn('#dc2626', 'phone-off', '#fff', '', onClose)}</div>
+            </>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '10px', background: navy2 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="phone" size={15} color={sub} /></div>
-          <div style={{ width: 40, height: 34, borderRadius: 8, background: '#e0642f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="grid-3x3" size={16} color="#fff" /></div>
-          <div style={{ width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="users" size={15} color={sub} /></div>
+          <div style={{ width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Ic name="phone" size={15} color={sub} /></div>
+          <div style={{ width: 40, height: 34, borderRadius: 8, background: '#e0642f', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Ic name="grid-3x3" size={16} color="#fff" /></div>
+          <div style={{ width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Ic name="users" size={15} color={sub} /></div>
         </div>
       </div>
-      {leadOpen && <NewLeadForm sources={['Phone', 'Manual', 'Website', 'Referral', 'Angi', 'Thumbtack', 'Google LSA', 'Meta Ads']} assignees={['Maria Gonzalez', 'Diane Cole', 'Marcus Lee', 'Sarah Chen', 'Tom Rivera']} prefill={{ name: caller.name, phone: caller.phone, src: 'Phone' }} onClose={() => setLeadOpen(false)} onToast={showToast} onCreate={() => { setLeadOpen(false); showToast('Lead created & qualified from the call'); }} />}
+      {leadFull && <NewLeadForm sources={['Phone', 'Manual', 'Website', 'Referral', 'Angi', 'Thumbtack', 'Google LSA', 'Meta Ads']} assignees={['Maria Gonzalez', 'Diane Cole', 'Marcus Lee', 'Sarah Chen', 'Tom Rivera']} prefill={{ name: lf.name, phone: lf.phone, src: 'Phone' }} onClose={() => setLeadFull(false)} onToast={showToast} onCreate={() => { setLeadFull(false); showToast('Lead created & qualified from the call'); }} />}
       {toast && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 3400, background: LH.ink, color: '#fff', fontSize: 13, fontWeight: 500, padding: '11px 18px', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="check-circle" size={15} color="#4ade80" />{toast}</div>}
     </div>;
   }
