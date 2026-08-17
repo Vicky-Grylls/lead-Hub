@@ -30542,7 +30542,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>{m.label}</span><span style={{ fontSize: 10, fontWeight: 600, color: x.dir === 'in' ? LH.green : LH.sub, background: x.dir === 'in' ? LH.greenBg : '#f1f0ec', borderRadius: 999, padding: '1px 6px' }}>{x.dir === 'in' ? 'Inbound' : 'Outbound'}</span><span style={{ flex: 1 }} /><span style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap' }}>{x.t}</span></div>
               <div style={{ fontSize: 12, color: LH.body, fontWeight: 600 }}>{x.title}</div>
               <div style={{ fontSize: 11.5, color: LH.muted, lineHeight: 1.45, marginTop: 1 }}>{x.preview}</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 3 }}><span style={{ fontSize: 10.5, color: LH.muted }}>{x.who}</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10.5, fontWeight: 600, color: LH.primary }}>Open in Connect<Ic name="arrow-right" size={11} color={LH.primary} /></span></div>
+              <div style={{ marginTop: 3 }}><span style={{ fontSize: 10.5, color: LH.muted }}>{x.who}</span></div>
             </div>
           </div>
         </div>; })}
