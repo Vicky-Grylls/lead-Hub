@@ -33120,9 +33120,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [open, setOpen] = useState({ highlights: true, jobs: false, conv: false, quotes: false, invoices: false, form: true, playbook: true });
     const [leadFull, setLeadFull] = useState(false);
     const [toast, setToast] = useState(null);
-    const [lf, setLf] = useState({ name: 'David Moore', phone: '(+1) 206 234 2124', email: '', service: '' });
+    const CALL_NO = '(+1) 206 234 2124';
+    const [lf, setLf] = useState({ name: '', phone: CALL_NO, email: '', service: '' });
     const [pb, setPb] = useState({ q1: 'Within service territory', q2: '', q3: '', q4: '', roofType: '', sidingType: '', q6: '', q6other: '', q7: '', q8: '', owner: '', when: '' });
-    const caller = { name: 'David Moore', phone: '(+1) 206 234 2124', avatar: 'D' };
+    const caller = mode === 'customer' ? { name: 'David Moore', phone: CALL_NO, avatar: 'D' } : { name: 'Unknown number', phone: CALL_NO, avatar: '?' };
     useEffect(() => { if (phase !== 'connected') return; const t = setInterval(() => setSecs(s => s + 1), 1000); return () => clearInterval(t); }, [phase]);
     const mmss = ('0' + Math.floor(secs / 60)).slice(-2) + ':' + ('0' + (secs % 60)).slice(-2);
     const showToast = m => { setToast(m); setTimeout(() => setToast(null), 2800); };
@@ -33141,7 +33142,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const inp = { width: '100%', height: 32, borderRadius: 7, border: '1px solid ' + LH.border, padding: '0 9px', fontSize: 12.5, color: LH.ink, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
     const flbl = { fontSize: 11, fontWeight: 600, color: LH.body, margin: '0 0 4px', display: 'block' };
     const seg = (k, l) => <button onClick={() => setMode(k)} style={{ flex: 1, height: 28, borderRadius: 7, border: 'none', background: mode === k ? '#fff' : 'transparent', color: mode === k ? LH.ink : LH.sub, fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: mode === k ? '0 1px 2px rgba(0,0,0,.08)' : 'none' }}>{l}</button>;
-    return <div style={{ position: 'fixed', top: 52, right: 16, zIndex: 2600, display: 'flex', alignItems: 'stretch', fontFamily: "'Inter',ui-sans-serif,system-ui", boxShadow: '0 24px 60px rgba(0,0,0,.28)', borderRadius: 14, maxHeight: 'calc(100vh - 68px)' }}>
+    return <div style={{ position: 'fixed', top: 52, right: 16, zIndex: 2600, display: 'flex', alignItems: 'stretch', fontFamily: "'Inter',ui-sans-serif,system-ui", boxShadow: '0 24px 60px rgba(0,0,0,.28)', borderRadius: 14, height: 'min(560px, calc(100vh - 76px))' }}>
       {/* Screen-pop context card */}
       <div style={{ width: 320, background: '#fff', borderRadius: '14px 0 0 14px', border: '1px solid ' + LH.border, borderRight: 'none', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '10px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
