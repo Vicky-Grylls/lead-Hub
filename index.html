@@ -30526,10 +30526,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ flexShrink: 0, display: 'flex', gap: 6, padding: '10px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
         {FILTERS.map(([k, l]) => { const on = chFilter === k; return <button key={k} onClick={() => setChFilter(k)} style={{ height: 26, padding: '0 10px', borderRadius: 999, border: '1px solid ' + (on ? LH.ink : LH.border), background: on ? LH.ink : '#fff', color: on ? '#fff' : LH.body, fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}>{l}</button>; })}
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '6px 0' }}>
-        {shown.map((x, i) => { const m = CH_META[x.ch]; return <div key={i} style={{ display: 'flex', gap: 11, padding: '11px 14px', borderBottom: i < shown.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={x.dir === 'in' && x.ch === 'call' ? 'phone-incoming' : m.ic} size={14} color={m.fg} /></div>
-          <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '16px 16px 20px' }}>
+        {shown.map((x, i) => { const m = CH_META[x.ch]; const isLast = i === shown.length - 1; return <div key={i} style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 30 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={x.dir === 'in' && x.ch === 'call' ? 'phone-incoming' : m.ic} size={14} color={m.fg} /></div>
+            {!isLast && <div style={{ flex: 1, width: 1, background: LH.borderSoft, minHeight: 14, marginTop: 4 }} />}
+          </div>
+          <div style={{ flex: 1, minWidth: 0, paddingBottom: isLast ? 0 : 18 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>{m.label}</span><span style={{ fontSize: 10, fontWeight: 600, color: x.dir === 'in' ? LH.green : LH.sub, background: x.dir === 'in' ? LH.greenBg : '#f1f0ec', borderRadius: 999, padding: '1px 6px' }}>{x.dir === 'in' ? 'Inbound' : 'Outbound'}</span><span style={{ flex: 1 }} /><span style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap' }}>{x.t}</span></div>
             <div style={{ fontSize: 12, color: LH.body, fontWeight: 600 }}>{x.title}</div>
             <div style={{ fontSize: 11.5, color: LH.muted, lineHeight: 1.45, marginTop: 1 }}>{x.preview}</div>
@@ -30537,11 +30540,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </div>; })}
         {!shown.length && <div style={{ padding: '30px 16px', textAlign: 'center', fontSize: 12.5, color: LH.muted }}>No {chFilter} history yet.</div>}
-      </div>
-      <div style={{ flexShrink: 0, borderTop: '1px solid ' + LH.borderSoft, padding: 10, display: 'flex', gap: 8 }}>
-        <Btn icon="phone" style={{ flex: 1, justifyContent: 'center' }} onClick={() => onToast && onToast('Calling ' + (lead && lead.name) + '…')}>Call</Btn>
-        <Btn icon="message-square" style={{ flex: 1, justifyContent: 'center' }} onClick={() => onToast && onToast('New SMS')}>SMS</Btn>
-        <Btn icon="mail" style={{ flex: 1, justifyContent: 'center' }} onClick={() => onToast && onToast('Compose email')}>Email</Btn>
       </div>
     </div>;
   }
@@ -32386,31 +32384,148 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {step === 2 && <div style={{ textAlign: 'center', padding: '20px 0' }}><div style={{ width: 52, height: 52, borderRadius: 999, background: LH.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}><Ic name="check" size={26} color={LH.green} /></div><div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>{pick} is live</div><div style={{ fontSize: 13, color: LH.sub, marginTop: 4, maxWidth: 380, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>New leads from {pick} will land in your pipeline automatically and enter any matching campaigns.</div></div>}
     </ChOverlay>;
   }
+  // Preset address suggestions for the map picker (DFW area, matches the sample lead territory).
+  const ADDR_SUGGEST = [
+    { a: '4821 Oakwood Dr, Plano, TX 75024', lat: 33.0862, lng: -96.7519 },
+    { a: '1200 E Legacy Dr, Plano, TX 75023', lat: 33.0736, lng: -96.6903 },
+    { a: '750 W Spring Creek Pkwy, Plano, TX 75023', lat: 33.0620, lng: -96.7300 },
+    { a: '3300 Preston Rd, Frisco, TX 75034', lat: 33.1198, lng: -96.8033 },
+    { a: '900 Coit Rd, Plano, TX 75075', lat: 33.0270, lng: -96.7690 },
+    { a: '2601 Internet Blvd, Frisco, TX 75034', lat: 33.1035, lng: -96.8200 }
+  ];
+  // Pick an address by dropping a pin on a Leaflet map (reverse-geocoded, coord fallback) or a suggestion.
+  function LeadAddressPicker({ initial, onClose, onApply }) {
+    const elRef = useRef(null); const mapRef = useRef(null); const mkRef = useRef(null);
+    const [addr, setAddr] = useState(initial || '');
+    const [q, setQ] = useState('');
+    const place = (lat, lng, label) => {
+      const L = window.L, m = mapRef.current; if (!L || !m) return;
+      if (mkRef.current) mkRef.current.setLatLng([lat, lng]); else mkRef.current = L.marker([lat, lng], { draggable: true }).addTo(m).on('dragend', e => { const p = e.target.getLatLng(); reverse(p.lat, p.lng); });
+      m.setView([lat, lng], Math.max(m.getZoom(), 13));
+      if (label) setAddr(label); else reverse(lat, lng);
+    };
+    const reverse = (lat, lng) => {
+      setAddr('Pinned · ' + lat.toFixed(4) + ', ' + lng.toFixed(4));
+      try {
+        const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 3500);
+        fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng, { signal: ctl.signal, headers: { 'Accept': 'application/json' } })
+          .then(r => r.json()).then(d => { clearTimeout(to); if (d && d.display_name) setAddr(d.display_name); }).catch(() => {});
+      } catch (e) {}
+    };
+    useEffect(() => {
+      if (!window.L || !elRef.current || mapRef.current) return;
+      const L = window.L;
+      const map = L.map(elRef.current, { center: [ADDR_SUGGEST[0].lat, ADDR_SUGGEST[0].lng], zoom: 11, zoomControl: false });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(map);
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      map.on('click', e => place(e.latlng.lat, e.latlng.lng));
+      mapRef.current = map; setTimeout(() => map.invalidateSize(), 60);
+      return () => { map.remove(); mapRef.current = null; };
+    }, []);
+    const matches = ADDR_SUGGEST.filter(s => s.a.toLowerCase().includes(q.toLowerCase()));
+    return ReactDOM.createPortal(<div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 3200, background: 'rgba(0,0,0,.42)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 'min(680px,96vw)', maxHeight: '88vh', background: '#fff', borderRadius: 14, boxShadow: '0 24px 64px rgba(0,0,0,.3)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid ' + LH.borderSoft }}><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Pick address from map</div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
+        <div style={{ padding: '12px 18px 0', position: 'relative' }}>
+          <div style={{ position: 'relative' }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 11, top: 11 }} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search an address…" style={{ width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px 0 32px', fontSize: 13, color: LH.ink, outline: 'none', boxSizing: 'border-box' }} /></div>
+          {q && <div style={{ border: '1px solid ' + LH.border, borderRadius: 9, marginTop: 6, overflow: 'hidden' }}>{matches.length ? matches.map(s => <div key={s.a} onClick={() => { place(s.lat, s.lng, s.a); setQ(''); }} style={{ padding: '9px 12px', fontSize: 12.5, color: LH.body, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name="map-pin" size={13} color={LH.sub} />{s.a}</div>) : <div style={{ padding: '9px 12px', fontSize: 12.5, color: LH.muted }}>No matches — click the map to drop a pin.</div>}</div>}
+        </div>
+        <div ref={elRef} style={{ margin: '12px 18px', height: 320, borderRadius: 10, overflow: 'hidden', border: '1px solid ' + LH.border, background: '#eee' }} />
+        <div style={{ padding: '0 18px 12px', fontSize: 12.5, color: addr ? LH.body : LH.muted, minHeight: 18 }}>{addr ? <span><Ic name="map-pin" size={13} color={LH.primary} /> {addr}</span> : 'Click on the map or search to set the address.'}</div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '12px 18px', borderTop: '1px solid ' + LH.borderSoft }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="check" onClick={() => { onApply(addr); onClose(); }} style={{ opacity: addr ? 1 : 0.5 }}>Use this address</Btn></div>
+      </div>
+    </div>, document.body);
+  }
+  const PB_QUESTIONS = [
+    { k: 'q1', n: 'Q1', label: 'Service territory', opts: ['Within service territory', 'Outside service territory'] },
+    { k: 'q2', n: 'Q2', label: 'Ownership / authority', opts: ['Homeowner', 'Authorized PM / HOA rep', 'Tenant', 'Other'] },
+    { k: 'q3', n: 'Q3', label: 'Property type', opts: ['Residential', 'Commercial'] },
+    { k: 'q4', n: 'Q4', label: 'Project type', opts: ['Roofing', 'Siding', 'Gutters', 'Windows', 'Painting', 'Multiple / not determined'] },
+    { k: 'q6', n: 'Q6', label: 'Damage cause', opts: ['Storm damage', 'Hail Damage', 'Fallen tree or debris', 'General wear and age', 'Proactive inspection', 'Other'] },
+    { k: 'q7', n: 'Q7', label: 'Claim status', opts: ['No Claim', 'Pre-Claim Inspection', 'Claim Filed', 'Waiting for Claim Filing', 'Adjuster Scheduled'] },
+    { k: 'q8', n: 'Q8', label: 'Appointment type', opts: ['Inspection', 'Sales Appointment'] }
+  ];
+  const PB_CLAIM = ['Pre-Claim Inspection', 'Claim Filed', 'Waiting for Claim Filing', 'Adjuster Scheduled'];
+  function pbOutcome(p) {
+    const answered = p.q2 || p.q3 || p.q4 || p.q6 || p.q7 || p.q8;
+    if (!answered) return { state: 'pending', tone: 'muted', label: 'Answer the playbook to qualify', detail: 'Nova asks these on the call; qualification updates live.' };
+    if (p.q1 === 'Outside service territory') return { state: 'disqualified', tone: 'red', label: 'Disqualified', detail: 'Property is outside the service territory — logged, no opportunity.' };
+    if (p.q2 === 'Tenant') return { state: 'disqualified', tone: 'red', label: 'Disqualified', detail: 'Caller is a tenant — CSR must get owner contact details.' };
+    const missing = []; if (!p.q3) missing.push('Property type'); if (!p.q4) missing.push('Project type'); if (!p.q8) missing.push('Appointment');
+    if (missing.length) return { state: 'hold', tone: 'amber', label: 'On hold — complete fields', detail: 'Missing: ' + missing.join(', ') + '. CSR notified.' };
+    const storm = p.q6 === 'Storm damage' || p.q6 === 'Hail Damage';
+    const claim = PB_CLAIM.includes(p.q7);
+    let pr, det;
+    if (storm && claim) { pr = 'High'; det = 'Storm + insurance — book inspection within 48 hours; alert CSR manager.'; }
+    else if (storm) { pr = 'High'; det = 'Storm damage — book the next available slot.'; }
+    else if (claim) { pr = 'Medium'; det = 'Insurance claim — book inspection; copy claim details to the opportunity.'; }
+    else { pr = 'Standard'; det = 'Retail — book per the chosen appointment type.'; }
+    return { state: 'qualified', tone: 'green', label: 'Qualified · ' + pr + ' priority', detail: det, priority: pr };
+  }
   function NewLeadForm({ sources, assignees, onClose, onToast, onCreate }) {
-    const [f, setF] = useState({ name: '', email: '', phone: '', src: (sources && sources[0]) || 'Manual', assignee: (assignees && assignees[0]) || '', note: '', stage: 'New lead', notes: '' });
+    const [f, setF] = useState({ name: '', email: '', phone: '', src: (sources && sources[0]) || 'Manual', assignee: (assignees && assignees[0]) || '', note: '', stage: 'New lead', notes: '', address: '' });
+    const [pb, setPb] = useState({ q1: 'Within service territory', q2: '', q3: '', q4: '', roofType: '', sidingType: '', q6: '', q6other: '', q7: '', q8: '', owner: '', when: '' });
     const [shown, setShown] = useState(false);
+    const [mapOpen, setMapOpen] = useState(false);
     useEffect(() => { const t = setTimeout(() => setShown(true), 10); const h = e => { if (e.key === 'Escape') onClose(); }; document.addEventListener('keydown', h); return () => { clearTimeout(t); document.removeEventListener('keydown', h); }; }, []);
     const set = (k, v) => setF(p => ({ ...p, [k]: v }));
+    const setQ = (k, v) => setPb(p => ({ ...p, [k]: v }));
     const inp = { width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
     const lbl = { fontSize: 12, fontWeight: 600, color: LH.body, marginBottom: 5, display: 'block' };
     const canSave = !!f.name.trim();
     const STAGES = ['New lead', 'Contacting', 'Qualifying', 'Needs human'];
-    // Same right-side sheet chrome as the lead-to-job creation sheet (docked, no dark overlay).
-    return <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 'min(440px,96%)', zIndex: 300, display: 'flex', flexDirection: 'column', background: '#fff', borderLeft: '1px solid ' + LH.borderSoft, boxShadow: '-10px 0 30px rgba(0,0,0,0.16)', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1)', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}><div><div style={{ fontSize: 15.5, fontWeight: 700, color: LH.ink }}>New lead</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Add a lead to your pipeline manually.</div></div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Full name<span style={{ color: LH.red }}> *</span></label><input value={f.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Jordan Blake" autoFocus style={inp} /></div>
-          <div><label style={lbl}>Email</label><input value={f.email} onChange={e => set('email', e.target.value)} placeholder="name@email.com" style={inp} /></div>
-          <div><label style={lbl}>Phone</label><input value={f.phone} onChange={e => set('phone', e.target.value)} placeholder="(555) 555-5555" style={inp} /></div>
-          <div><label style={lbl}>Lead source</label><Dropdown value={f.src} options={(sources || []).map(s => ({ value: s, label: s }))} onChange={v => set('src', v)} /></div>
-          <div><label style={lbl}>Stage</label><Dropdown value={f.stage} options={STAGES.map(s => ({ value: s, label: s }))} onChange={v => set('stage', v)} /></div>
-          <div><label style={lbl}>Assigned CSR</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
-          <div><label style={lbl}>Service interest</label><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="e.g. Roof inspection" style={inp} /></div>
-          <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Notes</label><textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional context…" style={{ ...inp, height: 70, padding: 10, resize: 'vertical' }} /></div>
+    const oc = pbOutcome(pb);
+    const ocT = oc.tone === 'green' ? { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd } : oc.tone === 'red' ? { bg: '#fdecec', fg: LH.red, bd: '#f6cccc' } : oc.tone === 'amber' ? { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd } : { bg: '#f1f0ec', fg: LH.sub, bd: LH.border };
+    const prTone = p => p === 'High' ? { bg: '#fdecec', fg: LH.red } : p === 'Medium' ? { bg: LH.amberBg, fg: LH.amber } : { bg: LH.tint, fg: LH.body };
+    const create = () => { if (!canSave) return; const stage = oc.state === 'qualified' ? 'Qualifying' : (oc.state === 'hold' || oc.state === 'disqualified') ? 'Needs human' : f.stage; onCreate({ ...f, stage, qualification: oc }); };
+    const pbSelect = (qq) => <div style={{ marginBottom: 12 }}>
+      <label style={{ ...lbl, display: 'flex', gap: 6 }}><span style={{ color: LH.muted, fontWeight: 700 }}>{qq.n}</span>{qq.label}</label>
+      <Dropdown value={pb[qq.k] || ''} placeholder="Select…" options={qq.opts.map(o => ({ value: o, label: o }))} onChange={v => setQ(qq.k, v)} />
+    </div>;
+    return <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 'min(920px,97%)', zIndex: 300, display: 'flex', flexDirection: 'column', background: '#fff', borderLeft: '1px solid ' + LH.borderSoft, boxShadow: '-10px 0 30px rgba(0,0,0,0.16)', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1)', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}><div><div style={{ fontSize: 15.5, fontWeight: 700, color: LH.ink }}>New lead</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Add a lead and qualify it against the playbook.</div></div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
+      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+        {/* Left — lead form */}
+        <div style={{ flex: '1 1 0', minWidth: 0, overflowY: 'auto', padding: 20, borderRight: '1px solid ' + LH.borderSoft }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Full name<span style={{ color: LH.red }}> *</span></label><input value={f.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Jordan Blake" autoFocus style={inp} /></div>
+            <div><label style={lbl}>Email</label><input value={f.email} onChange={e => set('email', e.target.value)} placeholder="name@email.com" style={inp} /></div>
+            <div><label style={lbl}>Phone</label><input value={f.phone} onChange={e => set('phone', e.target.value)} placeholder="(555) 555-5555" style={inp} /></div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={lbl}>Address</label><button onClick={() => setMapOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 5 }}><Ic name="map-pin" size={13} color={LH.primary} />Pick from map</button></div>
+              <input value={f.address} onChange={e => set('address', e.target.value)} placeholder="Start typing or pick from map…" style={inp} />
+            </div>
+            <div><label style={lbl}>Lead source</label><Dropdown value={f.src} options={(sources || []).map(s => ({ value: s, label: s }))} onChange={v => set('src', v)} /></div>
+            <div><label style={lbl}>Stage</label><Dropdown value={f.stage} options={STAGES.map(s => ({ value: s, label: s }))} onChange={v => set('stage', v)} /></div>
+            <div><label style={lbl}>Assigned CSR</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
+            <div><label style={lbl}>Service interest</label><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="e.g. Roof inspection" style={inp} /></div>
+            <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Notes</label><textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional context…" style={{ ...inp, height: 70, padding: 10, resize: 'vertical' }} /></div>
+          </div>
+        </div>
+        {/* Right — qualification playbook */}
+        <div style={{ flex: '0 0 400px', maxWidth: '46%', overflowY: 'auto', padding: 20, background: LH.bg }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="book-open" size={15} color={LH.primary} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Qualification playbook</span></div>
+          <div style={{ fontSize: 11.5, color: LH.sub, marginBottom: 12 }}>Shield Roofing · Lead Qualification decision flow. Qualification updates live as you answer.</div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '11px 12px', borderRadius: 10, border: '1px solid ' + ocT.bd, background: ocT.bg, marginBottom: 14 }}>
+            <Ic name={oc.state === 'qualified' ? 'check-circle' : oc.state === 'disqualified' ? 'x-circle' : oc.state === 'hold' ? 'pause-circle' : 'circle-dashed'} size={16} color={ocT.fg} style={{ position: 'relative', top: 1, flexShrink: 0 }} />
+            <div style={{ minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13, fontWeight: 700, color: ocT.fg }}>{oc.label}</span>{oc.priority && <span style={{ fontSize: 10.5, fontWeight: 700, borderRadius: 999, padding: '1px 8px', background: prTone(oc.priority).bg, color: prTone(oc.priority).fg }}>{oc.priority}</span>}</div><div style={{ fontSize: 11.5, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{oc.detail}</div></div>
+          </div>
+          {pbSelect(PB_QUESTIONS[0])}
+          {pbSelect(PB_QUESTIONS[1])}
+          {pb.q2 === 'Tenant' && <div style={{ marginBottom: 12 }}><label style={lbl}>Owner name</label><input value={pb.owner} onChange={e => setQ('owner', e.target.value)} placeholder="Homeowner name" style={inp} /></div>}
+          {pbSelect(PB_QUESTIONS[2])}
+          {pbSelect(PB_QUESTIONS[3])}
+          {pb.q4 === 'Roofing' && <div style={{ marginBottom: 12 }}><label style={lbl}>Roof type</label><Dropdown value={pb.roofType || ''} placeholder="Select…" options={['Asphalt', 'Metal', 'Shingle', 'TPO', 'EPDM', 'PVC'].map(o => ({ value: o, label: o }))} onChange={v => setQ('roofType', v)} /></div>}
+          {pb.q4 === 'Siding' && <div style={{ marginBottom: 12 }}><label style={lbl}>Siding type</label><Dropdown value={pb.sidingType || ''} placeholder="Select…" options={['James Hardie', 'LP SmartSide', 'Vinyl'].map(o => ({ value: o, label: o }))} onChange={v => setQ('sidingType', v)} /></div>}
+          {pbSelect(PB_QUESTIONS[4])}
+          {pb.q6 === 'Other' && <div style={{ marginBottom: 12 }}><label style={lbl}>Cause of damage</label><input value={pb.q6other} onChange={e => setQ('q6other', e.target.value)} placeholder="Describe the cause" style={inp} /></div>}
+          {pbSelect(PB_QUESTIONS[5])}
+          {pbSelect(PB_QUESTIONS[6])}
+          {pb.q8 && <div style={{ marginBottom: 4 }}><label style={lbl}>Preferred date & time</label><input value={pb.when} onChange={e => setQ('when', e.target.value)} placeholder="e.g. Tue Aug 19, 9:00 AM" style={inp} /></div>}
         </div>
       </div>
-      <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="plus" onClick={() => canSave && onCreate(f)} style={{ opacity: canSave ? 1 : 0.5 }}>Create lead</Btn></div>
+      <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="plus" onClick={create} style={{ opacity: canSave ? 1 : 0.5 }}>Create lead</Btn></div>
+      {mapOpen && <LeadAddressPicker initial={f.address} onClose={() => setMapOpen(false)} onApply={a => set('address', a)} />}
     </div>;
   }
   function ImportFlow({ onClose, onToast, onImport }) {
