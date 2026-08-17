@@ -24228,6 +24228,7 @@ function TopNavBar(){
               <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M4.5 0H1.5C0.671573 0 0 0.671573 0 1.5V4.5C0 5.32843 0.671573 6 1.5 6H4.5C5.32843 6 6 5.32843 6 4.5V1.5C6 0.671573 5.32843 0 4.5 0Z" fill="#525252"/><path d="M4.5 7H1.5C0.671573 7 0 7.67157 0 8.5V11.5C0 12.3284 0.671573 13 1.5 13H4.5C5.32843 13 6 12.3284 6 11.5V8.5C6 7.67157 5.32843 7 4.5 7Z" fill="#525252" fillOpacity="0.2"/><path d="M11.5 14H8.5C7.67157 14 7 14.6716 7 15.5V18.5C7 19.3284 7.67157 20 8.5 20H11.5C12.3284 20 13 19.3284 13 18.5V15.5C13 14.6716 12.3284 14 11.5 14Z" fill="#525252" fillOpacity="0.2"/><path d="M11.5 0H8.5C7.67157 0 7 0.671573 7 1.5V4.5C7 5.32843 7.67157 6 8.5 6H11.5C12.3284 6 13 5.32843 13 4.5V1.5C13 0.671573 12.3284 0 11.5 0Z" fill="#525252" fillOpacity="0.2"/><path d="M11.5 7H8.5C7.67157 7 7 7.67157 7 8.5V11.5C7 12.3284 7.67157 13 8.5 13H11.5C12.3284 13 13 12.3284 13 11.5V8.5C13 7.67157 12.3284 7 11.5 7Z" fill="#525252"/><path d="M4.5 14H1.5C0.671573 14 0 14.6716 0 15.5V18.5C0 19.3284 0.671573 20 1.5 20H4.5C5.32843 20 6 19.3284 6 18.5V15.5C6 14.6716 5.32843 14 4.5 14Z" fill="#525252"/><path d="M18.5 0H15.5C14.6716 0 14 0.671573 14 1.5V4.5C14 5.32843 14.6716 6 15.5 6H18.5C19.3284 6 20 5.32843 20 4.5V1.5C20 0.671573 19.3284 0 18.5 0Z" fill="#525252"/><path d="M18.5 7H15.5C14.6716 7 14 7.67157 14 8.5V11.5C14 12.3284 14.6716 13 15.5 13H18.5C19.3284 13 20 12.3284 20 11.5V8.5C20 7.67157 19.3284 7 18.5 7Z" fill="#525252" fillOpacity="0.2"/><path d="M18.5 14H15.5C14.6716 14 14 14.6716 14 15.5V18.5C14 19.3284 14.6716 20 15.5 20H18.5C19.3284 20 20 19.3284 20 18.5V15.5C20 14.6716 19.3284 14 18.5 14Z" fill="#525252"/></svg>
               <span className="font-medium">Sense</span>
             </button>
+            <div title="Zuper Connect" onClick={()=>window.dispatchEvent(new CustomEvent('zuper-connect:open'))} className="w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-black/5"><I name="phone" size={16} color="#737373"/></div>
             {['search','message-square','bell','layout-grid','moon'].map(ic=>(
               <div key={ic} className="w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-black/5"><I name={ic} size={16} color="#737373"/></div>
             ))}
@@ -32464,11 +32465,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     else { pr = 'Standard'; det = 'Retail — book per the chosen appointment type.'; }
     return { state: 'qualified', tone: 'green', label: 'Qualified · ' + pr + ' priority', detail: det, priority: pr };
   }
-  function NewLeadForm({ sources, assignees, onClose, onToast, onCreate }) {
-    const [f, setF] = useState({ name: '', email: '', phone: '', src: (sources && sources[0]) || 'Manual', assignee: (assignees && assignees[0]) || '', note: '', stage: 'New lead', notes: '', address: '' });
+  function NewLeadForm({ sources, assignees, onClose, onToast, onCreate, prefill }) {
+    const pf = prefill || {};
+    const [f, setF] = useState({ name: pf.name || '', email: pf.email || '', phone: pf.phone || '', src: pf.src || (sources && sources[0]) || 'Manual', assignee: (assignees && assignees[0]) || '', note: '', stage: 'New lead', notes: '', address: '' });
     const [pb, setPb] = useState({ q1: 'Within service territory', q2: '', q3: '', q4: '', roofType: '', sidingType: '', q6: '', q6other: '', q7: '', q8: '', owner: '', when: '' });
     const [shown, setShown] = useState(false);
     const [mapOpen, setMapOpen] = useState(false);
+    const [pbOpen, setPbOpen] = useState(true);
     useEffect(() => { const t = setTimeout(() => setShown(true), 10); const h = e => { if (e.key === 'Escape') onClose(); }; document.addEventListener('keydown', h); return () => { clearTimeout(t); document.removeEventListener('keydown', h); }; }, []);
     const set = (k, v) => setF(p => ({ ...p, [k]: v }));
     const setQ = (k, v) => setPb(p => ({ ...p, [k]: v }));
@@ -32484,8 +32487,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <label style={{ ...lbl, display: 'flex', gap: 6 }}><span style={{ color: LH.muted, fontWeight: 700 }}>{qq.n}</span>{qq.label}</label>
       <Dropdown value={pb[qq.k] || ''} placeholder="Select…" options={qq.opts.map(o => ({ value: o, label: o }))} onChange={v => setQ(qq.k, v)} />
     </div>;
-    return ReactDOM.createPortal(<div onMouseDown={onClose} style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.42)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
-    <div onMouseDown={e => e.stopPropagation()} style={{ width: 'min(960px,96vw)', height: 'min(680px,92vh)', background: '#fff', borderRadius: 16, boxShadow: '0 30px 80px rgba(0,0,0,0.35)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: shown ? 'scale(1)' : 'scale(0.98)', opacity: shown ? 1 : 0, transition: 'transform .18s ease, opacity .18s ease' }}>
+    return ReactDOM.createPortal(<div onMouseDown={onClose} style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(8,6,5,0.35)', display: 'flex', justifyContent: 'flex-end', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ width: pbOpen ? 'min(880px,96vw)' : 'min(560px,96vw)', height: '100%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,0.16)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s ease' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}><div><div style={{ fontSize: 15.5, fontWeight: 700, color: LH.ink }}>New lead</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Add a lead and qualify it against the playbook.</div></div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
       <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
         {/* Left — lead form */}
@@ -32505,9 +32508,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Notes</label><textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional context…" style={{ ...inp, height: 70, padding: 10, resize: 'vertical' }} /></div>
           </div>
         </div>
-        {/* Right — qualification playbook */}
-        <div style={{ flex: '0 0 400px', maxWidth: '46%', overflowY: 'auto', padding: 20, background: LH.bg }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="book-open" size={15} color={LH.primary} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Qualification playbook</span></div>
+        {/* Right — qualification playbook (collapsible) */}
+        {pbOpen && <div style={{ flex: '0 0 400px', maxWidth: '46%', overflowY: 'auto', padding: 20, background: LH.bg, borderLeft: '1px solid ' + LH.borderSoft }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="book-open" size={15} color={LH.primary} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink, flex: 1 }}>Qualification playbook</span><button onClick={() => setPbOpen(false)} title="Collapse playbook" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="chevrons-right" size={16} color={LH.sub} /></button></div>
           <div style={{ fontSize: 11.5, color: LH.sub, marginBottom: 12 }}>Shield Roofing · Lead Qualification decision flow. Qualification updates live as you answer.</div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '11px 12px', borderRadius: 10, border: '1px solid ' + ocT.bd, background: ocT.bg, marginBottom: 14 }}>
             <Ic name={oc.state === 'qualified' ? 'check-circle' : oc.state === 'disqualified' ? 'x-circle' : oc.state === 'hold' ? 'pause-circle' : 'circle-dashed'} size={16} color={ocT.fg} style={{ position: 'relative', top: 1, flexShrink: 0 }} />
@@ -32525,7 +32528,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {pbSelect(PB_QUESTIONS[5])}
           {pbSelect(PB_QUESTIONS[6])}
           {pb.q8 && <div style={{ marginBottom: 4 }}><label style={lbl}>Preferred date & time</label><input value={pb.when} onChange={e => setQ('when', e.target.value)} placeholder="e.g. Tue Aug 19, 9:00 AM" style={inp} /></div>}
-        </div>
+        </div>}
+        {!pbOpen && <button onClick={() => setPbOpen(true)} title="Show qualification playbook" style={{ flex: '0 0 44px', border: 'none', borderLeft: '1px solid ' + LH.borderSoft, background: LH.bg, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '16px 0' }}>
+          <Ic name="chevrons-left" size={16} color={LH.sub} />
+          <Ic name="book-open" size={15} color={LH.primary} />
+          <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontSize: 11.5, fontWeight: 700, color: LH.ink, letterSpacing: '.02em' }}>Playbook</span>
+          <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontSize: 10.5, fontWeight: 700, color: ocT.fg }}>{oc.state === 'qualified' ? 'Qualified' : oc.state === 'disqualified' ? 'Disqualified' : oc.state === 'hold' ? 'On hold' : 'Pending'}</span>
+        </button>}
       </div>
       <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="plus" onClick={create} style={{ opacity: canSave ? 1 : 0.5 }}>Create lead</Btn></div>
       {mapOpen && <LeadAddressPicker initial={f.address} onClose={() => setMapOpen(false)} onApply={a => set('address', a)} />}
@@ -33098,6 +33107,68 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </>);
   }
   window.LeadHubCampaignCreate = CampaignCreate;
+
+  // ─────────── Zuper Connect — incoming-call CTI with screen-pop + create-lead-from-call ───────────
+  function ZuperConnectCTI({ onClose }) {
+    const [phase, setPhase] = useState('incoming'); // incoming | connected
+    const [secs, setSecs] = useState(0);
+    const [hiOpen, setHiOpen] = useState(true);
+    const [leadOpen, setLeadOpen] = useState(false);
+    const [toast, setToast] = useState(null);
+    const caller = { name: 'David Moore', phone: '(+1) 206 234 2124', avatar: 'D' };
+    useEffect(() => { if (phase !== 'connected') return; const t = setInterval(() => setSecs(s => s + 1), 1000); return () => clearInterval(t); }, [phase]);
+    const mmss = ('0' + Math.floor(secs / 60)).slice(-2) + ':' + ('0' + (secs % 60)).slice(-2);
+    const showToast = m => { setToast(m); setTimeout(() => setToast(null), 2800); };
+    const HL = [['Outstanding balance', '$790'], ['Lifetime Value', '$4,369'], ['Last Service Date', '11/01/2025'], ['Customer Since', '05/08/2024'], ['Account Manager', 'Lewis Hamilton']];
+    const SECTIONS = ['Jobs', 'Recent Conversation', 'Quotes', 'Invoices'];
+    const navy = '#0f1d2e', navy2 = '#16283d', line = 'rgba(255,255,255,.12)', sub = 'rgba(255,255,255,.6)';
+    const circleBtn = (bg, ic, col, label, onClick) => <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}><button onClick={onClick} style={{ width: 46, height: 46, borderRadius: 999, border: 'none', background: bg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={ic} size={20} color={col} /></button><span style={{ fontSize: 11, color: sub }}>{label}</span></div>;
+    return <div style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 2600, display: 'flex', alignItems: 'stretch', fontFamily: "'Inter',ui-sans-serif,system-ui", boxShadow: '0 24px 60px rgba(0,0,0,.28)', borderRadius: 14 }}>
+      {/* Screen-pop context card */}
+      <div style={{ width: 292, background: '#fff', borderRadius: '14px 0 0 14px', border: '1px solid ' + LH.border, borderRight: 'none', overflow: 'hidden', maxHeight: 540, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          <button onClick={() => setHiOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '12px 14px', background: 'none', border: 'none', borderBottom: '1px solid ' + LH.borderSoft, cursor: 'pointer' }}><Ic name="user" size={14} color={LH.sub} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink, flex: 1, textAlign: 'left' }}>Customer Highlights</span><Ic name={hiOpen ? 'chevron-up' : 'chevron-down'} size={15} color={LH.sub} /></button>
+          {hiOpen && <div style={{ padding: '10px 14px', borderBottom: '1px solid ' + LH.borderSoft }}>
+            {HL.map(([k, v]) => <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '5px 0' }}><span style={{ fontSize: 12, color: LH.muted }}>{k}</span><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{v}</span></div>)}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0' }}><span style={{ fontSize: 12, color: LH.muted }}>Tags</span><span style={{ fontSize: 10.5, fontWeight: 700, color: '#dc2626', background: '#fdecec', borderRadius: 999, padding: '2px 9px' }}>VIP</span></div>
+            <button onClick={() => showToast('Opening customer profile…')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.blue, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0 0' }}>View Full Details<Ic name="external-link" size={12} color={LH.blue} /></button>
+          </div>}
+          {SECTIONS.map(s => <button key={s} onClick={() => showToast(s + ' — opening…')} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 14px', background: 'none', border: 'none', borderBottom: '1px solid ' + LH.borderSoft, cursor: 'pointer' }}><Ic name={s === 'Jobs' ? 'briefcase' : s === 'Quotes' ? 'file-text' : s === 'Invoices' ? 'receipt' : 'message-square'} size={14} color={LH.sub} /><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, flex: 1, textAlign: 'left' }}>{s}</span><Ic name="chevron-down" size={14} color={LH.muted} /></button>)}
+        </div>
+        <div style={{ padding: 12, borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}>
+          <div style={{ fontSize: 11, color: LH.muted, marginBottom: 8, lineHeight: 1.4 }}>New enquiry on this call? Capture &amp; qualify it against the playbook.</div>
+          <Btn kind="primary" icon="book-open" onClick={() => setLeadOpen(true)} style={{ width: '100%', justifyContent: 'center' }}>Create lead from call</Btn>
+        </div>
+      </div>
+      {/* Call panel */}
+      <div style={{ width: 276, background: navy, borderRadius: '0 14px 14px 0', color: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: navy2 }}><span style={{ fontSize: 12.5, fontWeight: 700 }}>Sales</span><button onClick={onClose} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Ic name="minimize-2" size={15} color={sub} /></button></div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '22px 16px 8px' }}>
+          <div style={{ width: 58, height: 58, borderRadius: 999, background: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, marginBottom: 12 }}>{caller.avatar}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 16, fontWeight: 700 }}>{caller.name}<Ic name="external-link" size={14} color={sub} /></div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,.8)', marginTop: 3 }}>{caller.phone}</div>
+          <div style={{ fontSize: 12, color: sub, marginTop: 3 }}>{phase === 'incoming' ? 'Incoming call…' : 'On call · ' + mmss}</div>
+          <div style={{ flex: 1 }} />
+          {phase === 'incoming'
+            ? <div style={{ display: 'flex', gap: 34, padding: '10px 0 14px' }}>{circleBtn('#dc2626', 'phone-off', '#fff', 'Ignore', onClose)}{circleBtn('#16a34a', 'phone', '#fff', 'Accept', () => setPhase('connected'))}</div>
+            : <div style={{ display: 'flex', gap: 26, padding: '10px 0 14px' }}>{circleBtn('rgba(255,255,255,.12)', 'mic-off', '#fff', 'Mute')}{circleBtn('rgba(255,255,255,.12)', 'pause', '#fff', 'Hold')}{circleBtn('#dc2626', 'phone-off', '#fff', 'End', onClose)}</div>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '10px', background: navy2 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="phone" size={15} color={sub} /></div>
+          <div style={{ width: 40, height: 34, borderRadius: 8, background: '#e0642f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="grid-3x3" size={16} color="#fff" /></div>
+          <div style={{ width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="users" size={15} color={sub} /></div>
+        </div>
+      </div>
+      {leadOpen && <NewLeadForm sources={['Phone', 'Manual', 'Website', 'Referral', 'Angi', 'Thumbtack', 'Google LSA', 'Meta Ads']} assignees={['Maria Gonzalez', 'Diane Cole', 'Marcus Lee', 'Sarah Chen', 'Tom Rivera']} prefill={{ name: caller.name, phone: caller.phone, src: 'Phone' }} onClose={() => setLeadOpen(false)} onToast={showToast} onCreate={() => { setLeadOpen(false); showToast('Lead created & qualified from the call'); }} />}
+      {toast && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 3400, background: LH.ink, color: '#fff', fontSize: 13, fontWeight: 500, padding: '11px 18px', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="check-circle" size={15} color="#4ade80" />{toast}</div>}
+    </div>;
+  }
+  function ZuperConnectHost() {
+    const [open, setOpen] = useState(false);
+    useEffect(() => { const h = () => setOpen(true); window.addEventListener('zuper-connect:open', h); return () => window.removeEventListener('zuper-connect:open', h); }, []);
+    return open ? <ZuperConnectCTI onClose={() => setOpen(false)} /> : null;
+  }
+  try { if (!document.getElementById('zuper-connect-root')) { const host = document.createElement('div'); host.id = 'zuper-connect-root'; document.body.appendChild(host); ReactDOM.createRoot(host).render(React.createElement(ZuperConnectHost)); } } catch (e) {}
 })();
 </script>
 <script>
