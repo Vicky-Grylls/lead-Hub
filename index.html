@@ -33145,9 +33145,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     return <div style={{ position: 'fixed', top: 52, right: 16, zIndex: 2600, display: 'flex', alignItems: 'stretch', fontFamily: "'Inter',ui-sans-serif,system-ui", boxShadow: '0 24px 60px rgba(0,0,0,.28)', borderRadius: 14, height: 'min(560px, calc(100vh - 76px))' }}>
       {/* Screen-pop context card */}
       <div style={{ width: 320, background: '#fff', borderRadius: '14px 0 0 14px', border: '1px solid ' + LH.border, borderRight: 'none', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '10px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
-          <div style={{ display: 'flex', gap: 3, padding: 3, background: '#f1f0ec', borderRadius: 9 }}>{seg('lead', 'New lead')}{seg('customer', 'Known customer')}</div>
-        </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {mode === 'customer' ? <>
             {acc('highlights', 'user', 'Customer Highlights', <>
