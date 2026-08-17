@@ -598,10 +598,12 @@ function TopNavBar({ extraTab, extraTabs = [], activeExtra = null, onSelectExtra
     fill: "#525252"
   })), /*#__PURE__*/React.createElement("span", {
     className: "font-medium"
-  }, "Sense")), ['search', 'message-square', 'bell', 'layout-grid', 'moon'].map(ic => ic === 'bell' ? /*#__PURE__*/React.createElement(NotifBell, {
+  }, "Sense")), ['phone', 'search', 'message-square', 'bell', 'layout-grid', 'moon'].map(ic => ic === 'bell' ? /*#__PURE__*/React.createElement(NotifBell, {
     key: ic
   }) : /*#__PURE__*/React.createElement("div", {
     key: ic,
+    title: ic === 'phone' ? 'Zuper Connect' : undefined,
+    onClick: ic === 'phone' ? () => window.dispatchEvent(new CustomEvent('zuper-connect:open')) : undefined,
     className: "w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-black/5"
   }, /*#__PURE__*/React.createElement(I, {
     name: ic,
@@ -15337,10 +15339,12 @@ function TopNavBar({ extraTab, extraTabs = [], activeExtra = null, onSelectExtra
     fill: "#525252"
   })), /*#__PURE__*/React.createElement("span", {
     className: "font-medium"
-  }, "Sense")), ['search', 'message-square', 'bell', 'layout-grid', 'moon'].map(ic => ic === 'bell' ? /*#__PURE__*/React.createElement(NotifBell, {
+  }, "Sense")), ['phone', 'search', 'message-square', 'bell', 'layout-grid', 'moon'].map(ic => ic === 'bell' ? /*#__PURE__*/React.createElement(NotifBell, {
     key: ic
   }) : /*#__PURE__*/React.createElement("div", {
     key: ic,
+    title: ic === 'phone' ? 'Zuper Connect' : undefined,
+    onClick: ic === 'phone' ? () => window.dispatchEvent(new CustomEvent('zuper-connect:open')) : undefined,
     className: "w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-black/5"
   }, /*#__PURE__*/React.createElement(I, {
     name: ic,
