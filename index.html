@@ -30504,7 +30504,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </div>;
   }
   // Right-pane communication history — last calls / SMS / emails for this lead, filterable by channel.
-  function LeadCommHistoryPanel({ lead, onToast }) {
+  function LeadCommHistoryPanel({ lead, onToast, onOpen }) {
     const [chFilter, setChFilter] = useState('all');
     const first = (lead && lead.name ? lead.name.split(' ')[0] : 'there');
     const CH_META = { call: { ic: 'phone', fg: LH.green, bg: LH.greenBg, label: 'Call' }, sms: { ic: 'message-square', fg: LH.blue, bg: LH.blueBg, label: 'SMS' }, email: { ic: 'mail', fg: LH.amber, bg: LH.amberBg, label: 'Email' } };
@@ -30532,11 +30532,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <div style={{ width: 30, height: 30, borderRadius: 8, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={x.dir === 'in' && x.ch === 'call' ? 'phone-incoming' : m.ic} size={14} color={m.fg} /></div>
             {!isLast && <div style={{ flex: 1, width: 1, background: LH.borderSoft, minHeight: 14, marginTop: 4 }} />}
           </div>
-          <div style={{ flex: 1, minWidth: 0, paddingBottom: isLast ? 0 : 18 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>{m.label}</span><span style={{ fontSize: 10, fontWeight: 600, color: x.dir === 'in' ? LH.green : LH.sub, background: x.dir === 'in' ? LH.greenBg : '#f1f0ec', borderRadius: 999, padding: '1px 6px' }}>{x.dir === 'in' ? 'Inbound' : 'Outbound'}</span><span style={{ flex: 1 }} /><span style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap' }}>{x.t}</span></div>
-            <div style={{ fontSize: 12, color: LH.body, fontWeight: 600 }}>{x.title}</div>
-            <div style={{ fontSize: 11.5, color: LH.muted, lineHeight: 1.45, marginTop: 1 }}>{x.preview}</div>
-            <div style={{ fontSize: 10.5, color: LH.muted, marginTop: 3 }}>{x.who}</div>
+          <div onClick={() => onOpen && onOpen(x)} style={{ flex: 1, minWidth: 0, paddingBottom: isLast ? 0 : 18, cursor: 'pointer' }}>
+            <div style={{ borderRadius: 9, padding: 9, margin: '-9px', transition: 'background .12s' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>{m.label}</span><span style={{ fontSize: 10, fontWeight: 600, color: x.dir === 'in' ? LH.green : LH.sub, background: x.dir === 'in' ? LH.greenBg : '#f1f0ec', borderRadius: 999, padding: '1px 6px' }}>{x.dir === 'in' ? 'Inbound' : 'Outbound'}</span><span style={{ flex: 1 }} /><span style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap' }}>{x.t}</span></div>
+              <div style={{ fontSize: 12, color: LH.body, fontWeight: 600 }}>{x.title}</div>
+              <div style={{ fontSize: 11.5, color: LH.muted, lineHeight: 1.45, marginTop: 1 }}>{x.preview}</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 3 }}><span style={{ fontSize: 10.5, color: LH.muted }}>{x.who}</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10.5, fontWeight: 600, color: LH.primary }}>Open in Connect<Ic name="arrow-right" size={11} color={LH.primary} /></span></div>
+            </div>
           </div>
         </div>; })}
         {!shown.length && <div style={{ padding: '30px 16px', textAlign: 'center', fontSize: 12.5, color: LH.muted }}>No {chFilter} history yet.</div>}
@@ -30742,7 +30744,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}><Btn kind="primary" icon="send" onClick={send}>Send</Btn></div>
               </div>
             </div>}
-            {panel === 'comm' && <LeadCommHistoryPanel lead={lead} onToast={onToast} />}
+            {panel === 'comm' && <LeadCommHistoryPanel lead={lead} onToast={onToast} onOpen={x => { setPanel('connect'); onToast && onToast('Opening ' + (x.ch === 'call' ? 'call' : x.ch === 'sms' ? 'SMS' : 'email') + ' in Zuper Connect…'); }} />}
             {panel === 'history' && <LeadStatusHistoryPanel lead={lead} onToast={onToast} />}
             {panel === 'assoc' && <LeadAssociationsPanel lead={lead} onToast={onToast} />}
             {panel === 'chats' && <LeadChatsPanel />}
@@ -32482,7 +32484,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <label style={{ ...lbl, display: 'flex', gap: 6 }}><span style={{ color: LH.muted, fontWeight: 700 }}>{qq.n}</span>{qq.label}</label>
       <Dropdown value={pb[qq.k] || ''} placeholder="Select…" options={qq.opts.map(o => ({ value: o, label: o }))} onChange={v => setQ(qq.k, v)} />
     </div>;
-    return <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 'min(920px,97%)', zIndex: 300, display: 'flex', flexDirection: 'column', background: '#fff', borderLeft: '1px solid ' + LH.borderSoft, boxShadow: '-10px 0 30px rgba(0,0,0,0.16)', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1)', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+    return ReactDOM.createPortal(<div onMouseDown={onClose} style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.42)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ width: 'min(960px,96vw)', height: 'min(680px,92vh)', background: '#fff', borderRadius: 16, boxShadow: '0 30px 80px rgba(0,0,0,0.35)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: shown ? 'scale(1)' : 'scale(0.98)', opacity: shown ? 1 : 0, transition: 'transform .18s ease, opacity .18s ease' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}><div><div style={{ fontSize: 15.5, fontWeight: 700, color: LH.ink }}>New lead</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Add a lead and qualify it against the playbook.</div></div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
       <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
         {/* Left — lead form */}
@@ -32526,7 +32529,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
       <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="plus" onClick={create} style={{ opacity: canSave ? 1 : 0.5 }}>Create lead</Btn></div>
       {mapOpen && <LeadAddressPicker initial={f.address} onClose={() => setMapOpen(false)} onApply={a => set('address', a)} />}
-    </div>;
+    </div>
+    </div>, document.body);
   }
   function ImportFlow({ onClose, onToast, onImport }) {
     const [step, setStep] = useState(0);
