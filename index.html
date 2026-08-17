@@ -32469,10 +32469,85 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     else { pr = 'Standard'; det = 'Retail — book per the chosen appointment type.'; }
     return { state: 'qualified', tone: 'green', label: 'Qualified · ' + pr + ' priority', detail: det, priority: pr };
   }
+  const PENDING = { state: 'pending', tone: 'muted', label: 'Answer the playbook to qualify', detail: 'Nova asks these on the call; qualification updates live.' };
+  function stormOutcome(p) {
+    if (!(p.q2 || p.sev || p.safe || p.q7)) return PENDING;
+    if (p.q1 === 'Outside service territory') return { state: 'disqualified', tone: 'red', label: 'Disqualified', detail: 'Outside the service territory — logged, no opportunity.' };
+    if (p.q2 === 'Tenant') return { state: 'disqualified', tone: 'red', label: 'Disqualified', detail: 'Caller is a tenant — CSR must get owner contact details.' };
+    const missing = []; if (!p.sev) missing.push('Damage severity'); if (!p.safe) missing.push('Weather-tight?');
+    if (missing.length) return { state: 'hold', tone: 'amber', label: 'On hold — complete fields', detail: 'Missing: ' + missing.join(', ') + '.' };
+    const urgent = p.sev === 'Active leak / emergency' || p.safe === 'No' || p.q7 === 'Claim Filed' || p.q7 === 'Adjuster Scheduled';
+    return urgent
+      ? { state: 'qualified', tone: 'green', label: 'Qualified · High priority', detail: 'Emergency/insurance — dispatch inspection within 24–48 hours.', priority: 'High' }
+      : { state: 'qualified', tone: 'green', label: 'Qualified · Medium priority', detail: 'Storm damage — book the next available inspection.', priority: 'Medium' };
+  }
+  function retailOutcome(p) {
+    if (!(p.q2 || p.q3 || p.q4 || p.timeline)) return PENDING;
+    if (p.q1 === 'Outside service territory') return { state: 'disqualified', tone: 'red', label: 'Disqualified', detail: 'Outside the service territory — logged, no opportunity.' };
+    if (p.q2 === 'Tenant') return { state: 'disqualified', tone: 'red', label: 'Disqualified', detail: 'Caller is a tenant — CSR must get owner contact details.' };
+    const missing = []; if (!p.q3) missing.push('Property type'); if (!p.q4) missing.push('Project type'); if (!p.timeline) missing.push('Timeline');
+    if (missing.length) return { state: 'hold', tone: 'amber', label: 'On hold — complete fields', detail: 'Missing: ' + missing.join(', ') + '.' };
+    let pr, det;
+    if (p.timeline === 'ASAP' && p.budget === 'Yes') { pr = 'High'; det = 'Ready-to-buy — book a sales appointment this week.'; }
+    else if (p.timeline === 'ASAP' || p.timeline === '1–3 months') { pr = 'Medium'; det = 'Warm — schedule an estimate and follow up.'; }
+    else { pr = 'Standard'; det = 'Nurture — book per the customer’s timeline.'; }
+    return { state: 'qualified', tone: 'green', label: 'Qualified · ' + pr + ' priority', detail: det, priority: pr };
+  }
+  // Configured lead-qualification playbooks — pick one, then qualify the lead against it.
+  const LEAD_PLAYBOOKS = [
+    { id: 'shield', name: 'Shield Roofing — Lead Qualification', desc: 'Full 10-step decision flow: territory, ownership, project, damage & insurance.', questions: PB_QUESTIONS, outcome: pbOutcome },
+    { id: 'storm', name: 'Storm Response Intake', desc: 'High-urgency storm/hail intake — safety and insurance first.', questions: [
+      { k: 'q1', n: 'Q1', label: 'Service territory', opts: ['Within service territory', 'Outside service territory'] },
+      { k: 'q2', n: 'Q2', label: 'Ownership / authority', opts: ['Homeowner', 'Authorized PM / HOA rep', 'Tenant', 'Other'] },
+      { k: 'sev', n: 'Q3', label: 'Damage severity', opts: ['Active leak / emergency', 'Visible damage', 'Minor / cosmetic'] },
+      { k: 'safe', n: 'Q4', label: 'Property weather-tight?', opts: ['Yes', 'No'] },
+      { k: 'q7', n: 'Q5', label: 'Insurance claim', opts: ['No Claim', 'Considering', 'Claim Filed', 'Adjuster Scheduled'] }
+    ], outcome: stormOutcome },
+    { id: 'retail', name: 'Retail / Estimate Request', desc: 'Non-storm estimate — property, project, timeline and budget.', questions: [
+      { k: 'q1', n: 'Q1', label: 'Service territory', opts: ['Within service territory', 'Outside service territory'] },
+      { k: 'q2', n: 'Q2', label: 'Ownership / authority', opts: ['Homeowner', 'Authorized PM / HOA rep', 'Tenant', 'Other'] },
+      { k: 'q3', n: 'Q3', label: 'Property type', opts: ['Residential', 'Commercial'] },
+      { k: 'q4', n: 'Q4', label: 'Project type', opts: ['Roofing', 'Siding', 'Gutters', 'Windows', 'Painting'] },
+      { k: 'timeline', n: 'Q5', label: 'Timeline', opts: ['ASAP', '1–3 months', '3–6 months', 'Just researching'] },
+      { k: 'budget', n: 'Q6', label: 'Budget confirmed?', opts: ['Yes', 'No / unsure'] }
+    ], outcome: retailOutcome }
+  ];
+  const getPlaybook = id => LEAD_PLAYBOOKS.find(p => p.id === id) || LEAD_PLAYBOOKS[0];
+  const leadOutcome = (id, pb) => getPlaybook(id).outcome(pb);
+  // Shared qualification panel: playbook picker → its questions → live outcome banner.
+  function QualifyPlaybook({ pbId, setPbId, pb, setPb, dense }) {
+    const P = getPlaybook(pbId);
+    const oc = P.outcome(pb);
+    const setQ = (k, v) => setPb(s => ({ ...s, [k]: v }));
+    const ocT = oc.tone === 'green' ? { bg: LH.greenBg, fg: LH.green } : oc.tone === 'red' ? { bg: '#fdecec', fg: LH.red } : oc.tone === 'amber' ? { bg: LH.amberBg, fg: LH.amber } : { bg: '#f1f0ec', fg: LH.sub };
+    const lbl = { fontSize: dense ? 11 : 12, fontWeight: 600, color: LH.body, margin: '0 0 5px', display: 'block' };
+    const inp = { width: '100%', height: dense ? 32 : 36, borderRadius: 7, border: '1px solid ' + LH.border, padding: '0 9px', fontSize: 12.5, color: LH.ink, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
+    return <div>
+      <div style={{ marginBottom: 12 }}>
+        <label style={lbl}>Playbook</label>
+        <Dropdown value={pbId} height={dense ? 32 : 36} options={LEAD_PLAYBOOKS.map(p => ({ value: p.id, label: p.name }))} onChange={id => { setPbId(id); setPb({ q1: 'Within service territory' }); }} />
+        <div style={{ fontSize: 11, color: LH.muted, marginTop: 5, lineHeight: 1.4 }}>{P.desc}</div>
+      </div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '9px 11px', borderRadius: 9, background: ocT.bg, marginBottom: 12 }}>
+        <Ic name={oc.state === 'qualified' ? 'check-circle' : oc.state === 'disqualified' ? 'x-circle' : oc.state === 'hold' ? 'pause-circle' : 'circle-dashed'} size={15} color={ocT.fg} style={{ position: 'relative', top: 1, flexShrink: 0 }} />
+        <div style={{ minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: ocT.fg }}>{oc.label}</span></div><div style={{ fontSize: 11.5, color: LH.sub, marginTop: 1, lineHeight: 1.45 }}>{oc.detail}</div></div>
+      </div>
+      {P.questions.map(qq => <div key={qq.k} style={{ marginBottom: 10 }}>
+        <label style={{ ...lbl, display: 'flex', gap: 5 }}><span style={{ color: LH.muted, fontWeight: 700 }}>{qq.n}</span>{qq.label}</label>
+        <Dropdown value={pb[qq.k] || ''} placeholder="Select…" height={dense ? 32 : 36} options={qq.opts.map(o => ({ value: o, label: o }))} onChange={v => setQ(qq.k, v)} />
+        {qq.k === 'q2' && pb.q2 === 'Tenant' && <div style={{ marginTop: 8 }}><label style={lbl}>Owner name</label><input value={pb.owner || ''} onChange={e => setQ('owner', e.target.value)} placeholder="Homeowner name" style={inp} /></div>}
+        {pbId === 'shield' && qq.k === 'q4' && pb.q4 === 'Roofing' && <div style={{ marginTop: 8 }}><label style={lbl}>Roof type</label><Dropdown value={pb.roofType || ''} placeholder="Select…" height={dense ? 32 : 36} options={['Asphalt', 'Metal', 'Shingle', 'TPO', 'EPDM', 'PVC'].map(o => ({ value: o, label: o }))} onChange={v => setQ('roofType', v)} /></div>}
+        {pbId === 'shield' && qq.k === 'q4' && pb.q4 === 'Siding' && <div style={{ marginTop: 8 }}><label style={lbl}>Siding type</label><Dropdown value={pb.sidingType || ''} placeholder="Select…" height={dense ? 32 : 36} options={['James Hardie', 'LP SmartSide', 'Vinyl'].map(o => ({ value: o, label: o }))} onChange={v => setQ('sidingType', v)} /></div>}
+        {pbId === 'shield' && qq.k === 'q6' && pb.q6 === 'Other' && <div style={{ marginTop: 8 }}><label style={lbl}>Cause of damage</label><input value={pb.q6other || ''} onChange={e => setQ('q6other', e.target.value)} placeholder="Describe the cause" style={inp} /></div>}
+        {pbId === 'shield' && qq.k === 'q8' && pb.q8 && <div style={{ marginTop: 8 }}><label style={lbl}>Preferred date &amp; time</label><input value={pb.when || ''} onChange={e => setQ('when', e.target.value)} placeholder="e.g. Tue Aug 19, 9:00 AM" style={inp} /></div>}
+      </div>)}
+    </div>;
+  }
   function NewLeadForm({ sources, assignees, onClose, onToast, onCreate, prefill }) {
     const pf = prefill || {};
     const [f, setF] = useState({ name: pf.name || '', email: pf.email || '', phone: pf.phone || '', src: pf.src || (sources && sources[0]) || 'Manual', assignee: (assignees && assignees[0]) || '', note: '', stage: 'New lead', notes: '', address: '' });
     const [pb, setPb] = useState({ q1: 'Within service territory', q2: '', q3: '', q4: '', roofType: '', sidingType: '', q6: '', q6other: '', q7: '', q8: '', owner: '', when: '' });
+    const [pbId, setPbId] = useState('shield');
     const [shown, setShown] = useState(false);
     const [mapOpen, setMapOpen] = useState(false);
     const [pbOpen, setPbOpen] = useState(true);
@@ -32483,14 +32558,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const lbl = { fontSize: 12, fontWeight: 600, color: LH.body, marginBottom: 5, display: 'block' };
     const canSave = !!f.name.trim();
     const STAGES = ['New lead', 'Contacting', 'Qualifying', 'Needs human'];
-    const oc = pbOutcome(pb);
-    const ocT = oc.tone === 'green' ? { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd } : oc.tone === 'red' ? { bg: '#fdecec', fg: LH.red, bd: '#f6cccc' } : oc.tone === 'amber' ? { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd } : { bg: '#f1f0ec', fg: LH.sub, bd: LH.border };
-    const prTone = p => p === 'High' ? { bg: '#fdecec', fg: LH.red } : p === 'Medium' ? { bg: LH.amberBg, fg: LH.amber } : { bg: LH.tint, fg: LH.body };
-    const create = () => { if (!canSave) return; const stage = oc.state === 'qualified' ? 'Qualifying' : (oc.state === 'hold' || oc.state === 'disqualified') ? 'Needs human' : f.stage; onCreate({ ...f, stage, qualification: oc }); };
-    const pbSelect = (qq) => <div style={{ marginBottom: 12 }}>
-      <label style={{ ...lbl, display: 'flex', gap: 6 }}><span style={{ color: LH.muted, fontWeight: 700 }}>{qq.n}</span>{qq.label}</label>
-      <Dropdown value={pb[qq.k] || ''} placeholder="Select…" options={qq.opts.map(o => ({ value: o, label: o }))} onChange={v => setQ(qq.k, v)} />
-    </div>;
+    const oc = leadOutcome(pbId, pb);
+    const create = () => { if (!canSave) return; const stage = oc.state === 'qualified' ? 'Qualifying' : (oc.state === 'hold' || oc.state === 'disqualified') ? 'Needs human' : f.stage; onCreate({ ...f, stage, qualification: oc, playbook: getPlaybook(pbId).name }); };
     return ReactDOM.createPortal(<div onMouseDown={onClose} style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(8,6,5,0.35)', display: 'flex', justifyContent: 'flex-end', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
     <div onMouseDown={e => e.stopPropagation()} style={{ width: pbOpen ? 'min(880px,96vw)' : 'min(560px,96vw)', height: '100%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,0.16)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s ease' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}><div><div style={{ fontSize: 15.5, fontWeight: 700, color: LH.ink }}>New lead</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Add a lead and qualify it against the playbook.</div></div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
@@ -32514,30 +32583,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
         {/* Right — qualification playbook (collapsible) */}
         {pbOpen && <div style={{ flex: '0 0 400px', maxWidth: '46%', overflowY: 'auto', padding: 20, background: LH.bg, borderLeft: '1px solid ' + LH.borderSoft }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="book-open" size={15} color={LH.primary} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink, flex: 1 }}>Qualification playbook</span><button onClick={() => setPbOpen(false)} title="Collapse playbook" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="chevrons-right" size={16} color={LH.sub} /></button></div>
-          <div style={{ fontSize: 11.5, color: LH.sub, marginBottom: 12 }}>Shield Roofing · Lead Qualification decision flow. Qualification updates live as you answer.</div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '11px 12px', borderRadius: 10, border: '1px solid ' + ocT.bd, background: ocT.bg, marginBottom: 14 }}>
-            <Ic name={oc.state === 'qualified' ? 'check-circle' : oc.state === 'disqualified' ? 'x-circle' : oc.state === 'hold' ? 'pause-circle' : 'circle-dashed'} size={16} color={ocT.fg} style={{ position: 'relative', top: 1, flexShrink: 0 }} />
-            <div style={{ minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13, fontWeight: 700, color: ocT.fg }}>{oc.label}</span>{oc.priority && <span style={{ fontSize: 10.5, fontWeight: 700, borderRadius: 999, padding: '1px 8px', background: prTone(oc.priority).bg, color: prTone(oc.priority).fg }}>{oc.priority}</span>}</div><div style={{ fontSize: 11.5, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{oc.detail}</div></div>
-          </div>
-          {pbSelect(PB_QUESTIONS[0])}
-          {pbSelect(PB_QUESTIONS[1])}
-          {pb.q2 === 'Tenant' && <div style={{ marginBottom: 12 }}><label style={lbl}>Owner name</label><input value={pb.owner} onChange={e => setQ('owner', e.target.value)} placeholder="Homeowner name" style={inp} /></div>}
-          {pbSelect(PB_QUESTIONS[2])}
-          {pbSelect(PB_QUESTIONS[3])}
-          {pb.q4 === 'Roofing' && <div style={{ marginBottom: 12 }}><label style={lbl}>Roof type</label><Dropdown value={pb.roofType || ''} placeholder="Select…" options={['Asphalt', 'Metal', 'Shingle', 'TPO', 'EPDM', 'PVC'].map(o => ({ value: o, label: o }))} onChange={v => setQ('roofType', v)} /></div>}
-          {pb.q4 === 'Siding' && <div style={{ marginBottom: 12 }}><label style={lbl}>Siding type</label><Dropdown value={pb.sidingType || ''} placeholder="Select…" options={['James Hardie', 'LP SmartSide', 'Vinyl'].map(o => ({ value: o, label: o }))} onChange={v => setQ('sidingType', v)} /></div>}
-          {pbSelect(PB_QUESTIONS[4])}
-          {pb.q6 === 'Other' && <div style={{ marginBottom: 12 }}><label style={lbl}>Cause of damage</label><input value={pb.q6other} onChange={e => setQ('q6other', e.target.value)} placeholder="Describe the cause" style={inp} /></div>}
-          {pbSelect(PB_QUESTIONS[5])}
-          {pbSelect(PB_QUESTIONS[6])}
-          {pb.q8 && <div style={{ marginBottom: 4 }}><label style={lbl}>Preferred date & time</label><input value={pb.when} onChange={e => setQ('when', e.target.value)} placeholder="e.g. Tue Aug 19, 9:00 AM" style={inp} /></div>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}><Ic name="book-open" size={15} color={LH.primary} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink, flex: 1 }}>Qualification playbook</span><button onClick={() => setPbOpen(false)} title="Collapse playbook" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="chevrons-right" size={16} color={LH.sub} /></button></div>
+          <QualifyPlaybook pbId={pbId} setPbId={setPbId} pb={pb} setPb={setPb} />
         </div>}
         {!pbOpen && <button onClick={() => setPbOpen(true)} title="Show qualification playbook" style={{ flex: '0 0 44px', border: 'none', borderLeft: '1px solid ' + LH.borderSoft, background: LH.bg, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '16px 0' }}>
           <Ic name="chevrons-left" size={16} color={LH.sub} />
           <Ic name="book-open" size={15} color={LH.primary} />
           <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontSize: 11.5, fontWeight: 700, color: LH.ink, letterSpacing: '.02em' }}>Playbook</span>
-          <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontSize: 10.5, fontWeight: 700, color: ocT.fg }}>{oc.state === 'qualified' ? 'Qualified' : oc.state === 'disqualified' ? 'Disqualified' : oc.state === 'hold' ? 'On hold' : 'Pending'}</span>
+          <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontSize: 10.5, fontWeight: 700, color: oc.tone === 'green' ? LH.green : oc.tone === 'red' ? LH.red : oc.tone === 'amber' ? LH.amber : LH.sub }}>{oc.state === 'qualified' ? 'Qualified' : oc.state === 'disqualified' ? 'Disqualified' : oc.state === 'hold' ? 'On hold' : 'Pending'}</span>
         </button>}
       </div>
       <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="plus" onClick={create} style={{ opacity: canSave ? 1 : 0.5 }}>Create lead</Btn></div>
@@ -33123,6 +33176,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const CALL_NO = '(+1) 206 234 2124';
     const [lf, setLf] = useState({ name: '', phone: CALL_NO, email: '', service: '' });
     const [pb, setPb] = useState({ q1: 'Within service territory', q2: '', q3: '', q4: '', roofType: '', sidingType: '', q6: '', q6other: '', q7: '', q8: '', owner: '', when: '' });
+    const [pbId, setPbId] = useState('shield');
     const caller = mode === 'customer' ? { name: 'David Moore', phone: CALL_NO, avatar: 'D' } : { name: 'Unknown number', phone: CALL_NO, avatar: '?' };
     useEffect(() => { if (phase !== 'connected') return; const t = setInterval(() => setSecs(s => s + 1), 1000); return () => clearInterval(t); }, [phase]);
     const mmss = ('0' + Math.floor(secs / 60)).slice(-2) + ':' + ('0' + (secs % 60)).slice(-2);
@@ -33137,7 +33191,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {open[key] && <div style={{ padding: '0 14px 12px' }}>{body}</div>}
     </div>;
     const emptyBlock = (label, cta) => <div style={{ textAlign: 'center', padding: '6px 0 2px' }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>No {label} Yet</div><div style={{ fontSize: 11, color: LH.muted, margin: '2px 0 10px' }}>{label} will appear here once it is created.</div><button onClick={() => showToast('New ' + label.toLowerCase() + '…')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.primary, cursor: 'pointer' }}><Ic name="plus" size={13} color={LH.primary} />{cta}</button></div>;
-    const oc = pbOutcome(pb);
+    const oc = leadOutcome(pbId, pb);
     const ocT = oc.tone === 'green' ? { bg: LH.greenBg, fg: LH.green } : oc.tone === 'red' ? { bg: '#fdecec', fg: LH.red } : oc.tone === 'amber' ? { bg: LH.amberBg, fg: LH.amber } : { bg: '#f1f0ec', fg: LH.sub };
     const inp = { width: '100%', height: 32, borderRadius: 7, border: '1px solid ' + LH.border, padding: '0 9px', fontSize: 12.5, color: LH.ink, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
     const flbl = { fontSize: 11, fontWeight: 600, color: LH.body, margin: '0 0 4px', display: 'block' };
@@ -33168,11 +33222,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <button onClick={() => setLeadFull(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}><Ic name="external-link" size={12} color={LH.primary} />Open full form (address, map…)</button>
             </div>)}
             {acc('playbook', 'book-open', 'Qualification playbook', <div style={{ paddingTop: 2 }}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '9px 10px', borderRadius: 9, background: ocT.bg, marginBottom: 10 }}>
-                <Ic name={oc.state === 'qualified' ? 'check-circle' : oc.state === 'disqualified' ? 'x-circle' : oc.state === 'hold' ? 'pause-circle' : 'circle-dashed'} size={15} color={ocT.fg} style={{ position: 'relative', top: 1, flexShrink: 0 }} />
-                <div style={{ minWidth: 0 }}><div style={{ fontSize: 12, fontWeight: 700, color: ocT.fg }}>{oc.label}</div><div style={{ fontSize: 11, color: LH.sub, marginTop: 1, lineHeight: 1.4 }}>{oc.detail}</div></div>
-              </div>
-              {PB_QUESTIONS.map(qq => <div key={qq.k} style={{ marginBottom: 9 }}><label style={{ ...flbl, display: 'flex', gap: 5 }}><span style={{ color: LH.muted, fontWeight: 700 }}>{qq.n}</span>{qq.label}</label><Dropdown value={pb[qq.k] || ''} placeholder="Select…" height={32} options={qq.opts.map(o => ({ value: o, label: o }))} onChange={v => setQ(qq.k, v)} /></div>)}
+              <QualifyPlaybook pbId={pbId} setPbId={setPbId} pb={pb} setPb={setPb} dense />
             </div>)}
           </>}
         </div>
