@@ -14359,6 +14359,26 @@ function App() {
       onClose: () => setToast(null)
     }));
   }
+  if (page === 'lead-campaign-generic') {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-col h-screen w-screen overflow-hidden",
+      style: { background: '#f8f5f0' }
+    }, /*#__PURE__*/React.createElement(TopNavBar, topBarProps), /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-1 overflow-hidden",
+      style: { background: '#f8f5f0', padding: '0 12px 12px 0' }
+    }, /*#__PURE__*/React.createElement(Sidebar, {
+      onNavigate: handleNavigate,
+      activeNav: navActive
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-col flex-1 overflow-hidden rounded-2xl",
+      style: { background: '#fdfdfc', border: '1px solid #ece4d3', overflow: 'hidden' }
+    }, window.LeadHubGenericCampaign
+      ? /*#__PURE__*/React.createElement(window.LeadHubGenericCampaign, { embed: true, onClose: () => setPage('lead-campaigns'), onCreate: () => { setPage('lead-campaigns'); setCampaignDone(true); } })
+      : /*#__PURE__*/React.createElement("div", { style: { padding: 40, color: '#8c7a5a', fontSize: 14 } }, "Loading…"))), toast && /*#__PURE__*/React.createElement(Toast, {
+      message: toast,
+      onClose: () => setToast(null)
+    }));
+  }
   if (isLeadPage) {
     const leadSection = page === 'lead-pipeline' ? 'pipeline' : page === 'lead-campaigns' ? 'campaigns' : (page === 'lead-settings' || page === 'lead-workforce' || page === 'lead-channels') ? 'settings' : page === 'lead-health' ? 'health' : 'overview';
     const leadSettingsTab = page === 'lead-channels' ? 'channels' : 'workforce';
@@ -31341,6 +31361,24 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   const updateCampaign = (name, patch) => { CAMPAIGN_ROWS = CAMPAIGN_ROWS.map(r => r.name === name ? { ...r, ...patch } : r); };
   let CAMPAIGN_EDIT = null;
   const setCampaignEdit = row => { CAMPAIGN_EDIT = row; };
+  // Split "New campaign" CTA — primary opens the standard flow; the caret nests a "Global campaign"
+  // (generic, module-based) flow that adapts its steps to the module you pick.
+  function NewCampaignBtn({ onNavigate }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+    useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, [open]);
+    const go = page => { setOpen(false); setCampaignEdit(null); onNavigate && onNavigate(page); };
+    return <div ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
+      <button onClick={() => go('lead-campaign-new')} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 38, padding: '0 14px', borderRadius: '9px 0 0 9px', border: 'none', background: LH.ink, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}><Ic name="plus" size={16} color="#fff" />New campaign</button>
+      <button onClick={() => setOpen(o => !o)} title="More options" style={{ width: 34, height: 38, borderRadius: '0 9px 9px 0', border: 'none', borderLeft: '1px solid rgba(255,255,255,.18)', background: LH.ink, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="chevron-down" size={15} color="#fff" /></button>
+      {open && <div style={{ position: 'absolute', top: 44, right: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 11, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 6, width: 288 }}>
+        {[['lead-campaign-new', 'send', 'Campaign', 'Templates, sequences & AI drafting'], ['lead-campaign-generic', 'layers', 'Global campaign', 'Pick a module — Leads, Invoices & more']].map(([pg, ic, t, d]) => <div key={pg} onClick={() => go(pg)} style={{ display: 'flex', alignItems: 'flex-start', gap: 11, padding: '10px 11px', borderRadius: 9, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          <span style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={ic} size={15} color={LH.primary} /></span>
+          <div style={{ minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{t}</div><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 1, lineHeight: 1.4 }}>{d}</div></div>
+        </div>)}
+      </div>}
+    </div>;
+  }
   const fmtNow = () => { const d = new Date(); const p = n => String(n).padStart(2, '0'); let h12 = d.getHours() % 12; if (h12 === 0) h12 = 12; const ap = d.getHours() < 12 ? 'AM' : 'PM'; return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(h12) + ':' + p(d.getMinutes()) + ' ' + ap; };
 
   function CampaignsSection({ onToast, onNavigate }) {
@@ -31375,7 +31413,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <span style={{ width: 1, height: 18, background: LH.border }} />
           <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>{CHIPS.map(c => <button key={c} onClick={() => setChip(c)} style={{ height: 30, padding: '0 12px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', border: '1px solid ' + (chip === c ? LH.border : 'transparent'), background: chip === c ? '#fff' : 'transparent', color: chip === c ? LH.ink : LH.sub, boxShadow: chip === c ? '0 1px 2px rgba(0,0,0,.04)' : 'none' }}>{c}</button>)}</div>
         </div>
-        <Btn kind="primary" icon="plus" onClick={() => { setCampaignEdit(null); onNavigate && onNavigate('lead-campaign-new'); }}>New campaign</Btn>
+        <NewCampaignBtn onNavigate={onNavigate} />
       </div>
       {/* Filter bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid ' + LH.borderSoft, flexWrap: 'wrap' }}>
@@ -32170,6 +32208,254 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     if (embed) return <>{shell}{pbModal}</>;
     return <><div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(20,18,15,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}><div style={{ width: 'min(1040px,96vw)', height: 'min(700px,92vh)' }}>{shell}</div></div>{pbModal}</>;
   }
+
+  /* ─────────── GENERIC (MODULE-BASED) CAMPAIGN WIZARD ───────────
+     A second campaign-creation flow: name+description, then pick a module (Leads, Customers,
+     Invoices, Estimates, Jobs). The module drives the remaining steps — record modules like
+     Invoices go through Call Handling → Attempts Strategy → Exit Rules (a collections-style
+     call flow), while Leads/Customers reuse the familiar message-sequence flow. */
+  const GEN_MODULES = [
+    { key: 'leads', name: 'Leads', icon: 'user-plus', flow: 'sequence', desc: 'Fresh inbound leads from your sources — reach out with a message sequence.' },
+    { key: 'customers', name: 'Customers', icon: 'users', flow: 'sequence', desc: 'Existing or past customers — re-engage with a message sequence.' },
+    { key: 'invoices', name: 'Invoices', icon: 'file-text', flow: 'calls', desc: 'Outstanding or overdue invoices — call to recover payment.' },
+    { key: 'estimates', name: 'Estimates', icon: 'clipboard-list', flow: 'calls', desc: 'Sent estimates awaiting a decision — call to close.' },
+    { key: 'jobs', name: 'Jobs', icon: 'briefcase', flow: 'calls', desc: 'Scheduled or completed jobs — call to confirm or follow up.' }
+  ];
+  const GEN_FIELDS = {
+    leads: [{ v: 'lead.source', l: 'Lead source', opts: ['Angi', 'Thumbtack', 'Google LSA', 'Meta', 'Website Booking', 'SalesRabbit'] }, { v: 'lead.status', l: 'Status', opts: ['New Lead', 'Contacting', 'Qualifying', 'Needs human'] }, { v: 'lead.score', l: 'Lead score', type: 'number' }, { v: 'lead.city', l: 'City', opts: ['Dallas', 'Plano', 'Frisco', 'Austin', 'Houston'] }],
+    customers: [{ v: 'customer.type', l: 'Customer type', opts: ['Residential', 'Commercial'] }, { v: 'customer.tags', l: 'Tags', opts: ['VIP', 'Repeat customer', 'Membership', 'Warranty', 'Storm area'] }, { v: 'customer.ltv', l: 'Lifetime value ($)', type: 'number' }, { v: 'customer.last_service', l: 'Last service date', type: 'date' }],
+    invoices: [{ v: 'invoice.status', l: 'Invoice status', opts: ['Draft', 'Sent', 'Overdue', 'Partially paid', 'Paid'] }, { v: 'invoice.amount', l: 'Amount due ($)', type: 'number' }, { v: 'invoice.days_overdue', l: 'Days overdue', type: 'number' }, { v: 'invoice.due_date', l: 'Due date', type: 'date' }],
+    estimates: [{ v: 'estimate.status', l: 'Estimate status', opts: ['Draft', 'Sent', 'Viewed', 'Approved', 'Declined'] }, { v: 'estimate.amount', l: 'Estimate amount ($)', type: 'number' }, { v: 'estimate.sent_date', l: 'Sent date', type: 'date' }],
+    jobs: [{ v: 'job.status', l: 'Job status', opts: ['Scheduled', 'In progress', 'Completed', 'Cancelled'] }, { v: 'job.service', l: 'Service type', opts: ['Roofing', 'Gutter', 'Siding', 'Windows', 'Door'] }, { v: 'job.created', l: 'Created date', type: 'date' }]
+  };
+  const GEN_OPS = { multiselect: ['is any of', 'is none of'], number: ['more than', 'less than', 'equals'], date: ['between', 'before', 'after'], text: ['is', 'is not', 'contains'] };
+  const GEN_OUTCOMES = ['Answered — paid in full', 'Promised to pay', 'Partial payment', 'Refused to pay', 'No answer', 'Left voicemail', 'Wrong number', 'Requested callback', 'Dispute raised'];
+  const GEN_NEXT = ['Retry — next attempt', 'Send email', 'Send text', 'Needs attention & pause', 'Mark resolved & exit', 'Exit campaign'];
+  const GEN_AGENTS = ['Jenesys', 'Nova — AI voice agent', 'Atlas', 'Orion'];
+  const GEN_NUMBERS = ['(+1) 857 382 6587', '(+1) 650 206 1172', '(+1) 415 992 3380', '(+1) 628 555 0179'];
+  const GEN_TIMES = (() => { const o = []; for (let h = 0; h < 24; h++) { const hr = ((h + 11) % 12) + 1, ap = h < 12 ? 'AM' : 'PM'; o.push(('0' + hr).slice(-2) + ':00 ' + ap); o.push(('0' + hr).slice(-2) + ':30 ' + ap); } return o; })();
+
+  function GenericCampaignWizard({ onClose, onCreate, embed, editing }) {
+    const ed = editing || {};
+    const [step, setStep] = useState(0);
+    const [name, setName] = useState(ed.name || '');
+    const [desc, setDesc] = useState(ed.desc || '');
+    const [status, setStatus] = useState(ed.status || 'Draft');
+    const [moduleKey, setModuleKey] = useState(ed.module ? (GEN_MODULES.find(m => m.name === ed.module) || {}).key || 'invoices' : 'invoices');
+    const [condJoin, setCondJoin] = useState('and');
+    const [conds, setConds] = useState([{ id: wuid(), field: '', op: '', val: [] }]);
+    // Call handling
+    const [chMode, setChMode] = useState('ai');
+    const [chAgent, setChAgent] = useState('Jenesys');
+    const [chNumber, setChNumber] = useState(GEN_NUMBERS[0]);
+    const [chDays, setChDays] = useState({ 0: false, 1: true, 2: true, 3: true, 4: true, 5: true, 6: false });
+    const [chFrom, setChFrom] = useState('08:00 AM');
+    const [chTo, setChTo] = useState('10:00 PM');
+    const [chInstr, setChInstr] = useState('Purpose: Call customers with overdue invoices to recover payment. A clear next step is the win, not pressure.\n\nA successful call ends in one of these:\n• Payment taken on the call\n• Payment link sent (if enabled)\n• Callback scheduled');
+    // Attempts strategy
+    const [attempts, setAttempts] = useState([{ id: wuid(), outcomes: [{ id: wuid(), ifv: 'Refused to pay', then: 'Needs attention & pause' }], fallback: 'Needs attention & pause' }]);
+    const [attOpen, setAttOpen] = useState({});
+    // Exit rules
+    const [exitJoin, setExitJoin] = useState('or');
+    const [exitConds, setExitConds] = useState([{ id: wuid(), field: '', op: '', val: [] }]);
+
+    const mod = GEN_MODULES.find(m => m.key === moduleKey) || GEN_MODULES[2];
+    const flow = mod.flow;
+    const STEPS = ['Basic Details', 'Enrollment Rules', ...(flow === 'calls' ? ['Call Handling', 'Attempts Strategy'] : ['Message Sequence']), 'Exit Rules'];
+    // Message sequence (leads/customers)
+    const [seq, setSeq] = useState([{ id: wuid(), ch: 'sms', offset: 'launch', body: 'Hi {{customer_first_name}}, {{user_first_name}} with {{company.company_name}} — thanks for reaching out! When works for a quick call?' }, { id: wuid(), ch: 'call', offset: '30', body: '' }, { id: wuid(), ch: 'email', offset: '60', body: 'Hi {{customer_first_name}},\n\nReaching out about your request — reply and we’ll take it from there.' }]);
+
+    const fieldsFor = key => GEN_FIELDS[key] || [];
+    const opsForField = (key, f) => { const def = fieldsFor(key).find(x => x.v === f); return GEN_OPS[(def && def.type) || 'multiselect']; };
+    const fieldType = (key, f) => { const def = fieldsFor(key).find(x => x.v === f); return (def && def.type) || 'multiselect'; };
+    const fieldOpts = (key, f) => { const def = fieldsFor(key).find(x => x.v === f); return (def && def.opts) || []; };
+
+    const lbl = { fontSize: 13, fontWeight: 600, color: LH.ink, display: 'block', marginBottom: 8 };
+    const inp = { width: '100%', height: 40, borderRadius: 9, border: '1px solid ' + LH.border, padding: '0 12px', fontSize: 13.5, color: LH.ink, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' };
+
+    // Reusable condition builder (enrollment + exit).
+    const condBuilder = (rows, setRows, join, setJoin, key) => {
+      const set = (id, patch) => setRows(rs => rs.map(r => r.id === id ? { ...r, ...patch } : r));
+      const add = () => setRows(rs => [...rs, { id: wuid(), field: '', op: '', val: [] }]);
+      const del = id => setRows(rs => rs.length > 1 ? rs.filter(r => r.id !== id) : rs);
+      const fopts = fieldsFor(key).map(f => ({ value: f.v, label: f.l }));
+      return <div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13.5, fontWeight: 600, color: LH.ink }}><Ic name="sliders-horizontal" size={15} color={LH.sub} />Conditions <span style={{ color: LH.muted, fontWeight: 500 }}>({rows.length})</span></span>
+          <div style={{ display: 'flex', border: '1px solid ' + LH.border, borderRadius: 8, overflow: 'hidden' }}>{['and', 'or'].map(j => <button key={j} onClick={() => setJoin(j)} style={{ height: 30, padding: '0 14px', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, background: join === j ? LH.tint : '#fff', color: join === j ? LH.primary : LH.sub }}>{j.toUpperCase()}</button>)}</div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {rows.map(r => { const type = fieldType(key, r.field); return <div key={r.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ flex: 1.3 }}><Dropdown value={r.field} placeholder="Select field" height={40} options={fopts} onChange={v => set(r.id, { field: v, op: opsForField(key, v)[0], val: fieldType(key, v) === 'multiselect' ? [] : '' })} /></div>
+            <div style={{ flex: 1 }}><Dropdown value={r.op} placeholder="Select operator" height={40} options={(r.field ? opsForField(key, r.field) : []).map(o => ({ value: o, label: o }))} onChange={v => set(r.id, { op: v })} /></div>
+            <div style={{ flex: 1.2 }}>{type === 'multiselect'
+              ? <Dropdown value={r.val || []} multi placeholder="Select value" height={40} options={fieldOpts(key, r.field).map(o => ({ value: o, label: o }))} onChange={v => set(r.id, { val: v })} />
+              : <input value={Array.isArray(r.val) ? '' : (r.val || '')} onChange={e => set(r.id, { val: e.target.value })} placeholder={type === 'number' ? 'Enter number' : type === 'date' ? 'Pick a date' : 'Enter value'} style={inp} />}</div>
+            <button onClick={() => del(r.id)} title="Remove" style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="x" size={16} color={LH.sub} /></button>
+          </div>; })}
+        </div>
+        <button onClick={add} style={{ width: '100%', marginTop: 8, height: 42, borderRadius: 9, border: '1px dashed ' + LH.border, background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: LH.sub, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="plus" size={15} color={LH.sub} />Add Filter</button>
+      </div>;
+    };
+
+    const head = (icon, iconBg, iconFg, title, sub) => <div style={{ marginBottom: 22 }}>
+      <div style={{ width: 44, height: 44, borderRadius: 11, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}><Ic name={icon} size={20} color={iconFg} /></div>
+      <div style={{ fontSize: 20, fontWeight: 700, color: LH.ink, letterSpacing: '-0.01em' }}>{title}</div>
+      <div style={{ fontSize: 13.5, color: LH.sub, marginTop: 4, lineHeight: 1.5 }}>{sub}</div>
+    </div>;
+
+    const stepName = STEPS[step];
+    const stepBody = () => {
+      if (stepName === 'Basic Details') return <div style={{ maxWidth: 760, margin: '0 auto' }}>
+        {head('file-text', '#fde8e0', '#e0794f', 'Add details to your campaign', 'Name and describe your campaign')}
+        <div style={{ marginBottom: 18 }}><label style={lbl}>Campaign name <span style={{ color: LH.red }}>*</span></label><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Q1 Overdue Collections" style={inp} /></div>
+        <div><label style={lbl}>Description</label><textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Describe what this campaign should accomplish" style={{ ...inp, height: 150, padding: '12px', resize: 'vertical', lineHeight: 1.5 }} /></div>
+      </div>;
+
+      if (stepName === 'Enrollment Rules') return <div style={{ maxWidth: 760, margin: '0 auto' }}>
+        {head('file-up', '#e8e4fb', '#6d5ae0', 'Which records should be enrolled?', 'Define the enrollment criteria for the campaign.')}
+        <div style={{ marginBottom: 22 }}>
+          <label style={lbl}>Choose module</label>
+          <Dropdown value={moduleKey} height={44} options={GEN_MODULES.map(m => ({ value: m.key, label: m.name }))} onChange={v => { setModuleKey(v); setConds([{ id: wuid(), field: '', op: '', val: [] }]); setExitConds([{ id: wuid(), field: '', op: '', val: [] }]); }} />
+          <div style={{ fontSize: 12, color: LH.muted, marginTop: 7, display: 'flex', alignItems: 'center', gap: 6 }}><Ic name={mod.icon} size={13} color={LH.muted} />{mod.desc}</div>
+        </div>
+        {condBuilder(conds, setConds, condJoin, setCondJoin, moduleKey)}
+      </div>;
+
+      if (stepName === 'Call Handling') return <div style={{ maxWidth: 820, margin: '0 auto' }}>
+        {head('user', '#fde8e0', '#e0794f', 'Who shall handle calls?', 'Define the call handling criteria for the campaign.')}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 22 }}>
+          <div onClick={() => setChMode('ai')} style={{ border: '1.5px solid ' + (chMode === 'ai' ? LH.green : LH.border), borderRadius: 12, padding: 16, cursor: 'pointer', background: chMode === 'ai' ? '#f4fbf6' : '#fff', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: 14, right: 14, width: 18, height: 18, borderRadius: 999, border: '2px solid ' + (chMode === 'ai' ? LH.green : LH.border), background: chMode === 'ai' ? LH.green : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{chMode === 'ai' && <span style={{ width: 7, height: 7, borderRadius: 999, background: '#fff' }} />}</div>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}><Ic name="sparkles" size={16} color={LH.primary} /></div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Let AI handle it</div>
+            <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 3 }}>Automatically calls and follows up at scale</div>
+          </div>
+          <div style={{ border: '1.5px solid ' + LH.border, borderRadius: 12, padding: 16, background: '#fbfaf8', position: 'relative', opacity: 0.7 }}>
+            <span style={{ position: 'absolute', top: 12, right: 12, fontSize: 10.5, fontWeight: 700, color: LH.amber, background: LH.amberBg, borderRadius: 999, padding: '2px 9px' }}>Coming soon</span>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}><Ic name="user" size={16} color={LH.muted} /></div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: LH.muted }}>Assign to user</div>
+            <div style={{ fontSize: 12.5, color: LH.muted, marginTop: 3 }}>A human executive will make calls manually</div>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+          <div><label style={lbl}>Assign agent</label><Dropdown value={chAgent} height={44} options={GEN_AGENTS.map(a => ({ value: a, label: a }))} onChange={setChAgent} /></div>
+          <div><label style={lbl}>Agent number</label><Dropdown value={chNumber} height={44} options={GEN_NUMBERS.map(n => ({ value: n, label: n }))} onChange={setChNumber} /></div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+          <div><label style={lbl}>Days of Week</label><div style={{ display: 'flex', gap: 6 }}>{DOW.map((d, i) => <button key={i} onClick={() => setChDays(o => ({ ...o, [i]: !o[i] }))} style={{ width: 38, height: 38, borderRadius: 9, border: '1px solid ' + (chDays[i] ? LH.ink : LH.border), background: chDays[i] ? LH.ink : '#fff', color: chDays[i] ? '#fff' : LH.sub, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>{d}</button>)}</div></div>
+          <div><label style={lbl}>Call time window</label><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><div style={{ flex: 1 }}><Dropdown value={chFrom} height={44} options={GEN_TIMES.map(t => ({ value: t, label: t }))} onChange={setChFrom} /></div><span style={{ fontSize: 12.5, color: LH.muted }}>To</span><div style={{ flex: 1 }}><Dropdown value={chTo} height={44} options={GEN_TIMES.map(t => ({ value: t, label: t }))} onChange={setChTo} /></div></div></div>
+        </div>
+        <div><label style={lbl}>Add instructions to your agent</label><textarea value={chInstr} onChange={e => setChInstr(e.target.value)} style={{ ...inp, height: 160, padding: 12, resize: 'vertical', lineHeight: 1.55 }} /></div>
+      </div>;
+
+      if (stepName === 'Attempts Strategy') {
+        const setAtt = (id, patch) => setAttempts(a => a.map(x => x.id === id ? { ...x, ...patch } : x));
+        const addOutcome = id => setAtt(id, { outcomes: [...(attempts.find(a => a.id === id).outcomes), { id: wuid(), ifv: GEN_OUTCOMES[0], then: GEN_NEXT[0] }] });
+        const setOutcome = (aid, oid, patch) => setAtt(aid, { outcomes: attempts.find(a => a.id === aid).outcomes.map(o => o.id === oid ? { ...o, ...patch } : o) });
+        const delOutcome = (aid, oid) => setAtt(aid, { outcomes: attempts.find(a => a.id === aid).outcomes.filter(o => o.id !== oid) });
+        const addAttempt = () => setAttempts(a => [...a, { id: wuid(), outcomes: [{ id: wuid(), ifv: GEN_OUTCOMES[4], then: 'Retry — next attempt' }], fallback: 'Retry — next attempt' }]);
+        const dupAttempt = id => setAttempts(a => { const i = a.findIndex(x => x.id === id); const src = a[i]; const copy = { id: wuid(), fallback: src.fallback, outcomes: src.outcomes.map(o => ({ ...o, id: wuid() })) }; return [...a.slice(0, i + 1), copy, ...a.slice(i + 1)]; });
+        const delAttempt = id => setAttempts(a => a.length > 1 ? a.filter(x => x.id !== id) : a);
+        const isOpen = id => attOpen[id] !== false;
+        return <div style={{ maxWidth: 820, margin: '0 auto' }}>
+          {head('headphones', '#e8e4fb', '#6d5ae0', 'Configure call attempts and follow-up rules', 'Each attempt is one call to the contact. For every outcome, set what happens next: retry, send an email or text, pause for review, or exit the campaign. A retry triggers the next attempt, which has its own rules.')}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {attempts.map((a, i) => <div key={a.id} style={{ border: '1px solid ' + LH.border, borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', background: LH.bg, borderBottom: isOpen(a.id) ? '1px solid ' + LH.borderSoft : 'none' }}>
+                <span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Attempt {i + 1}</span>
+                <span style={{ fontSize: 12, color: LH.muted }}>· {a.outcomes.length} outcome{a.outcomes.length !== 1 ? 's' : ''}</span>
+                <div style={{ flex: 1 }} />
+                <button onClick={() => dupAttempt(a.id)} title="Duplicate" style={{ width: 30, height: 30, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="copy" size={15} color={LH.sub} /></button>
+                <button onClick={() => delAttempt(a.id)} title="Delete" style={{ width: 30, height: 30, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="trash-2" size={15} color={LH.sub} /></button>
+                <button onClick={() => setAttOpen(o => ({ ...o, [a.id]: !isOpen(a.id) }))} style={{ width: 30, height: 30, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={isOpen(a.id) ? 'chevron-up' : 'chevron-down'} size={16} color={LH.sub} /></button>
+              </div>
+              {isOpen(a.id) && <div style={{ padding: '14px' }}>
+                {a.outcomes.map(o => <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <span style={{ fontSize: 12.5, color: LH.muted, width: 18, flexShrink: 0 }}>if</span>
+                  <div style={{ flex: 1 }}><Dropdown value={o.ifv} height={40} options={GEN_OUTCOMES.map(x => ({ value: x, label: x }))} onChange={v => setOutcome(a.id, o.id, { ifv: v })} /></div>
+                  <Ic name="arrow-right" size={15} color={LH.muted} style={{ flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}><Dropdown value={o.then} height={40} options={GEN_NEXT.map(x => ({ value: x, label: x }))} onChange={v => setOutcome(a.id, o.id, { then: v })} /></div>
+                  <button onClick={() => delOutcome(a.id, o.id)} title="Remove" style={{ width: 32, height: 32, borderRadius: 8, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="x" size={15} color={LH.sub} /></button>
+                </div>)}
+                <button onClick={() => addOutcome(a.id)} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0 12px', display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="plus" size={14} color={LH.primary} />Add another outcome</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px solid ' + LH.borderSoft, paddingTop: 12 }}>
+                  <span style={{ fontSize: 12.5, color: LH.body }}>If outcome doesn't match above</span>
+                  <div style={{ width: 240 }}><Dropdown value={a.fallback} height={40} options={GEN_NEXT.map(x => ({ value: x, label: x }))} onChange={v => setAtt(a.id, { fallback: v })} /></div>
+                </div>
+              </div>}
+            </div>)}
+          </div>
+          <button onClick={addAttempt} style={{ width: '100%', marginTop: 12, height: 44, borderRadius: 10, border: '1px dashed ' + LH.border, background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: LH.sub, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="plus" size={15} color={LH.sub} />Add attempt</button>
+        </div>;
+      }
+
+      if (stepName === 'Message Sequence') {
+        const setS = (id, patch) => setSeq(s => s.map(x => x.id === id ? { ...x, ...patch } : x));
+        const addS = () => setSeq(s => [...s, { id: wuid(), ch: 'sms', offset: '30', body: '' }]);
+        const delS = id => setSeq(s => s.length > 1 ? s.filter(x => x.id !== id) : s);
+        return <div style={{ maxWidth: 780, margin: '0 auto' }}>
+          {head('headphones', '#e8e4fb', '#6d5ae0', 'Build the outreach sequence', 'Reach ' + mod.name.toLowerCase() + ' with a multi-channel sequence — SMS, calls, and email. Each step fires relative to the previous one.')}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {seq.map((s, i) => <div key={s.id} style={{ border: '1px solid ' + LH.border, borderRadius: 12, padding: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: s.ch === 'call' ? 0 : 10 }}>
+                <span style={{ width: 26, height: 26, borderRadius: 999, background: LH.tint, color: LH.primary, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
+                <div style={{ width: 150 }}><Dropdown value={s.ch} height={38} options={[['sms', 'Send SMS'], ['call', 'Make a call'], ['email', 'Send email']].map(([v, l]) => ({ value: v, label: l }))} onChange={v => setS(s.id, { ch: v })} /></div>
+                <div style={{ width: 150 }}><Dropdown value={s.offset} height={38} options={OFFSETS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => setS(s.id, { offset: v })} /></div>
+                <div style={{ flex: 1 }} />
+                <span style={{ width: 26, height: 26, borderRadius: 7, background: '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={CH_ICON[s.ch]} size={13} color={LH.sub} /></span>
+                <button onClick={() => delS(s.id)} title="Remove" style={{ width: 32, height: 32, borderRadius: 8, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="x" size={15} color={LH.sub} /></button>
+              </div>
+              {s.ch !== 'call' && <textarea value={s.body} onChange={e => setS(s.id, { body: e.target.value })} placeholder={s.ch === 'email' ? 'Email body…' : 'Message text…'} style={{ ...inp, height: 76, padding: 10, resize: 'vertical', lineHeight: 1.5 }} />}
+            </div>)}
+          </div>
+          <button onClick={addS} style={{ width: '100%', marginTop: 10, height: 44, borderRadius: 10, border: '1px dashed ' + LH.border, background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: LH.sub, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="plus" size={15} color={LH.sub} />Add step</button>
+        </div>;
+      }
+
+      if (stepName === 'Exit Rules') return <div style={{ maxWidth: 760, margin: '0 auto' }}>
+        {head('log-out', '#fde8e0', '#e0794f', 'When should a record exit?', 'Records that match any exit rule leave the campaign automatically. Opt-outs always exit.')}
+        {condBuilder(exitConds, setExitConds, exitJoin, setExitJoin, moduleKey)}
+        <div style={{ marginTop: 20, padding: '12px 14px', borderRadius: 10, background: LH.bg, border: '1px solid ' + LH.borderSoft, fontSize: 12.5, color: LH.sub, display: 'flex', alignItems: 'flex-start', gap: 9 }}><Ic name="shield-check" size={15} color={LH.green} style={{ position: 'relative', top: 1, flexShrink: 0 }} />Built-in stops always apply: an opt-out / STOP reply, or a resolved outcome (e.g. paid in full) exits the record immediately.</div>
+      </div>;
+      return null;
+    };
+
+    const isLast = step === STEPS.length - 1;
+    const canProceed = step === 0 ? name.trim() : true;
+    const publish = () => {
+      if (!name.trim()) { setStep(0); return; }
+      addCampaign({ name: name.trim(), by: 'Ethan Brooks', bi: 'E', status: status === 'Draft' ? 'Draft' : status, records: 0, date: fmtNow(), module: mod.name, generic: true });
+      onCreate();
+    };
+
+    return <div style={{ width: '100%', height: '100%', background: '#fff', borderRadius: embed ? 0 : 16, display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 22px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+        <span style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>{editing ? 'Edit campaign' : 'Create a new campaign'}</span>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={19} color={LH.sub} /></button>
+      </div>
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        <div style={{ width: 250, flexShrink: 0, borderRight: '1px solid ' + LH.borderSoft, padding: '22px 18px', background: '#fff' }}>
+          {STEPS.map((s, i) => <div key={s} style={{ position: 'relative', paddingBottom: i < STEPS.length - 1 ? 22 : 0 }}>
+            {i < STEPS.length - 1 && <span style={{ position: 'absolute', left: 12, top: 26, bottom: 0, width: 2, background: i < step ? LH.green : LH.border }} />}
+            <div onClick={() => (i < step || i === step) && setStep(i)} style={{ display: 'flex', alignItems: 'center', gap: 11, cursor: i <= step ? 'pointer' : 'default' }}>
+              <span style={{ width: 24, height: 24, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: i < step ? LH.green : '#fff', border: '2px solid ' + (i < step ? LH.green : (i === step ? LH.ink : LH.border)), color: i < step ? '#fff' : (i === step ? LH.ink : LH.muted) }}>{i < step ? <Ic name="check" size={12} color="#fff" /> : (i === step ? <span style={{ width: 8, height: 8, borderRadius: 999, background: LH.ink }} /> : '')}</span>
+              <span style={{ fontSize: 13.5, fontWeight: i === step ? 700 : 500, color: i === step ? LH.ink : (i < step ? LH.body : LH.muted) }}>{s}</span>
+            </div>
+          </div>)}
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '30px 34px' }}>{stepBody()}</div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, padding: '13px 22px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+        {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go Back</Btn>}
+        {step === 0 && <Btn onClick={onClose}>Go Back</Btn>}
+        {isLast
+          ? <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={publish} style={{ opacity: name.trim() ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Create campaign'}</Btn>
+          : <Btn kind="primary" onClick={() => { if (canProceed) setStep(step + 1); }} style={{ opacity: canProceed ? 1 : 0.5 }}>Proceed</Btn>}
+      </div>
+    </div>;
+  }
+  window.LeadHubGenericCampaign = GenericCampaignWizard;
 
   /* ─────────── AI WORKFORCE ─────────── */
   // The 4 configurable AI agents + a shared Playbook library. Both the AI Workforce page and the
@@ -32977,7 +33263,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [pipeFull, setPipeFull] = useState(false);
     useEffect(() => { if (section !== 'pipeline') setPipeFull(false); }, [section]);
     const h = heads[section] || heads.overview;
-    const campaignsAction = <Btn kind="primary" icon="plus" onClick={() => { setCampaignEdit(null); onNavigate('lead-campaign-new'); }}>New campaign</Btn>;
+    const campaignsAction = <NewCampaignBtn onNavigate={onNavigate} />;
     return <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       {section !== 'campaigns' && section !== 'pipeline' && <PageHead crumb={h.crumb} title={h.title} actions={h.actions} />}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 26px 34px', background: '#fdfdfc' }}>
