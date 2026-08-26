@@ -32304,10 +32304,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>;
     };
 
-    const head = (icon, iconBg, iconFg, title, sub) => <div style={{ marginBottom: 22 }}>
-      <div style={{ width: 44, height: 44, borderRadius: 11, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}><Ic name={icon} size={20} color={iconFg} /></div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: LH.ink, letterSpacing: '-0.01em' }}>{title}</div>
-      <div style={{ fontSize: 13.5, color: LH.sub, marginTop: 4, lineHeight: 1.5 }}>{sub}</div>
+    // Match the lead-campaign builder's section header so both wizards look identical.
+    const head = (icon, iconBg, iconFg, title, sub) => <div style={{ marginBottom: 18 }}>
+      <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name={icon} size={19} color={LH.primary} /></div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>{title}</div>
+      <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px', lineHeight: 1.5 }}>{sub}</div>
     </div>;
 
     const stepName = STEPS[step];
@@ -32325,8 +32326,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <Dropdown value={moduleKey} height={44} options={GEN_MODULES.map(m => ({ value: m.key, label: m.name }))} onChange={v => { setModuleKey(v); setConds([{ id: wuid(), field: '', op: '', val: [] }]); setExitConds([{ id: wuid(), field: '', op: '', val: [] }]); }} />
           <div style={{ fontSize: 12, color: LH.muted, marginTop: 7, display: 'flex', alignItems: 'center', gap: 6 }}><Ic name={mod.icon} size={13} color={LH.muted} />{mod.desc}</div>
         </div>
-        {condBuilder(conds, setConds, condJoin, setCondJoin, moduleKey)}
-        {flow === 'sequence' && <div style={{ marginTop: 20, padding: '12px 14px', borderRadius: 10, background: LH.tint, border: '1px solid ' + LH.border, fontSize: 12.5, color: LH.body, display: 'flex', alignItems: 'flex-start', gap: 9 }}><Ic name="sparkles" size={15} color={LH.primary} style={{ position: 'relative', top: 1, flexShrink: 0 }} /><span><b>{mod.name}</b> use the full campaign builder — next you’ll set up the audience, communication, message sequence, qualification playbook and exit rules.</span></div>}
+        {flow === 'calls'
+          ? condBuilder(conds, setConds, condJoin, setCondJoin, moduleKey)
+          : <div style={{ padding: '12px 14px', borderRadius: 10, background: LH.tint, border: '1px solid ' + LH.border, fontSize: 12.5, color: LH.body, display: 'flex', alignItems: 'flex-start', gap: 9 }}><Ic name="sparkles" size={15} color={LH.primary} style={{ position: 'relative', top: 1, flexShrink: 0 }} /><span><b>{mod.name}</b> use the full campaign builder — continue to set up the audience, communication, message sequence, qualification playbook and exit rules.</span></div>}
       </div>;
 
       if (stepName === 'Call Handling') return <div style={{ maxWidth: 820, margin: '0 auto' }}>
@@ -32443,31 +32445,31 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       init={{ name, desc, status, audienceType: moduleKey === 'customers' ? 'existing' : 'new', goal: moduleKey === 'customers' ? 'reengage' : 'speed' }}
       onClose={onClose} onCreate={onCreate} />;
 
+    // Shell mirrors CampaignWizard exactly (header + numbered rail + footer) so the two flows
+    // look identical and the lead/customer hand-off feels seamless.
     return <div style={{ width: '100%', height: '100%', background: '#fff', borderRadius: embed ? 0 : 16, display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 22px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
-        <span style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>{editing ? 'Edit campaign' : 'Create a new campaign'}</span>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={19} color={LH.sub} /></button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="send" size={15} color={LH.primary} /></div><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>{name || 'New campaign'}</span><div style={{ width: 118 }}><Dropdown value={status} height={28} options={['Draft', 'Active', 'Inactive'].map(s => ({ value: s, label: s }))} onChange={setStatus} /></div><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: LH.muted }}><Ic name="check" size={12} color={LH.green} />Auto-saved</span></div>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
       </div>
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        <div style={{ width: 250, flexShrink: 0, borderRight: '1px solid ' + LH.borderSoft, padding: '22px 18px', background: '#fff' }}>
-          {STEPS.map((s, i) => <div key={s} style={{ position: 'relative', paddingBottom: i < STEPS.length - 1 ? 22 : 0 }}>
-            {i < STEPS.length - 1 && <span style={{ position: 'absolute', left: 12, top: 26, bottom: 0, width: 2, background: i < step ? LH.green : LH.border }} />}
-            <div onClick={() => (i < step || i === step) && setStep(i)} style={{ display: 'flex', alignItems: 'center', gap: 11, cursor: i <= step ? 'pointer' : 'default' }}>
-              <span style={{ width: 24, height: 24, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: i < step ? LH.green : '#fff', border: '2px solid ' + (i < step ? LH.green : (i === step ? LH.ink : LH.border)), color: i < step ? '#fff' : (i === step ? LH.ink : LH.muted) }}>{i < step ? <Ic name="check" size={12} color="#fff" /> : (i === step ? <span style={{ width: 8, height: 8, borderRadius: 999, background: LH.ink }} /> : '')}</span>
-              <span style={{ fontSize: 13.5, fontWeight: i === step ? 700 : 500, color: i === step ? LH.ink : (i < step ? LH.body : LH.muted) }}>{s}</span>
-            </div>
-          </div>)}
+        <div style={{ width: 230, flexShrink: 0, borderRight: '1px solid ' + LH.borderSoft, padding: 14, background: LH.bg, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1 }}>{STEPS.map((s, i) => <div key={s} onClick={() => (i <= step) && setStep(i)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, marginBottom: 3, cursor: i <= step ? 'pointer' : 'default', background: step === i ? '#fff' : 'transparent', border: '1px solid ' + (step === i ? LH.border : 'transparent') }}>
+            <span style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: i < step ? LH.green : (i === step ? LH.primary : '#f1f0ec'), color: i <= step ? '#fff' : LH.muted }}>{i < step ? '✓' : i + 1}</span>
+            <span style={{ fontSize: 12.5, fontWeight: step === i ? 600 : 500, color: step === i ? LH.ink : LH.sub }}>{s}</span>
+          </div>)}</div>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: '30px 34px' }}>{stepBody()}</div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '26px 30px' }}>{stepBody()}</div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, padding: '13px 22px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
-        {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go Back</Btn>}
-        {step === 0 && <Btn onClick={onClose}>Go Back</Btn>}
-        {handsOff
-          ? <Btn kind="primary" icon="arrow-right" onClick={() => { if (name.trim()) setHandoff(true); }} style={{ opacity: name.trim() ? 1 : 0.5 }}>Continue in builder</Btn>
-          : isLast
-          ? <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={publish} style={{ opacity: name.trim() ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Create campaign'}</Btn>
-          : <Btn kind="primary" onClick={() => { if (canProceed) setStep(step + 1); }} style={{ opacity: canProceed ? 1 : 0.5 }}>Proceed</Btn>}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {step > 0 ? <Btn onClick={() => setStep(step - 1)}>Go back</Btn> : <Btn onClick={onClose}>Go back</Btn>}
+          {handsOff
+            ? <Btn kind="primary" icon="arrow-right" onClick={() => { if (name.trim()) setHandoff(true); }} style={{ opacity: name.trim() ? 1 : 0.5 }}>Continue in builder</Btn>
+            : isLast
+            ? <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={publish} style={{ opacity: name.trim() ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Create campaign'}</Btn>
+            : <Btn kind="primary" onClick={() => { if (canProceed) setStep(step + 1); }} style={{ opacity: canProceed ? 1 : 0.5 }}>Continue</Btn>}
+        </div>
       </div>
     </div>;
   }
