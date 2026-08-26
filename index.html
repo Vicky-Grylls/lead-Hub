@@ -32258,10 +32258,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     // Exit rules
     const [exitJoin, setExitJoin] = useState('or');
     const [exitConds, setExitConds] = useState([{ id: wuid(), field: '', op: '', val: [] }]);
+    const [handoff, setHandoff] = useState(false);
 
     const mod = GEN_MODULES.find(m => m.key === moduleKey) || GEN_MODULES[2];
     const flow = mod.flow;
-    const STEPS = ['Basic Details', 'Enrollment Rules', ...(flow === 'calls' ? ['Call Handling', 'Attempts Strategy'] : ['Message Sequence']), 'Exit Rules'];
+    // Lead/Customer modules run the full lead-campaign builder (audience, communication,
+    // sequence, playbook & exit rules) — so the generic wizard only owns Basic + Enrollment,
+    // then hands off. Record modules (invoices, etc.) get the call-based flow inline.
+    const STEPS = flow === 'sequence'
+      ? ['Basic Details', 'Enrollment Rules']
+      : ['Basic Details', 'Enrollment Rules', 'Call Handling', 'Attempts Strategy', 'Exit Rules'];
     // Message sequence (leads/customers)
     const [seq, setSeq] = useState([{ id: wuid(), ch: 'sms', offset: 'launch', body: 'Hi {{customer_first_name}}, {{user_first_name}} with {{company.company_name}} — thanks for reaching out! When works for a quick call?' }, { id: wuid(), ch: 'call', offset: '30', body: '' }, { id: wuid(), ch: 'email', offset: '60', body: 'Hi {{customer_first_name}},\n\nReaching out about your request — reply and we’ll take it from there.' }]);
 
@@ -32320,6 +32326,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ fontSize: 12, color: LH.muted, marginTop: 7, display: 'flex', alignItems: 'center', gap: 6 }}><Ic name={mod.icon} size={13} color={LH.muted} />{mod.desc}</div>
         </div>
         {condBuilder(conds, setConds, condJoin, setCondJoin, moduleKey)}
+        {flow === 'sequence' && <div style={{ marginTop: 20, padding: '12px 14px', borderRadius: 10, background: LH.tint, border: '1px solid ' + LH.border, fontSize: 12.5, color: LH.body, display: 'flex', alignItems: 'flex-start', gap: 9 }}><Ic name="sparkles" size={15} color={LH.primary} style={{ position: 'relative', top: 1, flexShrink: 0 }} /><span><b>{mod.name}</b> use the full campaign builder — next you’ll set up the audience, communication, message sequence, qualification playbook and exit rules.</span></div>}
       </div>;
 
       if (stepName === 'Call Handling') return <div style={{ maxWidth: 820, margin: '0 auto' }}>
@@ -32422,12 +32429,19 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     };
 
     const isLast = step === STEPS.length - 1;
+    // For lead/customer modules the last generic step (Enrollment) hands off to the full builder.
+    const handsOff = flow === 'sequence' && isLast;
     const canProceed = step === 0 ? name.trim() : true;
     const publish = () => {
       if (!name.trim()) { setStep(0); return; }
       addCampaign({ name: name.trim(), by: 'Ethan Brooks', bi: 'E', status: status === 'Draft' ? 'Draft' : status, records: 0, date: fmtNow(), module: mod.name, generic: true });
       onCreate();
     };
+
+    // Hand off lead/customer modules to the full lead-campaign builder — all features, prefilled.
+    if (handoff) return <CampaignWizard embed={embed}
+      init={{ name, desc, status, audienceType: moduleKey === 'customers' ? 'existing' : 'new', goal: moduleKey === 'customers' ? 'reengage' : 'speed' }}
+      onClose={onClose} onCreate={onCreate} />;
 
     return <div style={{ width: '100%', height: '100%', background: '#fff', borderRadius: embed ? 0 : 16, display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 22px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
@@ -32449,7 +32463,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, padding: '13px 22px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
         {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go Back</Btn>}
         {step === 0 && <Btn onClick={onClose}>Go Back</Btn>}
-        {isLast
+        {handsOff
+          ? <Btn kind="primary" icon="arrow-right" onClick={() => { if (name.trim()) setHandoff(true); }} style={{ opacity: name.trim() ? 1 : 0.5 }}>Continue in builder</Btn>
+          : isLast
           ? <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={publish} style={{ opacity: name.trim() ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Create campaign'}</Btn>
           : <Btn kind="primary" onClick={() => { if (canProceed) setStep(step + 1); }} style={{ opacity: canProceed ? 1 : 0.5 }}>Proceed</Btn>}
       </div>
