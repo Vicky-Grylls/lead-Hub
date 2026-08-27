@@ -30162,6 +30162,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   /* ─────────── OVERVIEW ─────────── */
   function OverviewSection({ onNavigate }) {
     const [setupTab, setSetupTab] = useState('Setup');
+    const [nextStepsOpen, setNextStepsOpen] = useState(() => { try { return localStorage.getItem('lhNextStepsClosed') !== '1'; } catch (e) { return true; } });
+    const toggleNextSteps = () => setNextStepsOpen(o => { const nv = !o; try { localStorage.setItem('lhNextStepsClosed', nv ? '0' : '1'); } catch (e) {} return nv; });
     const kpis = [
       { label: 'Received today', value: 28, accent: LH.ink },
       { label: 'Qualified today', value: 7, accent: LH.green },
@@ -30189,8 +30191,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const list = setupTab === 'Setup' ? steps : recs;
     return <div>
       <div style={{ display: 'flex', gap: 12, marginBottom: 22 }}>{kpis.map(k => <StatCard key={k.label} {...k} />)}</div>
-      <div style={{ marginBottom: 8 }}><div style={{ fontSize: 17, fontWeight: 700, color: LH.ink }}>Next steps for you</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Follow the steps below to tailor Lead Hub to your workflow.</div></div>
-      <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 17, fontWeight: 700, color: LH.ink }}>Next steps for you</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Follow the steps below to tailor Lead Hub to your workflow.</div></div>
+        <button onClick={toggleNextSteps} title={nextStepsOpen ? 'Collapse' : 'Expand'} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name={nextStepsOpen ? 'chevron-up' : 'chevron-down'} size={16} color={LH.sub} /></button>
+      </div>
+      {nextStepsOpen ? <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 24 }}>
         <div style={{ display: 'flex', gap: 4, padding: '0 16px', borderBottom: '1px solid ' + LH.borderSoft }}>
           {[['Setup', pending], ['Recommendations', recs.length]].map(([t, n]) => <button key={t} onClick={() => setSetupTab(t)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '12px 8px', fontSize: 13.5, fontWeight: 600, color: setupTab === t ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (setupTab === t ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{t}<span style={{ fontSize: 11, fontWeight: 700, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 7px' }}>{n}</span></button>)}
         </div>
@@ -30201,7 +30206,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             : setupTab === 'Setup' && i === firstOpen ? <Btn kind="primary" onClick={() => onNavigate(s.go)}>Start</Btn>
             : <Btn onClick={() => onNavigate(s.go)}>Start</Btn>}
         </div>)}</div>
-      </Card>
+      </Card> : <div style={{ marginBottom: 24 }} />}
       <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 10 }}>JUMP BACK IN</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
         {tiles.map(t => <Card key={t.id} hover onClick={() => onNavigate(t.id)} style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 11 }}>
