@@ -31785,7 +31785,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   function CampaignWizard({ onClose, onCreate, embed, init, editing }) {
     init = init || {};
-    const [step, setStep] = useState(0);
+    // Continuation mode (used by the Global campaign flow): render completed prefix steps
+    // (e.g. Basic Details, Enrollment Rules) in the rail, hide the leading WIZ_STEPS they
+    // replace, and start on the first remaining step — so the page continues instead of resetting.
+    const prefixSteps = init.prefixSteps || [];
+    const skipN = init.skipSteps || 0;
+    const onPrefix = init.onPrefix;
+    const [step, setStep] = useState(init.startStep != null ? init.startStep : skipN);
     const [audienceType, setAudienceType] = useState(init.audienceType || 'new');
     const [goal, setGoal] = useState(init.goal || 'speed');
     const [name, setName] = useState(init.name !== undefined ? init.name : 'Storm Season Re-engage');
@@ -32173,16 +32179,22 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
         <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
           <div style={{ width: 230, flexShrink: 0, borderRight: '1px solid ' + LH.borderSoft, padding: 14, background: LH.bg, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ flex: 1 }}>{WIZ_STEPS.map((s, i) => <div key={s} onClick={() => setStep(i)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, marginBottom: 3, cursor: 'pointer', background: step === i ? '#fff' : 'transparent', border: '1px solid ' + (step === i ? LH.border : 'transparent') }}>
-              <span style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: i < step ? LH.green : (i === step ? LH.primary : '#f1f0ec'), color: i <= step ? '#fff' : LH.muted }}>{i < step ? '✓' : i + 1}</span>
-              <span style={{ fontSize: 12.5, fontWeight: step === i ? 600 : 500, color: step === i ? LH.ink : LH.sub }}>{s}</span>
-            </div>)}</div>
+            <div style={{ flex: 1 }}>
+              {prefixSteps.map((s, pi) => <div key={'pre' + pi} onClick={() => onPrefix && onPrefix(pi)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, marginBottom: 3, cursor: onPrefix ? 'pointer' : 'default' }}>
+                <span style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: LH.green, color: '#fff' }}>✓</span>
+                <span style={{ fontSize: 12.5, fontWeight: 500, color: LH.body }}>{s}</span>
+              </div>)}
+              {WIZ_STEPS.map((s, i) => i < skipN ? null : <div key={s} onClick={() => setStep(i)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, marginBottom: 3, cursor: 'pointer', background: step === i ? '#fff' : 'transparent', border: '1px solid ' + (step === i ? LH.border : 'transparent') }}>
+                <span style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: i < step ? LH.green : (i === step ? LH.primary : '#f1f0ec'), color: i <= step ? '#fff' : LH.muted }}>{i < step ? '✓' : prefixSteps.length + (i - skipN) + 1}</span>
+                <span style={{ fontSize: 12.5, fontWeight: step === i ? 600 : 500, color: step === i ? LH.ink : LH.sub }}>{s}</span>
+              </div>)}
+            </div>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '26px 30px' }}>{stepBody()}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
           <div style={{ display: 'flex', gap: 8 }}>
-            {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go back</Btn>}
+            {step > skipN ? <Btn onClick={() => setStep(step - 1)}>Go back</Btn> : (onPrefix && <Btn onClick={() => onPrefix(prefixSteps.length - 1)}>Go back</Btn>)}
             {step < WIZ_STEPS.length - 1
               ? <Btn kind="primary" onClick={() => { if (step === 0 && !name.trim()) return; setStep(step + 1); }}>Continue</Btn>
               : (() => { const audOk = conds.some(c => c.field); const ok = name.trim() && tz && audOk; return <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={() => { if (!ok) return; if (editing) { updateCampaign(editing.name, { name: name.trim(), status, records: audienceType === 'new' ? 0 : enrolledCount, goal, audienceType }); } else { addCampaign({ name: name.trim(), by: 'Ethan Brooks', bi: 'E', status: status === 'Draft' ? 'Active' : status, records: audienceType === 'new' ? 0 : enrolledCount, date: fmtNow(), goal, audienceType }); } onCreate(); }} style={{ opacity: ok ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Publish campaign'}</Btn>; })()}
@@ -32326,9 +32338,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <Dropdown value={moduleKey} height={44} options={GEN_MODULES.map(m => ({ value: m.key, label: m.name }))} onChange={v => { setModuleKey(v); setConds([{ id: wuid(), field: '', op: '', val: [] }]); setExitConds([{ id: wuid(), field: '', op: '', val: [] }]); }} />
           <div style={{ fontSize: 12, color: LH.muted, marginTop: 7, display: 'flex', alignItems: 'center', gap: 6 }}><Ic name={mod.icon} size={13} color={LH.muted} />{mod.desc}</div>
         </div>
-        {flow === 'calls'
-          ? condBuilder(conds, setConds, condJoin, setCondJoin, moduleKey)
-          : <div style={{ padding: '12px 14px', borderRadius: 10, background: LH.tint, border: '1px solid ' + LH.border, fontSize: 12.5, color: LH.body, display: 'flex', alignItems: 'flex-start', gap: 9 }}><Ic name="sparkles" size={15} color={LH.primary} style={{ position: 'relative', top: 1, flexShrink: 0 }} /><span><b>{mod.name}</b> use the full campaign builder — continue to set up the audience, communication, message sequence, qualification playbook and exit rules.</span></div>}
+        {condBuilder(conds, setConds, condJoin, setCondJoin, moduleKey)}
+        {flow === 'sequence' && <div style={{ marginTop: 18, padding: '12px 14px', borderRadius: 10, background: LH.tint, border: '1px solid ' + LH.border, fontSize: 12.5, color: LH.body, display: 'flex', alignItems: 'flex-start', gap: 9 }}><Ic name="sparkles" size={15} color={LH.primary} style={{ position: 'relative', top: 1, flexShrink: 0 }} /><span>Continue to set up the message sequence, qualification playbook, communication and exit rules — the same steps as a lead campaign.</span></div>}
       </div>;
 
       if (stepName === 'Call Handling') return <div style={{ maxWidth: 820, margin: '0 auto' }}>
@@ -32440,9 +32451,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       onCreate();
     };
 
-    // Hand off lead/customer modules to the full lead-campaign builder — all features, prefilled.
+    // Lead/Customer modules continue in the full builder IN PLACE: the rail keeps Basic Details &
+    // Enrollment Rules as completed and resumes at Nurture sequence (Campaign setup + Audience are
+    // covered by our first two steps, so they're skipped) — no reset to a fresh page.
     if (handoff) return <CampaignWizard embed={embed}
-      init={{ name, desc, status, audienceType: moduleKey === 'customers' ? 'existing' : 'new', goal: moduleKey === 'customers' ? 'reengage' : 'speed' }}
+      init={{ name, desc, status, audienceType: moduleKey === 'customers' ? 'existing' : 'new', goal: moduleKey === 'customers' ? 'reengage' : 'speed',
+        prefixSteps: ['Basic Details', 'Enrollment Rules'], skipSteps: 2, startStep: 2,
+        onPrefix: pi => { setHandoff(false); setStep(pi); } }}
       onClose={onClose} onCreate={onCreate} />;
 
     // Shell mirrors CampaignWizard exactly (header + numbered rail + footer) so the two flows
@@ -32465,7 +32480,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ display: 'flex', gap: 8 }}>
           {step > 0 ? <Btn onClick={() => setStep(step - 1)}>Go back</Btn> : <Btn onClick={onClose}>Go back</Btn>}
           {handsOff
-            ? <Btn kind="primary" icon="arrow-right" onClick={() => { if (name.trim()) setHandoff(true); }} style={{ opacity: name.trim() ? 1 : 0.5 }}>Continue in builder</Btn>
+            ? <Btn kind="primary" onClick={() => { if (name.trim()) setHandoff(true); }} style={{ opacity: name.trim() ? 1 : 0.5 }}>Continue</Btn>
             : isLast
             ? <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={publish} style={{ opacity: name.trim() ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Create campaign'}</Btn>
             : <Btn kind="primary" onClick={() => { if (canProceed) setStep(step + 1); }} style={{ opacity: canProceed ? 1 : 0.5 }}>Continue</Btn>}
