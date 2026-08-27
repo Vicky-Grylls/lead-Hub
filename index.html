@@ -32271,15 +32271,18 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [exitJoin, setExitJoin] = useState('or');
     const [exitConds, setExitConds] = useState([{ id: wuid(), field: '', op: '', val: [] }]);
     const [handoff, setHandoff] = useState(false);
+    const [handoffStart, setHandoffStart] = useState(2);
 
     const mod = GEN_MODULES.find(m => m.key === moduleKey) || GEN_MODULES[2];
     const flow = mod.flow;
-    // Lead/Customer modules run the full lead-campaign builder (audience, communication,
-    // sequence, playbook & exit rules) — so the generic wizard only owns Basic + Enrollment,
-    // then hands off. Record modules (invoices, etc.) get the call-based flow inline.
+    // Lead/Customer modules own Basic + Enrollment, then the rail continues with the lead-campaign
+    // steps (which the full builder renders). Those tail labels show in the rail right away so the
+    // upcoming steps are visible before Continue. Tail indices map 1:1 to WIZ_STEPS (Nurture=2…).
+    const LEAD_TAIL = ['Nurture sequence', 'Playbook', 'Communication', 'Exit rules', 'Review & Publish'];
     const STEPS = flow === 'sequence'
-      ? ['Basic Details', 'Enrollment Rules']
+      ? ['Basic Details', 'Enrollment Rules', ...LEAD_TAIL]
       : ['Basic Details', 'Enrollment Rules', 'Call Handling', 'Attempts Strategy', 'Exit Rules'];
+    const SEQ_TAIL_START = 2; // rail index where the lead-builder tail begins
     // Message sequence (leads/customers)
     const [seq, setSeq] = useState([{ id: wuid(), ch: 'sms', offset: 'launch', body: 'Hi {{customer_first_name}}, {{user_first_name}} with {{company.company_name}} — thanks for reaching out! When works for a quick call?' }, { id: wuid(), ch: 'call', offset: '30', body: '' }, { id: wuid(), ch: 'email', offset: '60', body: 'Hi {{customer_first_name}},\n\nReaching out about your request — reply and we’ll take it from there.' }]);
 
@@ -32441,9 +32444,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       return null;
     };
 
-    const isLast = step === STEPS.length - 1;
-    // For lead/customer modules the last generic step (Enrollment) hands off to the full builder.
-    const handsOff = flow === 'sequence' && isLast;
+    // A sequence-tail step in the rail (Nurture sequence, Playbook…) belongs to the full builder.
+    const isTail = i => flow === 'sequence' && i >= SEQ_TAIL_START;
+    const enterBuilder = i => { if (name.trim()) { setHandoffStart(i); setHandoff(true); } };
+    const callsLast = flow === 'calls' && step === STEPS.length - 1;
+    const seqEnroll = flow === 'sequence' && stepName === 'Enrollment Rules';
     const canProceed = step === 0 ? name.trim() : true;
     const publish = () => {
       if (!name.trim()) { setStep(0); return; }
@@ -32452,11 +32457,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     };
 
     // Lead/Customer modules continue in the full builder IN PLACE: the rail keeps Basic Details &
-    // Enrollment Rules as completed and resumes at Nurture sequence (Campaign setup + Audience are
-    // covered by our first two steps, so they're skipped) — no reset to a fresh page.
+    // Enrollment Rules as completed and resumes at the chosen tail step (Campaign setup + Audience
+    // are covered by our first two steps, so they're skipped) — no reset to a fresh page.
     if (handoff) return <CampaignWizard embed={embed}
       init={{ name, desc, status, audienceType: moduleKey === 'customers' ? 'existing' : 'new', goal: moduleKey === 'customers' ? 'reengage' : 'speed',
-        prefixSteps: ['Basic Details', 'Enrollment Rules'], skipSteps: 2, startStep: 2,
+        prefixSteps: ['Basic Details', 'Enrollment Rules'], skipSteps: 2, startStep: handoffStart,
         onPrefix: pi => { setHandoff(false); setStep(pi); } }}
       onClose={onClose} onCreate={onCreate} />;
 
@@ -32469,19 +32474,19 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         <div style={{ width: 230, flexShrink: 0, borderRight: '1px solid ' + LH.borderSoft, padding: 14, background: LH.bg, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ flex: 1 }}>{STEPS.map((s, i) => <div key={s} onClick={() => (i <= step) && setStep(i)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, marginBottom: 3, cursor: i <= step ? 'pointer' : 'default', background: step === i ? '#fff' : 'transparent', border: '1px solid ' + (step === i ? LH.border : 'transparent') }}>
+          <div style={{ flex: 1 }}>{STEPS.map((s, i) => { const clickable = isTail(i) ? (step >= 1 && name.trim()) : i <= step; return <div key={s} onClick={() => { if (!clickable) return; if (isTail(i)) enterBuilder(i); else setStep(i); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, marginBottom: 3, cursor: clickable ? 'pointer' : 'default', background: step === i ? '#fff' : 'transparent', border: '1px solid ' + (step === i ? LH.border : 'transparent') }}>
             <span style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: i < step ? LH.green : (i === step ? LH.primary : '#f1f0ec'), color: i <= step ? '#fff' : LH.muted }}>{i < step ? '✓' : i + 1}</span>
             <span style={{ fontSize: 12.5, fontWeight: step === i ? 600 : 500, color: step === i ? LH.ink : LH.sub }}>{s}</span>
-          </div>)}</div>
+          </div>; })}</div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '26px 30px' }}>{stepBody()}</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
         <div style={{ display: 'flex', gap: 8 }}>
           {step > 0 ? <Btn onClick={() => setStep(step - 1)}>Go back</Btn> : <Btn onClick={onClose}>Go back</Btn>}
-          {handsOff
-            ? <Btn kind="primary" onClick={() => { if (name.trim()) setHandoff(true); }} style={{ opacity: name.trim() ? 1 : 0.5 }}>Continue</Btn>
-            : isLast
+          {seqEnroll
+            ? <Btn kind="primary" onClick={() => enterBuilder(SEQ_TAIL_START)} style={{ opacity: name.trim() ? 1 : 0.5 }}>Continue</Btn>
+            : callsLast
             ? <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={publish} style={{ opacity: name.trim() ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Create campaign'}</Btn>
             : <Btn kind="primary" onClick={() => { if (canProceed) setStep(step + 1); }} style={{ opacity: canProceed ? 1 : 0.5 }}>Continue</Btn>}
         </div>
