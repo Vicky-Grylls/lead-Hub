@@ -32900,37 +32900,30 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const oc = leadOutcome(pbId, pb);
     const create = () => { if (!canSave) return; const stage = oc.state === 'qualified' ? 'Qualifying' : (oc.state === 'hold' || oc.state === 'disqualified') ? 'Needs human' : f.stage; onCreate({ ...f, stage, qualification: oc, playbook: getPlaybook(pbId).name }); };
     return ReactDOM.createPortal(<div onMouseDown={onClose} style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(8,6,5,0.35)', display: 'flex', justifyContent: 'flex-end', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
-    <div onMouseDown={e => e.stopPropagation()} style={{ width: pbOpen ? 'min(880px,96vw)' : 'min(560px,96vw)', height: '100%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,0.16)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s ease' }}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ width: 'min(640px,96vw)', height: '100%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,0.16)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1)' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}><div><div style={{ fontSize: 15.5, fontWeight: 700, color: LH.ink }}>New lead</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Add a lead and qualify it against the playbook.</div></div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
-      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-        {/* Left — lead form */}
-        <div style={{ flex: '1 1 0', minWidth: 0, overflowY: 'auto', padding: 20, borderRight: '1px solid ' + LH.borderSoft }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Full name<span style={{ color: LH.red }}> *</span></label><input value={f.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Jordan Blake" autoFocus style={inp} /></div>
-            <div><label style={lbl}>Email</label><input value={f.email} onChange={e => set('email', e.target.value)} placeholder="name@email.com" style={inp} /></div>
-            <div><label style={lbl}>Phone</label><input value={f.phone} onChange={e => set('phone', e.target.value)} placeholder="(555) 555-5555" style={inp} /></div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={lbl}>Address</label><button onClick={() => setMapOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 5 }}><Ic name="map-pin" size={13} color={LH.primary} />Pick from map</button></div>
-              <input value={f.address} onChange={e => set('address', e.target.value)} placeholder="Start typing or pick from map…" style={inp} />
-            </div>
-            <div><label style={lbl}>Lead source</label><Dropdown value={f.src} options={(sources || []).map(s => ({ value: s, label: s }))} onChange={v => set('src', v)} /></div>
-            <div><label style={lbl}>Stage</label><Dropdown value={f.stage} options={STAGES.map(s => ({ value: s, label: s }))} onChange={v => set('stage', v)} /></div>
-            <div><label style={lbl}>Assigned CSR</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
-            <div><label style={lbl}>Service interest</label><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="e.g. Roof inspection" style={inp} /></div>
-            <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Notes</label><textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional context…" style={{ ...inp, height: 70, padding: 10, resize: 'vertical' }} /></div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 20, minHeight: 0 }}>
+        {/* Basic info */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}><Ic name="user" size={15} color={LH.primary} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Basic info</span></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Full name<span style={{ color: LH.red }}> *</span></label><input value={f.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Jordan Blake" autoFocus style={inp} /></div>
+          <div><label style={lbl}>Email</label><input value={f.email} onChange={e => set('email', e.target.value)} placeholder="name@email.com" style={inp} /></div>
+          <div><label style={lbl}>Phone</label><input value={f.phone} onChange={e => set('phone', e.target.value)} placeholder="(555) 555-5555" style={inp} /></div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={lbl}>Address</label><button onClick={() => setMapOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 5 }}><Ic name="map-pin" size={13} color={LH.primary} />Pick from map</button></div>
+            <input value={f.address} onChange={e => set('address', e.target.value)} placeholder="Start typing or pick from map…" style={inp} />
           </div>
+          <div><label style={lbl}>Lead source</label><Dropdown value={f.src} options={(sources || []).map(s => ({ value: s, label: s }))} onChange={v => set('src', v)} /></div>
+          <div><label style={lbl}>Stage</label><Dropdown value={f.stage} options={STAGES.map(s => ({ value: s, label: s }))} onChange={v => set('stage', v)} /></div>
+          <div><label style={lbl}>Assigned CSR</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
+          <div><label style={lbl}>Service interest</label><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="e.g. Roof inspection" style={inp} /></div>
+          <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Notes</label><textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional context…" style={{ ...inp, height: 70, padding: 10, resize: 'vertical' }} /></div>
         </div>
-        {/* Right — qualification playbook (collapsible) */}
-        {pbOpen && <div style={{ flex: '0 0 400px', maxWidth: '46%', overflowY: 'auto', padding: 20, background: LH.bg, borderLeft: '1px solid ' + LH.borderSoft }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}><Ic name="book-open" size={15} color={LH.primary} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink, flex: 1 }}>Qualification playbook</span><button onClick={() => setPbOpen(false)} title="Collapse playbook" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="chevrons-right" size={16} color={LH.sub} /></button></div>
+        {/* Playbook & qualification — same form, below basic info */}
+        <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid ' + LH.borderSoft }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}><Ic name="book-open" size={15} color={LH.primary} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Playbook &amp; qualification</span></div>
           <QualifyPlaybook pbId={pbId} setPbId={setPbId} pb={pb} setPb={setPb} />
-        </div>}
-        {!pbOpen && <button onClick={() => setPbOpen(true)} title="Show qualification playbook" style={{ flex: '0 0 44px', border: 'none', borderLeft: '1px solid ' + LH.borderSoft, background: LH.bg, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '16px 0' }}>
-          <Ic name="chevrons-left" size={16} color={LH.sub} />
-          <Ic name="book-open" size={15} color={LH.primary} />
-          <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontSize: 11.5, fontWeight: 700, color: LH.ink, letterSpacing: '.02em' }}>Playbook</span>
-          <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontSize: 10.5, fontWeight: 700, color: oc.tone === 'green' ? LH.green : oc.tone === 'red' ? LH.red : oc.tone === 'amber' ? LH.amber : LH.sub }}>{oc.state === 'qualified' ? 'Qualified' : oc.state === 'disqualified' ? 'Disqualified' : oc.state === 'hold' ? 'On hold' : 'Pending'}</span>
-        </button>}
+        </div>
       </div>
       <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="plus" onClick={create} style={{ opacity: canSave ? 1 : 0.5 }}>Create lead</Btn></div>
       {mapOpen && <LeadAddressPicker initial={f.address} onClose={() => setMapOpen(false)} onApply={a => set('address', a)} />}
