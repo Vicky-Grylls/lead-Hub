@@ -30334,6 +30334,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [flow, setFlow] = useState(null);
     const [ovToast, setOvToast] = useState(null);
     const flash = m => { setOvToast(m); setTimeout(() => setOvToast(null), 2600); };
+    // 10DLC registration status persists across reloads: none → pending (under carrier review) → approved.
+    const [dlc10, setDlc10] = useState(() => { try { return localStorage.getItem('lh10dlcStatus') || 'none'; } catch (e) { return 'none'; } });
+    const setDlc10Status = v => { setDlc10(v); try { localStorage.setItem('lh10dlcStatus', v); } catch (e) {} };
     const kpis = [
       { label: 'Received today', value: 28, accent: LH.ink },
       { label: 'Qualified today', value: 7, accent: LH.green },
@@ -30350,15 +30353,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { cat: 'SOURCE', icon: 'plug', bg: '#fdece5', fg: '#e0642f', title: 'Set up source', desc: 'Connect marketplace and native lead sources so new demand lands in Lead Hub.', done: true, go: 'lead-channels' },
       { cat: 'PHONE', icon: 'phone', bg: LH.blueBg, fg: LH.blue, title: 'Buy a phone number', desc: 'Purchase a local or toll-free number to start calling and texting leads.', action: 'buy-number', go: 'lead-channels' },
       { cat: 'SMS COMPLIANCE', icon: 'message-square', bg: LH.greenBg, fg: LH.green, title: 'Register 10DLC', desc: 'Register your brand & campaign so SMS sends compliantly. Takes under 5 minutes.', action: '10dlc', go: 'lead-channels' },
-      { cat: 'CAMPAIGN', icon: 'zap', bg: LH.amberBg, fg: LH.amber, title: 'Set up campaign', desc: 'Define speed-to-lead, nurture, storm response, or rehash follow-up.', go: 'lead-campaign-new' },
-      { cat: 'AI WORKFORCE', icon: 'sparkles', bg: '#efe7fb', fg: '#7c3aed', title: 'Enable AI workforce', desc: 'Turn on Nova for qualification, routing, speed-to-lead replies, and human handoff.', go: 'lead-workforce' }
+      { cat: 'CAMPAIGN', icon: 'zap', bg: LH.amberBg, fg: LH.amber, title: 'Set up campaign', desc: 'Define speed-to-lead, nurture, storm response, or rehash follow-up.', go: 'lead-campaign-new' }
     ];
     const recs = [
       { cat: 'PLAYBOOK', icon: 'book-open', bg: LH.tint, fg: LH.ink, title: 'Tune your Nova playbook', desc: 'Set qualification tone, handoff rules, and required signals.', go: 'lead-workforce' },
       { cat: 'TEMPLATES', icon: 'layout-template', bg: LH.tint, fg: LH.ink, title: 'Add message templates', desc: 'Save reusable SMS and email templates for faster campaigns.', go: 'lead-campaigns' }
     ];
-    const pending = steps.filter(s => !s.done).length;
-    const firstOpen = steps.findIndex(s => !s.done);
+    // A 10DLC step that's pending carrier review or approved is no longer "open" to action.
+    const stepStatus = s => (s.done || (s.action === '10dlc' && dlc10 === 'approved')) ? 'done' : (s.action === '10dlc' && dlc10 === 'pending') ? 'pending' : 'open';
+    const pending = steps.filter(s => stepStatus(s) === 'open').length;
+    const firstOpen = steps.findIndex(s => stepStatus(s) === 'open');
     const list = setupTab === 'Setup' ? steps : recs;
     return <div>
       <div style={{ display: 'flex', gap: 12, marginBottom: 22 }}>{kpis.map(k => <StatCard key={k.label} {...k} />)}</div>
@@ -30373,7 +30377,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ padding: 14 }}>{list.map((s, i) => <div key={s.title} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, border: '1px solid ' + LH.borderSoft, borderRadius: 12, marginBottom: i < list.length - 1 ? 10 : 0 }}>
           <div style={{ width: 42, height: 42, borderRadius: 11, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={s.icon} size={19} color={s.fg} /></div>
           <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>{s.cat}</div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginTop: 1 }}>{s.title}</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{s.desc}</div></div>
-          {s.done ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#f6f4ef', color: LH.sub, fontSize: 13, fontWeight: 600 }}><Ic name="check" size={14} color={LH.sub} />Completed</span>
+          {setupTab === 'Setup' && stepStatus(s) === 'pending' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.amberBd, background: LH.amberBg, color: LH.amber, fontSize: 13, fontWeight: 600 }}><Ic name="clock" size={14} color={LH.amber} />Pending approval</span>
+            : setupTab === 'Setup' && stepStatus(s) === 'done' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#f6f4ef', color: LH.sub, fontSize: 13, fontWeight: 600 }}><Ic name="check" size={14} color={LH.sub} />Completed</span>
+            : s.done ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#f6f4ef', color: LH.sub, fontSize: 13, fontWeight: 600 }}><Ic name="check" size={14} color={LH.sub} />Completed</span>
             : setupTab === 'Setup' && i === firstOpen ? <Btn kind="primary" onClick={() => s.action ? setFlow(s.action) : onNavigate(s.go)}>Start</Btn>
             : <Btn onClick={() => s.action ? setFlow(s.action) : onNavigate(s.go)}>Start</Btn>}
         </div>)}</div>
@@ -30392,7 +30398,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <AttentionRollupCard onNavigate={onNavigate} />
         <FollowupsCard onNavigate={onNavigate} onFlash={flash} />
       </div>
-      <div style={{ marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'stretch', marginBottom: 12 }}>
         {(() => {
           const RECENT = [
             { name: 'Speed-to-Lead Campaign', status: 'Active', when: '2h ago' },
@@ -30413,18 +30419,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             </div>
           </Card>;
         })()}
-      </div>
-      <Card style={{ padding: 18 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink, marginBottom: 14 }}>Recent activity</div>
-        {DIANE_ACT.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: i < DIANE_ACT.length - 1 ? 12 : 0, marginBottom: i < DIANE_ACT.length - 1 ? 12 : 0, borderBottom: i < DIANE_ACT.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
-          <div style={{ width: 26, height: 26, borderRadius: 7, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={a.who === 'Nova' ? 'sparkles' : 'settings'} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.4 }}>{a.msg}</div>
-            <div style={{ fontSize: 11, color: LH.muted, marginTop: 2 }}>{a.who} · {a.t}</div>
-          </div>
-        </div>)}
-      </Card>
-      {flow && <OnboardingFlowModal flow={flow} onClose={() => setFlow(null)} onDone={m => { setFlow(null); flash(m); }} />}
+        <Card style={{ padding: 18 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: LH.ink, marginBottom: 14 }}>Recent activity</div>
+          {DIANE_ACT.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: i < DIANE_ACT.length - 1 ? 12 : 0, marginBottom: i < DIANE_ACT.length - 1 ? 12 : 0, borderBottom: i < DIANE_ACT.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+            <div style={{ width: 26, height: 26, borderRadius: 7, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={a.who === 'Nova' ? 'sparkles' : 'settings'} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.4 }}>{a.msg}</div>
+              <div style={{ fontSize: 11, color: LH.muted, marginTop: 2 }}>{a.who} · {a.t}</div>
+            </div>
+          </div>)}
+        </Card>
+      {flow && <OnboardingFlowModal flow={flow} onClose={() => setFlow(null)} onDone={m => { if (flow === '10dlc') setDlc10Status('pending'); setFlow(null); flash(m); }} />}
       {ovToast && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 3700, background: LH.ink, color: '#fff', fontSize: 13, fontWeight: 500, padding: '11px 18px', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="check-circle" size={15} color="#4ade80" />{ovToast}</div>}
     </div>;
   }
