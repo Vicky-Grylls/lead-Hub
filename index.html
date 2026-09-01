@@ -33782,34 +33782,54 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   try { if (!document.getElementById('zuper-connect-root')) { const host = document.createElement('div'); host.id = 'zuper-connect-root'; document.body.appendChild(host); ReactDOM.createRoot(host).render(React.createElement(ZuperConnectHost)); } } catch (e) {}
 
   // ─────────── Global Qualification Playbook — bottom-stacked dock reachable from any screen ───────────
-  const PLAYBOOK_QS = [
-    { q: 'Are you the homeowner or the decision-maker?', req: true },
-    { q: 'What roof issue are you experiencing?', req: true },
-    { q: 'Is there active leaking or recent storm damage?', req: true },
-    { q: 'Approximate age of the current roof?', req: false },
-    { q: 'Is this being filed as an insurance claim?', req: true },
-    { q: 'What is your target timeframe to get it fixed?', req: true },
-    { q: 'Property address / service area?', req: true },
-    { q: 'Best callback number and time?', req: false },
-    { q: 'Budget range you have in mind?', req: false },
-    { q: 'How did you hear about Shield Roofing?', req: false }
+  // A couple of qualification playbooks, shown as stacked tabs on the bottom bar (Linear-style).
+  const PLAYBOOKS = [
+    { id: 'shield', name: 'Shield Roofing', tag: 'Lead Qualification', qs: [
+      { q: 'Are you the homeowner or the decision-maker?', req: true },
+      { q: 'What roof issue are you experiencing?', req: true },
+      { q: 'Is there active leaking or recent storm damage?', req: true },
+      { q: 'Approximate age of the current roof?', req: false },
+      { q: 'Is this being filed as an insurance claim?', req: true },
+      { q: 'What is your target timeframe to get it fixed?', req: true },
+      { q: 'Property address / service area?', req: true },
+      { q: 'Best callback number and time?', req: false },
+      { q: 'Budget range you have in mind?', req: false },
+      { q: 'How did you hear about Shield Roofing?', req: false }
+    ] },
+    { id: 'storm', name: 'Storm Response', tag: 'Damage Triage', qs: [
+      { q: 'Is there confirmed storm or hail damage?', req: true },
+      { q: 'What date did the storm hit?', req: true },
+      { q: 'Any active leaks or interior water damage?', req: true },
+      { q: 'Have you filed an insurance claim yet?', req: false },
+      { q: 'Roof age and material?', req: false },
+      { q: 'Preferred inspection window?', req: true }
+    ] },
+    { id: 'insurance', name: 'Insurance Claim', tag: 'Claim Intake', qs: [
+      { q: 'Insurance carrier and claim number?', req: true },
+      { q: 'Has an adjuster been assigned?', req: true },
+      { q: 'What is the date of loss?', req: true },
+      { q: 'Scope: roof only or full exterior?', req: false },
+      { q: 'Deductible amount?', req: false },
+      { q: 'Is an adjuster meeting scheduled?', req: false }
+    ] }
   ];
-  function PlaybookDock({ onCollapse }) {
+  function PlaybookDock({ playbook, onCollapse }) {
+    const qs = playbook.qs;
     const [ans, setAns] = useState({});
     const toggle = i => setAns(a => ({ ...a, [i]: !a[i] }));
-    const reqIdx = PLAYBOOK_QS.map((q, i) => q.req ? i : -1).filter(i => i >= 0);
+    const reqIdx = qs.map((q, i) => q.req ? i : -1).filter(i => i >= 0);
     const reqLeft = reqIdx.filter(i => !ans[i]).length;
     const answered = Object.values(ans).filter(Boolean).length;
     const outcome = reqLeft === 0 ? { label: 'Qualified', bg: LH.greenBg, fg: LH.green, ic: 'check-circle' } : { label: 'On hold — ' + reqLeft + ' required left', bg: LH.amberBg, fg: LH.amber, ic: 'clock' };
-    return <div style={{ position: 'fixed', right: 16, bottom: 40, zIndex: 2500, width: 380, maxWidth: '94vw', height: 520, maxHeight: 'calc(100vh - 120px)', background: '#fff', borderRadius: '14px 14px 0 0', border: '1px solid ' + LH.border, borderBottom: 'none', boxShadow: '0 24px 60px rgba(0,0,0,.28)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+    return <div style={{ position: 'fixed', right: 16, bottom: PB_BAR_H, zIndex: 2500, width: 380, maxWidth: '94vw', height: 520, maxHeight: 'calc(100vh - 120px)', background: '#fff', borderRadius: '14px 14px 0 0', border: '1px solid ' + LH.border, borderBottom: 'none', boxShadow: '0 24px 60px rgba(0,0,0,.28)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 14px', borderBottom: '1px solid ' + LH.borderSoft }}>
         <div style={{ width: 28, height: 28, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="book-open" size={15} color={LH.primary} /></div>
-        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Qualification Playbook</div><div style={{ fontSize: 11, color: LH.muted }}>Shield Roofing · 10 questions</div></div>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{playbook.name}</span><span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '.05em', color: LH.primary, background: LH.tint, borderRadius: 999, padding: '1px 7px' }}>PLAYBOOK</span></div><div style={{ fontSize: 11, color: LH.muted }}>{playbook.tag} · {qs.length} questions</div></div>
         <button onClick={onCollapse} title="Collapse" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Ic name="chevron-down" size={18} color={LH.sub} /></button>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: outcome.bg, borderBottom: '1px solid ' + LH.borderSoft }}><Ic name={outcome.ic} size={15} color={outcome.fg} /><span style={{ fontSize: 12.5, fontWeight: 700, color: outcome.fg }}>{outcome.label}</span><span style={{ fontSize: 11.5, color: LH.muted, marginLeft: 'auto' }}>{answered}/{PLAYBOOK_QS.length} answered</span></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: outcome.bg, borderBottom: '1px solid ' + LH.borderSoft }}><Ic name={outcome.ic} size={15} color={outcome.fg} /><span style={{ fontSize: 12.5, fontWeight: 700, color: outcome.fg }}>{outcome.label}</span><span style={{ fontSize: 11.5, color: LH.muted, marginLeft: 'auto' }}>{answered}/{qs.length} answered</span></div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px 12px' }}>
-        {PLAYBOOK_QS.map((q, i) => { const on = !!ans[i]; return <div key={i} onClick={() => toggle(i)} style={{ display: 'flex', gap: 10, padding: '10px 10px', borderRadius: 9, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+        {qs.map((q, i) => { const on = !!ans[i]; return <div key={i} onClick={() => toggle(i)} style={{ display: 'flex', gap: 10, padding: '10px 10px', borderRadius: 9, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
           <span style={{ width: 19, height: 19, borderRadius: 6, flexShrink: 0, marginTop: 1, border: '1.5px solid ' + (on ? LH.green : LH.border), background: on ? LH.green : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on && <Ic name="check" size={12} color="#fff" />}</span>
           <div style={{ flex: 1 }}><div style={{ fontSize: 13, color: on ? LH.muted : LH.ink, fontWeight: 500, lineHeight: 1.4, textDecoration: on ? 'line-through' : 'none' }}>{q.q}</div>{q.req && <span style={{ display: 'inline-block', marginTop: 4, fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: LH.amber, background: LH.amberBg, borderRadius: 999, padding: '1px 7px' }}>REQUIRED</span>}</div>
         </div>; })}
@@ -33817,23 +33837,21 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}><span style={{ fontSize: 11.5, color: LH.muted, flex: 1 }}>Runs on SMS, email or a live call</span><Btn kind="primary" icon="check" onClick={onCollapse}>Save to lead</Btn></div>
     </div>;
   }
-  // Full-width docked bottom bar (Linear-style) — always present, click to expand the playbook above it.
+  // Full-width docked bottom bar (Linear-style) — playbooks stack as tabs on the right; click one to expand it above.
   const PB_BAR_H = 40;
-  function PlaybookBottomBar({ expanded, onToggle }) {
-    return <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 2450, height: PB_BAR_H, background: '#fff', borderTop: '1px solid ' + LH.border, boxShadow: '0 -2px 12px rgba(0,0,0,.05)', display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
-      <div onClick={onToggle} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', minWidth: 0 }}>
-        <div style={{ width: 22, height: 22, borderRadius: 6, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="book-open" size={13} color={LH.primary} /></div>
-        <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap' }}>Qualification Playbook</span>
-        <span style={{ fontSize: 11.5, color: LH.muted, whiteSpace: 'nowrap' }}>· Shield Roofing · 10 questions</span>
-      </div>
+  function PlaybookBottomBar({ activeId, onToggle }) {
+    return <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 2450, height: PB_BAR_H, background: '#fff', borderTop: '1px solid ' + LH.border, boxShadow: '0 -2px 12px rgba(0,0,0,.05)', display: 'flex', alignItems: 'center', gap: 10, padding: '0 12px 0 16px', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}><Ic name="book-open" size={14} color={LH.sub} /><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, whiteSpace: 'nowrap' }}>PLAYBOOKS</span></div>
       <div style={{ flex: 1 }} />
-      <button onClick={onToggle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 11px', borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', color: LH.sub, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><Ic name={expanded ? 'chevron-down' : 'chevron-up'} size={14} color={LH.sub} />{expanded ? 'Collapse' : 'Open'}</button>
+      <div style={{ display: 'flex', alignItems: 'stretch', gap: 6, height: '100%' }}>
+        {PLAYBOOKS.map(p => { const on = activeId === p.id; return <button key={p.id} onClick={() => onToggle(p.id)} title={p.tag} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, alignSelf: 'flex-end', height: 30, padding: '0 11px', borderRadius: '8px 8px 0 0', border: '1px solid ' + (on ? LH.primary : LH.border), borderBottom: 'none', background: on ? LH.tint : '#fff', color: on ? LH.primary : LH.body, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><Ic name="book-open" size={13} color={on ? LH.primary : LH.sub} /><span style={{ whiteSpace: 'nowrap' }}>{p.name}</span><Ic name={on ? 'chevron-down' : 'chevron-up'} size={13} color={on ? LH.primary : LH.muted} /></button>; })}
+      </div>
     </div>;
   }
   function PlaybookHost() {
-    const [expanded, setExpanded] = useState(false);
+    const [activeId, setActiveId] = useState(null);
     useEffect(() => {
-      const h = () => setExpanded(true);
+      const h = () => setActiveId(PLAYBOOKS[0].id);
       window.addEventListener('lead-playbook:open', h);
       // Reserve space for the bottom bar by shrinking the app shell height. Retry until it mounts.
       let appEl = null, tries = 0;
@@ -33841,9 +33859,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       reserve();
       return () => { window.removeEventListener('lead-playbook:open', h); if (appEl) appEl.style.height = ''; };
     }, []);
+    const active = PLAYBOOKS.find(p => p.id === activeId);
     return <>
-      {expanded && <PlaybookDock onCollapse={() => setExpanded(false)} />}
-      <PlaybookBottomBar expanded={expanded} onToggle={() => setExpanded(e => !e)} />
+      {active && <PlaybookDock playbook={active} onCollapse={() => setActiveId(null)} />}
+      <PlaybookBottomBar activeId={activeId} onToggle={id => setActiveId(a => a === id ? null : id)} />
     </>;
   }
   try { if (!document.getElementById('lead-playbook-root')) { const host = document.createElement('div'); host.id = 'lead-playbook-root'; document.body.appendChild(host); ReactDOM.createRoot(host).render(React.createElement(PlaybookHost)); } } catch (e) {}
