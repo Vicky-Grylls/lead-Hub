@@ -33749,19 +33749,18 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { q: 'Budget range you have in mind?', req: false },
     { q: 'How did you hear about Shield Roofing?', req: false }
   ];
-  function PlaybookDock({ onMin, onClose }) {
+  function PlaybookDock({ onCollapse }) {
     const [ans, setAns] = useState({});
     const toggle = i => setAns(a => ({ ...a, [i]: !a[i] }));
     const reqIdx = PLAYBOOK_QS.map((q, i) => q.req ? i : -1).filter(i => i >= 0);
     const reqLeft = reqIdx.filter(i => !ans[i]).length;
     const answered = Object.values(ans).filter(Boolean).length;
     const outcome = reqLeft === 0 ? { label: 'Qualified', bg: LH.greenBg, fg: LH.green, ic: 'check-circle' } : { label: 'On hold — ' + reqLeft + ' required left', bg: LH.amberBg, fg: LH.amber, ic: 'clock' };
-    return <div style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 2500, width: 380, maxWidth: '94vw', height: 540, maxHeight: '80vh', background: '#fff', borderRadius: 14, border: '1px solid ' + LH.border, boxShadow: '0 24px 60px rgba(0,0,0,.28)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+    return <div style={{ position: 'fixed', right: 16, bottom: 40, zIndex: 2500, width: 380, maxWidth: '94vw', height: 520, maxHeight: 'calc(100vh - 120px)', background: '#fff', borderRadius: '14px 14px 0 0', border: '1px solid ' + LH.border, borderBottom: 'none', boxShadow: '0 24px 60px rgba(0,0,0,.28)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 14px', borderBottom: '1px solid ' + LH.borderSoft }}>
         <div style={{ width: 28, height: 28, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="book-open" size={15} color={LH.primary} /></div>
         <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Qualification Playbook</div><div style={{ fontSize: 11, color: LH.muted }}>Shield Roofing · 10 questions</div></div>
-        <button onClick={onMin} title="Minimise" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Ic name="minus" size={17} color={LH.sub} /></button>
-        <button onClick={onClose} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Ic name="x" size={17} color={LH.sub} /></button>
+        <button onClick={onCollapse} title="Collapse" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Ic name="chevron-down" size={18} color={LH.sub} /></button>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: outcome.bg, borderBottom: '1px solid ' + LH.borderSoft }}><Ic name={outcome.ic} size={15} color={outcome.fg} /><span style={{ fontSize: 12.5, fontWeight: 700, color: outcome.fg }}>{outcome.label}</span><span style={{ fontSize: 11.5, color: LH.muted, marginLeft: 'auto' }}>{answered}/{PLAYBOOK_QS.length} answered</span></div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px 12px' }}>
@@ -33770,27 +33769,37 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ flex: 1 }}><div style={{ fontSize: 13, color: on ? LH.muted : LH.ink, fontWeight: 500, lineHeight: 1.4, textDecoration: on ? 'line-through' : 'none' }}>{q.q}</div>{q.req && <span style={{ display: 'inline-block', marginTop: 4, fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: LH.amber, background: LH.amberBg, borderRadius: 999, padding: '1px 7px' }}>REQUIRED</span>}</div>
         </div>; })}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}><span style={{ fontSize: 11.5, color: LH.muted, flex: 1 }}>Runs on SMS, email or a live call</span><Btn kind="primary" icon="check" onClick={onClose}>Save to lead</Btn></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}><span style={{ fontSize: 11.5, color: LH.muted, flex: 1 }}>Runs on SMS, email or a live call</span><Btn kind="primary" icon="check" onClick={onCollapse}>Save to lead</Btn></div>
     </div>;
   }
-  function PlaybookStackedBar({ onRestore, onClose }) {
-    return <div style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 2500, width: 300, background: '#fff', borderRadius: '10px 10px 0 0', border: '1px solid ' + LH.border, borderBottom: 'none', boxShadow: '0 -6px 24px rgba(0,0,0,.14)', display: 'flex', alignItems: 'center', gap: 9, padding: '11px 12px', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
-      <div style={{ width: 24, height: 24, borderRadius: 7, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="book-open" size={13} color={LH.primary} /></div>
-      <span style={{ flex: 1, fontSize: 12.5, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Qualification Playbook</span>
-      <button onClick={onRestore} title="Restore" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Ic name="chevron-up" size={16} color={LH.sub} /></button>
-      <button onClick={onClose} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Ic name="x" size={16} color={LH.sub} /></button>
+  // Full-width docked bottom bar (Linear-style) — always present, click to expand the playbook above it.
+  const PB_BAR_H = 40;
+  function PlaybookBottomBar({ expanded, onToggle }) {
+    return <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 2450, height: PB_BAR_H, background: '#fff', borderTop: '1px solid ' + LH.border, boxShadow: '0 -2px 12px rgba(0,0,0,.05)', display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div onClick={onToggle} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', minWidth: 0 }}>
+        <div style={{ width: 22, height: 22, borderRadius: 6, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="book-open" size={13} color={LH.primary} /></div>
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap' }}>Qualification Playbook</span>
+        <span style={{ fontSize: 11.5, color: LH.muted, whiteSpace: 'nowrap' }}>· Shield Roofing · 10 questions</span>
+      </div>
+      <div style={{ flex: 1 }} />
+      <button onClick={onToggle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 11px', borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', color: LH.sub, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><Ic name={expanded ? 'chevron-down' : 'chevron-up'} size={14} color={LH.sub} />{expanded ? 'Collapse' : 'Open'}</button>
     </div>;
-  }
-  function PlaybookLauncher({ onClick }) {
-    return <button onClick={onClick} title="Open qualification playbook" style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 2400, display: 'inline-flex', alignItems: 'center', gap: 8, height: 42, padding: '0 16px', borderRadius: 999, border: 'none', background: LH.ink, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', boxShadow: '0 10px 28px rgba(0,0,0,.28)', fontFamily: "'Inter',ui-sans-serif,system-ui" }}><Ic name="book-open" size={16} color="#fff" />Playbook</button>;
   }
   function PlaybookHost() {
-    const [open, setOpen] = useState(false);
-    const [min, setMin] = useState(false);
-    useEffect(() => { const h = () => { setOpen(true); setMin(false); }; window.addEventListener('lead-playbook:open', h); return () => window.removeEventListener('lead-playbook:open', h); }, []);
-    if (!open) return <PlaybookLauncher onClick={() => setOpen(true)} />;
-    if (min) return <PlaybookStackedBar onRestore={() => setMin(false)} onClose={() => { setOpen(false); setMin(false); }} />;
-    return <PlaybookDock onMin={() => setMin(true)} onClose={() => setOpen(false)} />;
+    const [expanded, setExpanded] = useState(false);
+    useEffect(() => {
+      const h = () => setExpanded(true);
+      window.addEventListener('lead-playbook:open', h);
+      // Reserve space for the bottom bar by shrinking the app shell height. Retry until it mounts.
+      let appEl = null, tries = 0;
+      const reserve = () => { appEl = document.querySelector('#root > div'); if (appEl) { appEl.style.height = 'calc(100vh - ' + PB_BAR_H + 'px)'; } else if (tries++ < 40) { setTimeout(reserve, 100); } };
+      reserve();
+      return () => { window.removeEventListener('lead-playbook:open', h); if (appEl) appEl.style.height = ''; };
+    }, []);
+    return <>
+      {expanded && <PlaybookDock onCollapse={() => setExpanded(false)} />}
+      <PlaybookBottomBar expanded={expanded} onToggle={() => setExpanded(e => !e)} />
+    </>;
   }
   try { if (!document.getElementById('lead-playbook-root')) { const host = document.createElement('div'); host.id = 'lead-playbook-root'; document.body.appendChild(host); ReactDOM.createRoot(host).render(React.createElement(PlaybookHost)); } } catch (e) {}
 })();
