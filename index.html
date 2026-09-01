@@ -30346,8 +30346,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const tiles = [
       { id: 'lead-pipeline', icon: 'filter', title: 'Pipeline', desc: '6 active leads across 7 stages', accent: LH.blue },
       { id: 'lead-campaigns', icon: 'megaphone', title: 'Campaigns', desc: '3 active nurture sequences', accent: LH.primary },
-      { id: 'lead-channels', icon: 'radio', title: 'Channels', desc: '6 of 11 sources connected', accent: LH.green },
-      { id: 'lead-health', icon: 'activity', title: 'Health', desc: '5 pending · 1 requires action', accent: LH.amber }
+      { id: 'lead-channels', icon: 'radio', title: 'Channels', desc: '6 of 11 sources connected', accent: LH.green }
     ];
     const steps = [
       { cat: 'SOURCE', icon: 'plug', bg: '#fdece5', fg: '#e0642f', title: 'Set up source', desc: 'Connect marketplace and native lead sources so new demand lands in Lead Hub.', done: true, go: 'lead-channels' },
@@ -30384,16 +30383,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             : <Btn onClick={() => s.action ? setFlow(s.action) : onNavigate(s.go)}>Start</Btn>}
         </div>)}</div>
       </Card> : <div style={{ marginBottom: 24 }} />}
-      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 10 }}>JUMP BACK IN</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
-        {tiles.map(t => <Card key={t.id} hover onClick={() => onNavigate(t.id)} style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 11 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={t.icon} size={16} color={LH.primary} /></div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{t.title}</div>
-            <div style={{ fontSize: 11.5, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.desc}</div>
-          </div>
-        </Card>)}
-      </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'stretch', marginBottom: 12 }}>
         <AttentionRollupCard onNavigate={onNavigate} />
         <FollowupsCard onNavigate={onNavigate} onFlash={flash} />
@@ -30429,6 +30418,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             </div>
           </div>)}
         </Card>
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 10 }}>JUMP BACK IN</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 24 }}>
+        {tiles.map(t => <Card key={t.id} hover onClick={() => onNavigate(t.id)} style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 11 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={t.icon} size={16} color={LH.primary} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{t.title}</div>
+            <div style={{ fontSize: 11.5, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.desc}</div>
+          </div>
+        </Card>)}
       </div>
       {flow && <OnboardingFlowModal flow={flow} onClose={() => setFlow(null)} onDone={m => { if (flow === '10dlc') setDlc10Status('pending'); setFlow(null); flash(m); }} />}
       {ovToast && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 3700, background: LH.ink, color: '#fff', fontSize: 13, fontWeight: 500, padding: '11px 18px', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="check-circle" size={15} color="#4ade80" />{ovToast}</div>}
