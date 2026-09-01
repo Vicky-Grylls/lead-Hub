@@ -30159,11 +30159,141 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>; })}
     </Card>;
   }
+
+  /* Shared follow-up store — tasks created live on a Zuper Connect call surface on the Overview. */
+  const LEAD_FOLLOWUPS_SEED = [
+    { id: 'f1', n: 'Sofia Alvarez', task: 'Estimate follow-up call', due: 'Today · 2:00 PM', channel: 'call', src: 'Angi', overdue: false },
+    { id: 'f2', n: 'Marcus Reed', task: 'Send revised quote', due: 'Today · 4:30 PM', channel: 'email', src: 'Website Booking', overdue: false },
+    { id: 'f3', n: 'Dana Whitfield', task: 'Callback — storm damage', due: 'Overdue · 1d', channel: 'call', src: 'Meta Ads', overdue: true },
+    { id: 'f4', n: 'Owen Castillo', task: 'Text quote link', due: 'Tomorrow · 9:00 AM', channel: 'sms', src: 'Google LSA', overdue: false }
+  ];
+  const LeadFollowups = {
+    items: LEAD_FOLLOWUPS_SEED.slice(),
+    subs: [],
+    emit() { this.subs.forEach(f => f(this.items)); },
+    add(f) { this.items = [{ id: 'f' + (this.items.length + Date.now()), overdue: false, src: 'Phone', ...f }, ...this.items]; this.emit(); },
+    complete(id) { this.items = this.items.filter(x => x.id !== id); this.emit(); },
+    sub(fn) { this.subs.push(fn); return () => { this.subs = this.subs.filter(s => s !== fn); }; }
+  };
+  const FU_CHANNEL = {
+    call: { ic: 'phone', label: 'Call', bg: LH.greenBg, fg: LH.green },
+    sms: { ic: 'message-square', label: 'Text', bg: LH.blueBg, fg: LH.blue },
+    email: { ic: 'mail', label: 'Email', bg: '#efe7fb', fg: '#7c3aed' }
+  };
+
+  /* Overview: actionable follow-up queue (mirrors Needs attention, but each row has quick actions). */
+  function FollowupsCard({ onNavigate, onFlash }) {
+    const [items, setItems] = useState(LeadFollowups.items);
+    useEffect(() => LeadFollowups.sub(setItems), []);
+    const act = (f) => {
+      if (f.channel === 'call') { try { window.dispatchEvent(new CustomEvent('zuper-connect:open')); } catch (e) {} onFlash && onFlash('Calling ' + f.n + ' via Zuper Connect…'); }
+      else if (f.channel === 'sms') onFlash && onFlash('Opening SMS to ' + f.n + '…');
+      else onFlash && onFlash('Composing email to ' + f.n + '…');
+    };
+    return <Card style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><Ic name="calendar-clock" size={15} color={LH.primary} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Follow-ups</span><span style={{ fontSize: 11.5, fontWeight: 700, color: '#fff', background: LH.primary, borderRadius: 999, padding: '1px 7px' }}>{items.length}</span><span style={{ fontSize: 11.5, color: LH.muted, marginLeft: 'auto', cursor: 'pointer' }} onClick={() => onNavigate && onNavigate('lead-pipeline')}>View all</span></div>
+      {items.length === 0 && <div style={{ padding: '26px 16px', textAlign: 'center', fontSize: 12.5, color: LH.muted }}>All follow-ups cleared 🎉</div>}
+      {items.map((f, i) => { const ch = FU_CHANNEL[f.channel] || FU_CHANNEL.call; return <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < items.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+        <div style={{ width: 30, height: 30, borderRadius: 8, background: ch.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={ch.ic} size={15} color={ch.fg} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.n}</div><div style={{ fontSize: 11.5, color: f.overdue ? LH.red : LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.task} · {f.due}</div></div>
+        <button onClick={() => act(f)} title={ch.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 7, border: '1px solid ' + ch.bg, background: ch.bg, color: ch.fg, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><Ic name={ch.ic} size={13} color={ch.fg} />{ch.label}</button>
+        <button onClick={() => { LeadFollowups.complete(f.id); onFlash && onFlash('Follow-up with ' + f.n + ' marked done'); }} title="Mark done" style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}><Ic name="check" size={15} color={LH.sub} /></button>
+      </div>; })}
+    </Card>;
+  }
+
+  /* Live-call → follow-up task capture (end-to-end): create from Zuper Connect, lands on Overview. */
+  function CreateFollowupModal({ prefillName, onClose, onCreate }) {
+    const [title, setTitle] = useState('Follow-up call');
+    const [channel, setChannel] = useState('call');
+    const [due, setDue] = useState('Today');
+    const [note, setNote] = useState('');
+    const DUES = ['Today', 'Tomorrow', 'In 3 days', 'Next week'];
+    const inp = { width: '100%', border: '1px solid ' + LH.border, borderRadius: 8, padding: '9px 11px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
+    const submit = () => { onCreate({ n: prefillName, task: title.trim() || 'Follow-up', channel, due: due + ' · scheduled', src: 'Phone', overdue: false }); };
+    return <div style={{ position: 'fixed', inset: 0, zIndex: 3600, background: 'rgba(23,23,23,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 420, maxWidth: '94vw', background: '#fff', borderRadius: 14, boxShadow: '0 24px 60px rgba(0,0,0,.3)', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="calendar-clock" size={16} color={LH.primary} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Create follow-up task</div><div style={{ fontSize: 11.5, color: LH.muted }}>for {prefillName}</div></div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Ic name="x" size={17} color={LH.sub} /></button></div>
+        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 13 }}>
+          <div><div style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, marginBottom: 5 }}>Task</div><input value={title} onChange={e => setTitle(e.target.value)} style={inp} placeholder="What needs doing?" /></div>
+          <div><div style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, marginBottom: 5 }}>Channel</div><div style={{ display: 'flex', gap: 8 }}>{Object.keys(FU_CHANNEL).map(k => { const c = FU_CHANNEL[k]; const on = channel === k; return <button key={k} onClick={() => setChannel(k)} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, height: 36, borderRadius: 8, border: '1px solid ' + (on ? c.fg : LH.border), background: on ? c.bg : '#fff', color: on ? c.fg : LH.sub, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}><Ic name={c.ic} size={14} color={on ? c.fg : LH.muted} />{c.label}</button>; })}</div></div>
+          <div><div style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, marginBottom: 5 }}>Due</div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{DUES.map(d => { const on = due === d; return <button key={d} onClick={() => setDue(d)} style={{ padding: '7px 12px', borderRadius: 999, border: '1px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', color: on ? LH.primary : LH.sub, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>{d}</button>; })}</div></div>
+          <div><div style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, marginBottom: 5 }}>Note (optional)</div><textarea value={note} onChange={e => setNote(e.target.value)} rows={2} style={{ ...inp, resize: 'none' }} placeholder="Context for later…" /></div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '12px 16px', borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="check" onClick={submit}>Create task</Btn></div>
+      </div>
+    </div>;
+  }
+
+  /* Onboarding flows launched from the Overview "Next steps" checklist. */
+  function OnboardingFlowModal({ flow, onClose, onDone }) {
+    const [step, setStep] = useState(flow === '10dlc' ? 'intro' : 'search');
+    const [area, setArea] = useState('415');
+    const [picked, setPicked] = useState(null);
+    const [biz, setBiz] = useState(''); const [ein, setEin] = useState(''); const [site, setSite] = useState('');
+    const inp = { width: '100%', border: '1px solid ' + LH.border, borderRadius: 8, padding: '10px 12px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
+    const NUMS = ['(' + area + ') 555-0142', '(' + area + ') 555-0188', '(' + area + ') 555-0207', '(' + area + ') 555-0261'];
+    const shell = (body) => <div style={{ position: 'fixed', inset: 0, zIndex: 3600, background: 'rgba(23,23,23,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 460, maxWidth: '94vw', background: '#fff', borderRadius: 16, boxShadow: '0 24px 60px rgba(0,0,0,.3)', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>{body}</div>
+    </div>;
+    const closeX = <button onClick={onClose} style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Ic name="x" size={18} color={LH.sub} /></button>;
+    if (flow === '10dlc') {
+      if (step === 'intro') return shell(<div style={{ position: 'relative', padding: '40px 34px', textAlign: 'center' }}>{closeX}
+        <div style={{ width: 78, height: 78, borderRadius: 18, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}><Ic name="file-text" size={34} color={LH.primary} /></div>
+        <div style={{ fontSize: 21, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Register for 10DLC to Send SMS!</div>
+        <div style={{ fontSize: 13.5, color: LH.sub, lineHeight: 1.55, marginBottom: 22 }}>To send SMS messages, you need to complete your 10DLC registration first. This is vital for compliance and effective message delivery. Ready to get started?</div>
+        <Btn kind="primary" onClick={() => setStep('form')} style={{ padding: '0 28px', height: 42, fontSize: 14 }}>Register Now</Btn>
+        <div style={{ fontSize: 12, color: LH.muted, fontStyle: 'italic', marginTop: 14 }}>It should take less than 5 minutes</div>
+      </div>);
+      if (step === 'form') return shell(<div style={{ position: 'relative' }}>{closeX}
+        <div style={{ padding: '18px 22px 4px', fontSize: 16, fontWeight: 700, color: LH.ink }}>Brand & campaign details</div>
+        <div style={{ padding: '10px 22px 18px', display: 'flex', flexDirection: 'column', gap: 13 }}>
+          <div><div style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, marginBottom: 5 }}>Legal business name</div><input value={biz} onChange={e => setBiz(e.target.value)} style={inp} placeholder="Shield Roofing LLC" /></div>
+          <div><div style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, marginBottom: 5 }}>EIN / Tax ID</div><input value={ein} onChange={e => setEin(e.target.value)} style={inp} placeholder="12-3456789" /></div>
+          <div><div style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, marginBottom: 5 }}>Website</div><input value={site} onChange={e => setSite(e.target.value)} style={inp} placeholder="https://…" /></div>
+          <div><div style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, marginBottom: 5 }}>Sample message</div><textarea rows={2} defaultValue="Hi {name}, this is Shield Roofing following up on your estimate. Reply STOP to opt out." style={{ ...inp, resize: 'none' }} /></div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '12px 22px', borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}><Btn onClick={() => setStep('intro')}>Back</Btn><Btn kind="primary" icon="shield-check" onClick={() => setStep('done')}>Submit registration</Btn></div>
+      </div>);
+      return shell(<div style={{ position: 'relative', padding: '40px 34px', textAlign: 'center' }}>{closeX}
+        <div style={{ width: 78, height: 78, borderRadius: 999, background: LH.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}><Ic name="check-circle" size={40} color={LH.green} /></div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Registration submitted</div>
+        <div style={{ fontSize: 13.5, color: LH.sub, lineHeight: 1.55, marginBottom: 22 }}>Your 10DLC brand & campaign are under carrier review — typically approved in 1–3 business days. We'll notify you the moment SMS goes live.</div>
+        <Btn kind="primary" onClick={() => onDone('10DLC registration submitted for review')} style={{ padding: '0 28px', height: 42, fontSize: 14 }}>Done</Btn>
+      </div>);
+    }
+    // buy-number flow
+    if (step === 'search') return shell(<div style={{ position: 'relative' }}>{closeX}
+      <div style={{ padding: '18px 22px 4px', fontSize: 16, fontWeight: 700, color: LH.ink }}>Buy a phone number</div>
+      <div style={{ padding: '4px 22px 0', fontSize: 12.5, color: LH.sub }}>Pick a local number to start calling and texting leads.</div>
+      <div style={{ padding: '14px 22px 8px', display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+        <div style={{ flex: 1 }}><div style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, marginBottom: 5 }}>Area code</div><input value={area} onChange={e => setArea(e.target.value.replace(/\D/g, '').slice(0, 3))} style={inp} placeholder="415" /></div>
+        <Btn icon="search" onClick={() => {}} style={{ height: 40 }}>Search</Btn>
+      </div>
+      <div style={{ padding: '6px 22px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {NUMS.map(n => <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', border: '1px solid ' + LH.border, borderRadius: 10 }}>
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: LH.blueBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="phone" size={15} color={LH.blue} /></div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink }}>+1 {n}</div><div style={{ fontSize: 11, color: LH.muted }}>Local · Voice + SMS · $1.15/mo</div></div>
+          <Btn kind="primary" onClick={() => { setPicked(n); setStep('done'); }}>Buy</Btn>
+        </div>)}
+      </div>
+    </div>);
+    return shell(<div style={{ position: 'relative', padding: '40px 34px', textAlign: 'center' }}>{closeX}
+      <div style={{ width: 78, height: 78, borderRadius: 999, background: LH.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}><Ic name="check-circle" size={40} color={LH.green} /></div>
+      <div style={{ fontSize: 20, fontWeight: 700, color: LH.ink, marginBottom: 10 }}>Number active</div>
+      <div style={{ fontSize: 13.5, color: LH.sub, lineHeight: 1.55, marginBottom: 22 }}><b style={{ color: LH.ink }}>+1 {picked}</b> is now provisioned for calls. Register 10DLC next to unlock compliant SMS.</div>
+      <Btn kind="primary" onClick={() => onDone('Phone number +1 ' + picked + ' is now active')} style={{ padding: '0 28px', height: 42, fontSize: 14 }}>Done</Btn>
+    </div>);
+  }
+
   /* ─────────── OVERVIEW ─────────── */
   function OverviewSection({ onNavigate }) {
     const [setupTab, setSetupTab] = useState('Setup');
     const [nextStepsOpen, setNextStepsOpen] = useState(() => { try { return localStorage.getItem('lhNextStepsClosed') !== '1'; } catch (e) { return true; } });
     const toggleNextSteps = () => setNextStepsOpen(o => { const nv = !o; try { localStorage.setItem('lhNextStepsClosed', nv ? '0' : '1'); } catch (e) {} return nv; });
+    const [flow, setFlow] = useState(null);
+    const [ovToast, setOvToast] = useState(null);
+    const flash = m => { setOvToast(m); setTimeout(() => setOvToast(null), 2600); };
     const kpis = [
       { label: 'Received today', value: 28, accent: LH.ink },
       { label: 'Qualified today', value: 7, accent: LH.green },
@@ -30178,7 +30308,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ];
     const steps = [
       { cat: 'SOURCE', icon: 'plug', bg: '#fdece5', fg: '#e0642f', title: 'Set up source', desc: 'Connect marketplace and native lead sources so new demand lands in Lead Hub.', done: true, go: 'lead-channels' },
-      { cat: 'PHONE', icon: 'phone', bg: LH.blueBg, fg: LH.blue, title: 'Connect phone', desc: 'Set up calling and direct replies now. 10DLC for campaign texting may take longer.', go: 'lead-channels' },
+      { cat: 'PHONE', icon: 'phone', bg: LH.blueBg, fg: LH.blue, title: 'Buy a phone number', desc: 'Purchase a local or toll-free number to start calling and texting leads.', action: 'buy-number', go: 'lead-channels' },
+      { cat: 'SMS COMPLIANCE', icon: 'message-square', bg: LH.greenBg, fg: LH.green, title: 'Register 10DLC', desc: 'Register your brand & campaign so SMS sends compliantly. Takes under 5 minutes.', action: '10dlc', go: 'lead-channels' },
       { cat: 'CAMPAIGN', icon: 'zap', bg: LH.amberBg, fg: LH.amber, title: 'Set up campaign', desc: 'Define speed-to-lead, nurture, storm response, or rehash follow-up.', go: 'lead-campaign-new' },
       { cat: 'AI WORKFORCE', icon: 'sparkles', bg: '#efe7fb', fg: '#7c3aed', title: 'Enable AI workforce', desc: 'Turn on Nova for qualification, routing, speed-to-lead replies, and human handoff.', go: 'lead-workforce' }
     ];
@@ -30203,8 +30334,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ width: 42, height: 42, borderRadius: 11, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={s.icon} size={19} color={s.fg} /></div>
           <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>{s.cat}</div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginTop: 1 }}>{s.title}</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{s.desc}</div></div>
           {s.done ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#f6f4ef', color: LH.sub, fontSize: 13, fontWeight: 600 }}><Ic name="check" size={14} color={LH.sub} />Completed</span>
-            : setupTab === 'Setup' && i === firstOpen ? <Btn kind="primary" onClick={() => onNavigate(s.go)}>Start</Btn>
-            : <Btn onClick={() => onNavigate(s.go)}>Start</Btn>}
+            : setupTab === 'Setup' && i === firstOpen ? <Btn kind="primary" onClick={() => s.action ? setFlow(s.action) : onNavigate(s.go)}>Start</Btn>
+            : <Btn onClick={() => s.action ? setFlow(s.action) : onNavigate(s.go)}>Start</Btn>}
         </div>)}</div>
       </Card> : <div style={{ marginBottom: 24 }} />}
       <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 10 }}>JUMP BACK IN</div>
@@ -30219,6 +30350,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'stretch', marginBottom: 12 }}>
         <AttentionRollupCard onNavigate={onNavigate} />
+        <FollowupsCard onNavigate={onNavigate} onFlash={flash} />
+      </div>
+      <div style={{ marginBottom: 12 }}>
         {(() => {
           const RECENT = [
             { name: 'Speed-to-Lead Campaign', status: 'Active', when: '2h ago' },
@@ -30250,6 +30384,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </div>)}
       </Card>
+      {flow && <OnboardingFlowModal flow={flow} onClose={() => setFlow(null)} onDone={m => { setFlow(null); flash(m); }} />}
+      {ovToast && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 3700, background: LH.ink, color: '#fff', fontSize: 13, fontWeight: 500, padding: '11px 18px', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="check-circle" size={15} color="#4ade80" />{ovToast}</div>}
     </div>;
   }
 
@@ -33504,6 +33640,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [mode, setMode] = useState('lead'); // lead | customer
     const [open, setOpen] = useState({ highlights: true, jobs: false, conv: false, quotes: false, invoices: false, form: true, playbook: true });
     const [leadFull, setLeadFull] = useState(false);
+    const [taskOpen, setTaskOpen] = useState(false);
     const [toast, setToast] = useState(null);
     const CALL_NO = '(+1) 206 234 2124';
     const [lf, setLf] = useState({ name: '', phone: CALL_NO, email: '', service: '' });
@@ -33558,9 +33695,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             </div>)}
           </>}
         </div>
-        {mode === 'lead' && <div style={{ padding: 12, borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}>
-          <Btn kind="primary" icon="plus" onClick={() => { showToast('Lead created & ' + (oc.state === 'qualified' ? 'qualified' : oc.state === 'disqualified' ? 'disqualified' : 'held') + ' from the call'); }} style={{ width: '100%', justifyContent: 'center' }}>Create lead from call</Btn>
-        </div>}
+        <div style={{ padding: 12, borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}>
+          {mode === 'lead' && <Btn kind="primary" icon="plus" onClick={() => { showToast('Lead created & ' + (oc.state === 'qualified' ? 'qualified' : oc.state === 'disqualified' ? 'disqualified' : 'held') + ' from the call'); }} style={{ width: '100%', justifyContent: 'center' }}>Create lead from call</Btn>}
+          <Btn icon="calendar-clock" onClick={() => setTaskOpen(true)} style={{ width: '100%', justifyContent: 'center', marginTop: mode === 'lead' ? 8 : 0 }}>Create follow-up task</Btn>
+        </div>
       </div>
       {/* Call panel */}
       <div style={{ width: 268, background: navy, borderRadius: '0 14px 14px 0', color: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -33587,6 +33725,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
       </div>
       {leadFull && <NewLeadForm sources={['Phone', 'Manual', 'Website', 'Referral', 'Angi', 'Thumbtack', 'Google LSA', 'Meta Ads']} assignees={['Maria Gonzalez', 'Diane Cole', 'Marcus Lee', 'Sarah Chen', 'Tom Rivera']} prefill={{ name: lf.name, phone: lf.phone, src: 'Phone' }} onClose={() => setLeadFull(false)} onToast={showToast} onCreate={() => { setLeadFull(false); showToast('Lead created & qualified from the call'); }} />}
+      {taskOpen && <CreateFollowupModal prefillName={mode === 'customer' ? caller.name : (lf.name || 'this caller')} onClose={() => setTaskOpen(false)} onCreate={(f) => { LeadFollowups.add(f); setTaskOpen(false); showToast('Follow-up added to your Overview'); }} />}
       {toast && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 3400, background: LH.ink, color: '#fff', fontSize: 13, fontWeight: 500, padding: '11px 18px', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="check-circle" size={15} color="#4ade80" />{toast}</div>}
     </div>;
   }
@@ -33596,6 +33735,64 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     return open ? <ZuperConnectCTI onClose={() => setOpen(false)} /> : null;
   }
   try { if (!document.getElementById('zuper-connect-root')) { const host = document.createElement('div'); host.id = 'zuper-connect-root'; document.body.appendChild(host); ReactDOM.createRoot(host).render(React.createElement(ZuperConnectHost)); } } catch (e) {}
+
+  // ─────────── Global Qualification Playbook — bottom-stacked dock reachable from any screen ───────────
+  const PLAYBOOK_QS = [
+    { q: 'Are you the homeowner or the decision-maker?', req: true },
+    { q: 'What roof issue are you experiencing?', req: true },
+    { q: 'Is there active leaking or recent storm damage?', req: true },
+    { q: 'Approximate age of the current roof?', req: false },
+    { q: 'Is this being filed as an insurance claim?', req: true },
+    { q: 'What is your target timeframe to get it fixed?', req: true },
+    { q: 'Property address / service area?', req: true },
+    { q: 'Best callback number and time?', req: false },
+    { q: 'Budget range you have in mind?', req: false },
+    { q: 'How did you hear about Shield Roofing?', req: false }
+  ];
+  function PlaybookDock({ onMin, onClose }) {
+    const [ans, setAns] = useState({});
+    const toggle = i => setAns(a => ({ ...a, [i]: !a[i] }));
+    const reqIdx = PLAYBOOK_QS.map((q, i) => q.req ? i : -1).filter(i => i >= 0);
+    const reqLeft = reqIdx.filter(i => !ans[i]).length;
+    const answered = Object.values(ans).filter(Boolean).length;
+    const outcome = reqLeft === 0 ? { label: 'Qualified', bg: LH.greenBg, fg: LH.green, ic: 'check-circle' } : { label: 'On hold — ' + reqLeft + ' required left', bg: LH.amberBg, fg: LH.amber, ic: 'clock' };
+    return <div style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 2500, width: 380, maxWidth: '94vw', height: 540, maxHeight: '80vh', background: '#fff', borderRadius: 14, border: '1px solid ' + LH.border, boxShadow: '0 24px 60px rgba(0,0,0,.28)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 14px', borderBottom: '1px solid ' + LH.borderSoft }}>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="book-open" size={15} color={LH.primary} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Qualification Playbook</div><div style={{ fontSize: 11, color: LH.muted }}>Shield Roofing · 10 questions</div></div>
+        <button onClick={onMin} title="Minimise" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Ic name="minus" size={17} color={LH.sub} /></button>
+        <button onClick={onClose} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Ic name="x" size={17} color={LH.sub} /></button>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: outcome.bg, borderBottom: '1px solid ' + LH.borderSoft }}><Ic name={outcome.ic} size={15} color={outcome.fg} /><span style={{ fontSize: 12.5, fontWeight: 700, color: outcome.fg }}>{outcome.label}</span><span style={{ fontSize: 11.5, color: LH.muted, marginLeft: 'auto' }}>{answered}/{PLAYBOOK_QS.length} answered</span></div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px 12px' }}>
+        {PLAYBOOK_QS.map((q, i) => { const on = !!ans[i]; return <div key={i} onClick={() => toggle(i)} style={{ display: 'flex', gap: 10, padding: '10px 10px', borderRadius: 9, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          <span style={{ width: 19, height: 19, borderRadius: 6, flexShrink: 0, marginTop: 1, border: '1.5px solid ' + (on ? LH.green : LH.border), background: on ? LH.green : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on && <Ic name="check" size={12} color="#fff" />}</span>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 13, color: on ? LH.muted : LH.ink, fontWeight: 500, lineHeight: 1.4, textDecoration: on ? 'line-through' : 'none' }}>{q.q}</div>{q.req && <span style={{ display: 'inline-block', marginTop: 4, fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: LH.amber, background: LH.amberBg, borderRadius: 999, padding: '1px 7px' }}>REQUIRED</span>}</div>
+        </div>; })}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}><span style={{ fontSize: 11.5, color: LH.muted, flex: 1 }}>Runs on SMS, email or a live call</span><Btn kind="primary" icon="check" onClick={onClose}>Save to lead</Btn></div>
+    </div>;
+  }
+  function PlaybookStackedBar({ onRestore, onClose }) {
+    return <div style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 2500, width: 300, background: '#fff', borderRadius: '10px 10px 0 0', border: '1px solid ' + LH.border, borderBottom: 'none', boxShadow: '0 -6px 24px rgba(0,0,0,.14)', display: 'flex', alignItems: 'center', gap: 9, padding: '11px 12px', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div style={{ width: 24, height: 24, borderRadius: 7, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="book-open" size={13} color={LH.primary} /></div>
+      <span style={{ flex: 1, fontSize: 12.5, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Qualification Playbook</span>
+      <button onClick={onRestore} title="Restore" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Ic name="chevron-up" size={16} color={LH.sub} /></button>
+      <button onClick={onClose} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Ic name="x" size={16} color={LH.sub} /></button>
+    </div>;
+  }
+  function PlaybookLauncher({ onClick }) {
+    return <button onClick={onClick} title="Open qualification playbook" style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 2400, display: 'inline-flex', alignItems: 'center', gap: 8, height: 42, padding: '0 16px', borderRadius: 999, border: 'none', background: LH.ink, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', boxShadow: '0 10px 28px rgba(0,0,0,.28)', fontFamily: "'Inter',ui-sans-serif,system-ui" }}><Ic name="book-open" size={16} color="#fff" />Playbook</button>;
+  }
+  function PlaybookHost() {
+    const [open, setOpen] = useState(false);
+    const [min, setMin] = useState(false);
+    useEffect(() => { const h = () => { setOpen(true); setMin(false); }; window.addEventListener('lead-playbook:open', h); return () => window.removeEventListener('lead-playbook:open', h); }, []);
+    if (!open) return <PlaybookLauncher onClick={() => setOpen(true)} />;
+    if (min) return <PlaybookStackedBar onRestore={() => setMin(false)} onClose={() => { setOpen(false); setMin(false); }} />;
+    return <PlaybookDock onMin={() => setMin(true)} onClose={() => setOpen(false)} />;
+  }
+  try { if (!document.getElementById('lead-playbook-root')) { const host = document.createElement('div'); host.id = 'lead-playbook-root'; document.body.appendChild(host); ReactDOM.createRoot(host).render(React.createElement(PlaybookHost)); } } catch (e) {}
 })();
 </script>
 <script>
