@@ -977,17 +977,13 @@ function Sidebar({
         icon: 'megaphone',
         label: 'Campaigns'
       }, {
-        id: 'lead-workforce',
-        icon: 'bot',
-        label: 'AI Workforce'
-      }, {
         id: 'lead-channels',
         icon: 'radio',
         label: 'Channels'
       }, {
         id: 'lead-settings-page',
         icon: 'settings',
-        label: 'Lead Settings',
+        label: 'Settings',
         settings: true
       }].map(s => /*#__PURE__*/React.createElement("div", {
         key: s.id,
@@ -33871,13 +33867,18 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
     </>;
   }
+  const PB_DOCK_H = 60; // reserved strip below the app shell so the cluster sits below the center pane, not over it
   function PlaybookHost() {
     const [activeId, setActiveId] = useState(null);
     const [anchor, setAnchor] = useState(null);
     useEffect(() => {
       const h = () => { setActiveId(PLAYBOOKS[0].id); setAnchor(null); };
       window.addEventListener('lead-playbook:open', h);
-      return () => window.removeEventListener('lead-playbook:open', h);
+      // Shrink the app shell so the floating cluster sits in a strip below the content, seamlessly (Linear-style).
+      let appEl = null, tries = 0;
+      const reserve = () => { appEl = document.querySelector('#root > div'); if (appEl) { appEl.style.height = 'calc(100vh - ' + PB_DOCK_H + 'px)'; } else if (tries++ < 40) { setTimeout(reserve, 100); } };
+      reserve();
+      return () => { window.removeEventListener('lead-playbook:open', h); if (appEl) appEl.style.height = ''; };
     }, []);
     const active = PLAYBOOKS.find(p => p.id === activeId);
     const toggle = (id, rect) => { setActiveId(a => a === id ? null : id); setAnchor(rect); };
