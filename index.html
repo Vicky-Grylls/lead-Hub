@@ -31406,16 +31406,34 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ height: 8, borderRadius: 999, background: '#efece6', overflow: 'hidden' }}><div style={{ width: (enrolled ? val / enrolled * 100 : 0) + '%', height: '100%', background: LH.primary, borderRadius: 999 }} /></div>
       </div>) : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No enrollments yet. {st === 'Draft' ? 'Publish the campaign to start enrolling.' : 'Matching customers enroll as they are created.'}</div>}
     </Card>;
+    // Enrolled-leads table — mirrors the Pipeline listing but drops fields that are redundant
+    // inside a campaign (Campaigns column) or covered by campaign Status (pipeline Stage).
+    const R_CSRS = ['Marcus Webb', 'Maria Gonzalez', 'Tyson Silva', 'Michael Richardson'];
+    const rhash = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
+    const rScore = n => 30 + rhash(n) % 60;
+    const rCsr = n => R_CSRS[rhash(n + 'x') % R_CSRS.length];
+    const rEmail = n => n.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com';
+    const rInit = n => n.split(' ').map(w => w[0]).join('').slice(0, 2);
+    const ECOLS = [['Score', 62], ['Name', 168], ['Source', 148], ['Assigned CSR', 172], ['Email', 210], ['Phone', 128], ['Last activity', 182], ['Status', 116], ['Age', 58]];
+    const ETW = ECOLS.reduce((a, c) => a + c[1], 0) + 32;
+    const eHead = <div style={{ display: 'flex', alignItems: 'center', padding: '9px 16px', borderBottom: '1px solid ' + LH.borderSoft, background: LH.bg, position: 'sticky', top: 0, zIndex: 1 }}>{ECOLS.map(([l, w], j) => <span key={l} style={{ width: w, flexShrink: 0, fontSize: 11, fontWeight: 700, color: LH.muted, letterSpacing: '.02em', textAlign: l === 'Age' ? 'right' : 'left' }}>{l}</span>)}</div>;
+    const eCell = (w, node, right) => <span style={{ width: w, flexShrink: 0, minWidth: 0, fontSize: 12.5, color: LH.body, textAlign: right ? 'right' : 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 10 }}>{node}</span>;
     const recentCard = <Card style={{ padding: 0, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Enrolled leads</span>{enrolled ? <span style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '2px 8px' }}>{enrolled}</span> : null}</div>
-      <div style={{ maxHeight: 520, overflowY: 'auto' }}>
-      {enrolled ? recent.map((c, i) => <div key={i} onClick={() => openEnrollment(c)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < recent.length - 1 ? '1px solid ' + LH.borderSoft : 'none', cursor: 'pointer', background: selLead && selLead.id === c.n ? '#faf8f4' : 'transparent' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = selLead && selLead.id === c.n ? '#faf8f4' : 'transparent'}>
-        <div style={{ width: 30, height: 30, borderRadius: 999, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{c.n.split(' ').map(w => w[0]).join('')}</div>
-        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{c.n}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.src} · {c.last}</div></div>
-        <Pill label={c.stage} tone={c.tone} />
-        <span style={{ fontSize: 11.5, color: LH.muted, width: 60, textAlign: 'right' }}>{c.when}</span>
-      </div>) : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No one enrolled yet.</div>}
-      </div>
+      {enrolled ? <div style={{ overflowX: 'auto' }}><div style={{ minWidth: ETW, maxHeight: 560, overflowY: 'auto' }}>
+        {eHead}
+        {recent.map((c, i) => { const sc = rScore(c.n); const scC = sc >= 80 ? { bg: LH.greenBg, fg: LH.green } : sc >= 60 ? { bg: LH.amberBg, fg: LH.amber } : { bg: '#f1f0ec', fg: LH.sub }; return <div key={i} onClick={() => openEnrollment(c)} style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: i < recent.length - 1 ? '1px solid ' + LH.borderSoft : 'none', cursor: 'pointer', background: selLead && selLead.id === c.n ? '#faf8f4' : 'transparent' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = selLead && selLead.id === c.n ? '#faf8f4' : 'transparent'}>
+          {eCell(ECOLS[0][1], <span style={{ width: 26, height: 26, borderRadius: 999, background: scC.bg, color: scC.fg, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{sc}</span>)}
+          {eCell(ECOLS[1][1], <span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{c.n}</span>)}
+          {eCell(ECOLS[2][1], <Pill label={c.src} tone="New" />)}
+          {eCell(ECOLS[3][1], <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><span style={{ width: 22, height: 22, borderRadius: 999, background: LH.tint, color: LH.ink, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9.5, fontWeight: 700, flexShrink: 0 }}>{rInit(rCsr(c.n))}</span>{rCsr(c.n)}</span>)}
+          {eCell(ECOLS[4][1], rEmail(c.n))}
+          {eCell(ECOLS[5][1], '469-555-0172')}
+          {eCell(ECOLS[6][1], c.last)}
+          {eCell(ECOLS[7][1], <Pill label={c.stage} tone={c.tone} />)}
+          {eCell(ECOLS[8][1], <span style={{ color: LH.muted, fontSize: 11.5 }}>{c.when}</span>, true)}
+        </div>; })}
+      </div></div> : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No one enrolled yet.</div>}
     </Card>;
     const reasonTone = { 'Opted out': { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd }, 'Sent to rep': { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd }, 'Delivery failed': { bg: '#fbeaea', fg: LH.red, bd: '#f2d0d0' } };
     const openAttention = a => openEnrollment({ n: a.n, src: a.src, last: a.detail, stage: a.reason === 'Sent to rep' ? 'Qualifying' : 'In drip', when: a.when });
@@ -33552,18 +33570,53 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </div>;
   }
   // Analytics surface — the same lead metrics shown on the lead detail, aggregated, plus a conversion funnel.
+  // ── Analytics chart primitives (pure SVG/CSS, no chart lib) ──
+  function Donut({ data, total, sub, size = 168, thick = 24 }) {
+    const r = (size - thick) / 2, C = 2 * Math.PI * r, sum = data.reduce((a, d) => a + d.v, 0) || 1;
+    let acc = 0;
+    return <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size} viewBox={'0 0 ' + size + ' ' + size}>
+        <g transform={'rotate(-90 ' + (size / 2) + ' ' + (size / 2) + ')'}>
+          {data.map((d, i) => { const dash = (d.v / sum) * C; const el = <circle key={i} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={d.c} strokeWidth={thick} strokeDasharray={dash + ' ' + (C - dash)} strokeDashoffset={-acc} />; acc += dash; return el; })}
+        </g>
+      </svg>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontSize: 26, fontWeight: 800, color: LH.ink, lineHeight: 1 }}>{total}</div>
+        <div style={{ fontSize: 11, color: LH.muted, marginTop: 3 }}>{sub}</div>
+      </div>
+    </div>;
+  }
+  function Gauge({ pct, label }) {
+    const w = 150, r = 56, cx = w / 2, cy = 66, C = Math.PI * r, dash = (pct / 100) * C;
+    const arc = 'M ' + (cx - r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 0 1 ' + (cx + r) + ' ' + cy;
+    const tone = pct >= 85 ? LH.green : pct >= 70 ? LH.amber : LH.red;
+    return <div style={{ position: 'relative', width: w, height: 84 }}>
+      <svg width={w} height={84} viewBox={'0 0 ' + w + ' 84'}>
+        <path d={arc} fill="none" stroke="#efece6" strokeWidth={13} strokeLinecap="round" />
+        <path d={arc} fill="none" stroke={tone} strokeWidth={13} strokeLinecap="round" strokeDasharray={dash + ' ' + C} />
+      </svg>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 30, textAlign: 'center' }}><div style={{ fontSize: 22, fontWeight: 800, color: LH.ink }}>{pct}%</div><div style={{ fontSize: 11, fontWeight: 700, color: tone }}>{label}</div></div>
+    </div>;
+  }
   function AnalyticsSection({ onNavigate }) {
-    const cards = [
-      { label: 'Avg follow-up attempts', value: '2.8', accent: LH.ink },
-      { label: 'Time to first reach-out', value: '3 min', accent: LH.green },
-      { label: 'Last contacted (median)', value: '4h ago', accent: '#6d28d9' },
-      { label: 'Speed to qualify', value: '1d 20h', accent: LH.primary }
+    const [volMode, setVolMode] = useState('Daily');
+    const kpis = [
+      { label: 'Total leads', value: '3,964', delta: '+11.4%', good: true },
+      { label: 'Qualified', value: '1,863', delta: '+6.4%', good: true },
+      { label: 'Converted', value: '612', delta: '+2.1%', good: true },
+      { label: 'In drip', value: '1,489', delta: '-3.2%', good: false },
+      { label: 'Avg speed-to-lead', value: '3 min', delta: '-8.4%', good: true },
+      { label: 'AI-handled', value: '88%', delta: '+5.1%', good: true },
+      { label: 'Avg to qualify', value: '1d 20h', delta: '-4.4%', good: true }
     ];
-    const speed = [
-      { label: 'Speed to first call', value: '21 min', icon: 'phone', accent: LH.blue },
-      { label: 'Speed to first quote', value: '1d 6h', icon: 'file-text', accent: LH.amber },
-      { label: 'Speed to job create', value: '2d 8h', icon: 'briefcase', accent: LH.green }
-    ];
+    const VOL = [ { d: 'Mon', nw: 92, q: 51, l: 12 }, { d: 'Tue', nw: 132, q: 58, l: 13 }, { d: 'Wed', nw: 90, q: 51, l: 17 }, { d: 'Thu', nw: 96, q: 51, l: 22 }, { d: 'Fri', nw: 92, q: 51, l: 26 }, { d: 'Sat', nw: 40, q: 9, l: 6 }, { d: 'Sun', nw: 30, q: 6, l: 3 } ];
+    const volMax = Math.max(...VOL.map(v => v.nw + v.q + v.l));
+    const volSeg = [ ['nw', 'New', LH.blue], ['q', 'Qualified', '#22c55e'], ['l', 'Lost', '#ef4444'] ];
+    const SRC = [ { name: 'Angi', v: 36, c: '#3b82f6' }, { name: 'Meta Ads', v: 24, c: '#8b5cf6' }, { name: 'Google LSA', v: 16, c: '#22c55e' }, { name: 'Website', v: 14, c: '#f59e0b' }, { name: 'Thumbtack', v: 10, c: '#ef4444' } ];
+    const SRC_TABLE = [ { src: 'Angi', leads: '1,424', qual: '62%', cost: '$3.9k' }, { src: 'Meta Ads', leads: '951', qual: '48%', cost: '$2.7k' }, { src: 'Google LSA', leads: '634', qual: '57%', cost: '$2.1k' }, { src: 'Website', leads: '556', qual: '71%', cost: '$0' }, { src: 'Thumbtack', leads: '399', qual: '44%', cost: '$1.4k' } ];
+    const TAGS = [ ['Storm damage', 210], ['Roof replace', 185], ['Repair', 150], ['Insurance', 130], ['Gutter', 95], ['Inspection', 60], ['Other', 45] ];
+    const tagMax = Math.max(...TAGS.map(t => t[1]));
+    const OUTCOME = [ { label: 'Qualified', emoji: '😊', pct: 47, c: LH.green }, { label: 'Nurturing', emoji: '😐', pct: 41, c: LH.amber }, { label: 'Lost', emoji: '☹️', pct: 12, c: LH.red } ];
     const FUNNEL = [
       { stage: 'New leads', n: 320, go: 'lead-pipeline' },
       { stage: 'Contacted', n: 268, go: 'lead-pipeline' },
@@ -33573,22 +33626,100 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ];
     const top = FUNNEL[0].n;
     const FCOL = [LH.blue, '#22c55e', '#8b5cf6', LH.green, LH.primary];
+    // Arrival heatmap — 7 days x 12 two-hour buckets, intensity 0..4
+    const HEAT_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const heat = HEAT_DAYS.map((d, r) => Array.from({ length: 12 }, (_, c) => { const midday = 6 - Math.abs(c - 6); const weekday = r < 5 ? 1 : 0; return Math.max(0, Math.min(4, Math.round((midday / 2) + weekday + ((r * 7 + c * 3) % 3) - 1))); }));
+    const HEAT_C = ['#f1f0ec', '#dbe4fb', '#a9c2f6', '#5b8def', '#2563eb'];
+    const cardHead = (title, desc, right) => <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 14 }}>
+      <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>{title}</div>{desc && <div style={{ fontSize: 12, color: LH.sub, marginTop: 2 }}>{desc}</div>}</div>{right}
+    </div>;
+    const dailyPill = <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 28, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer' }}>{volMode}<Ic name="chevron-down" size={13} color={LH.sub} /></div>;
+    const legend = items => <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 12 }}>{items.map(x => <span key={x[1]} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: LH.sub }}><span style={{ width: 9, height: 9, borderRadius: 3, background: x[2] }} />{x[1]}</span>)}</div>;
     return <div>
-      <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>{cards.map(c => <StatCard key={c.label} {...c} />)}</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 22 }}>
-        {speed.map(s => <Card key={s.label} style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 11 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={s.icon} size={16} color={s.accent} /></div>
-          <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 11.5, color: LH.sub }}>{s.label}</div><div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>{s.value}</div></div>
-        </Card>)}
+      {/* Leads overview strip */}
+      <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 14 }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid ' + LH.borderSoft, fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Leads overview</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap' }}>{kpis.map((k, i) => <div key={k.label} style={{ flex: '1 1 14%', minWidth: 130, padding: '13px 16px', borderRight: '1px solid ' + LH.borderSoft, borderBottom: '1px solid ' + LH.borderSoft }}>
+          <div style={{ fontSize: 20, fontWeight: 800, color: LH.ink, lineHeight: 1.1 }}>{k.value}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}><span style={{ fontSize: 11.5, color: LH.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{k.label}</span><span style={{ fontSize: 11, fontWeight: 700, color: k.good ? LH.green : LH.red, marginLeft: 'auto', whiteSpace: 'nowrap' }}>{k.delta}</span></div>
+        </div>)}</div>
+      </Card>
+      {/* Lead volume stacked bar */}
+      <Card style={{ padding: 18, marginBottom: 14 }}>
+        {cardHead('Lead volume', 'Daily volume of new, qualified, and lost leads', dailyPill)}
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10, height: 180, padding: '0 4px' }}>
+          {VOL.map(v => { const t = v.nw + v.q + v.l; return <div key={v.d} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: LH.sub }}>{t}</div>
+            <div style={{ width: '72%', maxWidth: 44, display: 'flex', flexDirection: 'column-reverse', borderRadius: 6, overflow: 'hidden' }}>
+              {volSeg.map(([k, , c]) => <div key={k} title={k} style={{ height: (v[k] / volMax) * 150, background: c }} />)}
+            </div>
+            <div style={{ fontSize: 11, color: LH.muted }}>{v.d}</div>
+          </div>; })}
+        </div>
+        {legend(volSeg)}
+      </Card>
+      {/* Source distribution + Leads by source */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+        <Card style={{ padding: 18 }}>
+          {cardHead('Lead source distribution', 'Share of leads by source')}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+            <Donut data={SRC} total="3,964" sub="Total leads" />
+            <div style={{ flex: 1, minWidth: 0 }}>{SRC.map(s => <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}><span style={{ width: 9, height: 9, borderRadius: 3, background: s.c, flexShrink: 0 }} /><span style={{ flex: 1, fontSize: 12.5, color: LH.body }}>{s.name}</span><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>{s.v}%</span></div>)}</div>
+          </div>
+        </Card>
+        <Card style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ padding: '16px 18px 12px' }}>{cardHead('Leads by source', 'Volume, qualification rate, and spend')}</div>
+          <div style={{ display: 'flex', padding: '0 18px 8px', fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: LH.muted }}><span style={{ flex: 1 }}>SOURCE</span><span style={{ width: 70, textAlign: 'right' }}>LEADS</span><span style={{ width: 70, textAlign: 'right' }}>QUAL.</span><span style={{ width: 60, textAlign: 'right' }}>COST</span></div>
+          {SRC_TABLE.map((r, i) => <div key={r.src} style={{ display: 'flex', alignItems: 'center', padding: '11px 18px', borderTop: '1px solid ' + LH.borderSoft }}><span style={{ flex: 1, fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{r.src}</span><span style={{ width: 70, textAlign: 'right', fontSize: 12.5, color: LH.body }}>{r.leads}</span><span style={{ width: 70, textAlign: 'right', fontSize: 12.5, color: LH.body }}>{r.qual}</span><span style={{ width: 60, textAlign: 'right', fontSize: 12.5, color: LH.body }}>{r.cost}</span></div>)}
+        </Card>
       </div>
-      <Card style={{ padding: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="filter" size={15} color={LH.primary} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Conversion funnel</span><span style={{ fontSize: 11.5, color: LH.muted, marginLeft: 'auto' }}>Last 30 days · {Math.round(FUNNEL[FUNNEL.length - 1].n / top * 100)}% end-to-end</span></div>
-        <div style={{ fontSize: 12, color: LH.sub, marginBottom: 14 }}>Counts through each stage, with step conversion.</div>
+      {/* Tag distribution */}
+      <Card style={{ padding: 18, marginBottom: 14 }}>
+        {cardHead('Lead tag distribution', 'Leads grouped by tag')}
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 14, height: 170, padding: '0 4px' }}>
+          {TAGS.map(([name, n]) => <div key={name} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: 140 }}><div style={{ height: (n / tagMax) * 130, background: LH.blue, borderRadius: '6px 6px 0 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 4 }}><span style={{ fontSize: 10.5, fontWeight: 700, color: '#fff' }}>{n}</span></div></div>
+            <div style={{ fontSize: 10.5, color: LH.muted, textAlign: 'center', lineHeight: 1.2 }}>{name}</div>
+          </div>)}
+        </div>
+      </Card>
+      {/* Outcome sentiment + SLA gauge */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 14, marginBottom: 14 }}>
+        <Card style={{ padding: 18 }}>
+          {cardHead('Lead outcome mix', 'Where enrolled leads end up')}
+          <div style={{ display: 'flex', gap: 12 }}>{OUTCOME.map(o => <div key={o.label} style={{ flex: 1, border: '1px solid ' + LH.borderSoft, borderRadius: 12, padding: '14px 12px', textAlign: 'center' }}>
+            <div style={{ fontSize: 26 }}>{o.emoji}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: o.c, marginTop: 4 }}>{o.pct}%</div>
+            <div style={{ fontSize: 12, color: LH.sub, marginTop: 2 }}>{o.label}</div>
+          </div>)}</div>
+        </Card>
+        <Card style={{ padding: 18, display: 'flex', flexDirection: 'column' }}>
+          {cardHead('Speed-to-lead SLA', 'Leads first-touched within 5 min')}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-around', gap: 12 }}>
+            <div><div style={{ fontSize: 12, color: LH.sub }}>Within 5 min</div><div style={{ fontSize: 20, fontWeight: 800, color: LH.ink }}>87.5%</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 8 }}>Within 30 min</div><div style={{ fontSize: 20, fontWeight: 800, color: LH.ink }}>96.2%</div></div>
+            <Gauge pct={87} label="Good" />
+          </div>
+        </Card>
+      </div>
+      {/* Conversion funnel */}
+      <Card style={{ padding: 18, marginBottom: 14 }}>
+        {cardHead('Conversion funnel', 'Counts through each stage, with step conversion', <span style={{ fontSize: 11.5, color: LH.muted }}>{Math.round(FUNNEL[FUNNEL.length - 1].n / top * 100)}% end-to-end</span>)}
         {FUNNEL.map((f, i) => { const pct = Math.round(f.n / top * 100); const step = i === 0 ? 100 : Math.round(f.n / FUNNEL[i - 1].n * 100); return <div key={f.stage} onClick={() => onNavigate && onNavigate(f.go)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', cursor: 'pointer' }}>
           <span style={{ width: 128, flexShrink: 0, fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{f.stage}</span>
           <div style={{ flex: 1, height: 26, borderRadius: 7, background: '#f1f0ec', overflow: 'hidden', position: 'relative' }}><div style={{ width: pct + '%', height: '100%', borderRadius: 7, background: FCOL[i], display: 'flex', alignItems: 'center', paddingLeft: 10 }}><span style={{ fontSize: 11.5, fontWeight: 700, color: '#fff' }}>{f.n}</span></div></div>
           <span style={{ width: 96, flexShrink: 0, textAlign: 'right', fontSize: 11.5, color: LH.muted }}>{pct}% of top{i > 0 && <span style={{ color: step >= 60 ? LH.green : step >= 40 ? LH.amber : LH.red, fontWeight: 700 }}> · {step}%</span>}</span>
         </div>; })}
+      </Card>
+      {/* Arrival heatmap */}
+      <Card style={{ padding: 18 }}>
+        {cardHead('Lead arrival heatmap', 'When leads come in, by day and hour')}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {heat.map((row, r) => <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 30, fontSize: 10.5, color: LH.muted }}>{HEAT_DAYS[r]}</span>
+            <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(12,1fr)', gap: 4 }}>{row.map((v, c) => <div key={c} title={v + ' leads'} style={{ height: 16, borderRadius: 3, background: HEAT_C[v] }} />)}</div>
+          </div>)}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, justifyContent: 'flex-end', fontSize: 10.5, color: LH.muted }}>Less{HEAT_C.map((c, i) => <span key={i} style={{ width: 12, height: 12, borderRadius: 3, background: c }} />)}More</div>
+        </div>
       </Card>
     </div>;
   }
