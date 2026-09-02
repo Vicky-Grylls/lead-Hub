@@ -31373,8 +31373,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const config = [
       { icon: 'filter', title: 'Audience', lines: ['Trigger: Source-based', 'Angi, Thumbtack · New Lead · Roofing', enrolled + ' records enrolled'] },
       { icon: 'radio', title: 'Communication', lines: ['Nova — AI voice agent', 'SMS/calls: (+1) 650 206 1172', 'Email: hello@mail.hillroofing.com', '5 playbook questions'] },
-      { icon: 'zap', title: 'Speed to Lead', lines: ['3 launch-day steps', 'SMS on arrival · call +30m · email +60m', 'Business hours: any time'] },
-      { icon: 'headphones', title: 'Nurture sequence', lines: ['14-day sequence', 'Send days: Mon–Fri · ET', '6 days with steps'] },
+      { icon: 'zap', title: 'Speed to Lead', lines: ['3 launch attempts', 'SMS on arrival · call +30m · email +60m', 'Business hours: any time'] },
+      { icon: 'headphones', title: 'Attempt sequence', lines: ['6 attempts · outcome-based', 'Send window: Mon–Fri · ET', 'Waits relative to previous attempt'] },
       { icon: 'log-out', title: 'Exit rules', lines: ['Auto-unenroll · always on', 'Qualified or Disqualified', 'Built-in: reply, opt-out, Nova DND'] }
     ];
     const activity = [
@@ -31433,12 +31433,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
     const chMeta = { sms: { icon: 'message-square', label: 'SMS', bg: LH.tint, fg: LH.ink }, call: { icon: 'phone', label: 'Call', bg: LH.blueBg, fg: LH.blue }, email: { icon: 'mail', label: 'Email', bg: '#efe9de', fg: '#8a6d3b' }, voice_drop: { icon: 'mic', label: 'Voice drop', bg: LH.tint, fg: LH.ink }, video_drop: { icon: 'video', label: 'Video drop', bg: '#efe9de', fg: '#8a6d3b' } };
     const flowSteps = [
-      { ch: 'sms', title: 'Speed-to-lead SMS', when: 'On enrollment', preview: 'Hi {{first_name}} — thanks for reaching out! When works for a quick chat?' },
-      { ch: 'call', title: 'Nova qualification call', when: '+30 minutes', preview: 'Nova confirms property, damage type, and urgency by phone.' },
-      { ch: 'email', title: 'Intro email', when: '+60 minutes', preview: 'Subject · We just received your request' },
-      { ch: 'sms', title: 'Nurture check-in', when: 'Day 3', preview: 'Following up — still happy to help. Want me to hold a slot?' },
-      { ch: 'call', title: 'Nurture call', when: 'Day 7', preview: 'Nova checks back in with the homeowner.' },
-      { ch: 'email', title: 'Value email', when: 'Day 10', preview: 'Subject · A few ways we can help with your roof' }
+      { ch: 'sms', title: 'Attempt 1 · Speed-to-lead SMS', when: 'On enrollment', preview: 'Hi {{first_name}} — thanks for reaching out! When works for a quick chat?' },
+      { ch: 'call', title: 'Attempt 2 · Nova qualification call', when: '+30 min · if no response', preview: 'Nova confirms property, damage type, and urgency by phone.' },
+      { ch: 'email', title: 'Attempt 3 · Intro email', when: '+1 hour · if no response', preview: 'Subject · We just received your request' },
+      { ch: 'sms', title: 'Attempt 4 · Follow-up SMS', when: '+2 days · if no response', preview: 'Following up — still happy to help. Want me to hold a slot?' },
+      { ch: 'call', title: 'Attempt 5 · Follow-up call', when: '+4 days · if no response', preview: 'Nova checks back in with the homeowner.' },
+      { ch: 'email', title: 'Attempt 6 · Value email', when: '+3 days · if no response', preview: 'Subject · A few ways we can help with your roof' }
     ];
     const stepStats = i => { const sent = Math.max(0, Math.round(enrolled * (1 - i * 0.09))); return [['Scheduled', Math.max(0, enrolled - sent)], ['Delivered', Math.round(sent * 0.97)], ['Reply', Math.round(sent * Math.max(0.04, 0.22 - i * 0.03))], ['Opt-out', Math.round(sent * 0.03)]]; };
     // Per-step conversion (reply rate) → find the weakest step and the biggest drop-off.
@@ -31700,7 +31700,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   /* ─────────── CAMPAIGN WIZARD (6 steps) ─────────── */
   /* ═══════════ CAMPAIGN WIZARD (fully functional) ═══════════ */
-  const WIZ_STEPS = ['Campaign setup', 'Audience', 'Nurture sequence', 'Playbook', 'Communication', 'Exit rules', 'Review & Publish'];
+  const WIZ_STEPS = ['Campaign setup', 'Audience', 'Attempt sequence', 'Playbook', 'Communication', 'Exit rules', 'Review & Publish'];
   const AUDIENCE_TYPES = [
     { key: 'new', icon: 'user-plus', title: 'New Leads', desc: 'Fresh inbound leads from your sources. Speed-to-lead applies — the launch day fires the moment a lead is captured.' },
     { key: 'existing', icon: 'users', title: 'Existing Customers', desc: 'Past or cold customers you already have. Re-engagement / demand-gen — no speed-to-lead; the launch day is your first re-outreach.' }
@@ -31996,7 +31996,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {timingMode === 'offset'
           ? <><div style={{ width: 110, flexShrink: 0 }}><Dropdown value={step.offset} options={OFFSETS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => onChange({ ...step, offset: v })} /></div>
             {step.offset !== 'launch' && <div style={{ width: 175, flexShrink: 0 }}><Dropdown value={step.anchor} options={ANCHORS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => onChange({ ...step, anchor: v })} /></div>}</>
-          : <div style={{ width: 120, flexShrink: 0 }}><Dropdown value={step.time} options={TIMES.map(t => ({ value: t, label: t }))} onChange={v => onChange({ ...step, time: v })} /></div>}
+          : timingMode === 'time'
+          ? <div style={{ width: 120, flexShrink: 0 }}><Dropdown value={step.time} options={TIMES.map(t => ({ value: t, label: t }))} onChange={v => onChange({ ...step, time: v })} /></div>
+          : null}
         <div style={{ flex: 1, minWidth: 8 }} />
         {(ch === 'sms' || (ch === 'email' && step.emode !== 'rich')) && <div style={{ width: 150, flexShrink: 0 }}><Dropdown value={step.tpl || ''} placeholder="Choose a template…" height={30} options={(ch === 'sms' ? SMS_TEMPLATES : EMAIL_TEMPLATES).map(tpl => ({ value: tpl.name, label: tpl.name }))} onChange={applyTemplate} /></div>}
         {(ch === 'sms' || (ch === 'email' && step.emode !== 'rich')) && <div style={{ width: 150, flexShrink: 0 }}><Dropdown value="" placeholder="Insert snippet…" height={30} options={SNIPPETS.map(([v, l]) => ({ value: v, label: l }))} onChange={insertSnippet} /></div>}
@@ -32113,6 +32115,25 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       ] },
       5: { active: true, steps: [{ id: wuid(), ch: 'sms', time: '10:00 am', body: 'Checking back in, {{customer_first_name}} — happy to hold a slot for your roof inspection.' }] }
     });
+    // Attempts / outcome-based cadence (locked model: not a fixed-day drip). Seeded from any
+    // launch (s2l) + day steps in init, flattened into an ordered attempt list with relative waits.
+    const WAIT_UNITS = [['min', 'min'], ['hour', 'hours'], ['day', 'days']];
+    const offsetToWait = off => { const m = Number(off) || 30; if (m % 1440 === 0) return { n: m / 1440, unit: 'day' }; if (m % 60 === 0) return { n: m / 60, unit: 'hour' }; return { n: m, unit: 'min' }; };
+    const seedAttempts = () => {
+      const out = [];
+      const s2lSeed = init.s2l && init.s2l.length ? init.s2l : [{ ch: 'sms', offset: 'launch', body: '' }];
+      s2lSeed.forEach((s, i) => out.push({ id: wuid(), ch: s.ch, body: s.body || '', subject: s.subject, media: s.media, callBy: s.callBy, rules: s.rules, wait: i === 0 ? { mode: 'launch' } : { mode: 'after', ...offsetToWait(s.offset) } }));
+      const dayKeys = Object.keys(init.days || {}).map(Number).sort((a, b) => a - b);
+      let prev = 0;
+      dayKeys.forEach(d => { const o = init.days[d]; (o.steps || []).forEach((s, si) => { const gap = si === 0 ? Math.max(1, d - prev) : 0; out.push({ id: wuid(), ch: s.ch, body: s.body || '', subject: s.subject, media: s.media, callBy: s.callBy, rules: s.rules, wait: gap > 0 ? { mode: 'after', n: gap, unit: 'day' } : { mode: 'after', n: 3, unit: 'hour' } }); }); prev = d; });
+      return out.length ? out : [{ id: wuid(), ch: 'sms', body: '', wait: { mode: 'launch' } }];
+    };
+    const [attempts, setAttempts] = useState(seedAttempts);
+    const setAttempt = (id, ns) => setAttempts(a => a.map(x => x.id === id ? ns : x));
+    const setAttemptWait = (id, patch) => setAttempts(a => a.map(x => x.id === id ? { ...x, wait: { ...x.wait, ...patch } } : x));
+    const removeAttempt = id => setAttempts(a => (a.length > 1 ? a.filter(x => x.id !== id) : a));
+    const addAttempt = () => setAttempts(a => [...a, { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 1, unit: 'day' } }]);
+    const duplicateAttempt = id => setAttempts(a => { const i = a.findIndex(x => x.id === id); return i < 0 ? a : [...a.slice(0, i + 1), { ...a[i], id: wuid() }, ...a.slice(i + 1)]; });
     // Exit
     const [exitJoin, setExitJoin] = useState('or');
     const [exitConds, setExitConds] = useState([{ id: wuid(), field: 'job.current_status', op: 'is any of', val: ['Qualified', 'Disqualified'] }]);
@@ -32292,17 +32313,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       }
       if (step === 2) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="headphones" size={19} color={LH.primary} /></div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Nurture sequence</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}><b style={{ color: LH.ink }}>Launch day</b> is {audienceType === 'existing' ? 'the first outreach when a customer is enrolled' : 'the first outreach — it fires the moment a lead is captured (speed-to-lead)'}. The following days are the day-by-day follow-up drip.</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Attempt sequence</div>
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Nova works each lead through these attempts in order, waiting between them. The sequence is <b style={{ color: LH.ink }}>outcome-based</b> — it stops the moment the lead qualifies, disqualifies, replies, or opts out. There is no fixed calendar; waits are relative to the previous attempt.</div>
         <Card style={{ padding: 16, marginBottom: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>SEND DAYS</div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>SEND WINDOW · DAYS</div>
             <div style={{ display: 'flex', gap: 5 }}>{DOW.map((d, i) => <button key={i} onClick={() => setSendDays({ ...sendDays, [i]: !sendDays[i] })} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + (sendDays[i] ? LH.primary : LH.border), background: sendDays[i] ? LH.primary : '#fff', color: sendDays[i] ? '#fff' : LH.sub, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>{d}</button>)}</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', rowGap: 12, paddingTop: 14, marginTop: 14, borderTop: '1px solid ' + LH.borderSoft }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>BUSINESS HOURS</div>
-              <div style={{ fontSize: 13, color: LH.body, marginTop: 4 }}>Only send during set hours</div>
+              <div style={{ fontSize: 13, color: LH.body, marginTop: 4 }}>Only send during set hours — waits that land outside roll to the next open window</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
               <Toggle on={bizHours} onChange={setBizHours} />
@@ -32310,28 +32331,25 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             </div>
           </div>
         </Card>
-        <div style={{ display: 'flex', gap: 14 }}>
-          <div style={{ width: 132, flexShrink: 0, maxHeight: 460, overflowY: 'auto' }}>{[0].concat(dayList).map(d => { const isLaunch = d === 0; const o = days[d]; const chs = isLaunch ? s2l.map(s => s.ch) : (o ? o.steps.map(s => s.ch) : []); return <div key={d} onClick={() => setSelDay(d)} style={{ padding: '9px 11px', borderRadius: 9, marginBottom: 6, border: '1px solid ' + (selDay === d ? LH.primary : LH.border), background: selDay === d ? LH.tint : (isLaunch ? LH.bg : '#fff'), cursor: 'pointer' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 12.5, fontWeight: isLaunch ? 700 : 600, color: LH.ink }}>{isLaunch ? 'Launch day' : 'Day ' + d}</span>{!isLaunch && o && o.active === false && <span style={{ fontSize: 10, color: LH.amber }}>Paused</span>}</div><div style={{ display: 'flex', gap: 5, marginTop: 5, minHeight: 13 }}>{['sms', 'email', 'call', 'voice_drop', 'video_drop'].filter(c => chs.includes(c)).map(c => <Ic key={c} name={CH_ICON[c]} size={12} color={LH.muted} />)}</div></div>; })}<button onClick={() => setDayCount(Math.min(30, dayCount + 1))} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 9, padding: '9px 0', marginTop: 2, background: 'transparent', color: LH.primary, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}><Ic name="plus" size={14} color={LH.primary} />Add a day</button></div>
-          {selDay === 0
-            ? <Card style={{ flex: 1, minWidth: 0, padding: 16, alignSelf: 'flex-start' }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Launch day</div>
-                <div style={{ fontSize: 12, color: LH.sub, margin: '3px 0 14px' }}>These steps fire {audienceType === 'existing' ? 'when the customer is enrolled' : 'the moment the lead is enrolled'}, each one relative to the step before it.</div>
-                {s2l.map(s => <StepEditor key={s.id} step={s} timingMode="offset" onChange={ns => setS2l(s2l.map(x => x.id === s.id ? ns : x))} onRemove={() => setS2l(s2l.filter(x => x.id !== s.id))} onDuplicate={() => { const i = s2l.findIndex(x => x.id === s.id); setS2l([...s2l.slice(0, i + 1), { ...s, id: wuid() }, ...s2l.slice(i + 1)]); }} />)}
-                <button onClick={() => setS2l([...s2l, { id: wuid(), ch: 'sms', offset: '15', anchor: 'last_message', body: '' }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 10, padding: 11, background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button>
-              </Card>
-            : <Card style={{ flex: 1, minWidth: 0, padding: 16, alignSelf: 'flex-start' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                  <div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Day {selDay}</div><div style={{ fontSize: 12, color: LH.sub }}>{dayObj.steps.length ? dayObj.steps.length + (dayObj.steps.length > 1 ? ' steps' : ' step') : 'No steps yet'}</div></div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <button onClick={() => duplicateDay(selDay)} title="Duplicate this day" style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="copy" size={14} color={LH.sub} /></button>
-                    {dayCount > 1 && <button onClick={() => deleteDay(selDay)} title="Delete this day" style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#fbeaea'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="trash-2" size={14} color={LH.red} /></button>}
-                  </div>
-                </div>
-                {dayObj.active === false && <div style={{ fontSize: 12, color: LH.amber, background: LH.amberBg, border: '1px solid ' + LH.amberBd, borderRadius: 8, padding: '9px 12px', marginBottom: 12 }}>This day is paused — nothing sends. Disabled days are skipped and the campaign continues with the next enabled day.</div>}
-                {dayObj.steps.map(s => <StepEditor key={s.id} step={s} timingMode="time" onChange={ns => setDaySteps(dayObj.steps.map(x => x.id === s.id ? ns : x))} onRemove={() => setDaySteps(dayObj.steps.filter(x => x.id !== s.id))} onDuplicate={() => { const i = dayObj.steps.findIndex(x => x.id === s.id); setDaySteps([...dayObj.steps.slice(0, i + 1), { ...s, id: wuid() }, ...dayObj.steps.slice(i + 1)]); }} />)}
-                <button onClick={() => setDaySteps([...dayObj.steps, { id: wuid(), ch: 'sms', time: '10:00 am', body: '' }])} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 10, padding: 11, background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button>
-              </Card>}
+        <div>
+          {attempts.map((a, i) => <div key={a.id}>
+            {i > 0 && <div style={{ display: 'flex', justifyContent: 'center', margin: '2px 0' }}><div style={{ width: 1, height: 14, background: LH.border }} /></div>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+              <span style={{ width: 24, height: 24, borderRadius: 999, background: LH.primary, color: '#fff', fontSize: 11.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</span>
+              {i === 0
+                ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, background: LH.tint, border: '1px solid ' + LH.borderSoft, fontSize: 12.5, fontWeight: 600, color: LH.primary }}><Ic name="zap" size={13} color={LH.primary} />On enrollment · fires immediately</span>
+                : <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 12.5, color: LH.sub }}>Wait</span>
+                    <input type="number" min={1} value={a.wait.n != null ? a.wait.n : 1} onChange={e => setAttemptWait(a.id, { n: Math.max(1, Number(e.target.value) || 1) })} style={{ width: 58, height: 30, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 8px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit' }} />
+                    <div style={{ width: 110 }}><Dropdown value={a.wait.unit || 'day'} height={30} options={WAIT_UNITS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => setAttemptWait(a.id, { unit: v })} /></div>
+                    <span style={{ fontSize: 12.5, color: LH.sub }}>after previous · only if no response</span>
+                  </div>}
+            </div>
+            <StepEditor step={a} timingMode="none" onChange={ns => setAttempt(a.id, ns)} onRemove={() => removeAttempt(a.id)} onDuplicate={() => duplicateAttempt(a.id)} />
+          </div>)}
+          <button onClick={addAttempt} style={{ width: '100%', border: '1px dashed ' + LH.border, borderRadius: 10, padding: 11, background: 'transparent', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><Ic name="plus" size={15} color={LH.primary} />Add an attempt</button>
         </div>
+        <div style={{ marginTop: 14, border: '1px solid ' + LH.borderSoft, borderRadius: 10, background: LH.bg, padding: '12px 14px', display: 'flex', gap: 9 }}><Ic name="flag" size={15} color={LH.sub} style={{ flexShrink: 0, marginTop: 1 }} /><span style={{ fontSize: 12.5, color: LH.sub, lineHeight: 1.5 }}><b style={{ color: LH.ink }}>End of sequence.</b> After attempt {attempts.length} with no response, the lead stops receiving outreach — handle what happens next under <b style={{ color: LH.ink }}>Exit rules</b>. A qualifying outcome ends the sequence at any point, well before the last attempt.</span></div>
       </div>;
       if (step === 3) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="book-open" size={19} color={LH.primary} /></div>
@@ -32386,7 +32404,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </Card>
         <Card style={{ padding: 16, marginTop: 14 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>When the sequence completes</div>
-          <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 14px' }}>The lead ran the full {dayCount}-day cycle without exiting earlier. Decide what happens next.</div>
+          <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 14px' }}>The lead ran through all {attempts.length} attempt{attempts.length !== 1 ? 's' : ''} without a qualifying outcome. Decide what happens next.</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={doneStatusOn} onChange={setDoneStatusOn} /><span style={{ fontSize: 13, color: LH.body }}>Change the lead status to</span><div style={{ width: 210, opacity: doneStatusOn ? 1 : 0.5, pointerEvents: doneStatusOn ? 'auto' : 'none' }}><Dropdown value={doneStatus} height={32} options={['Nurture — no response', 'Needs attention', 'Cold', 'Not qualified', 'Long-term follow-up'].map(o => ({ value: o, label: o }))} onChange={setDoneStatus} /></div></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={doneCampOn} onChange={setDoneCampOn} /><span style={{ fontSize: 13, color: LH.body }}>Move to another campaign</span><div style={{ width: 210, opacity: doneCampOn ? 1 : 0.5, pointerEvents: doneCampOn ? 'auto' : 'none' }}><Dropdown value={doneCamp} height={32} options={['Storm Season Re-engage', 'Estimate Follow-up', 'Gutter Season Push', 'Winback — Cold Leads'].map(o => ({ value: o, label: o }))} onChange={setDoneCamp} /></div></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Toggle on={doneTaskOn} onChange={setDoneTaskOn} /><span style={{ fontSize: 13, color: LH.body }}>Create a task and assign it to a user</span></div>
@@ -32400,7 +32418,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             { icon: 'phone-off', t: 'Nova DND', d: 'a stop request on a call activates DND and exits.' }
           ].map(x => <div key={x.t} style={{ display: 'flex', gap: 8, alignItems: 'baseline', padding: '3px 0' }}><Ic name={x.icon} size={12} color={LH.muted} style={{ position: 'relative', top: 2 }} /><div style={{ fontSize: 12, color: LH.sub, lineHeight: 1.5 }}><b style={{ color: LH.body, fontWeight: 600 }}>{x.t}</b> — {x.d}</div></div>)}
         </div>
-        <div style={{ fontSize: 12.5, color: LH.body, marginTop: 12, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '11px 13px', display: 'flex', gap: 9 }}><Ic name="rotate-ccw" size={15} color={LH.sub} /><span><b style={{ color: LH.ink }}>Automatic stop.</b> Beyond the conditions above, the sequence ends on its own — after the final step on Day {dayCount}, the record is unenrolled.</span></div>
+        <div style={{ fontSize: 12.5, color: LH.body, marginTop: 12, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '11px 13px', display: 'flex', gap: 9 }}><Ic name="rotate-ccw" size={15} color={LH.sub} /><span><b style={{ color: LH.ink }}>Automatic stop.</b> Beyond the conditions above, the sequence ends on its own — after the last attempt with no response, the record is unenrolled.</span></div>
       </div>;
       // Step 7 — Review & Publish
       const activeDays = Object.keys(days).filter(d => (days[d].active !== false) && days[d].steps && days[d].steps.length).length;
@@ -32409,7 +32427,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       const summary = [
         { i: 0, icon: 'send', t: 'Campaign setup', lines: ['Name: ' + (name || '—') + ' · ' + audLabel, 'Goal: ' + goalObj.title, 'KPIs: ' + goalObj.kpis.map(k => k.target + ' ' + k.label).join(' · ')] },
         { i: 1, icon: 'filter', t: 'Audience', lines: audienceType === 'new' ? ['Trigger: ' + ({ source: 'Source-based', value: 'Value-based', creation: 'On lead creation' }[enrollTrigger] || 'Source-based'), enrollTrigger === 'creation' ? 'Every new lead enrols on creation' : conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', 'New leads auto-enrol as they arrive'] : [conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', enrolledCount + ' of ' + CONTACTS.length + ' customers will enrol', removedInMatch + ' removed manually'] },
-        { i: 2, icon: 'headphones', t: 'Nurture sequence', lines: ['Launch day: ' + s2l.length + ' step' + (s2l.length !== 1 ? 's' : '') + (bizHours ? ' · business hours on' : ''), dayCount + '-day drip · ' + activeDays + ' day' + (activeDays !== 1 ? 's' : '') + ' with steps', 'Send days: ' + sendDaysLabel] },
+        { i: 2, icon: 'headphones', t: 'Attempt sequence', lines: [attempts.length + ' attempt' + (attempts.length !== 1 ? 's' : '') + ' · outcome-based' + (bizHours ? ' · business hours on' : ''), 'Channels: ' + (Array.from(new Set(attempts.map(a => ({ sms: 'SMS', email: 'Email', call: 'Call', voice_drop: 'Voice drop', video_drop: 'Video drop', task: 'Task' }[a.ch] || a.ch)))).join(', ') || '—'), 'Send days: ' + sendDaysLabel] },
         { i: 3, icon: 'book-open', t: 'Playbook', lines: [playbook.length + ' qualification question' + (playbook.length !== 1 ? 's' : ''), pbFile ? 'Uploaded: ' + pbFile.name : 'Channel-agnostic — used on every channel'] },
         { i: 4, icon: 'radio', t: 'Communication', lines: ['Number: ' + NUMBERS[numIdx].name + ' · ' + NUMBERS[numIdx].num, 'Voice agent: ' + agent, 'Email: ' + emailAddr] },
         { i: 5, icon: 'log-out', t: 'Exit rules', lines: ['Auto-unenroll on Qualified / Disqualified · always on', 'On reply: ' + ([replyStatusOn && 'status → ' + replyStatus, replyTaskOn && 'create task'].filter(Boolean).join(', ') || 'no action'), 'Built-in stops: opt-out, Nova DND'] }
@@ -32539,7 +32557,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     // Lead/Customer modules own Basic + Enrollment, then the rail continues with the lead-campaign
     // steps (which the full builder renders). Those tail labels show in the rail right away so the
     // upcoming steps are visible before Continue. Tail indices map 1:1 to WIZ_STEPS (Nurture=2…).
-    const LEAD_TAIL = ['Nurture sequence', 'Playbook', 'Communication', 'Exit rules', 'Review & Publish'];
+    const LEAD_TAIL = ['Attempt sequence', 'Playbook', 'Communication', 'Exit rules', 'Review & Publish'];
     const STEPS = flow === 'sequence'
       ? ['Basic Details', 'Enrollment Rules', ...LEAD_TAIL]
       : ['Basic Details', 'Enrollment Rules', 'Call Handling', 'Attempts Strategy', 'Exit Rules'];
