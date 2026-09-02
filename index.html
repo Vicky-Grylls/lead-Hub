@@ -33606,13 +33606,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { label: 'Converted', value: '612', delta: '+2.1%', good: true },
       { label: 'In drip', value: '1,489', delta: '-3.2%', good: false },
       { label: 'Avg speed-to-lead', value: '3 min', delta: '-8.4%', good: true },
-      { label: 'AI-handled', value: '88%', delta: '+5.1%', good: true },
+      { label: 'AI-handled', value: '88%', delta: '+5.1%', good: true, hi: true },
       { label: 'Avg to qualify', value: '1d 20h', delta: '-4.4%', good: true }
     ];
     const VOL = [ { d: 'Mon', nw: 92, q: 51, l: 12 }, { d: 'Tue', nw: 132, q: 58, l: 13 }, { d: 'Wed', nw: 90, q: 51, l: 17 }, { d: 'Thu', nw: 96, q: 51, l: 22 }, { d: 'Fri', nw: 92, q: 51, l: 26 }, { d: 'Sat', nw: 40, q: 9, l: 6 }, { d: 'Sun', nw: 30, q: 6, l: 3 } ];
     const volMax = Math.max(...VOL.map(v => v.nw + v.q + v.l));
-    const volSeg = [ ['nw', 'New', LH.blue], ['q', 'Qualified', '#22c55e'], ['l', 'Lost', '#ef4444'] ];
-    const SRC = [ { name: 'Angi', v: 36, c: '#3b82f6' }, { name: 'Meta Ads', v: 24, c: '#8b5cf6' }, { name: 'Google LSA', v: 16, c: '#22c55e' }, { name: 'Website', v: 14, c: '#f59e0b' }, { name: 'Thumbtack', v: 10, c: '#ef4444' } ];
+    const volSeg = [ ['nw', 'New', '#2563eb'], ['q', 'Qualified', '#93b4f5'], ['l', 'Lost', '#f97066'] ];
+    const SRC = [ { name: 'Angi', v: 36, c: '#2563eb' }, { name: 'Meta Ads', v: 24, c: '#7c3aed' }, { name: 'Google LSA', v: 16, c: '#16a34a' }, { name: 'Website', v: 14, c: '#f59e0b' }, { name: 'Thumbtack', v: 10, c: '#f97066' } ];
     const SRC_TABLE = [ { src: 'Angi', leads: '1,424', qual: '62%', cost: '$3.9k' }, { src: 'Meta Ads', leads: '951', qual: '48%', cost: '$2.7k' }, { src: 'Google LSA', leads: '634', qual: '57%', cost: '$2.1k' }, { src: 'Website', leads: '556', qual: '71%', cost: '$0' }, { src: 'Thumbtack', leads: '399', qual: '44%', cost: '$1.4k' } ];
     const TAGS = [ ['Storm damage', 210], ['Roof replace', 185], ['Repair', 150], ['Insurance', 130], ['Gutter', 95], ['Inspection', 60], ['Other', 45] ];
     const tagMax = Math.max(...TAGS.map(t => t[1]));
@@ -33625,11 +33625,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { stage: 'Converted to job', n: 61, go: 'lead-pipeline' }
     ];
     const top = FUNNEL[0].n;
-    const FCOL = [LH.blue, '#22c55e', '#8b5cf6', LH.green, LH.primary];
+    const FCOL = ['#2563eb', '#4b7bec', '#6366f1', '#7c3aed', '#6d28d9'];
     // Arrival heatmap — 7 days x 12 two-hour buckets, intensity 0..4
     const HEAT_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const heat = HEAT_DAYS.map((d, r) => Array.from({ length: 12 }, (_, c) => { const midday = 6 - Math.abs(c - 6); const weekday = r < 5 ? 1 : 0; return Math.max(0, Math.min(4, Math.round((midday / 2) + weekday + ((r * 7 + c * 3) % 3) - 1))); }));
-    const HEAT_C = ['#f1f0ec', '#dbe4fb', '#a9c2f6', '#5b8def', '#2563eb'];
+    const HEAT_C = ['#eef1f5', '#dbe4fb', '#a9c2f6', '#5b8def', '#2563eb'];
     const cardHead = (title, desc, right) => <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 14 }}>
       <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>{title}</div>{desc && <div style={{ fontSize: 12, color: LH.sub, marginTop: 2 }}>{desc}</div>}</div>{right}
     </div>;
@@ -33639,8 +33639,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {/* Leads overview strip */}
       <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 14 }}>
         <div style={{ padding: '12px 16px', borderBottom: '1px solid ' + LH.borderSoft, fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Leads overview</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap' }}>{kpis.map((k, i) => <div key={k.label} style={{ flex: '1 1 14%', minWidth: 130, padding: '13px 16px', borderRight: '1px solid ' + LH.borderSoft, borderBottom: '1px solid ' + LH.borderSoft }}>
-          <div style={{ fontSize: 20, fontWeight: 800, color: LH.ink, lineHeight: 1.1 }}>{k.value}</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap' }}>{kpis.map((k, i) => <div key={k.label} style={{ flex: '1 1 14%', minWidth: 130, padding: '13px 16px', borderRight: '1px solid ' + LH.borderSoft, borderBottom: '1px solid ' + LH.borderSoft, background: k.hi ? '#f5f3ff' : undefined, boxShadow: k.hi ? 'inset 0 0 0 1px #ddd6fe' : undefined }}>
+          <div style={{ fontSize: 20, fontWeight: 800, color: k.hi ? '#6d28d9' : LH.ink, lineHeight: 1.1 }}>{k.value}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}><span style={{ fontSize: 11.5, color: LH.sub, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{k.label}</span><span style={{ fontSize: 11, fontWeight: 700, color: k.good ? LH.green : LH.red, marginLeft: 'auto', whiteSpace: 'nowrap' }}>{k.delta}</span></div>
         </div>)}</div>
       </Card>
@@ -33677,8 +33677,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <Card style={{ padding: 18, marginBottom: 14 }}>
         {cardHead('Lead tag distribution', 'Leads grouped by tag')}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 14, height: 170, padding: '0 4px' }}>
-          {TAGS.map(([name, n]) => <div key={name} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: 140 }}><div style={{ height: (n / tagMax) * 130, background: LH.blue, borderRadius: '6px 6px 0 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 4 }}><span style={{ fontSize: 10.5, fontWeight: 700, color: '#fff' }}>{n}</span></div></div>
+          {TAGS.map(([name, n], i) => <div key={name} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: 140 }}><div style={{ height: (n / tagMax) * 130, background: i === TAGS.length - 1 ? '#c7d2fe' : '#4b7bec', borderRadius: '6px 6px 0 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 4 }}><span style={{ fontSize: 10.5, fontWeight: 700, color: i === TAGS.length - 1 ? '#3730a3' : '#fff' }}>{n}</span></div></div>
             <div style={{ fontSize: 10.5, color: LH.muted, textAlign: 'center', lineHeight: 1.2 }}>{name}</div>
           </div>)}
         </div>
