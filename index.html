@@ -29620,38 +29620,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </span>)}
         </div>}
       </div>
-      <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
-        {secHead('Custom Fields', cf, () => setCf(p => !p))}
-        {cf && <div style={{ marginTop: 4 }}>
-          {kv('External ID', (srcSchema && srcSchema.custom.length ? srcSchema.custom[0][1] : lead.src.toLowerCase().replace(/[^a-z]/g, '') + '_1232'))}
-          {kv('Meta source', <span style={{ fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 11, color: LH.body }}>{'{ src: "' + lead.src + '", campaign_id: "120210…447" }'}</span>)}
-          {kv('Conversation notes', <span style={{ fontSize: 12, color: LH.body, lineHeight: 1.5 }}>Homeowner confirmed storm damage on the last call; wants the inspection this week. Prefers texts over calls.</span>)}
-        </div>}
-      </div>
-      <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
-        {secHead('Lead Analytics', an, () => setAn(p => !p))}
-        {an && <div style={{ marginTop: 4 }}>
-          {kv('Follow-up attempts', '3')}
-          {kv('Time to first reach-out', '2 min')}
-          {kv('Time to first call', '18 min')}
-          {kv('Time to first quote', '1d 4h')}
-          {kv('Time to job create', status === 'Qualified' ? '2d 6h' : '—')}
-          {kv('Speed to qualify', status === 'Qualified' ? '1d 22h' : 'In progress')}
-          {kv('Last contacted', 'Today · 11:04 AM')}
-          {kv('Close-won amount', status === 'Qualified' ? '$9,800' : '—')}
-          {kv('Converted job', lead.jobId ? '#' + lead.jobId : '—')}
-        </div>}
-      </div>
-      <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
-        {secHead('Compliance', cmp, () => setCmp(p => !p))}
-        {cmp && <div style={{ marginTop: 4 }}>
-          {[['SMS opt-out', smsOpt, setSmsOpt, 'Replies STOP → Do Not Disturb'], ['Email opt-out', emailOpt, setEmailOpt, 'Unsubscribed from email']].map(([label, on, set, sub]) => <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0' }}>
-            <div style={{ flex: 1 }}><div style={{ fontSize: 12, color: LH.body, fontWeight: 500 }}>{label}</div><div style={{ fontSize: 11, color: LH.muted }}>{sub}</div></div>
-            <button onClick={() => { set(!on); toast(label + (on ? ' cleared' : ' set — Do Not Disturb')); }} style={{ width: 38, height: 22, borderRadius: 999, border: 'none', background: on ? LH.red : '#d9d5cc', position: 'relative', cursor: 'pointer', flexShrink: 0, transition: 'background .15s' }}><span style={{ position: 'absolute', top: 2, left: on ? 18 : 2, width: 18, height: 18, borderRadius: 999, background: '#fff', transition: 'left .15s' }} /></button>
-          </div>)}
-          <div style={{ fontSize: 11, color: LH.muted, marginTop: 4, lineHeight: 1.5 }}>Mirrors the contact profile. Outbound email includes an unsubscribe link to a Zuper endpoint.</div>
-        </div>}
-      </div>
     </div>;
   }
   // Shared lead header — avatar, name, address, CTA row. Used at the top of both the
