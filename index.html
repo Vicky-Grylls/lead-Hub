@@ -30825,7 +30825,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [playing, setPlaying] = useState(false);
     const [prog, setProg] = useState(18);
     const [moreOpen, setMoreOpen] = useState(false);
-    const [panel, setPanel] = useState('comm');
+    const [panel, setPanel] = useState('assoc');
     const [jobId, setJobId] = useState(lead.jobId || null);
     const [convOpen, setConvOpen] = useState(false);
     const canConvert = lead.col === 'Qualified' && !jobId;
@@ -31022,9 +31022,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {/* Mini sidebar */}
         <div style={{ width: 46, flexShrink: 0, borderLeft: '1px solid ' + LH.borderSoft, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {[['phone', 'connect', 'Zuper Connect'], ['message-square', 'comm', 'Communication'], ['clock', 'history', 'Status History'], ['link', 'assoc', 'Associations'], ['message-circle', 'chats', 'Chats'], ['sparkles', 'sense', 'Sense AI']].map(([ic, key, lbl], i) => <Fragment key={key}>
+            {[['link', 'assoc', 'Associations']].map(([ic, key, lbl], i) => <Fragment key={key}>
               <button onClick={() => setPanel(key)} title={lbl} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: panel === key ? '#f8f5f0' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '2px 0' }} onMouseEnter={e => { if (panel !== key) e.currentTarget.style.background = '#f5f2ec'; }} onMouseLeave={e => { if (panel !== key) e.currentTarget.style.background = 'transparent'; }}><Ic name={ic} size={16} color={panel === key ? '#262626' : '#a3a3a3'} /></button>
-              {i === 0 && <div style={{ width: 24, height: 1, background: '#e5e7eb', margin: '4px 0' }} />}
             </Fragment>)}
           </div>
           <button title="Collapse" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="panel-right-close" size={16} color="#a3a3a3" /></button>
