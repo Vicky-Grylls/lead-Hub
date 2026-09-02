@@ -30257,30 +30257,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {/* Header */}
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', borderBottom: '1px solid ' + LH.borderSoft }}>
           <button onClick={close} title="Back" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="arrow-left" size={17} color={LH.ink} /></button>
-          <span style={{ fontSize: 14.5, fontWeight: 700, color: LH.ink, flex: 1 }}>Create Task</span>
-          <div style={{ position: 'relative' }}>
-            <button onClick={() => setTplOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="list" size={13} color={LH.sub} />Task Template<Ic name="chevron-down" size={13} color={LH.sub} /></button>
-            {tplOpen && <div style={{ position: 'absolute', top: 38, right: 0, width: 210, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.16)', padding: '5px 0', zIndex: 5 }}>{TPLS.map(t => <div key={t} onClick={() => { setTitle(t); setTplOpen(false); }} style={{ padding: '8px 13px', fontSize: 12.5, color: LH.ink, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{t}</div>)}</div>}
-          </div>
+          <span style={{ fontSize: 14.5, fontWeight: 700, color: LH.ink, flex: 1 }}>Create Follow-up</span>
           <button onClick={close} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="x" size={17} color={LH.sub} /></button>
         </div>
         {/* Body */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {row('type', 'Task Title', <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Add a title" style={vInp} />, true)}
-          {row('type', 'Task Description', <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Add description" style={vInp} />)}
-          {row('flame', 'Priority', <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 9, height: 9, borderRadius: 999, background: (PRIOS.find(p => p[0] === priority) || PRIOS[0])[1] }} /><select value={priority} onChange={e => setPriority(e.target.value)} style={selCss}>{PRIOS.map(p => <option key={p[0]}>{p[0]}</option>)}</select></div>)}
-          {row('briefcase', 'Trade Type', <select value={trade} onChange={e => setTrade(e.target.value)} style={{ ...selCss, ...(trade ? {} : ph) }}><option value="">Select Trade Type</option>{TRADES.map(t => <option key={t}>{t}</option>)}</select>)}
+          {row('type', 'Follow-up Title', <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Add a title" style={vInp} />, true)}
+          {row('type', 'Follow-up Description', <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Add description" style={vInp} />)}
           {row('user', 'Assignee', <select value={assignee} onChange={e => setAssignee(e.target.value)} style={{ ...selCss, ...(assignee ? {} : ph) }}><option value="">Add assignee</option>{ASSIGNEES.map(a => <option key={a}>{a}</option>)}</select>)}
-          {row('check-square', 'Task Type', <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Ic name={(FU_CHANNEL[channel] || FU_CHANNEL.call).ic} size={13} color={(FU_CHANNEL[channel] || FU_CHANNEL.call).fg} /><select value={channel} onChange={e => setChannel(e.target.value)} style={selCss}>{Object.keys(FU_CHANNEL).map(k => <option key={k} value={k}>{FU_CHANNEL[k].label}</option>)}</select></div>)}
-          {row('link', 'Associated Module', <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 10px', borderRadius: 999, background: LH.tint, fontSize: 11.5, fontWeight: 600, color: LH.primary }}><Ic name="phone" size={12} color={LH.primary} />Lead · {prefillName}</div>)}
+          {row('check-square', 'Follow-up Type', <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Ic name={(FU_CHANNEL[channel] || FU_CHANNEL.call).ic} size={13} color={(FU_CHANNEL[channel] || FU_CHANNEL.call).fg} /><select value={channel} onChange={e => setChannel(e.target.value)} style={selCss}>{Object.keys(FU_CHANNEL).map(k => <option key={k} value={k}>{FU_CHANNEL[k].label}</option>)}</select></div>)}
           {row('calendar', 'Due Date', <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><select value={dueDate ? '__custom' : due} onChange={e => { const v = e.target.value; if (v === '__custom') { setDue(''); } else { setDue(v); setDueDate(''); } }} style={selCss}>{DUES.map(d => <option key={d} value={d}>{d}</option>)}<option value="__custom">Custom date…</option></select>{(dueDate || !due) && <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={{ border: '1px solid ' + LH.border, borderRadius: 7, padding: '5px 9px', fontSize: 12, color: LH.ink, fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }} />}</div>)}
-          {row('bell', 'Set Reminder', <input value={reminder} onChange={e => setReminder(e.target.value)} placeholder="Select date and time" style={{ ...vInp, color: reminder ? LH.ink : LH.muted }} />)}
-          {row('clock', 'Estimated Duration', <span style={{ fontSize: 12.5, color: LH.muted }}>Add estimated duration</span>)}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 18px', borderBottom: '1px solid ' + LH.borderSoft, opacity: 0.55, cursor: 'not-allowed' }}>
-            <div style={{ width: 148, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 9 }}><Ic name="clipboard-list" size={15} color={LH.muted} /><span style={{ fontSize: 12, fontWeight: 500, color: LH.muted }}>Inspection Form</span></div>
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 12.5, color: LH.muted }}>Select inspection form</span><Ic name="lock" size={12} color={LH.muted} /></div>
-          </div>
-          {row('paperclip', 'Attachments', <span style={{ fontSize: 12.5, color: LH.muted }}>Add attachments</span>)}
         </div>
         {/* Footer */}
         <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'flex-end', gap: 10, padding: '11px 16px', borderTop: '1px solid ' + LH.borderSoft }}>
