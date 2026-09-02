@@ -29599,33 +29599,33 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {secHead('Primary Details', pd, () => setPd(p => !p))}
         {pd && <div style={{ marginTop: 4 }}>
           {kv('Contact', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: LH.ink }}>{lead.name}<Ic name="chevron-right" size={13} color={LH.muted} /></span>)}
-          {kv('Email', email)}{kv('Phone', '+1 469 555 0172')}
-          {kv('Lead Owner', 'Maria Gonzalez · sold-by')}
-          {kv('Lead Source', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, height: 16, borderRadius: 5, background: LH.blueBg, color: LH.blue, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>{lead.src[0]}</span>{lead.src}</span>)}
-          {kv('Campaign', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Ic name="megaphone" size={13} color={leadCampaign(lead) ? LH.primary : LH.muted} /><span style={{ color: leadCampaign(lead) ? LH.body : LH.muted }}>{leadCampaign(lead) || 'Not enrolled'}</span></span>)}
+          {kv('Phone number', '+14695550172')}
+          {kv('Description', 'Roof replacement after storm damage — wants an inspection this week.')}
+          {kv('Category', lead.score >= 70 ? 'Paid' : 'Organic')}
+          {kv('Lead source', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, height: 16, borderRadius: 5, background: LH.blueBg, color: LH.blue, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>{lead.src[0]}</span>{lead.src}</span>)}
+          {kv('Lead owner', 'Maria Gonzalez · sold-by')}
+          {kv('Lead value', '$' + (6 + (lead.score % 9)) + ',500 potential')}
+          {kv('Converted job', lead.jobId ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: LH.green, fontWeight: 600 }}><Ic name="briefcase" size={13} color={LH.green} />#{lead.jobId}</span> : <span style={{ color: LH.muted }}>Not converted</span>)}
+          {kv('Close-won amount', lead.jobId ? '$26,585' : <span style={{ color: LH.muted }}>—</span>)}
+          {kv('Last engagement', '4h ago')}
+          {kv('Follow-up attempts', '3')}
+          {kv('Time to first touch', '3 min')}
+          {kv('Time to first call', '21 min')}
+          {kv('Time to first quote', lead.jobId ? '1d 6h' : <span style={{ color: LH.muted }}>—</span>)}
+          {kv('Time to job create', lead.jobId ? '2d 8h' : <span style={{ color: LH.muted }}>—</span>)}
           {kv('Status', <span style={{ position: 'relative', display: 'inline-block' }}><button onClick={() => setStatusOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 8px', borderRadius: 7, border: '1px solid ' + st.bd, background: st.bg, color: st.fg, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{status}<Ic name="chevron-down" size={12} color={st.fg} /></button>{statusOpen && <div onMouseLeave={() => setStatusOpen(false)} style={{ position: 'absolute', top: 28, left: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 170 }}>{STATUS_OPTS.map(s => <div key={s} onClick={() => pickStatus(s)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 9px', borderRadius: 6, fontSize: 12, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{s}{status === s && <Ic name="check" size={13} color={st.fg} />}</div>)}</div>}</span>)}
           {isDisq && kv('Disqualification reason', <span style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
             <span style={{ position: 'relative', display: 'inline-block' }}><button onClick={() => setDisqOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 8px', borderRadius: 7, border: '1px solid #f2d0d0', background: '#fdecec', color: LH.red, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{disqReason}<Ic name="chevron-down" size={12} color={LH.red} /></button>{disqOpen && <div onMouseLeave={() => setDisqOpen(false)} style={{ position: 'absolute', top: 28, left: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 210 }}>{DISQ_REASONS.map(r => <div key={r} onClick={() => { setDisqReason(r); setDisqOpen(false); }} style={{ padding: '6px 9px', borderRadius: 6, fontSize: 12, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{r}</div>)}</div>}</span>
             <input value={disqNote} onChange={e => setDisqNote(e.target.value)} placeholder="Add a remark (optional)…" style={{ width: '100%', border: '1px solid ' + LH.border, borderRadius: 7, padding: '6px 9px', fontSize: 11.5, color: LH.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
           </span>)}
-          {kv('Lead Score', lead.score + '/100')}
-          {kv('Lead Value', '$' + (6 + (lead.score % 9)) + ',500 potential')}{kv('Category', lead.score >= 70 ? 'Paid' : 'Organic')}
-          {kv('Description', 'Roof replacement after storm damage — wants an inspection this week.')}
-          {kv('Assigned CSR', 'Maria Gonzalez')}{kv('Age', lead.age || '—')}{kv('Auto-qualified', 'Yes — Property Intelligence')}
-          {kv('Service Address', '4821 Oakwood Dr')}{kv('City, State, ZIP', 'Plano, TX 75024')}{kv('Score Breakdown', 'Source 20 · Data 22 · Intel 25 · Demo 15')}
-          {kv('Tags', <span style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>{tags.length ? tags.map(tagPill) : <span style={{ fontSize: 12, color: LH.muted }}>No tags yet</span>}</span>)}
-          {srcSchema && srcSchema.primary.map(([k, v]) => kv(k, v))}
         </div>}
       </div>
       <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
         {secHead('Custom Fields', cf, () => setCf(p => !p))}
         {cf && <div style={{ marginTop: 4 }}>
-          {srcSchema
-            ? <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '2px 0 4px' }}><span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: LH.muted }}>From {lead.src}</span></div>
-                {srcSchema.custom.map(([k, v]) => kv(k, v))}
-              </>
-            : <>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}</>}
+          {kv('External ID', (srcSchema && srcSchema.custom.length ? srcSchema.custom[0][1] : lead.src.toLowerCase().replace(/[^a-z]/g, '') + '_1232'))}
+          {kv('Meta source', <span style={{ fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 11, color: LH.body }}>{'{ src: "' + lead.src + '", campaign_id: "120210…447" }'}</span>)}
+          {kv('Conversation notes', <span style={{ fontSize: 12, color: LH.body, lineHeight: 1.5 }}>Homeowner confirmed storm damage on the last call; wants the inspection this week. Prefers texts over calls.</span>)}
         </div>}
       </div>
       <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
