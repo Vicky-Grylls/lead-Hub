@@ -30056,7 +30056,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const act = (shown && shown.act) || DIANE_ACT;
     const addTask = () => { if (!tTitle.trim()) return; setTasks(ts => [{ title: tTitle.trim(), type: tType, who: tWho, due: tDue, done: false }, ...ts]); setTTitle(''); setTaskOpen(false); onToast && onToast('Task created — “' + tTitle.trim() + '”'); };
     const addNote = () => { if (!noteText.trim()) return; setNotes(ns => [{ text: noteText.trim(), who: 'You', when: 'Just now' }, ...ns]); setNoteText(''); };
-    const PRIMARY_TABS = [['details', 'Primary Details'], ['intel', 'Intake intelligence'], ['activity', 'Activity'], ['tasks', 'Tasks']];
+    const PRIMARY_TABS = [['details', 'Primary Details'], ['activity', 'Activity'], ['tasks', 'Tasks']];
     const MORE_TABS = [['notes', 'Notes'], ['qualification', 'Qualification'], ['campaign', 'Campaign'], ['communication', 'Communication'], ['files', 'Files'], ['emails', 'Emails'], ['estimates', 'Estimates'], ['invoices', 'Invoices'], ['automations', 'Automations']];
     const moreActive = MORE_TABS.some(([k]) => k === tab);
     const moreLabel = moreActive ? (MORE_TABS.find(([k]) => k === tab)[1]) : ('+' + MORE_TABS.length + ' More');
