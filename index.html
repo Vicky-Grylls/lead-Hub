@@ -29655,7 +29655,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   // Bridge to the real (FSM) Create Job flow, prefilled from the lead + the "Lead" job template.
   const genJobId = lead => 'JN-2456' + String(78 + (lead.name.length * 7 + (lead.score || 50)) % 21).padStart(2, '0');
   const leadJobPrefill = (lead, jobId) => { const p = lead.name.split(' '); return { firstName: p[0], lastName: p.slice(1).join(' '), displayName: lead.name, email: lead.email || (lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com'), phone: '469-555-0172', address: '4821 Oakwood Dr', city: 'Plano', state: 'TX', zip: '75024', leadSource: lead.src, jobName: (lead.service || 'Roof') + ' Inspection — ' + lead.name, description: (lead.note ? lead.note + '. ' : '') + 'Converted from Lead Hub — free inspection for ' + lead.name + '.', _jobId: jobId, _tpl: 'Inspection' }; };
-  const startLeadConvert = (lead, onCreated, fallback) => { const jobId = genJobId(lead); if (typeof window !== 'undefined' && window.__leadHubCreateJob) { window.__leadHubCreateJob(leadJobPrefill(lead, jobId), () => onCreated(jobId)); } else if (fallback) fallback(); };
+  // Lead → job uses the Lead Hub convert wizard (category required, due date optional, playbook-outcome gated).
+  const startLeadConvert = (lead, onCreated, fallback) => { if (fallback) { fallback(); } else if (typeof window !== 'undefined' && window.__leadHubCreateJob) { const jobId = genJobId(lead); window.__leadHubCreateJob(leadJobPrefill(lead, jobId), () => onCreated(jobId)); } };
   // Full lead lifecycle: Angi/source capture → speed-to-lead → qualified → converted → inspection job.
   function LeadLifecycle({ lead, jobId }) {
     const STAGES = [
@@ -29683,7 +29684,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const STEPS = ['Review lead', 'Job details', 'Schedule', 'Confirm'];
     const [step, setStep] = useState(0);
     const [service, setService] = useState(lead.service || 'Roofing');
+    const [category, setCategory] = useState('');
     const [priority, setPriority] = useState('Standard');
+    const CATEGORIES = ['Repair', 'Replacement', 'New installation', 'Inspection', 'Maintenance'];
     const [desc, setDesc] = useState((lead.note ? lead.note + '. ' : '') + 'Free inspection for ' + lead.name + '.');
     const [date, setDate] = useState('Tomorrow');
     const [time, setTime] = useState('9:00 am');
@@ -29697,7 +29700,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const captured = parseInt(lead.fields || '0') || 0;
     const SERVICES = ['Roofing', 'Gutter', 'Siding', 'Windows', 'Door'];
     const CREW = ['Michael Richardson', 'Luke Marks', 'Eli Cohen', 'Monica Klein', 'Tyson Silva', 'Marcus Webb'];
-    const DATES = ['Today', 'Tomorrow', 'In 2 days', 'This weekend', 'Next week'];
+    const DATES = ['Unscheduled', 'Today', 'Tomorrow', 'In 2 days', 'This weekend', 'Next week'];
     const TIMESL = ['8:00 am', '9:00 am', '10:30 am', '1:00 pm', '3:00 pm', '4:30 pm'];
     const DURS = ['30 min', '1 hr', '1.5 hrs', '2 hrs'];
     const create = () => { setDone(jobId); onConverted && onConverted(jobId); onToast && onToast('Inspection Job ' + jobId + ' created'); };
@@ -29717,24 +29720,26 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       if (step === 1) return <div>
         {fld('Job type', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 8, background: LH.tint, color: LH.primary, fontSize: 13, fontWeight: 600 }}><Ic name="clipboard-check" size={14} color={LH.primary} />Inspection</span>)}
         {fld('Service type', <Dropdown value={service} options={SERVICES.map(o => ({ value: o, label: o }))} onChange={setService} />)}
+        {fld(<span>Category<span style={{ color: LH.red }}> *</span></span>, <Dropdown value={category} placeholder="Select a category" options={CATEGORIES.map(o => ({ value: o, label: o }))} onChange={setCategory} />)}
         {fld('Priority', <Dropdown value={priority} options={['Standard', 'High', 'Urgent'].map(o => ({ value: o, label: o }))} onChange={setPriority} />)}
         {fld('Description', <textarea value={desc} onChange={e => setDesc(e.target.value)} style={{ width: '100%', height: 78, borderRadius: 9, border: '1px solid ' + LH.border, padding: 11, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />)}
       </div>;
       if (step === 2) return <div>
-        <div style={{ display: 'flex', gap: 12 }}>{fld('Date', <Dropdown value={date} options={DATES.map(o => ({ value: o, label: o }))} onChange={setDate} />)}{fld('Time', <Dropdown value={time} options={TIMESL.map(o => ({ value: o, label: o }))} onChange={setTime} />)}</div>
+        <div style={{ display: 'flex', gap: 12 }}>{fld('Date (optional)', <Dropdown value={date} options={DATES.map(o => ({ value: o, label: o }))} onChange={setDate} />)}{fld('Time', <Dropdown value={time} options={TIMESL.map(o => ({ value: o, label: o }))} onChange={setTime} />)}</div>
         {fld('Assign technician', <Dropdown value={tech} options={CREW.map(o => ({ value: o, label: o }))} onChange={setTech} />)}
         {fld('Duration', <Dropdown value={dur} options={DURS.map(o => ({ value: o, label: o }))} onChange={setDur} />)}
-        <div style={{ fontSize: 12, color: LH.sub, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '10px 12px', display: 'flex', gap: 8 }}><Ic name="calendar" size={14} color={LH.sub} /><span>{tech} will be booked for a {dur} inspection at {address}.</span></div>
+        <div style={{ fontSize: 12, color: LH.sub, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '10px 12px', display: 'flex', gap: 8 }}><Ic name="calendar" size={14} color={LH.sub} /><span>{date === 'Unscheduled' ? 'Job will be created unscheduled — assign a date later from the job board.' : tech + ' will be booked for a ' + dur + ' inspection at ' + address + '.'}</span></div>
       </div>;
       // step 3 confirm
       return <div>
         <div style={{ fontSize: 12.5, color: LH.sub, marginBottom: 12 }}>Review the job. Creating it moves <b style={{ color: LH.ink }}>{lead.name}</b> to <b style={{ color: LH.ink }}>Converted as Job</b>.</div>
         <Card style={{ padding: '10px 14px' }}>
           {rrow('Job type', 'Inspection · ' + service)}
+          {rrow('Category', category || <span style={{ color: LH.red }}>Required — go back and pick one</span>)}
           {rrow('Priority', priority)}
           {rrow('Customer', lead.name)}
           {rrow('Address', address)}
-          {rrow('When', date + ' · ' + time + ' · ' + dur)}
+          {rrow('When', date === 'Unscheduled' ? 'Unscheduled — schedule later' : date + ' · ' + time + ' · ' + dur)}
           {rrow('Technician', tech)}
         </Card>
       </div>;
@@ -29743,7 +29748,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       ? <div style={{ padding: '30px 24px', textAlign: 'center' }}>
           <div style={{ width: 54, height: 54, borderRadius: 999, background: LH.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}><Ic name="check" size={28} color={LH.green} /></div>
           <div style={{ fontSize: 17, fontWeight: 700, color: LH.ink }}>Inspection Job created</div>
-          <div style={{ fontSize: 13, color: LH.sub, marginTop: 4 }}>Job <b style={{ color: LH.ink }}>#{done}</b> · {date} · {time} · {tech}</div>
+          <div style={{ fontSize: 13, color: LH.sub, marginTop: 4 }}>Job <b style={{ color: LH.ink }}>#{done}</b> · {date === 'Unscheduled' ? 'Unscheduled · ' + tech : date + ' · ' + time + ' · ' + tech}</div>
           <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 8, maxWidth: 380, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>{lead.name} is now an active inspection job. The lead card has moved to the Converted as Job stage.</div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 20 }}><Btn onClick={onClose}>Close</Btn><Btn kind="primary" icon="external-link" onClick={() => onToast && onToast('Opening Job #' + done + '…')}>View job</Btn></div>
         </div>
@@ -29758,7 +29763,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ padding: 20, overflowY: 'auto', flex: 1 }}>{body()}</div>
           <div style={{ padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             {step > 0 && <Btn onClick={() => setStep(step - 1)}>Go back</Btn>}
-            {step < STEPS.length - 1 ? <Btn kind="primary" onClick={() => setStep(step + 1)}>Continue</Btn> : <Btn kind="primary" icon="rocket" onClick={create}>Create job</Btn>}
+            {step < STEPS.length - 1
+              ? <Btn kind="primary" onClick={() => { if (step === 1 && !category) { onToast && onToast('Pick a job category to continue'); return; } setStep(step + 1); }} style={{ opacity: (step === 1 && !category) ? 0.55 : 1 }}>Continue</Btn>
+              : <Btn kind="primary" icon="rocket" onClick={() => { if (!category) { onToast && onToast('Category is required'); setStep(1); return; } create(); }} style={{ opacity: category ? 1 : 0.55 }}>Create job</Btn>}
           </div>
         </>;
     return <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(20,18,15,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
