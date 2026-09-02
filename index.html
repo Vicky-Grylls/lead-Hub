@@ -977,6 +977,10 @@ function Sidebar({
         icon: 'megaphone',
         label: 'Campaigns'
       }, {
+        id: 'lead-analytics',
+        icon: 'bar-chart-2',
+        label: 'Analytics'
+      }, {
         id: 'lead-channels',
         icon: 'radio',
         label: 'Channels'
@@ -14376,7 +14380,7 @@ function App() {
     }));
   }
   if (isLeadPage) {
-    const leadSection = page === 'lead-pipeline' ? 'pipeline' : page === 'lead-campaigns' ? 'campaigns' : (page === 'lead-settings' || page === 'lead-workforce' || page === 'lead-channels') ? 'settings' : page === 'lead-health' ? 'health' : 'overview';
+    const leadSection = page === 'lead-pipeline' ? 'pipeline' : page === 'lead-campaigns' ? 'campaigns' : page === 'lead-analytics' ? 'analytics' : (page === 'lead-settings' || page === 'lead-workforce' || page === 'lead-channels') ? 'settings' : page === 'lead-health' ? 'health' : 'overview';
     const leadSettingsTab = page === 'lead-channels' ? 'channels' : 'workforce';
     return /*#__PURE__*/React.createElement("div", {
       className: "flex flex-col h-screen w-screen overflow-hidden",
@@ -29628,12 +29632,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {secHead('Lead Analytics', an, () => setAn(p => !p))}
         {an && <div style={{ marginTop: 4 }}>
           {kv('Follow-up attempts', '3')}
-          {kv('Time to first touch', '2 min')}
+          {kv('Time to first reach-out', '2 min')}
           {kv('Time to first call', '18 min')}
           {kv('Time to first quote', '1d 4h')}
           {kv('Time to job create', status === 'Qualified' ? '2d 6h' : '—')}
           {kv('Speed to qualify', status === 'Qualified' ? '1d 22h' : 'In progress')}
-          {kv('Last engagement', 'Today · 11:04 AM')}
+          {kv('Last contacted', 'Today · 11:04 AM')}
           {kv('Close-won amount', status === 'Qualified' ? '$9,800' : '—')}
           {kv('Converted job', lead.jobId ? '#' + lead.jobId : '—')}
         </div>}
@@ -30397,6 +30401,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const tiles = [
       { id: 'lead-pipeline', icon: 'filter', title: 'Pipeline', desc: '6 active leads across 7 stages', accent: LH.blue },
       { id: 'lead-campaigns', icon: 'megaphone', title: 'Campaigns', desc: '3 active nurture sequences', accent: LH.primary },
+      { id: 'lead-analytics', icon: 'bar-chart-2', title: 'Analytics', desc: 'Funnel, speed & follow-up metrics', accent: '#6d28d9' },
       { id: 'lead-channels', icon: 'radio', title: 'Channels', desc: '6 of 11 sources connected', accent: LH.green }
     ];
     const steps = [
@@ -31363,11 +31368,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const R_WHEN = ['1h ago', '2h ago', '4h ago', '6h ago', '9h ago', '14h ago', '1d ago', '2d ago', '3d ago', '4d ago'];
     const recent = enrolled <= RECENT_FIXED.length ? RECENT_FIXED.slice(0, enrolled) : RECENT_FIXED.concat(Array.from({ length: enrolled - RECENT_FIXED.length }, (_, k) => { const i = k + RECENT_FIXED.length; const s = R_STAGE[i % R_STAGE.length]; return { n: R_FIRST[i % R_FIRST.length] + ' ' + R_LAST[(i * 7 + 3) % R_LAST.length], src: R_SRC[i % R_SRC.length], stage: s[0], tone: s[1], last: s[2], when: R_WHEN[i % R_WHEN.length] }; }));
     const config = [
-      { icon: 'filter', title: 'Audience', lines: ['3 conditions (AND)', 'Angi, Thumbtack · New Lead · Roofing', enrolled + ' records enrolled'] },
+      { icon: 'filter', title: 'Audience', lines: ['Trigger: Source-based', 'Angi, Thumbtack · New Lead · Roofing', enrolled + ' records enrolled'] },
       { icon: 'radio', title: 'Communication', lines: ['Nova — AI voice agent', 'SMS/calls: (+1) 650 206 1172', 'Email: hello@mail.hillroofing.com', '5 playbook questions'] },
       { icon: 'zap', title: 'Speed to Lead', lines: ['3 launch-day steps', 'SMS on arrival · call +30m · email +60m', 'Business hours: any time'] },
       { icon: 'headphones', title: 'Nurture sequence', lines: ['14-day sequence', 'Send days: Mon–Fri · ET', '6 days with steps'] },
-      { icon: 'log-out', title: 'Exit rules', lines: ['2 exit conditions (OR)', 'Qualified or Disqualified', 'Built-in: reply, opt-out, Nova DND'] }
+      { icon: 'log-out', title: 'Exit rules', lines: ['Auto-unenroll · always on', 'Qualified or Disqualified', 'Built-in: reply, opt-out, Nova DND'] }
     ];
     const activity = [
       { icon: 'user-plus', who: 'System', msg: 'Daniel Thompson enrolled from Angi.', when: '12m ago' },
@@ -32030,6 +32035,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const onPrefix = init.onPrefix;
     const [step, setStep] = useState(init.startStep != null ? init.startStep : skipN);
     const [audienceType, setAudienceType] = useState(init.audienceType || 'new');
+    // Enrollment trigger (locked model): source-based, value-based, or on-lead-creation. Status-based is deprioritized.
+    const [enrollTrigger, setEnrollTrigger] = useState(init.enrollTrigger || 'source');
     const [goal, setGoal] = useState(init.goal || 'speed');
     const [name, setName] = useState(init.name !== undefined ? init.name : 'Storm Season Re-engage');
     const [desc, setDesc] = useState(init.desc !== undefined ? init.desc : 'Re-engages storm-season leads from Angi and Thumbtack with a 14-day drip.');
@@ -32163,8 +32170,18 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Audience</div>
         {audienceType === 'new'
           ? <>
-            <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>Configure which incoming leads qualify — by source and other rules. New leads enrol automatically as they arrive, so there are no existing records to match yet.</div>
-            <Conditions rows={conds} setRows={setConds} join={join} setJoin={setJoin} options={['customer.lead_source', 'job.service_type', 'customer.city', 'customer.state', 'customer.zip', 'job.created_date'].map(v => ({ value: v, label: FIELD_DEFS[v].label }))} addField="customer.lead_source" />
+            <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px', maxWidth: 640 }}>Configure which incoming leads qualify — by source and other rules. New leads enrol automatically as they arrive, so there are no existing records to match yet.</div>
+            {(() => { const TRIGGERS = [{ key: 'source', icon: 'radio', title: 'Source-based', desc: 'Enrol leads from specific sources — Angi, Meta, Website, and more.' }, { key: 'value', icon: 'trending-up', title: 'Value-based', desc: 'Enrol leads above a value or score threshold.' }, { key: 'creation', icon: 'user-plus', title: 'On lead creation', desc: 'Enrol every new lead the moment it is created.' }]; const cur = TRIGGERS.find(t => t.key === enrollTrigger) || TRIGGERS[0]; return <div style={{ marginBottom: 18 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.04em', color: LH.muted, marginBottom: 8 }}>ENROLLMENT TRIGGER</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>{TRIGGERS.map(t => { const on = enrollTrigger === t.key; return <div key={t.key} onClick={() => setEnrollTrigger(t.key)} style={{ border: '1px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', borderRadius: 11, padding: 12, cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}><Ic name={t.icon} size={15} color={on ? LH.primary : LH.sub} /><span style={{ fontSize: 12.5, fontWeight: 700, color: on ? LH.primary : LH.ink }}>{t.title}</span></div>
+                <div style={{ fontSize: 11, color: LH.sub, lineHeight: 1.4 }}>{t.desc}</div>
+              </div>; })}</div>
+              <div style={{ fontSize: 11, color: LH.muted, marginTop: 8 }}>{cur.desc}</div>
+            </div>; })()}
+            {enrollTrigger === 'creation'
+              ? <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: '12px 14px', borderRadius: 10, background: LH.bg, border: '1px solid ' + LH.borderSoft }}><Ic name="user-plus" size={15} color={LH.sub} style={{ marginTop: 1 }} /><div style={{ fontSize: 12.5, color: LH.sub, lineHeight: 1.5 }}>Every new lead enrols on creation — no conditions needed. Add exit rules downstream to control who stays.</div></div>
+              : <Conditions rows={conds} setRows={setConds} join={join} setJoin={setJoin} options={(enrollTrigger === 'value' ? ['customer.lifetime_value', 'customer.total_jobs', 'customer.lead_source', 'job.service_type', 'customer.city', 'customer.state'] : ['customer.lead_source', 'job.service_type', 'customer.city', 'customer.state', 'customer.zip', 'job.created_date']).filter(v => FIELD_DEFS[v]).map(v => ({ value: v, label: FIELD_DEFS[v].label }))} addField={enrollTrigger === 'value' ? 'customer.lifetime_value' : 'customer.lead_source'} />}
             <div style={{ marginTop: 20, display: 'flex', alignItems: 'flex-start', gap: 9, padding: '12px 14px', borderRadius: 10, background: LH.bg, border: '1px solid ' + LH.borderSoft }}><Ic name="inbox" size={15} color={LH.sub} style={{ marginTop: 1 }} /><div style={{ fontSize: 12.5, color: LH.sub, lineHeight: 1.5 }}>Matching leads will appear in the pipeline once these sources start delivering. Nothing to enrol right now — this campaign runs on new arrivals.</div></div>
           </>
           : <>
@@ -32352,8 +32369,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       if (step === 5) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="log-out" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>When should we stop reaching out?</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Records are unenrolled as soon as any of these becomes true.</div>
-        <Conditions rows={exitConds} setRows={setExitConds} join={exitJoin} setJoin={setExitJoin} addLabel="Add exit condition" />
+        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Exit is automatic — no setup required. Leads unenrol the moment they reach a terminal outcome.</div>
+        <Card style={{ padding: 16, display: 'flex', alignItems: 'flex-start', gap: 12, background: LH.greenBg, border: '1px solid ' + LH.greenBd }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="check-circle" size={17} color={LH.green} /></div>
+          <div><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Auto-unenroll on Qualified or Disqualified</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 3, lineHeight: 1.5 }}>On by default for every campaign — same as an invoice-paid auto-exit from a dunning sequence. Reaching a terminal lead outcome removes the record automatically; there is nothing to configure.</div></div>
+        </Card>
         <Card style={{ padding: 16, marginTop: 22 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>When a customer replies</div>
           <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 14px' }}>A reply to any SMS or email triggers these actions.</div>
@@ -32385,11 +32405,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       const goalObj = CAMPAIGN_GOALS.find(g => g.key === goal) || CAMPAIGN_GOALS[0];
       const summary = [
         { i: 0, icon: 'send', t: 'Campaign setup', lines: ['Name: ' + (name || '—') + ' · ' + audLabel, 'Goal: ' + goalObj.title, 'KPIs: ' + goalObj.kpis.map(k => k.target + ' ' + k.label).join(' · ')] },
-        { i: 1, icon: 'filter', t: 'Audience', lines: audienceType === 'new' ? [conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', 'Sources: ' + (srcVal.length ? srcVal.join(', ') : 'any'), 'New leads auto-enrol as they arrive'] : [conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', enrolledCount + ' of ' + CONTACTS.length + ' customers will enrol', removedInMatch + ' removed manually'] },
+        { i: 1, icon: 'filter', t: 'Audience', lines: audienceType === 'new' ? ['Trigger: ' + ({ source: 'Source-based', value: 'Value-based', creation: 'On lead creation' }[enrollTrigger] || 'Source-based'), enrollTrigger === 'creation' ? 'Every new lead enrols on creation' : conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', 'New leads auto-enrol as they arrive'] : [conds.length + ' condition' + (conds.length !== 1 ? 's' : '') + ' (' + join.toUpperCase() + ')', enrolledCount + ' of ' + CONTACTS.length + ' customers will enrol', removedInMatch + ' removed manually'] },
         { i: 2, icon: 'headphones', t: 'Nurture sequence', lines: ['Launch day: ' + s2l.length + ' step' + (s2l.length !== 1 ? 's' : '') + (bizHours ? ' · business hours on' : ''), dayCount + '-day drip · ' + activeDays + ' day' + (activeDays !== 1 ? 's' : '') + ' with steps', 'Send days: ' + sendDaysLabel] },
         { i: 3, icon: 'book-open', t: 'Playbook', lines: [playbook.length + ' qualification question' + (playbook.length !== 1 ? 's' : ''), pbFile ? 'Uploaded: ' + pbFile.name : 'Channel-agnostic — used on every channel'] },
         { i: 4, icon: 'radio', t: 'Communication', lines: ['Number: ' + NUMBERS[numIdx].name + ' · ' + NUMBERS[numIdx].num, 'Voice agent: ' + agent, 'Email: ' + emailAddr] },
-        { i: 5, icon: 'log-out', t: 'Exit rules', lines: [exitConds.length + ' exit condition' + (exitConds.length !== 1 ? 's' : '') + ' (' + exitJoin.toUpperCase() + ')', 'On reply: ' + [replyStatusOn && 'status → ' + replyStatus, replyTaskOn && 'create task'].filter(Boolean).join(', ') || 'no action', 'Built-in stops: opt-out, Nova DND'] }
+        { i: 5, icon: 'log-out', t: 'Exit rules', lines: ['Auto-unenroll on Qualified / Disqualified · always on', 'On reply: ' + ([replyStatusOn && 'status → ' + replyStatus, replyTaskOn && 'create task'].filter(Boolean).join(', ') || 'no action'), 'Built-in stops: opt-out, Nova DND'] }
       ];
       const problems = []; if (!name.trim()) problems.push('Campaign name is required (Basic details).'); if (!tz) problems.push('Campaign time zone is required (Basic details).'); if (!conds.filter(c => c.field).length) problems.push('Add at least one audience condition.');
       return <div style={{ maxWidth: 720, margin: '0 auto' }}>
@@ -33510,6 +33530,47 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {tab === 'workforce' ? <WorkforceSection onToast={onToast} /> : <ChannelsSection onToast={onToast} onNavigate={onNavigate} />}
     </div>;
   }
+  // Analytics surface — the same lead metrics shown on the lead detail, aggregated, plus a conversion funnel.
+  function AnalyticsSection({ onNavigate }) {
+    const cards = [
+      { label: 'Avg follow-up attempts', value: '2.8', accent: LH.ink },
+      { label: 'Time to first reach-out', value: '3 min', accent: LH.green },
+      { label: 'Last contacted (median)', value: '4h ago', accent: '#6d28d9' },
+      { label: 'Speed to qualify', value: '1d 20h', accent: LH.primary }
+    ];
+    const speed = [
+      { label: 'Speed to first call', value: '21 min', icon: 'phone', accent: LH.blue },
+      { label: 'Speed to first quote', value: '1d 6h', icon: 'file-text', accent: LH.amber },
+      { label: 'Speed to job create', value: '2d 8h', icon: 'briefcase', accent: LH.green }
+    ];
+    const FUNNEL = [
+      { stage: 'New leads', n: 320, go: 'lead-pipeline' },
+      { stage: 'Contacted', n: 268, go: 'lead-pipeline' },
+      { stage: 'Qualifying', n: 176, go: 'lead-pipeline' },
+      { stage: 'Qualified', n: 98, go: 'lead-pipeline' },
+      { stage: 'Converted to job', n: 61, go: 'lead-pipeline' }
+    ];
+    const top = FUNNEL[0].n;
+    const FCOL = [LH.blue, '#22c55e', '#8b5cf6', LH.green, LH.primary];
+    return <div>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>{cards.map(c => <StatCard key={c.label} {...c} />)}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 22 }}>
+        {speed.map(s => <Card key={s.label} style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 11 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={s.icon} size={16} color={s.accent} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 11.5, color: LH.sub }}>{s.label}</div><div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>{s.value}</div></div>
+        </Card>)}
+      </div>
+      <Card style={{ padding: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><Ic name="filter" size={15} color={LH.primary} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Conversion funnel</span><span style={{ fontSize: 11.5, color: LH.muted, marginLeft: 'auto' }}>Last 30 days · {Math.round(FUNNEL[FUNNEL.length - 1].n / top * 100)}% end-to-end</span></div>
+        <div style={{ fontSize: 12, color: LH.sub, marginBottom: 14 }}>Counts through each stage, with step conversion.</div>
+        {FUNNEL.map((f, i) => { const pct = Math.round(f.n / top * 100); const step = i === 0 ? 100 : Math.round(f.n / FUNNEL[i - 1].n * 100); return <div key={f.stage} onClick={() => onNavigate && onNavigate(f.go)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', cursor: 'pointer' }}>
+          <span style={{ width: 128, flexShrink: 0, fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{f.stage}</span>
+          <div style={{ flex: 1, height: 26, borderRadius: 7, background: '#f1f0ec', overflow: 'hidden', position: 'relative' }}><div style={{ width: pct + '%', height: '100%', borderRadius: 7, background: FCOL[i], display: 'flex', alignItems: 'center', paddingLeft: 10 }}><span style={{ fontSize: 11.5, fontWeight: 700, color: '#fff' }}>{f.n}</span></div></div>
+          <span style={{ width: 96, flexShrink: 0, textAlign: 'right', fontSize: 11.5, color: LH.muted }}>{pct}% of top{i > 0 && <span style={{ color: step >= 60 ? LH.green : step >= 40 ? LH.amber : LH.red, fontWeight: 700 }}> · {step}%</span>}</span>
+        </div>; })}
+      </Card>
+    </div>;
+  }
   function LeadHubShell({ section, settingsTab, onNavigate }) {
     const [toast, setToast] = useState(null);
     const showToast = m => { setToast(m); setTimeout(() => setToast(null), 3200); };
@@ -33528,7 +33589,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       pipeline: { crumb: 'Lead Hub', title: 'Pipeline', actions: <DateRangePicker /> },
       campaigns: { crumb: 'Lead Hub · 3 active', title: 'Campaigns', actions: null },
       settings: { crumb: settingsTab === 'channels' ? 'Lead Hub · Channels' : 'Lead Hub · AI Workforce', title: settingsTab === 'channels' ? 'Channels' : 'AI Workforce', actions: settingsTab === 'channels' ? <><Btn icon="upload" onClick={() => CH_IMPORT()}>Import leads</Btn><Btn kind="primary" icon="plus" onClick={() => CH_CONNECT()}>Connect source</Btn></> : <Btn kind="primary" icon="plus" onClick={() => showToast('Add a new AI agent')}>Add agent</Btn> },
-      health: { crumb: 'Last 30 days · 18 issues surfaced · 13 resolved · 5 pending', title: 'Hub Health', actions: <><Btn icon="calendar">Last 30 days</Btn><Btn icon="download">Export log</Btn></> }
+      health: { crumb: 'Last 30 days · 18 issues surfaced · 13 resolved · 5 pending', title: 'Hub Health', actions: <><Btn icon="calendar">Last 30 days</Btn><Btn icon="download">Export log</Btn></> },
+      analytics: { crumb: 'Lead Hub · Last 30 days', title: 'Analytics', actions: <><Btn icon="calendar">Last 30 days</Btn><Btn icon="download">Export</Btn></> }
     };
     const [wizardOpen, setWizardOpen] = useState(false);
     const [pipeFull, setPipeFull] = useState(false);
@@ -33544,6 +33606,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {section === 'campaigns' && <CampaignsSection onToast={showToast} onNavigate={onNavigate} />}
         {section === 'settings' && <SettingsSection onToast={showToast} onNavigate={onNavigate} initialTab={settingsTab} />}
         {section === 'health' && <HealthSection />}
+        {section === 'analytics' && <AnalyticsSection onNavigate={onNavigate} />}
       </div>
       {toast && <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 300, background: LH.ink, color: '#fff', fontSize: 13, fontWeight: 500, padding: '11px 18px', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="check-circle" size={15} color="#4ade80" />{toast}</div>}
       {onbOpen && <LeadOnboarding onFinish={finishOnboarding} onCreateCampaign={startCampaign} onToast={showToast} />}
