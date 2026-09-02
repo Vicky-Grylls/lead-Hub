@@ -30039,8 +30039,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const act = (shown && shown.act) || DIANE_ACT;
     const addTask = () => { if (!tTitle.trim()) return; setTasks(ts => [{ title: tTitle.trim(), type: tType, who: tWho, due: tDue, done: false }, ...ts]); setTTitle(''); setTaskOpen(false); onToast && onToast('Task created — “' + tTitle.trim() + '”'); };
     const addNote = () => { if (!noteText.trim()) return; setNotes(ns => [{ text: noteText.trim(), who: 'You', when: 'Just now' }, ...ns]); setNoteText(''); };
-    const PRIMARY_TABS = [['details', 'Primary Details'], ['activity', 'Activity'], ['tasks', 'Tasks']];
-    const MORE_TABS = [['notes', 'Notes'], ['qualification', 'Qualification'], ['campaign', 'Campaign'], ['communication', 'Communication'], ['files', 'Attachments']];
+    const PRIMARY_TABS = [['details', 'Primary Details'], ['activity', 'Activity'], ['tasks', 'Tasks'], ['notes', 'Notes'], ['qualification', 'Qualification'], ['campaign', 'Campaign']];
+    const MORE_TABS = [['communication', 'Communication'], ['files', 'Attachments']];
     const moreActive = MORE_TABS.some(([k]) => k === tab);
     const moreLabel = moreActive ? (MORE_TABS.find(([k]) => k === tab)[1]) : ('+' + MORE_TABS.length + ' More');
     return <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, zIndex: 40, width: expanded ? 680 : 524, maxWidth: '94%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,.10)', display: 'flex', flexDirection: 'column', transform: lead ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s' }}>
@@ -30054,8 +30054,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               .map((b, k) => <button key={k} onClick={b.f} title={b.t} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name={b.i} size={15} color={LH.sub} /></button>)}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '0 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0, whiteSpace: 'nowrap' }}>
-          {PRIMARY_TABS.map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ padding: '11px 10px', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', color: tab === k ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (tab === k ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{l}</button>)}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '0 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0, whiteSpace: 'nowrap', overflowX: 'auto' }}>
+          {PRIMARY_TABS.map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ padding: '11px 8px', fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0, color: tab === k ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (tab === k ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{l}</button>)}
           <div style={{ position: 'relative', marginLeft: 'auto' }}>
             <button onClick={() => setMoreTabOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '11px 10px', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', color: moreActive ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (moreActive ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{moreLabel}<Ic name={moreTabOpen ? 'chevron-up' : 'chevron-down'} size={13} color={LH.muted} /></button>
             {moreTabOpen && <div onMouseLeave={() => setMoreTabOpen(false)} style={{ position: 'absolute', top: 42, right: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 190 }}>
@@ -30844,8 +30844,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const phone = '469-555-0172';
     const toast = m => onToast && onToast(m);
     // Match the side sheet's tab set exactly.
-    const PTABS = [['details', 'Primary Details'], ['activity', 'Activity'], ['tasks', 'Tasks']];
-    const MTABS = [['notes', 'Notes'], ['qualification', 'Qualification'], ['campaign', 'Campaign'], ['communication', 'Communication'], ['files', 'Attachments']];
+    const PTABS = [['details', 'Primary Details'], ['activity', 'Activity'], ['tasks', 'Tasks'], ['notes', 'Notes'], ['qualification', 'Qualification'], ['campaign', 'Campaign']];
+    const MTABS = [['communication', 'Communication'], ['files', 'Attachments']];
     const moreActive = MTABS.some(([k]) => k === tab);
     const moreLabel = moreActive ? MTABS.find(([k]) => k === tab)[1] : '+' + MTABS.length + ' More';
     const addNote = () => { if (!noteText.trim()) return; setNotes(ns => [{ text: noteText.trim(), who: 'You', when: 'Just now' }, ...ns]); setNoteText(''); };
