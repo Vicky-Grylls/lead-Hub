@@ -31134,7 +31134,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             </div>}
           </div>}
           <div style={{ display: 'inline-flex', border: '1px solid ' + LH.border, borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
-            {[['kanban', 'layout-grid', 'Board'], ['list', 'list', 'List'], ['map', 'map-pin', 'Map']].map(([v, ic, lbl], vi) => <button key={v} onClick={() => setView(v)} title={lbl} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 32, border: 'none', borderLeft: vi > 0 ? '1px solid ' + LH.border : 'none', background: view === v ? LH.tint : '#fff', color: view === v ? LH.ink : LH.sub, cursor: 'pointer' }}><Ic name={ic} size={15} color={view === v ? LH.ink : LH.sub} /></button>)}
+            {[['kanban', 'layout-grid', 'Board'], ['list', 'list', 'List']].map(([v, ic, lbl], vi) => <button key={v} onClick={() => setView(v)} title={lbl} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 32, border: 'none', borderLeft: vi > 0 ? '1px solid ' + LH.border : 'none', background: view === v ? LH.tint : '#fff', color: view === v ? LH.ink : LH.sub, cursor: 'pointer' }}><Ic name={ic} size={15} color={view === v ? LH.ink : LH.sub} /></button>)}
           </div>
         </div>
       </div>
@@ -31143,8 +31143,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>; })()}
       {view === 'kanban'
         ? <LeadsKanban leads={filtered} onMove={boardMove} onCardClick={setSelId} selId={selId} cardCfg={cardCfg} />
-        : view === 'map'
-        ? <LeadsMapView leads={filtered} onOpen={setSelId} onToast={onToast} showKpi={showKpi} />
         : <Card style={{ padding: 0, overflowX: 'auto', overflowY: 'hidden' }}>
           <table style={{ width: '100%', minWidth: 1240, borderCollapse: 'collapse' }}>
             <thead><tr>{[['Score', 64], ['Name', 190], ['Stage', 120], ['Source', 150], ['Assigned CSR', 150], ['Email', 210], ['Phone', 130], ['Campaigns', 170], ['Tags', 150], ['Age', 70]].map(([h, w]) => <th key={h} style={{ textAlign: 'left', padding: '10px 16px', fontSize: 12, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w || 'auto' }}>{h}</th>)}</tr></thead>
