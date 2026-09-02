@@ -30348,8 +30348,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [ovToast, setOvToast] = useState(null);
     const flash = m => { setOvToast(m); setTimeout(() => setOvToast(null), 2600); };
     // 10DLC registration status persists across reloads: none → pending (under carrier review) → approved.
-    const [dlc10, setDlc10] = useState(() => { try { return localStorage.getItem('lh10dlcStatus') || 'none'; } catch (e) { return 'none'; } });
-    const setDlc10Status = v => { setDlc10(v); try { localStorage.setItem('lh10dlcStatus', v); } catch (e) {} };
+    const [dlc10, setDlc10] = useState(() => { try { return localStorage.getItem('lh10dlcStatus_v2') || 'none'; } catch (e) { return 'none'; } });
+    const setDlc10Status = v => { setDlc10(v); try { localStorage.setItem('lh10dlcStatus_v2', v); } catch (e) {} };
     const kpis = [
       { label: 'Received today', value: 28, accent: LH.ink },
       { label: 'Qualified today', value: 7, accent: LH.green },
@@ -30387,15 +30387,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ display: 'flex', gap: 4, padding: '0 16px', borderBottom: '1px solid ' + LH.borderSoft }}>
           {[['Setup', pending], ['Recommendations', recs.length]].map(([t, n]) => <button key={t} onClick={() => setSetupTab(t)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '12px 8px', fontSize: 13.5, fontWeight: 600, color: setupTab === t ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (setupTab === t ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{t}<span style={{ fontSize: 11, fontWeight: 700, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 7px' }}>{n}</span></button>)}
         </div>
-        <div style={{ padding: 14 }}>{list.map((s, i) => <div key={s.title} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, border: '1px solid ' + LH.borderSoft, borderRadius: 12, marginBottom: i < list.length - 1 ? 10 : 0 }}>
-          <div style={{ width: 42, height: 42, borderRadius: 11, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={s.icon} size={19} color={s.fg} /></div>
-          <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>{s.cat}</div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginTop: 1 }}>{s.title}</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2, lineHeight: 1.45 }}>{s.desc}</div></div>
-          {setupTab === 'Setup' && stepStatus(s) === 'pending' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.amberBd, background: LH.amberBg, color: LH.amber, fontSize: 13, fontWeight: 600 }}><Ic name="clock" size={14} color={LH.amber} />Pending approval</span>
-            : setupTab === 'Setup' && stepStatus(s) === 'done' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#f6f4ef', color: LH.sub, fontSize: 13, fontWeight: 600 }}><Ic name="check" size={14} color={LH.sub} />Completed</span>
-            : s.done ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#f6f4ef', color: LH.sub, fontSize: 13, fontWeight: 600 }}><Ic name="check" size={14} color={LH.sub} />Completed</span>
-            : setupTab === 'Setup' && i === firstOpen ? <Btn kind="primary" onClick={() => s.action ? setFlow(s.action) : onNavigate(s.go)}>Start</Btn>
-            : <Btn onClick={() => s.action ? setFlow(s.action) : onNavigate(s.go)}>Start</Btn>}
-        </div>)}</div>
+        <div style={{ padding: 10 }}>{list.map((s, i) => { const cta = s.action === '10dlc' ? 'Register' : 'Start'; return <div key={s.title} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '10px 12px', border: '1px solid ' + LH.borderSoft, borderRadius: 10, marginBottom: i < list.length - 1 ? 8 : 0 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={s.icon} size={16} color={s.fg} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>{s.cat}</div><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, marginTop: 1 }}>{s.title}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1, lineHeight: 1.4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.desc}</div></div>
+          {setupTab === 'Setup' && stepStatus(s) === 'pending' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.amberBd, background: LH.amberBg, color: LH.amber, fontSize: 12.5, fontWeight: 600, flexShrink: 0 }}><Ic name="clock" size={13} color={LH.amber} />Pending approval</span>
+            : setupTab === 'Setup' && stepStatus(s) === 'done' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#f6f4ef', color: LH.sub, fontSize: 12.5, fontWeight: 600, flexShrink: 0 }}><Ic name="check" size={13} color={LH.sub} />Completed</span>
+            : s.done ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#f6f4ef', color: LH.sub, fontSize: 12.5, fontWeight: 600, flexShrink: 0 }}><Ic name="check" size={13} color={LH.sub} />Completed</span>
+            : setupTab === 'Setup' && i === firstOpen ? <Btn kind="primary" onClick={() => s.action ? setFlow(s.action) : onNavigate(s.go)}>{cta}</Btn>
+            : <Btn onClick={() => s.action ? setFlow(s.action) : onNavigate(s.go)}>{cta}</Btn>}
+        </div>; })}</div>
       </Card> : <div style={{ marginBottom: 24 }} />}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'stretch', marginBottom: 12 }}>
         <AttentionRollupCard onNavigate={onNavigate} />
