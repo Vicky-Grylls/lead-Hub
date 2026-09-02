@@ -31438,8 +31438,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: hideKpi ? 12 : 10 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><Toggle on={!hideKpi} onChange={() => setHideKpi(k => !k)} /><span onClick={() => setHideKpi(k => !k)} style={{ fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}>Hide KPIs</span></div>
         </div>
-        {!hideKpi && goalCard}
-        {!hideKpi && <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>{kpis.map(k => kpiCard({ label: k.label, value: k.value, accent: k.accent }))}</div>}
+        {!hideKpi && <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 16 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap' }}>{[
+            ...goalKpis.map(k => ({ value: enrolled ? k.actual : '—', label: k.label, target: k.target, status: enrolled ? (k.ok ? 'on track' : 'below') : null, ok: k.ok })),
+            ...kpis.map(k => ({ value: k.value, label: k.label, accent: k.accent }))
+          ].map(c => <div key={c.label} style={{ flex: '1 1 14%', minWidth: 128, padding: '13px 16px', borderRight: '1px solid ' + LH.borderSoft, borderBottom: '1px solid ' + LH.borderSoft }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}><span style={{ fontSize: 20, fontWeight: 800, color: c.accent || LH.ink, lineHeight: 1.1 }}>{c.value}</span>{c.status && <span style={{ fontSize: 10.5, fontWeight: 700, color: c.ok ? LH.green : LH.amber, marginLeft: 'auto' }}>{c.status}</span>}</div>
+            <div style={{ fontSize: 11.5, color: LH.sub, marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.label}{c.target ? <span style={{ color: LH.muted }}> · Target {c.target}</span> : ''}</div>
+          </div>)}</div>
+        </Card>}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>{needsCard}{underperfCard}</div>
         <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>{activityCard}{tasksCard}</div>
       </>;
