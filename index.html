@@ -29346,6 +29346,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     Qualifying: { bg: '#f3eefe', fg: '#6d28d9', bd: '#ddd0f7' },
     'Needs human': { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
     'Converted as Job': { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
+    'Disqualified': { bg: '#fdecec', fg: LH.red, bd: '#f2d0d0' },
     'In drip': { bg: '#f3eefe', fg: '#6d28d9', bd: '#ddd0f7' },
     Draft: { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' },
     Paused: { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
@@ -29468,8 +29469,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { id: 'l6b', col: 'Qualified', score: 84, name: 'Grant Wells', note: 'Full roof replacement', src: 'Google LSA', age: '1d', status: 'Qualified', fields: '9/9' },
     { id: 'l6c', col: 'Qualified', score: 80, name: 'Yara Haddad', note: 'Insurance-approved repair', src: 'Angi', age: '5h', status: 'Qualified', fields: '8/9' }
   ];
-  const COL_STAGE = { 'New lead': 0, 'Contacting': 1, 'Qualifying': 2, 'Needs human': 3, 'In drip': 4, 'Qualified': 5, 'Converted as Job': 6 };
-  const COL_DOT = { 'New lead': '#3b82f6', 'Contacting': '#22c55e', 'Qualifying': '#8b5cf6', 'Needs human': '#f59e0b', 'In drip': '#6d28d9', 'Qualified': '#16a34a', 'Converted as Job': '#0ea5e9' };
+  const COL_STAGE = { 'New lead': 0, 'Contacting': 1, 'Qualifying': 2, 'Needs human': 3, 'In drip': 4, 'Qualified': 5, 'Converted as Job': 6, 'Disqualified': 7 };
+  const COL_DOT = { 'New lead': '#3b82f6', 'Contacting': '#22c55e', 'Qualifying': '#8b5cf6', 'Needs human': '#f59e0b', 'In drip': '#6d28d9', 'Qualified': '#16a34a', 'Converted as Job': '#0ea5e9', 'Disqualified': '#dc2626' };
   const PIPE_COLS = [
     { key: 'New lead', hint: 'Captured from source' },
     { key: 'Contacting', hint: 'Speed-to-lead active' },
@@ -29477,7 +29478,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { key: 'Needs human', hint: 'CSR handoff required' },
     { key: 'In drip', hint: 'Follow-up sequence' },
     { key: 'Qualified', hint: 'Ready for Sales Hub' },
-    { key: 'Converted as Job', hint: 'Converted handoff' }
+    { key: 'Converted as Job', hint: 'Converted handoff' },
+    { key: 'Disqualified', hint: 'Terminal — logged, no opportunity' }
   ];
   const STAGES = ['New', 'Contacting', 'Qualifying', 'Human', 'Drip', 'Qualified', 'Inspection'];
   const DIANE_FIELDS = ['Property address', 'Roof type', 'Damage type', 'Insurance claim', 'Homeowner name', 'Best contact time', 'Urgency', 'Spouse decision', 'Previous estimates'];
@@ -29563,9 +29565,20 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const curCol = lead.col || lead.status || lead.stage || 'New';
     const [localStatus, setLocalStatus] = useState(curCol);
     const status = boardMode ? curCol : localStatus;
-    const STATUS_OPTS = boardMode ? PIPE_COLS.map(c => c.key) : ['New', 'Contacting', 'Qualifying', 'Live with Nova', 'Qualified', 'Dead'];
+    // Predefined status enum (MVP). Terminal states are Qualified and Disqualified; the rest are intermediate.
+    const STATUS_OPTS = boardMode ? PIPE_COLS.map(c => c.key) : ['New', 'Contacting', 'Qualifying', 'Follow-up w/ estimator', 'Qualified', 'Disqualified'];
     const st = TONE[status] || TONE.Draft;
     const [statusOpen, setStatusOpen] = useState(false);
+    const isDisq = /disqualified|dead|lost/i.test(status);
+    // Disqualification reason: bounded values + a free-text remark.
+    const DISQ_REASONS = ['Out of service area', 'Not the decision-maker', 'No budget', 'Bad timing / not ready', 'Duplicate lead', 'Spam / invalid', 'Chose a competitor', 'Unresponsive'];
+    const [disqReason, setDisqReason] = useState(lead.disqualification_reason || DISQ_REASONS[0]);
+    const [disqNote, setDisqNote] = useState('');
+    const [disqOpen, setDisqOpen] = useState(false);
+    const [an, setAn] = useState(true);
+    const [cmp, setCmp] = useState(true);
+    const [smsOpt, setSmsOpt] = useState(false);
+    const [emailOpt, setEmailOpt] = useState(false);
     const toast = m => onToast && onToast(m);
     const pickStatus = s => { setStatusOpen(false); if (boardMode) { onMove(lead.id, s); toast('Moved to ' + s); } else { setLocalStatus(s); toast('Status → ' + s); } };
     const email = lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com';
@@ -29582,10 +29595,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {secHead('Primary Details', pd, () => setPd(p => !p))}
         {pd && <div style={{ marginTop: 4 }}>
           {kv('Contact', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: LH.ink }}>{lead.name}<Ic name="chevron-right" size={13} color={LH.muted} /></span>)}
-          {kv('Email', email)}{kv('Mobile', phone)}
+          {kv('Email', email)}{kv('Phone', '+1 469 555 0172')}
+          {kv('Lead Owner', 'Maria Gonzalez · sold-by')}
           {kv('Lead Source', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, height: 16, borderRadius: 5, background: LH.blueBg, color: LH.blue, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>{lead.src[0]}</span>{lead.src}</span>)}
           {kv('Status', <span style={{ position: 'relative', display: 'inline-block' }}><button onClick={() => setStatusOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 8px', borderRadius: 7, border: '1px solid ' + st.bd, background: st.bg, color: st.fg, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{status}<Ic name="chevron-down" size={12} color={st.fg} /></button>{statusOpen && <div onMouseLeave={() => setStatusOpen(false)} style={{ position: 'absolute', top: 28, left: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 170 }}>{STATUS_OPTS.map(s => <div key={s} onClick={() => pickStatus(s)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 9px', borderRadius: 6, fontSize: 12, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{s}{status === s && <Ic name="check" size={13} color={st.fg} />}</div>)}</div>}</span>)}
+          {isDisq && kv('Disqualification reason', <span style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
+            <span style={{ position: 'relative', display: 'inline-block' }}><button onClick={() => setDisqOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 8px', borderRadius: 7, border: '1px solid #f2d0d0', background: '#fdecec', color: LH.red, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{disqReason}<Ic name="chevron-down" size={12} color={LH.red} /></button>{disqOpen && <div onMouseLeave={() => setDisqOpen(false)} style={{ position: 'absolute', top: 28, left: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 210 }}>{DISQ_REASONS.map(r => <div key={r} onClick={() => { setDisqReason(r); setDisqOpen(false); }} style={{ padding: '6px 9px', borderRadius: 6, fontSize: 12, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{r}</div>)}</div>}</span>
+            <input value={disqNote} onChange={e => setDisqNote(e.target.value)} placeholder="Add a remark (optional)…" style={{ width: '100%', border: '1px solid ' + LH.border, borderRadius: 7, padding: '6px 9px', fontSize: 11.5, color: LH.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+          </span>)}
           {kv('Lead Score', lead.score + '/100')}
+          {kv('Lead Value', '$' + (6 + (lead.score % 9)) + ',500 potential')}{kv('Category', lead.score >= 70 ? 'Paid' : 'Organic')}
+          {kv('Description', 'Roof replacement after storm damage — wants an inspection this week.')}
           {kv('Assigned CSR', 'Maria Gonzalez')}{kv('Age', lead.age || '—')}{kv('Auto-qualified', 'Yes — Property Intelligence')}
           {kv('Service Address', '4821 Oakwood Dr')}{kv('City, State, ZIP', 'Plano, TX 75024')}{kv('Score Breakdown', 'Source 20 · Data 22 · Intel 25 · Demo 15')}
           {kv('Tags', <span style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>{tags.length ? tags.map(tagPill) : <span style={{ fontSize: 12, color: LH.muted }}>No tags yet</span>}</span>)}
@@ -29601,6 +29621,30 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 {srcSchema.custom.map(([k, v]) => kv(k, v))}
               </>
             : <>{kv(lead.src + ' ID', '1232')}{kv('Mobile', phone)}</>}
+        </div>}
+      </div>
+      <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
+        {secHead('Lead Analytics', an, () => setAn(p => !p))}
+        {an && <div style={{ marginTop: 4 }}>
+          {kv('Follow-up attempts', '3')}
+          {kv('Time to first touch', '2 min')}
+          {kv('Time to first call', '18 min')}
+          {kv('Time to first quote', '1d 4h')}
+          {kv('Time to job create', status === 'Qualified' ? '2d 6h' : '—')}
+          {kv('Speed to qualify', status === 'Qualified' ? '1d 22h' : 'In progress')}
+          {kv('Last engagement', 'Today · 11:04 AM')}
+          {kv('Close-won amount', status === 'Qualified' ? '$9,800' : '—')}
+          {kv('Converted job', lead.jobId ? '#' + lead.jobId : '—')}
+        </div>}
+      </div>
+      <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}>
+        {secHead('Compliance', cmp, () => setCmp(p => !p))}
+        {cmp && <div style={{ marginTop: 4 }}>
+          {[['SMS opt-out', smsOpt, setSmsOpt, 'Replies STOP → Do Not Disturb'], ['Email opt-out', emailOpt, setEmailOpt, 'Unsubscribed from email']].map(([label, on, set, sub]) => <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0' }}>
+            <div style={{ flex: 1 }}><div style={{ fontSize: 12, color: LH.body, fontWeight: 500 }}>{label}</div><div style={{ fontSize: 11, color: LH.muted }}>{sub}</div></div>
+            <button onClick={() => { set(!on); toast(label + (on ? ' cleared' : ' set — Do Not Disturb')); }} style={{ width: 38, height: 22, borderRadius: 999, border: 'none', background: on ? LH.red : '#d9d5cc', position: 'relative', cursor: 'pointer', flexShrink: 0, transition: 'background .15s' }}><span style={{ position: 'absolute', top: 2, left: on ? 18 : 2, width: 18, height: 18, borderRadius: 999, background: '#fff', transition: 'left .15s' }} /></button>
+          </div>)}
+          <div style={{ fontSize: 11, color: LH.muted, marginTop: 4, lineHeight: 1.5 }}>Mirrors the contact profile. Outbound email includes an unsubscribe link to a Zuper endpoint.</div>
         </div>}
       </div>
     </div>;
@@ -31312,7 +31356,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { icon: 'radio', title: 'Communication', lines: ['Nova — AI voice agent', 'SMS/calls: (+1) 650 206 1172', 'Email: hello@mail.hillroofing.com', '5 playbook questions'] },
       { icon: 'zap', title: 'Speed to Lead', lines: ['3 launch-day steps', 'SMS on arrival · call +30m · email +60m', 'Business hours: any time'] },
       { icon: 'headphones', title: 'Nurture sequence', lines: ['14-day sequence', 'Send days: Mon–Fri · ET', '6 days with steps'] },
-      { icon: 'log-out', title: 'Exit rules', lines: ['2 exit conditions (OR)', 'Qualified or Dead', 'Built-in: reply, opt-out, Nova DND'] }
+      { icon: 'log-out', title: 'Exit rules', lines: ['2 exit conditions (OR)', 'Qualified or Disqualified', 'Built-in: reply, opt-out, Nova DND'] }
     ];
     const activity = [
       { icon: 'user-plus', who: 'System', msg: 'Daniel Thompson enrolled from Angi.', when: '12m ago' },
@@ -31424,7 +31468,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             </Card>
           </div>; })}
           {connector}{timingPill('Exit conditions')}{connector}
-          {node('log-out', '#f1f0ec', LH.sub, 'Exit — Qualified or Dead', 'Also exits on reply, opt-out, or Nova DND')}
+          {node('log-out', '#f1f0ec', LH.sub, 'Exit — Qualified or Disqualified', 'Also exits on reply, opt-out, or Nova DND')}
         </div>;
       }
       if (tab === 'leads') return <><div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>{kpis.map(k => kpiCard({ label: k.label, value: k.value, accent: k.accent }))}</div>{recentCard}</>;
@@ -32050,7 +32094,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     });
     // Exit
     const [exitJoin, setExitJoin] = useState('or');
-    const [exitConds, setExitConds] = useState([{ id: wuid(), field: 'job.current_status', op: 'is any of', val: ['Qualified', 'Dead'] }]);
+    const [exitConds, setExitConds] = useState([{ id: wuid(), field: 'job.current_status', op: 'is any of', val: ['Qualified', 'Disqualified'] }]);
     const [replyStatusOn, setReplyStatusOn] = useState(true);
     const [replyStatus, setReplyStatus] = useState('Needs attention');
     const [replyTaskOn, setReplyTaskOn] = useState(false);
@@ -32317,6 +32361,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ marginTop: 14, border: '1px solid ' + LH.borderSoft, borderRadius: 10, background: LH.bg, padding: '12px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}><Ic name="shield-check" size={13} color={LH.muted} /><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: LH.muted }}>Built-in stop conditions · always on</span></div>
           {[
+            { icon: 'check-circle', t: 'Qualified or Disqualified', d: 'reaching a terminal lead outcome auto-unenrolls the record — on by default, no configuration needed.' },
             { icon: 'ban', t: 'Opt-out', d: 'STOP on SMS or unsubscribe on email exits and marks the customer Do Not Disturb.' },
             { icon: 'phone-off', t: 'Nova DND', d: 'a stop request on a call activates DND and exits.' }
           ].map(x => <div key={x.t} style={{ display: 'flex', gap: 8, alignItems: 'baseline', padding: '3px 0' }}><Ic name={x.icon} size={12} color={LH.muted} style={{ position: 'relative', top: 2 }} /><div style={{ fontSize: 12, color: LH.sub, lineHeight: 1.5 }}><b style={{ color: LH.body, fontWeight: 600 }}>{x.t}</b> — {x.d}</div></div>)}
@@ -33034,19 +33079,21 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   function QualifyPlaybook({ pbId, setPbId, pb, setPb, dense }) {
     const P = getPlaybook(pbId);
     const oc = P.outcome(pb);
+    // Playbook outcome is binary: qualified / not_qualified. Branching happens via the answers below.
+    const bin = oc.state === 'qualified' ? { label: 'Qualified', tone: 'green' } : oc.state === 'pending' ? { label: 'Not qualified yet', tone: 'muted' } : { label: 'Not qualified', tone: oc.state === 'disqualified' ? 'red' : 'amber' };
+    const binC = bin.tone === 'green' ? { bg: LH.greenBg, fg: LH.green, ic: 'check-circle' } : bin.tone === 'red' ? { bg: '#fdecec', fg: LH.red, ic: 'x-circle' } : bin.tone === 'amber' ? { bg: LH.amberBg, fg: LH.amber, ic: 'alert-circle' } : { bg: '#f1f0ec', fg: LH.sub, ic: 'circle-dashed' };
     const setQ = (k, v) => setPb(s => ({ ...s, [k]: v }));
     const ocT = oc.tone === 'green' ? { bg: LH.greenBg, fg: LH.green } : oc.tone === 'red' ? { bg: '#fdecec', fg: LH.red } : oc.tone === 'amber' ? { bg: LH.amberBg, fg: LH.amber } : { bg: '#f1f0ec', fg: LH.sub };
     const lbl = { fontSize: dense ? 11 : 12, fontWeight: 600, color: LH.body, margin: '0 0 5px', display: 'block' };
     const inp = { width: '100%', height: dense ? 32 : 36, borderRadius: 7, border: '1px solid ' + LH.border, padding: '0 9px', fontSize: 12.5, color: LH.ink, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
     return <div>
-      <div style={{ marginBottom: 12 }}>
-        <label style={lbl}>Playbook</label>
-        <Dropdown value={pbId} height={dense ? 32 : 36} options={LEAD_PLAYBOOKS.map(p => ({ value: p.id, label: p.name }))} onChange={id => { setPbId(id); setPb({ q1: 'Within service territory' }); }} />
-        <div style={{ fontSize: 11, color: LH.muted, marginTop: 5, lineHeight: 1.4 }}>{P.desc}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <div style={{ width: 26, height: 26, borderRadius: 7, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="book-open" size={14} color={LH.primary} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Lead Qualification</span><span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.05em', color: LH.primary, background: LH.tint, borderRadius: 999, padding: '1px 6px' }}>PLAYBOOK</span></div><div style={{ fontSize: 11, color: LH.muted }}>One playbook · branches on the answers below</div></div>
       </div>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '9px 11px', borderRadius: 9, background: ocT.bg, marginBottom: 12 }}>
-        <Ic name={oc.state === 'qualified' ? 'check-circle' : oc.state === 'disqualified' ? 'x-circle' : oc.state === 'hold' ? 'pause-circle' : 'circle-dashed'} size={15} color={ocT.fg} style={{ position: 'relative', top: 1, flexShrink: 0 }} />
-        <div style={{ minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: ocT.fg }}>{oc.label}</span></div><div style={{ fontSize: 11.5, color: LH.sub, marginTop: 1, lineHeight: 1.45 }}>{oc.detail}</div></div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '9px 11px', borderRadius: 9, background: binC.bg, marginBottom: 12 }}>
+        <Ic name={binC.ic} size={15} color={binC.fg} style={{ position: 'relative', top: 1, flexShrink: 0 }} />
+        <div style={{ minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: binC.fg }}>{bin.label}</span></div><div style={{ fontSize: 11.5, color: LH.sub, marginTop: 1, lineHeight: 1.45 }}>{oc.detail}</div></div>
       </div>
       {P.questions.map(qq => <div key={qq.k} style={{ marginBottom: 10 }}>
         <label style={{ ...lbl, display: 'flex', gap: 5 }}><span style={{ color: LH.muted, fontWeight: 700 }}>{qq.n}</span>{qq.label}</label>
@@ -33779,34 +33826,20 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   // ─────────── Global Qualification Playbook — bottom-stacked dock reachable from any screen ───────────
   // A couple of qualification playbooks, shown as stacked tabs on the bottom bar (Linear-style).
+  // One playbook with branching (locked decision). Questions marked `branch` reveal a follow-up
+  // sub-question once answered — the checklist branches on the lead's answers.
   const PLAYBOOKS = [
-    { id: 'shield', name: 'Shield Roofing', tag: 'Lead Qualification', qs: [
+    { id: 'lead-qual', name: 'Lead Qualification', tag: 'One playbook · branches on answers', qs: [
       { q: 'Are you the homeowner or the decision-maker?', req: true },
-      { q: 'What roof issue are you experiencing?', req: true },
-      { q: 'Is there active leaking or recent storm damage?', req: true },
-      { q: 'Approximate age of the current roof?', req: false },
-      { q: 'Is this being filed as an insurance claim?', req: true },
+      { q: 'Is the property within our service area?', req: true },
+      { q: 'What roof issue are you experiencing?', req: true, branch: 'Storm/hail? → capture date of loss & carrier' },
+      { q: 'Is there active leaking or recent storm damage?', req: true, branch: 'If leaking → flag as emergency, dispatch in 24–48h' },
+      { q: 'Is this being filed as an insurance claim?', req: true, branch: 'If yes → capture claim # and adjuster status' },
       { q: 'What is your target timeframe to get it fixed?', req: true },
       { q: 'Property address / service area?', req: true },
       { q: 'Best callback number and time?', req: false },
       { q: 'Budget range you have in mind?', req: false },
-      { q: 'How did you hear about Shield Roofing?', req: false }
-    ] },
-    { id: 'storm', name: 'Storm Response', tag: 'Damage Triage', qs: [
-      { q: 'Is there confirmed storm or hail damage?', req: true },
-      { q: 'What date did the storm hit?', req: true },
-      { q: 'Any active leaks or interior water damage?', req: true },
-      { q: 'Have you filed an insurance claim yet?', req: false },
-      { q: 'Roof age and material?', req: false },
-      { q: 'Preferred inspection window?', req: true }
-    ] },
-    { id: 'insurance', name: 'Insurance Claim', tag: 'Claim Intake', qs: [
-      { q: 'Insurance carrier and claim number?', req: true },
-      { q: 'Has an adjuster been assigned?', req: true },
-      { q: 'What is the date of loss?', req: true },
-      { q: 'Scope: roof only or full exterior?', req: false },
-      { q: 'Deductible amount?', req: false },
-      { q: 'Is an adjuster meeting scheduled?', req: false }
+      { q: 'How did you hear about us?', req: false }
     ] }
   ];
   function PlaybookDock({ playbook, anchor, onCollapse }) {
@@ -33816,7 +33849,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const reqIdx = qs.map((q, i) => q.req ? i : -1).filter(i => i >= 0);
     const reqLeft = reqIdx.filter(i => !ans[i]).length;
     const answered = Object.values(ans).filter(Boolean).length;
-    const outcome = reqLeft === 0 ? { label: 'Qualified', bg: LH.greenBg, fg: LH.green, ic: 'check-circle' } : { label: 'On hold — ' + reqLeft + ' required left', bg: LH.amberBg, fg: LH.amber, ic: 'clock' };
+    const outcome = reqLeft === 0 ? { label: 'Qualified', bg: LH.greenBg, fg: LH.green, ic: 'check-circle' } : { label: 'Not qualified — ' + reqLeft + ' required left', bg: LH.amberBg, fg: LH.amber, ic: 'alert-circle' };
     const W = 380;
     const left = anchor ? Math.max(12, Math.min(anchor.left, window.innerWidth - W - 12)) : window.innerWidth - W - 16;
     const bottom = anchor ? anchor.bottom : 60;
@@ -33830,7 +33863,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px 12px' }}>
         {qs.map((q, i) => { const on = !!ans[i]; return <div key={i} onClick={() => toggle(i)} style={{ display: 'flex', gap: 10, padding: '10px 10px', borderRadius: 9, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
           <span style={{ width: 19, height: 19, borderRadius: 6, flexShrink: 0, marginTop: 1, border: '1.5px solid ' + (on ? LH.green : LH.border), background: on ? LH.green : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on && <Ic name="check" size={12} color="#fff" />}</span>
-          <div style={{ flex: 1 }}><div style={{ fontSize: 13, color: on ? LH.muted : LH.ink, fontWeight: 500, lineHeight: 1.4, textDecoration: on ? 'line-through' : 'none' }}>{q.q}</div>{q.req && <span style={{ display: 'inline-block', marginTop: 4, fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: LH.amber, background: LH.amberBg, borderRadius: 999, padding: '1px 7px' }}>REQUIRED</span>}</div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 13, color: on ? LH.muted : LH.ink, fontWeight: 500, lineHeight: 1.4, textDecoration: on ? 'line-through' : 'none' }}>{q.q}</div>{q.req && <span style={{ display: 'inline-block', marginTop: 4, fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: LH.amber, background: LH.amberBg, borderRadius: 999, padding: '1px 7px' }}>REQUIRED</span>}{on && q.branch && <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '5px 8px', borderRadius: 7, background: LH.tint, fontSize: 11, color: LH.primary, fontWeight: 500 }}><Ic name="git-branch" size={12} color={LH.primary} />{q.branch}</div>}</div>
         </div>; })}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}><span style={{ fontSize: 11.5, color: LH.muted, flex: 1 }}>Runs on SMS, email or a live call</span><Btn kind="primary" icon="check" onClick={onCollapse}>Save to lead</Btn></div>
