@@ -29697,6 +29697,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [tech, setTech] = useState('Michael Richardson');
     const [dur, setDur] = useState('1 hr');
     const [done, setDone] = useState(null);
+    const [shown, setShown] = useState(false);
+    useEffect(() => { const t = setTimeout(() => setShown(true), 20); return () => clearTimeout(t); }, []);
+    const close = () => { setShown(false); setTimeout(onClose, 240); };
     const jobId = 'JN-2456' + String(78 + (lead.name.length * 7 + (lead.score || 50)) % 21).padStart(2, '0');
     const address = lead.address || '4821 Oakwood Dr, Plano, TX 75024';
     const email = lead.email || (lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com');
@@ -29754,13 +29757,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ fontSize: 17, fontWeight: 700, color: LH.ink }}>Inspection Job created</div>
           <div style={{ fontSize: 13, color: LH.sub, marginTop: 4 }}>Job <b style={{ color: LH.ink }}>#{done}</b> · {date === 'Unscheduled' ? 'Unscheduled · ' + tech : date + ' · ' + time + ' · ' + tech}</div>
           <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 8, maxWidth: 380, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.5 }}>{lead.name} is now an active inspection job. The lead card has moved to the Converted as Job stage.</div>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 20 }}><Btn onClick={onClose}>Close</Btn><Btn kind="primary" icon="external-link" onClick={() => onToast && onToast('Opening Job #' + done + '…')}>View job</Btn></div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 20 }}><Btn onClick={close}>Close</Btn><Btn kind="primary" icon="external-link" onClick={() => onToast && onToast('Opening Job #' + done + '…')}>View job</Btn></div>
         </div>
       : <>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="git-merge" size={15} color={LH.primary} /></div><div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Convert to job</div><div style={{ fontSize: 12, color: LH.muted }}>{lead.name}</div></div></div>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
+              <button onClick={close} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
             </div>
             <div style={{ display: 'flex', gap: 6, marginTop: 14 }}>{STEPS.map((s, i) => <div key={s} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ width: 20, height: 20, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10.5, fontWeight: 700, background: i < step ? LH.green : i === step ? LH.primary : '#f1f0ec', color: i <= step ? '#fff' : LH.muted }}>{i < step ? '✓' : i + 1}</span><span style={{ fontSize: 11.5, fontWeight: step === i ? 600 : 500, color: step === i ? LH.ink : LH.muted, whiteSpace: 'nowrap' }}>{s}</span></div>)}</div>
           </div>
@@ -29772,8 +29775,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               : <Btn kind="primary" icon="rocket" onClick={() => { if (!category) { onToast && onToast('Category is required'); setStep(1); return; } create(); }} style={{ opacity: category ? 1 : 0.55 }}>Create job</Btn>}
           </div>
         </>;
-    return <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(20,18,15,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: 'min(560px,96vw)', maxHeight: '88vh', background: '#fff', borderRadius: 14, boxShadow: '0 24px 64px rgba(0,0,0,.3)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>{shell}</div>
+    return <div onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 500, background: shown ? 'rgba(20,18,15,.42)' : 'rgba(20,18,15,0)', transition: 'background .24s ease', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 'min(520px,96vw)', background: '#fff', boxShadow: '-16px 0 48px rgba(0,0,0,.22)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1)' }}>{shell}</div>
     </div>;
   }
   // §11 AI delighters — deterministic intake intelligence derived from a lead. Stable per lead
@@ -30255,7 +30258,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   /* Live-call → follow-up task capture (end-to-end): create from Zuper Connect, lands on Overview. */
   function CreateFollowupModal({ prefillName, onClose, onCreate }) {
     const [shown, setShown] = useState(false);
-    useEffect(() => { const r = requestAnimationFrame(() => setShown(true)); return () => cancelAnimationFrame(r); }, []);
+    useEffect(() => { const t = setTimeout(() => setShown(true), 20); return () => clearTimeout(t); }, []);
     const close = () => { setShown(false); setTimeout(onClose, 240); };
     const [title, setTitle] = useState('Follow-up call');
     const [desc, setDesc] = useState('');
