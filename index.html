@@ -32186,13 +32186,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {audienceType === 'new'
           ? <>
             <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px', maxWidth: 640 }}>Configure which incoming leads qualify — by source and other rules. New leads enrol automatically as they arrive, so there are no existing records to match yet.</div>
-            {(() => { const TRIGGERS = [{ key: 'source', icon: 'radio', title: 'Source-based', desc: 'Enrol leads from specific sources — Angi, Meta, Website, and more.' }, { key: 'value', icon: 'trending-up', title: 'Value-based', desc: 'Enrol leads above a value or score threshold.' }, { key: 'creation', icon: 'user-plus', title: 'On lead creation', desc: 'Enrol every new lead the moment it is created.' }]; const cur = TRIGGERS.find(t => t.key === enrollTrigger) || TRIGGERS[0]; return <div style={{ marginBottom: 18 }}>
+            {(() => { const TRIGGERS = [{ key: 'source', title: 'Source-based', desc: 'Enrol leads from specific sources — Angi, Meta, Website, and more.' }, { key: 'value', title: 'Value-based', desc: 'Enrol leads above a value or score threshold.' }, { key: 'creation', title: 'On lead creation', desc: 'Enrol every new lead the moment it is created.' }]; const cur = TRIGGERS.find(t => t.key === enrollTrigger) || TRIGGERS[0]; return <div style={{ marginBottom: 18 }}>
               <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.04em', color: LH.muted, marginBottom: 8 }}>ENROLLMENT TRIGGER</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>{TRIGGERS.map(t => { const on = enrollTrigger === t.key; return <div key={t.key} onClick={() => setEnrollTrigger(t.key)} style={{ border: '1px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', borderRadius: 11, padding: 12, cursor: 'pointer' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}><Ic name={t.icon} size={15} color={on ? LH.primary : LH.sub} /><span style={{ fontSize: 12.5, fontWeight: 700, color: on ? LH.primary : LH.ink }}>{t.title}</span></div>
-                <div style={{ fontSize: 11, color: LH.sub, lineHeight: 1.4 }}>{t.desc}</div>
-              </div>; })}</div>
-              <div style={{ fontSize: 11, color: LH.muted, marginTop: 8 }}>{cur.desc}</div>
+              <Dropdown value={enrollTrigger} options={TRIGGERS.map(t => ({ value: t.key, label: t.title }))} onChange={setEnrollTrigger} />
+              <div style={{ fontSize: 11, color: LH.muted, marginTop: 6 }}>{cur.desc}</div>
             </div>; })()}
             {enrollTrigger === 'creation'
               ? <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: '12px 14px', borderRadius: 10, background: LH.bg, border: '1px solid ' + LH.borderSoft }}><Ic name="user-plus" size={15} color={LH.sub} style={{ marginTop: 1 }} /><div style={{ fontSize: 12.5, color: LH.sub, lineHeight: 1.5 }}>Every new lead enrols on creation — no conditions needed. Add exit rules downstream to control who stays.</div></div>
