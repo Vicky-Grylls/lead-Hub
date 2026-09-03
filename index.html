@@ -31298,6 +31298,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [st, setSt] = useState(row.status);
     const [tab, setTab] = useState('overview');
     const [hideKpi, setHideKpi] = useState(false);
+    // Editable flow (workflow builder): steps in state, click a node to configure.
+    const [flowSteps2, setFlowSteps2] = useState(() => [
+      { ch: 'sms', title: 'Attempt 1 · Speed-to-lead SMS', when: 'On enrollment', preview: 'Hi {{first_name}} — thanks for reaching out! When works for a quick chat?' },
+      { ch: 'call', title: 'Attempt 2 · Nova qualification call', when: '+30 min · if no response', preview: 'Nova confirms property, damage type, and urgency by phone.' },
+      { ch: 'email', title: 'Attempt 3 · Intro email', when: '+1 hour · if no response', preview: 'Subject · We just received your request' },
+      { ch: 'sms', title: 'Attempt 4 · Follow-up SMS', when: '+2 days · if no response', preview: 'Following up — still happy to help. Want me to hold a slot?' },
+      { ch: 'call', title: 'Attempt 5 · Follow-up call', when: '+4 days · if no response', preview: 'Nova checks back in with the homeowner.' },
+      { ch: 'email', title: 'Attempt 6 · Value email', when: '+3 days · if no response', preview: 'Subject · A few ways we can help with your roof' }
+    ]);
+    const [editIdx, setEditIdx] = useState(null);
     const [nameEdit, setNameEdit] = useState(row.name);
     const [selLead, setSelLead] = useState(null);
     // Notification preferences (same block as the campaign wizard).
@@ -31465,15 +31475,34 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const activityCard = <Card style={{ padding: 18 }}><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink, marginBottom: 14 }}>Recent activity</div>{enrolled ? activity.map((a, i) => <div key={i} style={{ display: 'flex', gap: 11, paddingBottom: i < activity.length - 1 ? 14 : 0 }}><div style={{ width: 28, height: 28, borderRadius: 8, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={a.icon} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.45 }}>{a.msg}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 2 }}>{a.who} · {a.when}</div></div></div>) : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No activity yet.</div>}</Card>;
     const tasksCard = <Card style={{ padding: 0, overflow: 'hidden' }}><div style={{ padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="square-check-big" size={15} color={LH.sub} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Tasks</span><span style={{ fontSize: 11.5, fontWeight: 700, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 8px' }}>{tasks.length}</span></div>{tasks.length ? tasks.map((tk, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < tasks.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><span style={{ width: 18, height: 18, borderRadius: 5, border: '1.5px solid ' + (tk.done ? LH.green : LH.border), background: tk.done ? LH.green : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{tk.done && <Ic name="check" size={12} color="#fff" />}</span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink, textDecoration: tk.done ? 'line-through' : 'none' }}>{tk.title}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{tk.type} · {tk.who}</div></div><span style={{ fontSize: 11.5, color: LH.sub }}>{tk.due}</span></div>) : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No tasks yet.</div>}</Card>;
 
-    const chMeta = { sms: { icon: 'message-square', label: 'SMS', bg: LH.tint, fg: LH.ink }, call: { icon: 'phone', label: 'Call', bg: LH.blueBg, fg: LH.blue }, email: { icon: 'mail', label: 'Email', bg: '#efe9de', fg: '#8a6d3b' }, voice_drop: { icon: 'mic', label: 'Voice drop', bg: LH.tint, fg: LH.ink }, video_drop: { icon: 'video', label: 'Video drop', bg: '#efe9de', fg: '#8a6d3b' } };
-    const flowSteps = [
-      { ch: 'sms', title: 'Attempt 1 · Speed-to-lead SMS', when: 'On enrollment', preview: 'Hi {{first_name}} — thanks for reaching out! When works for a quick chat?' },
-      { ch: 'call', title: 'Attempt 2 · Nova qualification call', when: '+30 min · if no response', preview: 'Nova confirms property, damage type, and urgency by phone.' },
-      { ch: 'email', title: 'Attempt 3 · Intro email', when: '+1 hour · if no response', preview: 'Subject · We just received your request' },
-      { ch: 'sms', title: 'Attempt 4 · Follow-up SMS', when: '+2 days · if no response', preview: 'Following up — still happy to help. Want me to hold a slot?' },
-      { ch: 'call', title: 'Attempt 5 · Follow-up call', when: '+4 days · if no response', preview: 'Nova checks back in with the homeowner.' },
-      { ch: 'email', title: 'Attempt 6 · Value email', when: '+3 days · if no response', preview: 'Subject · A few ways we can help with your roof' }
-    ];
+    const chMeta = { sms: { icon: 'message-square', label: 'SMS', bg: LH.tint, fg: LH.ink }, call: { icon: 'phone', label: 'Call', bg: LH.blueBg, fg: LH.blue }, email: { icon: 'mail', label: 'Email', bg: '#efe9de', fg: '#8a6d3b' }, voice_drop: { icon: 'mic', label: 'Voice drop', bg: LH.tint, fg: LH.ink }, video_drop: { icon: 'video', label: 'Video drop', bg: '#efe9de', fg: '#8a6d3b' }, wait: { icon: 'timer', label: 'Wait', bg: '#f1f0ec', fg: LH.sub }, task: { icon: 'square-check-big', label: 'Task', bg: LH.greenBg, fg: LH.green } };
+    const CH_OPTS = [['sms', 'Send SMS'], ['call', 'Place call'], ['email', 'Send email'], ['wait', 'Wait'], ['task', 'Create task']];
+    // Config editor for a single flow step (opens as a right side sheet on node click).
+    function FlowStepEditor({ step, isNew, onSave, onDelete, onClose }) {
+      const [shown, setShown] = useState(false);
+      useEffect(() => { const t = setTimeout(() => setShown(true), 20); return () => clearTimeout(t); }, []);
+      const close = () => { setShown(false); setTimeout(onClose, 220); };
+      const [ch, setCh] = useState(step.ch);
+      const [title, setTitle] = useState(step.title);
+      const [when, setWhen] = useState(step.when);
+      const [preview, setPreview] = useState(step.preview);
+      const m = chMeta[ch] || chMeta.sms;
+      const fld = { width: '100%', border: '1px solid ' + LH.border, borderRadius: 8, padding: '9px 11px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
+      const lbl = { fontSize: 11.5, fontWeight: 600, color: LH.sub, marginBottom: 5, display: 'block' };
+      return <div onClick={close} style={{ position: 'fixed', inset: 0, zIndex: 600, background: shown ? 'rgba(20,18,15,.42)' : 'rgba(20,18,15,0)', transition: 'background .22s ease', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+        <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 'min(440px,96vw)', background: '#fff', boxShadow: '-16px 0 48px rgba(0,0,0,.22)', display: 'flex', flexDirection: 'column', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .26s cubic-bezier(0.32,0.72,0,1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid ' + LH.borderSoft }}><div style={{ width: 30, height: 30, borderRadius: 8, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={m.icon} size={15} color={m.fg} /></div><span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: LH.ink }}>{isNew ? 'Add step' : 'Configure step'}</span><button onClick={close} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div><label style={lbl}>Action</label><div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{CH_OPTS.map(([k, l]) => { const on = ch === k; const cm = chMeta[k]; return <button key={k} onClick={() => setCh(k)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 8, border: '1px solid ' + (on ? LH.ink : LH.border), background: on ? LH.tint : '#fff', color: on ? LH.ink : LH.sub, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}><Ic name={cm.icon} size={13} color={on ? LH.ink : LH.muted} />{l}</button>; })}</div></div>
+            <div><label style={lbl}>Step name</label><input value={title} onChange={e => setTitle(e.target.value)} style={fld} /></div>
+            <div><label style={lbl}>Timing / condition</label><input value={when} onChange={e => setWhen(e.target.value)} placeholder="e.g. +30 min · if no response" style={fld} /><div style={{ fontSize: 11, color: LH.muted, marginTop: 5 }}>Outcome-based — waits are relative to the previous attempt; the sequence stops on qualify / disqualify / reply / opt-out.</div></div>
+            <div><label style={lbl}>{ch === 'email' ? 'Subject & body' : ch === 'wait' ? 'Note' : ch === 'task' ? 'Task detail' : 'Message'}</label><textarea value={preview} onChange={e => setPreview(e.target.value)} rows={4} style={{ ...fld, resize: 'vertical' }} placeholder="What Nova sends / does at this step…" /></div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 18px', borderTop: '1px solid ' + LH.borderSoft }}>{!isNew && <button onClick={() => onDelete()} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.red, cursor: 'pointer' }}>Delete</button>}<div style={{ flex: 1 }} /><Btn onClick={close}>Cancel</Btn><Btn kind="primary" icon="check" onClick={() => onSave({ ch, title: title.trim() || 'Untitled step', when, preview })}>{isNew ? 'Add step' : 'Save'}</Btn></div>
+        </div>
+      </div>;
+    }
+    const flowSteps = flowSteps2;
     const stepStats = i => { const sent = Math.max(0, Math.round(enrolled * (1 - i * 0.09))); return [['Scheduled', Math.max(0, enrolled - sent)], ['Delivered', Math.round(sent * 0.97)], ['Reply', Math.round(sent * Math.max(0.04, 0.22 - i * 0.03))], ['Opt-out', Math.round(sent * 0.03)]]; };
     // Per-step conversion (reply rate) → find the weakest step and the biggest drop-off.
     const stepMetrics = flowSteps.map((s, i) => { const sent = Math.max(0, Math.round(enrolled * (1 - i * 0.09))); const reply = Math.round(sent * Math.max(0.04, 0.22 - i * 0.03)); return { ...s, i, sent, reply, rate: sent ? reply / sent : 0 }; });
@@ -31513,22 +31542,31 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         const timingPill = when => <div style={{ display: 'flex', justifyContent: 'center' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 12px', borderRadius: 999, background: '#f1f0ec', border: '1px solid ' + LH.borderSoft, fontSize: 12, fontWeight: 600, color: LH.body }}><Ic name="timer" size={13} color={LH.sub} />{when}</span></div>;
         const node = (icon, bg, fg, title, sub) => <Card style={{ padding: 14, maxWidth: 760, margin: '0 auto' }}><div style={{ display: 'flex', alignItems: 'center', gap: 11 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={16} color={fg} /></div><div><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{title}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1 }}>{sub}</div></div></div></Card>;
         return <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, maxWidth: 760, margin: '0 auto 16px' }}><div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Campaign flow</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>How a lead moves through this campaign, step by step.</div></div><Btn icon="pencil" onClick={onEdit}>Edit flow</Btn></div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, maxWidth: 760, margin: '0 auto 16px' }}><div><div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Campaign flow</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Click any step to configure it — or add a new one.</div></div><div style={{ display: 'flex', gap: 8 }}><Btn icon="pencil" onClick={onEdit}>Full editor</Btn><Btn kind="primary" icon="plus" onClick={() => setEditIdx('new')}>Add step</Btn></div></div>
           {node('user-plus', LH.greenBg, LH.green, 'Lead enrolled', 'Angi, Thumbtack · New Lead · Roofing — enters on create')}
           {flowSteps.map((s, i) => { const m = chMeta[s.ch]; const weak = enrolled && weakStep && i === weakStep.i; return <div key={i}>
             {connector}{timingPill(s.when)}{connector}
-            <Card style={{ padding: 0, overflow: 'hidden', maxWidth: 760, margin: '0 auto', border: weak ? '1px solid ' + LH.amberBd : undefined, boxShadow: weak ? '0 0 0 3px ' + LH.amberBg : undefined }}>
+            <Card hover onClick={() => setEditIdx(i)} style={{ padding: 0, overflow: 'hidden', maxWidth: 760, margin: '0 auto', cursor: 'pointer', border: weak ? '1px solid ' + LH.amberBd : undefined, boxShadow: weak ? '0 0 0 3px ' + LH.amberBg : undefined }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '13px 16px' }}>
                 <div style={{ width: 34, height: 34, borderRadius: 9, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={m.icon} size={16} color={m.fg} /></div>
                 <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Step {i + 1}: {s.title}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.preview}</div></div>
                 {weak && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 9px', borderRadius: 7, background: LH.amberBg, color: LH.amber, border: '1px solid ' + LH.amberBd, fontSize: 11.5, fontWeight: 700, flexShrink: 0 }}><Ic name="trending-down" size={12} color={LH.amber} />Lowest reply</span>}
                 <span style={{ display: 'inline-flex', alignItems: 'center', height: 24, padding: '0 9px', borderRadius: 7, background: '#f1f0ec', fontSize: 11.5, fontWeight: 600, color: LH.sub, flexShrink: 0 }}>{m.label}</span>
+                <Ic name="pencil" size={14} color={LH.muted} />
               </div>
               <div style={{ display: 'flex', gap: 18, padding: '10px 16px', borderTop: '1px solid ' + LH.borderSoft, background: '#faf8f4', flexWrap: 'wrap' }}>{stepStats(i).map(([lbl, val]) => <span key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}><span style={{ fontWeight: 700, color: LH.ink }}>{enrolled ? val : 0}</span><span style={{ color: LH.muted }}>{lbl}</span></span>)}</div>
             </Card>
           </div>; })}
+          {connector}
+          <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', justifyContent: 'center' }}><button onClick={() => setEditIdx('new')} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 36, padding: '0 16px', borderRadius: 9, border: '1px dashed ' + LH.border, background: '#fff', color: LH.sub, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} onMouseEnter={e => { e.currentTarget.style.background = '#faf8f4'; e.currentTarget.style.borderColor = LH.primary; e.currentTarget.style.color = LH.primary; }} onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = LH.border; e.currentTarget.style.color = LH.sub; }}><Ic name="plus" size={14} color="currentColor" />Add a step</button></div>
           {connector}{timingPill('Exit conditions')}{connector}
           {node('log-out', '#f1f0ec', LH.sub, 'Exit — Qualified or Disqualified', 'Also exits on reply, opt-out, or Nova DND')}
+          {editIdx != null && <FlowStepEditor
+            step={editIdx === 'new' ? { ch: 'sms', title: 'New step', when: '+1 day · if no response', preview: '' } : flowSteps[editIdx]}
+            isNew={editIdx === 'new'}
+            onClose={() => setEditIdx(null)}
+            onSave={s => { setFlowSteps2(a => editIdx === 'new' ? [...a, s] : a.map((x, j) => j === editIdx ? s : x)); setEditIdx(null); onToast && onToast(editIdx === 'new' ? 'Step added' : 'Step updated'); }}
+            onDelete={() => { setFlowSteps2(a => a.filter((_, j) => j !== editIdx)); setEditIdx(null); onToast && onToast('Step removed'); }} />}
         </div>;
       }
       if (tab === 'leads') return <><div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>{kpis.map(k => kpiCard({ label: k.label, value: k.value, accent: k.accent }))}</div>{recentCard}</>;
