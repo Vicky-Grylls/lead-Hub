@@ -30186,7 +30186,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { id: 'f1', n: 'Sofia Alvarez', task: 'Estimate follow-up call', due: 'Today · 2:00 PM', channel: 'call', src: 'Angi', overdue: false },
     { id: 'f2', n: 'Marcus Reed', task: 'Send revised quote', due: 'Today · 4:30 PM', channel: 'email', src: 'Website Booking', overdue: false },
     { id: 'f3', n: 'Dana Whitfield', task: 'Callback — storm damage', due: 'Overdue · 1d', channel: 'call', src: 'Meta Ads', overdue: true },
-    { id: 'f4', n: 'Owen Castillo', task: 'Text quote link', due: 'Tomorrow · 9:00 AM', channel: 'sms', src: 'Google LSA', overdue: false }
+    { id: 'f4', n: 'Owen Castillo', task: 'Text quote link', due: 'Tomorrow · 9:00 AM', channel: 'sms', src: 'Google LSA', overdue: false },
+    { id: 'f5', n: 'Rachel Bennett', task: 'Qualification callback', due: 'Tomorrow · 11:30 AM', channel: 'call', src: 'Thumbtack', overdue: false },
+    { id: 'f6', n: 'Nina Foster', task: 'Confirm inspection slot', due: 'Jul 30 · 3:00 PM', channel: 'task', src: 'Estimate Follow-up', overdue: false }
   ];
   const LeadFollowups = {
     items: LEAD_FOLLOWUPS_SEED.slice(),
@@ -30213,7 +30215,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       else onFlash && onFlash('Composing email to ' + f.n + '…');
     };
     return <Card style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><Ic name="calendar-clock" size={15} color={LH.primary} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Follow-ups</span><span style={{ fontSize: 11.5, fontWeight: 700, color: '#fff', background: LH.primary, borderRadius: 999, padding: '1px 7px' }}>{items.length}</span><span style={{ fontSize: 11.5, color: LH.muted, marginLeft: 'auto', cursor: 'pointer' }} onClick={() => onNavigate && onNavigate('lead-pipeline')}>View all</span></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><Ic name="calendar-clock" size={15} color={LH.primary} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Follow-ups</span><span style={{ fontSize: 11.5, fontWeight: 700, color: '#fff', background: LH.primary, borderRadius: 999, padding: '1px 7px' }}>{items.length}</span></div>
       {items.length === 0 && <div style={{ padding: '26px 16px', textAlign: 'center', fontSize: 12.5, color: LH.muted }}>All follow-ups cleared 🎉</div>}
       {items.map((f, i) => { const ch = FU_CHANNEL[f.channel] || FU_CHANNEL.call; return <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < items.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
         <div style={{ width: 30, height: 30, borderRadius: 8, background: ch.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={ch.ic} size={15} color={ch.fg} /></div>
@@ -30221,6 +30223,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <button onClick={() => act(f)} title={ch.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 7, border: '1px solid ' + ch.bg, background: ch.bg, color: ch.fg, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><Ic name={ch.ic} size={13} color={ch.fg} />{ch.label}</button>
         <button onClick={() => { LeadFollowups.complete(f.id); onFlash && onFlash('Follow-up with ' + f.n + ' marked done'); }} title="Mark done" style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}><Ic name="check" size={15} color={LH.sub} /></button>
       </div>; })}
+      <div style={{ flex: 1 }} />
     </Card>;
   }
 
