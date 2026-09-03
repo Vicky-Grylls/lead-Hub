@@ -28823,7 +28823,9 @@ function SettingsLeadsContent({setActiveId}){
     {title:'Lead Custom Fields',desc:'Field groups triggered by lead source',Icon:TiFilePlus,color:'#b87a2b',badge:'New',onClick:()=>setActiveId('modules/Leads/fields')},
     {title:'Lead Pipeline & Stages',desc:'Manage kanban stages and their order',Icon:TiStack2,color:'#4f46e5',onClick:()=>setActiveId('modules/Leads/pipeline')},
     {title:'Lead Sources',desc:'Manage the sources leads come in from',Icon:TiTag,color:'#3f8553',onClick:()=>setActiveId('modules/Leads/sources')},
-    {title:'Lead Notification Settings',desc:'Choose which lead events notify you, and how',Icon:TiChatBubble,color:'#c2410c',onClick:()=>setActiveId('modules/Leads/notifications')}
+    {title:'Lead Notification Settings',desc:'Choose which lead events notify you, and how',Icon:TiChatBubble,color:'#c2410c',onClick:()=>setActiveId('modules/Leads/notifications')},
+    {title:'Playbook',desc:'Qualification playbook, branching & binary outcome',Icon:TiClipboardText,color:'#7c3aed',onClick:()=>setActiveId('modules/Leads/playbook')},
+    {title:'AI Agents',desc:'Configure Nova agents for qualification & routing',Icon:TiHighlight,color:'#0891b2',onClick:()=>setActiveId('modules/Leads/agents')}
   ];
   return RCE(React.Fragment,null,
     RCE("div",{style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 48px',borderBottom:'1px solid #e8e7e2',flexShrink:0,minHeight:40}},
@@ -29241,6 +29243,52 @@ function LeadCustomFields({setActiveId}){
 }
 
 /* ─── Router ─── */
+/* ─── Playbook Settings ─── */
+function LeadPlaybookSettings({setActiveId}){
+  const [def,setDef]=useState('Lead Qualification');
+  const [branch,setBranch]=useState(true);
+  const [perCampaign,setPerCampaign]=useState(true);
+  const [handoff,setHandoff]=useState(true);
+  const [minReq,setMinReq]=useState(5);
+  return RCE(React.Fragment,null,
+    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiClipboardText,title:'Playbook Settings',sub:'One qualification playbook with branching and a binary outcome',onSave:()=>setActiveId('modules/Leads')}),
+    leadScroll(RCE(React.Fragment,null,
+      RCE("div",{style:{borderTop:'1px solid #e8e7e2'}},
+        RCE(SettingsFormRow,{label:'Default playbook',sub:'The single playbook Nova runs on inbound intake.'},RCE("input",{value:def,onChange:e=>setDef(e.target.value),style:{...leadInput,width:280}})),
+        leadRowToggle('Branch on answers','Reveal follow-up questions based on the lead’s answers.',branch,()=>setBranch(v=>!v)),
+        leadRowToggle('One playbook per campaign','Each outbound campaign uses exactly one playbook.',perCampaign,()=>setPerCampaign(v=>!v)),
+        RCE(SettingsFormRow,{label:'Required signals to qualify',sub:'Minimum required questions answered before a lead can qualify.'},RCE("input",{type:'number',value:minReq,onChange:e=>setMinReq(e.target.value),style:{...leadInput,width:90}})),
+        leadRowToggle('Hand off when not qualified','Route not-qualified leads to a human rep automatically.',handoff,()=>setHandoff(v=>!v))),
+      RCE("div",{style:{marginTop:18,display:'flex',gap:10,alignItems:'flex-start',border:'1px solid #e8e7e2',borderRadius:10,background:'#faf8f4',padding:'12px 14px'}},
+        RCE(TiClipboardText,{size:16,color:"#7c3aed"}),
+        RCE("div",{style:{fontSize:12,color:'#5b5b57',lineHeight:1.5}},"Playbook outcome is binary — ",RCE("b",null,"qualified / not_qualified"),". Terminal lead states are Qualified and Disqualified."))
+    )));
+}
+/* ─── AI Agents Settings ─── */
+function LeadAgentsSettings({setActiveId}){
+  const AGENTS=[
+    {id:'csr',name:'Nova CSR',desc:'First-touch intake & qualification on inbound leads'},
+    {id:'demand',name:'Nova Demand',desc:'Speed-to-lead replies the moment a lead arrives'},
+    {id:'sched',name:'Nova Scheduler',desc:'Books inspections and confirms appointment slots'},
+    {id:'qual',name:'Nova Qualifier',desc:'Runs the playbook across SMS, email and calls'}
+  ];
+  const [on,setOn]=useState({csr:true,demand:true,sched:true,qual:false});
+  const [tone,setTone]=useState('Friendly and concise');
+  const [hitl,setHitl]=useState(true);
+  return RCE(React.Fragment,null,
+    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiHighlight,title:'AI Agents',sub:'Turn on Nova agents for qualification, routing and speed-to-lead',onSave:()=>setActiveId('modules/Leads')}),
+    leadScroll(RCE(React.Fragment,null,
+      RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden',background:'#fff'}},
+        AGENTS.map((a,i)=>RCE("div",{key:a.id,style:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:i<AGENTS.length-1?'1px solid #f0eeea':'none'}},
+          RCE("div",{style:{width:32,height:32,borderRadius:8,background:'#efe7fb',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},RCE(TiHighlight,{size:16,color:"#7c3aed"})),
+          RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:13,fontWeight:600,color:'#1f1f1d'}},a.name),RCE("div",{style:{fontSize:11.5,color:'#9c9b96'}},a.desc)),
+          RCE("button",{onClick:()=>setOn(p=>({...p,[a.id]:!p[a.id]})),style:{width:38,height:22,borderRadius:999,border:'none',background:on[a.id]?'#7c3aed':'#d9d5cc',position:'relative',cursor:'pointer',flexShrink:0,transition:'background .15s'}},RCE("span",{style:{position:'absolute',top:2,left:on[a.id]?18:2,width:18,height:18,borderRadius:999,background:'#fff',transition:'left .15s'}}))))),
+      RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:'26px 0 2px'}},"Global"),
+      RCE("div",{style:{borderTop:'1px solid #e8e7e2'}},
+        RCE(SettingsFormRow,{label:'Default tone',sub:'How agents phrase their messages.'},RCE("input",{value:tone,onChange:e=>setTone(e.target.value),style:{...leadInput,width:280}})),
+        leadRowToggle('Human-in-the-loop as last resort','Only escalate to a rep when Nova can’t proceed on its own.',hitl,()=>setHitl(v=>!v)))
+    )));
+}
 function SettingsLeadsRouter({activeId,setActiveId}){
   const sub=activeId.slice('modules/Leads/'.length);
   if(sub==='general')return RCE(LeadGeneralSettings,{setActiveId:setActiveId});
@@ -29251,6 +29299,8 @@ function SettingsLeadsRouter({activeId,setActiveId}){
   if(sub==='fields')return RCE(LeadCustomFields,{setActiveId:setActiveId});
   if(sub==='notifications')return RCE(LeadNotifSettings,{setActiveId:setActiveId});
   if(sub==='scoring')return RCE(LeadScoringSettings,{setActiveId:setActiveId});
+  if(sub==='playbook')return RCE(LeadPlaybookSettings,{setActiveId:setActiveId});
+  if(sub==='agents')return RCE(LeadAgentsSettings,{setActiveId:setActiveId});
   return RCE(SettingsLeadsContent,{setActiveId:setActiveId});
 }
 /* ═══════════════════════ END LEAD SETTINGS MODULE ═══════════════════════ */
