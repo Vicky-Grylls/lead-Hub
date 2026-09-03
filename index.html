@@ -29243,6 +29243,54 @@ function LeadCustomFields({setActiveId}){
 }
 
 /* ─── Router ─── */
+/* ─── Playbooks list + detail (Settings) ─── */
+const LEAD_PLAYBOOKS_LIST=[
+  {id:'lead-qual',name:'Lead Qualification',tag:'Default · inbound intake',outcome:'qualified / not_qualified',qs:[
+    {q:'Are you the homeowner or the decision-maker?',req:true},
+    {q:'What roof issue are you experiencing?',req:true},
+    {q:'Is there active leaking or recent storm damage?',req:true},
+    {q:'Approximate age of the current roof?',req:false},
+    {q:'Is this being filed as an insurance claim?',req:true},
+    {q:'What is your target timeframe to get it fixed?',req:true},
+    {q:'Best callback number and time?',req:false}
+  ]},
+  {id:'storm',name:'Storm Response',tag:'Damage triage',outcome:'qualified / not_qualified',qs:[
+    {q:'Is there confirmed storm or hail damage?',req:true},
+    {q:'What date did the storm hit?',req:true},
+    {q:'Any active leaks or interior water damage?',req:true},
+    {q:'Have you filed an insurance claim yet?',req:false},
+    {q:'Roof age and material?',req:false},
+    {q:'Preferred inspection window?',req:true}
+  ]},
+  {id:'insurance',name:'Insurance Claim',tag:'Claim intake',outcome:'qualified / not_qualified',qs:[
+    {q:'Insurance carrier and claim number?',req:true},
+    {q:'Has an adjuster been assigned?',req:true},
+    {q:'What is the date of loss?',req:true},
+    {q:'Scope: roof only or full exterior?',req:false},
+    {q:'Deductible amount?',req:false}
+  ]},
+  {id:'estimate',name:'Estimate Follow-up',tag:'Rehash / nurture',outcome:'qualified / not_qualified',qs:[
+    {q:'Did you receive the estimate we sent?',req:true},
+    {q:'Any questions on scope or pricing?',req:false},
+    {q:'Are you comparing other quotes?',req:false},
+    {q:'What timeframe are you working toward?',req:true}
+  ]}
+];
+function LeadPlaybookDetail({setActiveId,id}){
+  const pb=LEAD_PLAYBOOKS_LIST.find(p=>p.id===id)||LEAD_PLAYBOOKS_LIST[0];
+  return RCE(React.Fragment,null,
+    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiClipboardText,title:pb.name,sub:pb.tag+' · '+pb.qs.length+' questions',onSave:()=>setActiveId('modules/Leads/playbook')}),
+    leadScroll(RCE(React.Fragment,null,
+      RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden',background:'#fff'}},
+        pb.qs.map((x,i)=>RCE("div",{key:i,style:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:i<pb.qs.length-1?'1px solid #f0eeea':'none'}},
+          RCE("span",{style:{width:22,height:22,borderRadius:999,background:'#f1f0ec',color:'#737373',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},i+1),
+          RCE("div",{style:{flex:1,minWidth:0,fontSize:13,color:'#1f1f1d'}},x.q),
+          x.req?RCE("span",{style:{fontSize:10,fontWeight:700,letterSpacing:'.04em',color:'#b45309',background:'#fef3c7',borderRadius:999,padding:'2px 8px',flexShrink:0}},"REQUIRED"):RCE("span",{style:{fontSize:11,color:'#9c9b96',flexShrink:0}},"optional")))),
+      RCE("div",{style:{marginTop:18,display:'flex',gap:10,alignItems:'flex-start',border:'1px solid #e8e7e2',borderRadius:10,background:'#faf8f4',padding:'12px 14px'}},
+        RCE(TiClipboardText,{size:16,color:"#7c3aed"}),
+        RCE("div",{style:{fontSize:12,color:'#5b5b57',lineHeight:1.5}},"Channel-agnostic — Nova asks these on SMS, email or a live call. Outcome is binary — ",RCE("b",null,pb.outcome),"."))
+    )));
+}
 /* ─── Playbook Settings ─── */
 function LeadPlaybookSettings({setActiveId}){
   const [def,setDef]=useState('Lead Qualification');
@@ -29261,7 +29309,13 @@ function LeadPlaybookSettings({setActiveId}){
         leadRowToggle('Hand off when not qualified','Route not-qualified leads to a human rep automatically.',handoff,()=>setHandoff(v=>!v))),
       RCE("div",{style:{marginTop:18,display:'flex',gap:10,alignItems:'flex-start',border:'1px solid #e8e7e2',borderRadius:10,background:'#faf8f4',padding:'12px 14px'}},
         RCE(TiClipboardText,{size:16,color:"#7c3aed"}),
-        RCE("div",{style:{fontSize:12,color:'#5b5b57',lineHeight:1.5}},"Playbook outcome is binary — ",RCE("b",null,"qualified / not_qualified"),". Terminal lead states are Qualified and Disqualified."))
+        RCE("div",{style:{fontSize:12,color:'#5b5b57',lineHeight:1.5}},"Playbook outcome is binary — ",RCE("b",null,"qualified / not_qualified"),". Terminal lead states are Qualified and Disqualified.")),
+      RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:'26px 0 10px'}},"Playbooks"),
+      RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden',background:'#fff'}},
+        LEAD_PLAYBOOKS_LIST.map((p,i)=>RCE("div",{key:p.id,onClick:()=>setActiveId('modules/Leads/playbook/'+p.id),style:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:i<LEAD_PLAYBOOKS_LIST.length-1?'1px solid #f0eeea':'none',cursor:'pointer'},onMouseEnter:e=>e.currentTarget.style.background='#faf8f4',onMouseLeave:e=>e.currentTarget.style.background='#fff'},
+          RCE("div",{style:{width:32,height:32,borderRadius:8,background:'#efe7fb',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},RCE(TiClipboardText,{size:16,color:"#7c3aed"})),
+          RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:13,fontWeight:600,color:'#1f1f1d'}},p.name),RCE("div",{style:{fontSize:11.5,color:'#9c9b96'}},p.tag+' · '+p.qs.length+' questions')),
+          RCE("span",{style:{fontSize:18,color:'#c4c2bd',flexShrink:0,lineHeight:1}},"›"))))
     )));
 }
 /* ─── AI Agents Settings ─── */
@@ -29299,6 +29353,7 @@ function SettingsLeadsRouter({activeId,setActiveId}){
   if(sub==='fields')return RCE(LeadCustomFields,{setActiveId:setActiveId});
   if(sub==='notifications')return RCE(LeadNotifSettings,{setActiveId:setActiveId});
   if(sub==='scoring')return RCE(LeadScoringSettings,{setActiveId:setActiveId});
+  if(sub.indexOf('playbook/')===0)return RCE(LeadPlaybookDetail,{setActiveId:setActiveId,id:sub.slice('playbook/'.length)});
   if(sub==='playbook')return RCE(LeadPlaybookSettings,{setActiveId:setActiveId});
   if(sub==='agents')return RCE(LeadAgentsSettings,{setActiveId:setActiveId});
   return RCE(SettingsLeadsContent,{setActiveId:setActiveId});
