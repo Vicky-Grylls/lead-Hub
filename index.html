@@ -30351,8 +30351,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [ovToast, setOvToast] = useState(null);
     const flash = m => { setOvToast(m); setTimeout(() => setOvToast(null), 2600); };
     // 10DLC registration status persists across reloads: none → pending (under carrier review) → approved.
-    const [dlc10, setDlc10] = useState(() => { try { return localStorage.getItem('lh10dlcStatus_v2') || 'none'; } catch (e) { return 'none'; } });
-    const setDlc10Status = v => { setDlc10(v); try { localStorage.setItem('lh10dlcStatus_v2', v); } catch (e) {} };
+    // In-memory only — 10DLC status resets to Register on refresh (prototype behaviour).
+    const [dlc10, setDlc10] = useState('none');
+    const setDlc10Status = v => setDlc10(v);
     const kpis = [
       { label: 'Received today', value: 28, accent: LH.ink },
       { label: 'Qualified today', value: 7, accent: LH.green },
