@@ -29243,56 +29243,123 @@ function LeadCustomFields({setActiveId}){
 }
 
 /* ─── Router ─── */
-/* ─── Playbooks list + detail (Settings) ─── */
-const LEAD_PLAYBOOKS_LIST=[
-  {id:'lead-qual',name:'Lead Qualification',tag:'Default · inbound intake',outcome:'qualified / not_qualified',qs:[
-    {q:'Are you the homeowner or the decision-maker?',req:true},
-    {q:'What roof issue are you experiencing?',req:true},
-    {q:'Is there active leaking or recent storm damage?',req:true},
-    {q:'Approximate age of the current roof?',req:false},
-    {q:'Is this being filed as an insurance claim?',req:true},
-    {q:'What is your target timeframe to get it fixed?',req:true},
-    {q:'Best callback number and time?',req:false}
+/* ─── Playbooks: store + list + full editor (Settings, roofing-tuned) ─── */
+const PB_TONES=['Friendly and concise','Warm and consultative','Direct and efficient','Formal and professional'];
+const PB_HANDOFFS=['Route low-confidence replies to CSR','Always confirm with a human first','Never hand off — Nova only','Hand off after 3 attempts'];
+const PB_QTYPES=[['yesno','Yes / No'],['select','Single select'],['text','Short text'],['number','Number'],['date','Date']];
+// Common roofing questions offered as one-tap adds in the editor.
+const PB_SUGGEST=[
+  {q:'What roof material do you have?',req:false,type:'select',options:['Asphalt shingle','Metal','Tile','Wood shake','Flat / TPO','Slate']},
+  {q:'Approximate age of the roof?',req:false,type:'select',options:['0–5 yrs','6–10 yrs','11–15 yrs','16–20 yrs','20+ yrs']},
+  {q:'What roof issue are you experiencing?',req:true,type:'select',options:['Leak','Storm / hail damage','Missing shingles','Sagging','Age / wear','Other']},
+  {q:'Is this being filed as an insurance claim?',req:true,type:'yesno'},
+  {q:'Are you the homeowner or decision-maker?',req:true,type:'yesno'},
+  {q:'Preferred inspection window?',req:true,type:'select',options:['Morning','Afternoon','Evening','Weekend']},
+  {q:'What is the service address?',req:true,type:'text'},
+  {q:'What is your target timeframe?',req:true,type:'select',options:['ASAP / emergency','Within 2 weeks','1–3 months','Just researching']}
+];
+const PB_SEED=[
+  {id:'lead-qual',name:'Lead Qualification',tag:'Default · inbound intake',agent:'csr',outcome:'qualified / not_qualified',tone:'Friendly and concise',handoff:'Route low-confidence replies to CSR',
+    instructions:'Introduce yourself as Nova from the company. Confirm you’re speaking with the homeowner, capture the roof problem and urgency, flag any insurance claim, and offer the earliest free inspection slot. Keep it warm and brief.',qs:[
+    {q:'Are you the homeowner or the decision-maker?',req:true,type:'yesno'},
+    {q:'What roof issue are you experiencing?',req:true,type:'select',options:['Leak','Storm / hail damage','Missing shingles','Sagging','Age / wear','Other']},
+    {q:'Is there active leaking or recent storm damage?',req:true,type:'yesno'},
+    {q:'Approximate age of the current roof?',req:false,type:'select',options:['0–5 yrs','6–10 yrs','11–15 yrs','16–20 yrs','20+ yrs']},
+    {q:'Is this being filed as an insurance claim?',req:true,type:'yesno'},
+    {q:'What is your target timeframe to get it fixed?',req:true,type:'select',options:['ASAP / emergency','Within 2 weeks','1–3 months','Just researching']},
+    {q:'Best callback number and time?',req:false,type:'text'}
   ]},
-  {id:'storm',name:'Storm Response',tag:'Damage triage',outcome:'qualified / not_qualified',qs:[
-    {q:'Is there confirmed storm or hail damage?',req:true},
-    {q:'What date did the storm hit?',req:true},
-    {q:'Any active leaks or interior water damage?',req:true},
-    {q:'Have you filed an insurance claim yet?',req:false},
-    {q:'Roof age and material?',req:false},
-    {q:'Preferred inspection window?',req:true}
+  {id:'storm',name:'Storm Response',tag:'Damage triage',agent:'csr',outcome:'qualified / not_qualified',tone:'Warm and consultative',handoff:'Hand off after 3 attempts',
+    instructions:'Lead with empathy about the storm. Confirm the property is safe and weather-tight, capture damage details and photos, prioritise emergency tarping, and book an inspection.',qs:[
+    {q:'Is there confirmed storm or hail damage?',req:true,type:'yesno'},
+    {q:'What date did the storm hit?',req:true,type:'date'},
+    {q:'Any active leaks or interior water damage?',req:true,type:'yesno'},
+    {q:'Have you filed an insurance claim yet?',req:false,type:'yesno'},
+    {q:'What is the roof material?',req:false,type:'select',options:['Asphalt shingle','Metal','Tile','Wood shake','Flat / TPO','Slate']},
+    {q:'Preferred inspection window?',req:true,type:'select',options:['Morning','Afternoon','Evening','Weekend']}
   ]},
-  {id:'insurance',name:'Insurance Claim',tag:'Claim intake',outcome:'qualified / not_qualified',qs:[
-    {q:'Insurance carrier and claim number?',req:true},
-    {q:'Has an adjuster been assigned?',req:true},
-    {q:'What is the date of loss?',req:true},
-    {q:'Scope: roof only or full exterior?',req:false},
-    {q:'Deductible amount?',req:false}
+  {id:'insurance',name:'Insurance Claim',tag:'Claim intake',agent:'qual',outcome:'qualified / not_qualified',tone:'Formal and professional',handoff:'Always confirm with a human first',
+    instructions:'Determine whether this is an insurance claim and whether it meets coverage and deductible criteria before routing. Capture carrier, claim number and date of loss precisely.',qs:[
+    {q:'Insurance carrier and claim number?',req:true,type:'text'},
+    {q:'Has an adjuster been assigned?',req:true,type:'yesno'},
+    {q:'What is the date of loss?',req:true,type:'date'},
+    {q:'Scope of the claim?',req:false,type:'select',options:['Roof only','Roof + gutters','Full exterior']},
+    {q:'Deductible amount?',req:false,type:'number'}
   ]},
-  {id:'estimate',name:'Estimate Follow-up',tag:'Rehash / nurture',outcome:'qualified / not_qualified',qs:[
-    {q:'Did you receive the estimate we sent?',req:true},
-    {q:'Any questions on scope or pricing?',req:false},
-    {q:'Are you comparing other quotes?',req:false},
-    {q:'What timeframe are you working toward?',req:true}
+  {id:'estimate',name:'Estimate Follow-up',tag:'Rehash / nurture',agent:'demand',outcome:'qualified / not_qualified',tone:'Friendly and concise',handoff:'Route low-confidence replies to CSR',
+    instructions:'Re-open the conversation with a helpful, no-pressure check-in. Reference the estimate we sent, answer scope or pricing questions, and offer to get them on the schedule.',qs:[
+    {q:'Did you receive the estimate we sent?',req:true,type:'yesno'},
+    {q:'Any questions on scope or pricing?',req:false,type:'text'},
+    {q:'Are you comparing other quotes?',req:false,type:'yesno'},
+    {q:'What timeframe are you working toward?',req:true,type:'select',options:['ASAP','1–3 months','Later']}
   ]}
 ];
+const LeadPlaybookStore={
+  items:PB_SEED.map(p=>({...p,qs:p.qs.map(q=>({...q}))})),
+  subs:[],
+  emit(){this.subs.forEach(f=>f(this.items));},
+  sub(fn){this.subs.push(fn);return ()=>{this.subs=this.subs.filter(s=>s!==fn);};},
+  get(id){return this.items.find(p=>p.id===id);},
+  update(id,patch){this.items=this.items.map(p=>p.id===id?{...p,...patch}:p);this.emit();},
+  remove(id){this.items=this.items.filter(p=>p.id!==id);this.emit();},
+  create(data){const id='pb'+Date.now().toString(36);const p={id,name:'Untitled playbook',tag:'Custom',agent:'csr',outcome:'qualified / not_qualified',tone:'Friendly and concise',handoff:'Route low-confidence replies to CSR',instructions:'',qs:[],...data,id};this.items=[...this.items,p];this.emit();return p;}
+};
+const usePlaybooks=()=>{const [items,setItems]=useState(LeadPlaybookStore.items);useEffect(()=>LeadPlaybookStore.sub(setItems),[]);return items;};
 function LeadPlaybookDetail({setActiveId,id}){
-  const pb=LEAD_PLAYBOOKS_LIST.find(p=>p.id===id)||LEAD_PLAYBOOKS_LIST[0];
+  const isNew=id==='new';
+  const base=isNew?{name:'',tag:'Custom',agent:'csr',outcome:'qualified / not_qualified',tone:'Friendly and concise',handoff:'Route low-confidence replies to CSR',instructions:'',qs:[]}:(LeadPlaybookStore.get(id)||LeadPlaybookStore.items[0]);
+  const [name,setName]=useState(base.name);
+  const [agent,setAgent]=useState(base.agent);
+  const [tone,setTone]=useState(base.tone);
+  const [handoff,setHandoff]=useState(base.handoff);
+  const [instructions,setInstructions]=useState(base.instructions);
+  const [qs,setQs]=useState(base.qs.map(q=>({...q})));
+  const sel=(value,onChange,opts,width)=>RCE("select",{value:value,onChange:e=>onChange(e.target.value),style:{...leadInput,width:width||'100%',cursor:'pointer'}},opts.map(o=>{const v=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return RCE("option",{key:v,value:v},l);}));
+  const setQ=(i,patch)=>setQs(a=>a.map((x,j)=>j===i?{...x,...patch}:x));
+  const move=(i,d)=>setQs(a=>{const n=[...a];const j=i+d;if(j<0||j>=n.length)return a;const t=n[i];n[i]=n[j];n[j]=t;return n;});
+  const addQ=(seed)=>setQs(a=>[...a,seed?{...seed}:{q:'New question',req:false,type:'text'}]);
+  const save=()=>{ if(!name.trim())return; const data={name:name.trim(),agent,tone,handoff,instructions,qs}; if(isNew){const p=LeadPlaybookStore.create(data);setActiveId('modules/Leads/playbook/'+p.id);} else {LeadPlaybookStore.update(id,data);setActiveId('modules/Leads/playbook');} };
+  const lbl={fontSize:12,fontWeight:600,color:'#1f1f1d',display:'block',marginBottom:5};
+  const agentOpts=LEAD_AGENTS_FULL.map(a=>[a.id,a.name.replace('Nova — ','')]);
   return RCE(React.Fragment,null,
-    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiClipboardText,title:pb.name,sub:pb.tag+' · '+pb.qs.length+' questions',onSave:()=>setActiveId('modules/Leads/playbook')}),
+    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiClipboardText,title:isNew?'New playbook':(name||'Playbook'),sub:(isNew?'Create a qualification playbook':base.tag)+' · '+qs.length+' questions',onSave:save}),
     leadScroll(RCE(React.Fragment,null,
+      isNew?RCE("div",{style:{marginBottom:16}},
+        RCE("div",{style:{fontSize:11,fontWeight:700,letterSpacing:'.05em',color:'#9c9b96',marginBottom:8}},"START FROM A TEMPLATE"),
+        RCE("div",{style:{display:'flex',gap:8,flexWrap:'wrap'}},[['Blank',null],['Storm Response','storm'],['Insurance Claim','insurance'],['Estimate Follow-up','estimate'],['Lead Qualification','lead-qual']].map(([l,tid])=>RCE("button",{key:l,onClick:()=>{const t=tid&&LeadPlaybookStore.get(tid);if(t){setName(t.name+' (copy)');setAgent(t.agent);setTone(t.tone);setHandoff(t.handoff);setInstructions(t.instructions);setQs(t.qs.map(q=>({...q})));}else{setQs([]);setInstructions('');}},style:{height:32,padding:'0 12px',borderRadius:8,border:'1px solid #e2ddd2',background:'#fff',fontSize:12.5,fontWeight:600,color:'#3f3f46',cursor:'pointer'}},l)))):null,
+      RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,background:'#fff',padding:16,marginBottom:18}},
+        RCE("div",{style:{marginBottom:12}},RCE("label",{style:lbl},"Playbook name"),RCE("input",{value:name,onChange:e=>setName(e.target.value),placeholder:'e.g. Storm Response',style:{...leadInput,width:'100%'}})),
+        RCE("div",{style:{display:'flex',gap:12,marginBottom:12}},
+          RCE("div",{style:{flex:1}},RCE("label",{style:lbl},"Runs on agent"),sel(agent,setAgent,agentOpts)),
+          RCE("div",{style:{flex:1}},RCE("label",{style:lbl},"Qualification tone"),sel(tone,setTone,PB_TONES)),
+          RCE("div",{style:{flex:1}},RCE("label",{style:lbl},"Handoff rule"),sel(handoff,setHandoff,PB_HANDOFFS))),
+        RCE("div",null,RCE("label",{style:lbl},"Instructions for Nova"),RCE("textarea",{value:instructions,onChange:e=>setInstructions(e.target.value),placeholder:'How Nova should run this playbook…',style:{...leadInput,width:'100%',height:88,padding:10,resize:'vertical',lineHeight:1.5}}))),
+      RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'0 0 10px'}},
+        RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:0}},"Questions ("+qs.length+")"),
+        RCE("button",{onClick:()=>addQ(),style:{display:'inline-flex',alignItems:'center',gap:5,height:30,padding:'0 12px',borderRadius:8,border:'1px solid #e2ddd2',background:'#fff',fontSize:12.5,fontWeight:600,color:'#7c3aed',cursor:'pointer'}},"+ Add question")),
       RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden',background:'#fff'}},
-        pb.qs.map((x,i)=>RCE("div",{key:i,style:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:i<pb.qs.length-1?'1px solid #f0eeea':'none'}},
-          RCE("span",{style:{width:22,height:22,borderRadius:999,background:'#f1f0ec',color:'#737373',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},i+1),
-          RCE("div",{style:{flex:1,minWidth:0,fontSize:13,color:'#1f1f1d'}},x.q),
-          x.req?RCE("span",{style:{fontSize:10,fontWeight:700,letterSpacing:'.04em',color:'#b45309',background:'#fef3c7',borderRadius:999,padding:'2px 8px',flexShrink:0}},"REQUIRED"):RCE("span",{style:{fontSize:11,color:'#9c9b96',flexShrink:0}},"optional")))),
+        qs.length===0?RCE("div",{style:{padding:'22px 16px',textAlign:'center',fontSize:12.5,color:'#9c9b96'}},"No questions yet — add one below or start from a template."):
+        qs.map((x,i)=>RCE("div",{key:i,style:{padding:'12px 16px',borderBottom:i<qs.length-1?'1px solid #f0eeea':'none'}},
+          RCE("div",{style:{display:'flex',alignItems:'center',gap:10}},
+            RCE("span",{style:{width:22,height:22,borderRadius:999,background:'#f1f0ec',color:'#737373',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},i+1),
+            RCE("input",{value:x.q,onChange:e=>setQ(i,{q:e.target.value}),style:{flex:1,fontSize:13,color:'#1f1f1d',border:'none',outline:'none',background:'transparent'}}),
+            sel(x.type||'text',v=>setQ(i,{type:v,options:v==='select'?(x.options||['Option 1','Option 2']):undefined}),PB_QTYPES,140),
+            RCE("button",{onClick:()=>setQ(i,{req:!x.req}),style:{fontSize:10.5,fontWeight:700,color:x.req?'#7c3aed':'#9c9b96',border:'none',background:'none',cursor:'pointer',flexShrink:0,width:64,textAlign:'right'}},x.req?'REQUIRED':'optional'),
+            RCE("button",{onClick:()=>move(i,-1),title:'Move up',style:{border:'none',background:'none',cursor:'pointer',color:'#c4c2bd',fontSize:14,padding:'0 2px'}},"↑"),
+            RCE("button",{onClick:()=>move(i,1),title:'Move down',style:{border:'none',background:'none',cursor:'pointer',color:'#c4c2bd',fontSize:14,padding:'0 2px'}},"↓"),
+            RCE("button",{onClick:()=>setQs(a=>a.filter((_,j)=>j!==i)),title:'Delete',style:{border:'none',background:'none',cursor:'pointer',color:'#c4c2bd',fontSize:14,padding:'0 2px'}},"✕")),
+          x.type==='select'?RCE("div",{style:{marginTop:8,marginLeft:32}},RCE("label",{style:{fontSize:10.5,fontWeight:600,color:'#9c9b96',display:'block',marginBottom:4}},"Options (comma-separated)"),RCE("input",{value:(x.options||[]).join(', '),onChange:e=>setQ(i,{options:e.target.value.split(',').map(s=>s.trim()).filter(Boolean)}),style:{...leadInput,width:'100%',height:30,fontSize:12}})):null))),
+      RCE("div",{style:{marginTop:14}},RCE("div",{style:{fontSize:11,fontWeight:700,letterSpacing:'.05em',color:'#9c9b96',marginBottom:8}},"QUICK-ADD ROOFING QUESTIONS"),
+        RCE("div",{style:{display:'flex',gap:8,flexWrap:'wrap'}},PB_SUGGEST.map((s,k)=>RCE("button",{key:k,onClick:()=>addQ(s),style:{height:30,padding:'0 11px',borderRadius:999,border:'1px solid #e2ddd2',background:'#fff',fontSize:12,fontWeight:500,color:'#5b5b57',cursor:'pointer'}},"+ "+s.q)))),
       RCE("div",{style:{marginTop:18,display:'flex',gap:10,alignItems:'flex-start',border:'1px solid #e8e7e2',borderRadius:10,background:'#faf8f4',padding:'12px 14px'}},
         RCE(TiClipboardText,{size:16,color:"#7c3aed"}),
-        RCE("div",{style:{fontSize:12,color:'#5b5b57',lineHeight:1.5}},"Channel-agnostic — Nova asks these on SMS, email or a live call. Outcome is binary — ",RCE("b",null,pb.outcome),"."))
+        RCE("div",{style:{fontSize:12,color:'#5b5b57',lineHeight:1.5}},"Channel-agnostic — Nova asks these on SMS, email or a live call. Outcome is binary — ",RCE("b",null,"qualified / not_qualified"),".")),
+      isNew?null:RCE("div",{style:{marginTop:16}},RCE("button",{onClick:()=>{LeadPlaybookStore.remove(id);setActiveId('modules/Leads/playbook');},style:{fontSize:12.5,fontWeight:600,color:'#dc2626',background:'none',border:'none',cursor:'pointer',padding:0}},"Delete playbook"))
     )));
 }
 /* ─── Playbook Settings ─── */
 function LeadPlaybookSettings({setActiveId}){
+  const playbooks=usePlaybooks();
   const [def,setDef]=useState('Lead Qualification');
   const [branch,setBranch]=useState(true);
   const [perCampaign,setPerCampaign]=useState(true);
@@ -29310,9 +29377,11 @@ function LeadPlaybookSettings({setActiveId}){
       RCE("div",{style:{marginTop:18,display:'flex',gap:10,alignItems:'flex-start',border:'1px solid #e8e7e2',borderRadius:10,background:'#faf8f4',padding:'12px 14px'}},
         RCE(TiClipboardText,{size:16,color:"#7c3aed"}),
         RCE("div",{style:{fontSize:12,color:'#5b5b57',lineHeight:1.5}},"Playbook outcome is binary — ",RCE("b",null,"qualified / not_qualified"),". Terminal lead states are Qualified and Disqualified.")),
-      RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:'26px 0 10px'}},"Playbooks"),
+      RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'26px 0 10px'}},
+        RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:0}},"Playbooks"),
+        RCE("button",{onClick:()=>setActiveId('modules/Leads/playbook/new'),style:{display:'inline-flex',alignItems:'center',gap:6,height:32,padding:'0 13px',borderRadius:8,border:'none',background:'#1f1f1d',color:'#fff',fontSize:12.5,fontWeight:600,cursor:'pointer'}},"+ New playbook")),
       RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden',background:'#fff'}},
-        LEAD_PLAYBOOKS_LIST.map((p,i)=>RCE("div",{key:p.id,onClick:()=>setActiveId('modules/Leads/playbook/'+p.id),style:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:i<LEAD_PLAYBOOKS_LIST.length-1?'1px solid #f0eeea':'none',cursor:'pointer'},onMouseEnter:e=>e.currentTarget.style.background='#faf8f4',onMouseLeave:e=>e.currentTarget.style.background='#fff'},
+        playbooks.map((p,i)=>RCE("div",{key:p.id,onClick:()=>setActiveId('modules/Leads/playbook/'+p.id),style:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:i<playbooks.length-1?'1px solid #f0eeea':'none',cursor:'pointer'},onMouseEnter:e=>e.currentTarget.style.background='#faf8f4',onMouseLeave:e=>e.currentTarget.style.background='#fff'},
           RCE("div",{style:{width:32,height:32,borderRadius:8,background:'#efe7fb',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},RCE(TiClipboardText,{size:16,color:"#7c3aed"})),
           RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:13,fontWeight:600,color:'#1f1f1d'}},p.name),RCE("div",{style:{fontSize:11.5,color:'#9c9b96'}},p.tag+' · '+p.qs.length+' questions')),
           RCE("span",{style:{fontSize:18,color:'#c4c2bd',flexShrink:0,lineHeight:1}},"›"))))
@@ -29320,19 +29389,19 @@ function LeadPlaybookSettings({setActiveId}){
 }
 /* ─── AI Agents Settings ─── */
 const LEAD_AGENTS_FULL=[
-  {id:'csr',name:'Nova — CSR Agent',role:'Speed-to-lead & qualification',channels:['SMS','Voice','Email'],metric:'312 leads engaged · 57% reply',on:true,
+  {id:'csr',name:'Nova — CSR Agent',role:'Speed-to-lead & qualification',channels:['SMS','Voice','Email'],metric:'312 leads engaged · 57% reply',on:true,playbookId:'lead-qual',
     about:'Nova’s front-line agent. Responds to every new lead within seconds over SMS, voice, and email, qualifies intent against the active playbook, and hands complex or low-confidence cases to a human CSR.',
     kpis:[['Leads engaged','312'],['Reply rate','57%'],['Avg first response','42s'],['Escalations','7']],
-    cfg:[['Voice','Nova (US female)'],['Working hours','24/7'],['Escalation','After 3 attempts → human'],['Playbook','Lead Qualification · 5 questions']]},
-  {id:'demand',name:'Demand Gen Agent',role:'Sources & re-engages demand',channels:['Email','SMS'],metric:'4 campaigns live · 128 re-engaged',on:true,
+    cfg:[['Voice','Nova (US female)'],['Working hours','24/7'],['Escalation','After 3 attempts → human']]},
+  {id:'demand',name:'Demand Gen Agent',role:'Sources & re-engages demand',channels:['Email','SMS'],metric:'4 campaigns live · 128 re-engaged',on:true,playbookId:'estimate',
     about:'Sources and re-warms demand. Runs re-engagement and winback sequences against aged and cold leads, staying inside budget and cadence guardrails, and routes replies back to the CSR agent.',
     kpis:[['Campaigns live','4'],['Re-engaged','128'],['Reply rate','31%'],['Opt-out','1.2%']],
     cfg:[['Audience','Cold leads > 30 days'],['Cadence','Weekly'],['Budget guardrail','$500/mo'],['Approval','Auto-send']]},
-  {id:'sched',name:'Scheduling Agent',role:'Books inspections & confirms',channels:['SMS','Voice'],metric:'89 inspections booked',on:true,
+  {id:'sched',name:'Scheduling Agent',role:'Books inspections & confirms',channels:['SMS','Voice'],metric:'89 inspections booked',on:true,playbookId:'storm',
     about:'Books and confirms inspections. Offers the earliest open slots from team availability, sends reminders, and lets homeowners self-serve reschedule — keeping the calendar full without a coordinator.',
     kpis:[['Inspections booked','89'],['Confirm rate','92%'],['Reschedules','11'],['No-shows','4%']],
     cfg:[['Calendar','Team availability'],['Buffer','30 min'],['Reminders','T-24h, T-2h'],['Reschedule','Self-serve link']]},
-  {id:'qual',name:'Qualification Agent',role:'Scores & routes new leads',channels:['Data'],metric:'9-field capture · 82% auto-qualified',on:false,
+  {id:'qual',name:'Qualification Agent',role:'Scores & routes new leads',channels:['Data'],metric:'9-field capture · 82% auto-qualified',on:false,playbookId:'insurance',
     about:'Scores and routes new leads. Silently captures the 9 property-intelligence signals across the conversation, scores intent, and routes hot leads to a rep while sending cold ones to nurture.',
     kpis:[['Auto-qualified','82%'],['Fields captured','9 / 9'],['Routed hot','64'],['Routed to nurture','118']],
     cfg:[['Model','Property Intelligence'],['Threshold','Score ≥ 60'],['Route hot','→ CSR + rep'],['Route cold','→ Nurture']]}
@@ -29349,6 +29418,12 @@ function LeadAgentDetail({setActiveId,id}){
       RCE("div",{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}},a.kpis.map(([l,v])=>RCE("div",{key:l,style:{border:'1px solid #e8e7e2',borderRadius:10,background:'#fff',padding:'12px 14px'}},RCE("div",{style:{fontSize:20,fontWeight:800,color:'#1f1f1d'}},v),RCE("div",{style:{fontSize:11.5,color:'#9c9b96',marginTop:2}},l)))),
       RCE("div",{style:{fontSize:13,color:'#5b5b57',lineHeight:1.55,marginBottom:6}},a.about),
       RCE("div",{style:{display:'flex',gap:6,flexWrap:'wrap',marginBottom:20}},a.channels.map(c=>RCE("span",{key:c,style:{fontSize:11,fontWeight:600,color:'#5b5b57',background:'#f1f0ec',borderRadius:999,padding:'3px 10px'}},c))),
+      (()=>{const pb=a.playbookId&&LeadPlaybookStore.get(a.playbookId);if(!pb)return null;return RCE(React.Fragment,null,
+        RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:'0 0 10px'}},"Qualification playbook"),
+        RCE("div",{style:{display:'flex',alignItems:'center',gap:12,border:'1px solid #e8e7e2',borderRadius:10,background:'#fff',padding:'12px 16px',marginBottom:20}},
+          RCE("div",{style:{width:32,height:32,borderRadius:8,background:'#efe7fb',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},RCE(TiClipboardText,{size:16,color:"#7c3aed"})),
+          RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:13,fontWeight:600,color:'#1f1f1d'}},pb.name),RCE("div",{style:{fontSize:11.5,color:'#9c9b96'}},pb.qs.length+' questions · outcome '+pb.outcome)),
+          RCE("button",{onClick:()=>setActiveId('modules/Leads/playbook/'+pb.id),style:{display:'inline-flex',alignItems:'center',gap:6,height:30,padding:'0 12px',borderRadius:8,border:'1px solid #e2ddd2',background:'#fff',fontSize:12.5,fontWeight:600,color:'#7c3aed',cursor:'pointer',flexShrink:0}},"Edit playbook")));})(),
       RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:'0 0 10px'}},"Configuration"),
       RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden',background:'#fff'}},
         a.cfg.map(([k,v],i)=>RCE("div",{key:k,style:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:i<a.cfg.length-1?'1px solid #f0eeea':'none'}},
