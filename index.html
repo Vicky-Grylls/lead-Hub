@@ -32500,33 +32500,70 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             </div>
           </div>
         </Card>
-        <div>
-          <Card style={{ padding: 14 }}><div style={{ display: 'flex', alignItems: 'center', gap: 11 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: LH.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="user-plus" size={16} color={LH.green} /></div><div><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Lead enrolled</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1 }}>Enters on create — the first attempt fires immediately</div></div></div></Card>
-          {attempts.map((a, i) => { const c = WZ_CH[a.ch] || WZ_CH.sms; const open = openStep === a.id; const preview = (a.body && a.body.trim()) || (a.subject && a.subject.trim()) || ('Click to configure this ' + c.label.toLowerCase()); const unitLabel = (WAIT_UNITS.find(u => u[0] === ((a.wait && a.wait.unit) || 'day')) || ['day', 'days'])[1]; return <div key={a.id}>
-            {wConn}{wPill(i === 0 ? 'On enrollment · fires immediately' : 'Wait ' + (a.wait && a.wait.n != null ? a.wait.n : 1) + ' ' + unitLabel + ' · if no response')}{wConn}
-            <Card style={{ padding: 0, overflow: 'hidden', ...(open ? { border: '1px solid ' + LH.primary } : {}) }}>
-              <div onClick={() => setOpenStep(o => o === a.id ? null : a.id)} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '13px 16px', cursor: 'pointer' }}>
-                <div style={{ width: 34, height: 34, borderRadius: 9, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={c.icon} size={16} color={c.fg} /></div>
-                <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Step {i + 1}: {c.label}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{preview}</div></div>
-                <span style={{ display: 'inline-flex', alignItems: 'center', height: 24, padding: '0 9px', borderRadius: 7, background: '#f1f0ec', fontSize: 11.5, fontWeight: 600, color: LH.sub, flexShrink: 0 }}>{c.short}</span>
-                <Ic name={open ? 'chevron-up' : 'chevron-down'} size={16} color={LH.muted} />
-              </div>
-              {open && <div style={{ padding: '0 16px 14px', borderTop: '1px solid ' + LH.borderSoft }}>
-                {i > 0 && <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '12px 0' }}>
+        {(() => {
+          // Node card on the canvas — selected gets a blue outline; click opens the right settings sheet.
+          const fnode = (id, icon, bg, fg, title, sub, chip) => { const selN = openStep === id; return <div onClick={() => setOpenStep(id)} style={{ maxWidth: 460, margin: '0 auto', background: '#fff', border: '1.5px solid ' + (selN ? LH.blue : LH.border), borderRadius: 12, boxShadow: selN ? '0 0 0 3px ' + LH.blueBg : '0 1px 2px rgba(0,0,0,.04)', padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer', transition: 'border-color .12s, box-shadow .12s' }}>
+            <div style={{ width: 34, height: 34, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={16} color={fg} /></div>
+            <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{title}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div></div>
+            {chip && <span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 8px', borderRadius: 7, background: '#f1f0ec', fontSize: 11, fontWeight: 600, color: LH.sub, flexShrink: 0 }}>{chip}</span>}
+          </div>; };
+          const bconn = <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 20, background: LH.blueBd }} /></div>;
+          const bpill = txt => <div style={{ display: 'flex', justifyContent: 'center' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 24, padding: '0 11px', borderRadius: 999, background: LH.blueBg, fontSize: 11.5, fontWeight: 600, color: LH.blue }}><Ic name="timer" size={12} color={LH.blue} />{txt}</span></div>;
+          const sel = openStep === 'trigger' ? { trigger: true } : attempts.find(a => a.id === openStep);
+          const selIdx = sel && !sel.trigger ? attempts.findIndex(a => a.id === openStep) : -1;
+          const nextOf = i => i < attempts.length - 1 ? { title: 'Step ' + (i + 2) + ': ' + (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).label, icon: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).icon, fg: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).fg, bg: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).bg, cond: 'if no response' } : { title: 'Exit — Qualified or Disqualified', icon: 'log-out', fg: LH.sub, bg: '#f1f0ec', cond: 'sequence end' };
+          return <>
+          {/* Canvas */}
+          <div style={{ position: 'relative', background: '#fbfaf8', backgroundImage: 'radial-gradient(circle, #e3ddd0 1px, transparent 1px)', backgroundSize: '18px 18px', border: '1px solid ' + LH.borderSoft, borderRadius: 14, padding: '26px 16px 30px' }}>
+            {fnode('trigger', 'user-plus', LH.greenBg, LH.green, 'Lead enrolled', 'Enters on create — first attempt fires immediately')}
+            {attempts.map((a, i) => { const c = WZ_CH[a.ch] || WZ_CH.sms; const preview = (a.body && a.body.trim()) || (a.subject && a.subject.trim()) || ('Configure this ' + c.label.toLowerCase()); const unitLabel = (WAIT_UNITS.find(u => u[0] === ((a.wait && a.wait.unit) || 'day')) || ['day', 'days'])[1]; return <div key={a.id}>
+              {bconn}{bpill(i === 0 ? 'On enrollment · fires immediately' : 'Wait ' + (a.wait && a.wait.n != null ? a.wait.n : 1) + ' ' + unitLabel + ' · if no response')}{bconn}
+              {fnode(a.id, c.icon, c.bg, c.fg, 'Step ' + (i + 1) + ': ' + c.label, preview, c.short)}
+            </div>; })}
+            {bconn}
+            <div style={{ display: 'flex', justifyContent: 'center' }}><button onClick={() => { const na = { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 1, unit: 'day' } }; setAttempts(a => [...a, na]); setOpenStep(na.id); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 36, padding: '0 16px', borderRadius: 9, border: '1px dashed ' + LH.border, background: '#fff', color: LH.primary, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} onMouseEnter={e => { e.currentTarget.style.background = LH.tint; e.currentTarget.style.borderColor = LH.primary; }} onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = LH.border; }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button></div>
+            {bconn}{bpill('If qualified or disqualified')}{bconn}
+            {fnode('exit', 'log-out', '#f1f0ec', LH.sub, 'Exit — Qualified or Disqualified', 'Also exits on reply, opt-out, or Nova DND')}
+          </div>
+          {/* Right settings sheet */}
+          {openStep && openStep !== 'exit' && <div onClick={() => setOpenStep(null)} style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(20,18,15,.28)' }} />}
+          <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(400px,96vw)', background: '#fff', zIndex: 3001, boxShadow: '-16px 0 48px rgba(0,0,0,.2)', display: 'flex', flexDirection: 'column', transform: (openStep && openStep !== 'exit') ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .26s cubic-bezier(0.32,0.72,0,1)', fontFamily: "'Inter',ui-sans-serif,system-ui" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+              <button onClick={() => setOpenStep(null)} title="Back" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="arrow-left" size={18} color={LH.ink} /></button>
+              <div style={{ flex: 1 }} />
+              {sel && !sel.trigger && <button onClick={() => onToast && onToast('Pick a different channel below to replace this step')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="repeat" size={13} color={LH.sub} />Replace step</button>}
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
+              {sel && sel.trigger && <>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}><Ic name="user-plus" size={19} color={LH.green} /></div>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 22, padding: '0 9px', borderRadius: 999, background: LH.blueBg, color: LH.blue, fontSize: 11, fontWeight: 700, marginBottom: 10 }}><Ic name="zap" size={12} color={LH.blue} />Trigger</span>
+                <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>Lead enrolled</div>
+                <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 3, lineHeight: 1.5 }}>Starts when a lead is created that matches this campaign’s audience. The first attempt fires immediately.</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, margin: '20px 0 3px' }}>Next steps</div>
+                <div style={{ fontSize: 12, color: LH.sub, marginBottom: 10 }}>Jump to the next step in this flow.</div>
+                {attempts[0] && <div onClick={() => setOpenStep(attempts[0].id)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 12px', border: '1px solid ' + LH.border, borderRadius: 10, cursor: 'pointer' }}><div style={{ width: 28, height: 28, borderRadius: 8, background: (WZ_CH[attempts[0].ch] || WZ_CH.sms).bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={(WZ_CH[attempts[0].ch] || WZ_CH.sms).icon} size={14} color={(WZ_CH[attempts[0].ch] || WZ_CH.sms).fg} /></div><span style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>Step 1: {(WZ_CH[attempts[0].ch] || WZ_CH.sms).label}</span></div>}
+              </>}
+              {sel && !sel.trigger && (() => { const c = WZ_CH[sel.ch] || WZ_CH.sms; const nx = nextOf(selIdx); return <>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}><Ic name={c.icon} size={19} color={c.fg} /></div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>Step {selIdx + 1}: {c.label}</div>
+                <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 3, lineHeight: 1.5 }}>Configure what Nova sends or does at this attempt.</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, margin: '20px 0 10px' }}>Configuration</div>
+                {selIdx > 0 && <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
                   <span style={{ fontSize: 12.5, color: LH.sub }}>Wait</span>
-                  <input type="number" min={1} value={a.wait.n != null ? a.wait.n : 1} onChange={e => setAttemptWait(a.id, { n: Math.max(1, Number(e.target.value) || 1) })} style={{ width: 58, height: 30, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 8px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit' }} />
-                  <div style={{ width: 110 }}><Dropdown value={a.wait.unit || 'day'} height={30} options={WAIT_UNITS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => setAttemptWait(a.id, { unit: v })} /></div>
-                  <span style={{ fontSize: 12.5, color: LH.sub }}>after previous · only if no response</span>
+                  <input type="number" min={1} value={sel.wait.n != null ? sel.wait.n : 1} onChange={e => setAttemptWait(sel.id, { n: Math.max(1, Number(e.target.value) || 1) })} style={{ width: 58, height: 30, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 8px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit' }} />
+                  <div style={{ width: 110 }}><Dropdown value={sel.wait.unit || 'day'} height={30} options={WAIT_UNITS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => setAttemptWait(sel.id, { unit: v })} /></div>
+                  <span style={{ fontSize: 12.5, color: LH.sub }}>after previous · if no response</span>
                 </div>}
-                <div style={{ paddingTop: i > 0 ? 0 : 12 }}><StepEditor step={a} timingMode="none" onChange={ns => setAttempt(a.id, ns)} onRemove={() => removeAttempt(a.id)} onDuplicate={() => duplicateAttempt(a.id)} /></div>
-              </div>}
-            </Card>
-          </div>; })}
-          {wConn}
-          <div style={{ display: 'flex', justifyContent: 'center' }}><button onClick={() => { const na = { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 1, unit: 'day' } }; setAttempts(a => [...a, na]); setOpenStep(na.id); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 38, padding: '0 18px', borderRadius: 9, border: '1px dashed ' + LH.border, background: '#fff', color: LH.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onMouseEnter={e => { e.currentTarget.style.background = LH.tint; e.currentTarget.style.borderColor = LH.primary; }} onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = LH.border; }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button></div>
-          {wConn}{wPill('Exit conditions')}{wConn}
-          <Card style={{ padding: 14 }}><div style={{ display: 'flex', alignItems: 'center', gap: 11 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="log-out" size={16} color={LH.sub} /></div><div><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Exit — Qualified or Disqualified</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1 }}>Also exits on reply, opt-out, or Nova DND</div></div></div></Card>
-        </div>
+                <StepEditor step={sel} timingMode="none" onChange={ns => setAttempt(sel.id, ns)} onRemove={() => { removeAttempt(sel.id); setOpenStep(null); }} onDuplicate={() => duplicateAttempt(sel.id)} />
+                <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, margin: '20px 0 3px' }}>Next steps</div>
+                <div style={{ fontSize: 12, color: LH.sub, marginBottom: 10 }}>Jump to the next step in this flow.</div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 22, padding: '0 9px', borderRadius: 999, background: LH.blueBg, color: LH.blue, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>{nx.cond}</div>
+                <div onClick={() => { if (selIdx < attempts.length - 1) setOpenStep(attempts[selIdx + 1].id); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 12px', border: '1px solid ' + LH.border, borderRadius: 10, cursor: selIdx < attempts.length - 1 ? 'pointer' : 'default' }}><div style={{ width: 28, height: 28, borderRadius: 8, background: nx.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={nx.icon} size={14} color={nx.fg} /></div><span style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{nx.title}</span></div>
+              </>; })()}
+            </div>
+          </div>
+          </>;
+        })()}
         <div style={{ marginTop: 14, border: '1px solid ' + LH.borderSoft, borderRadius: 10, background: LH.bg, padding: '12px 14px', display: 'flex', gap: 9 }}><Ic name="flag" size={15} color={LH.sub} style={{ flexShrink: 0, marginTop: 1 }} /><span style={{ fontSize: 12.5, color: LH.sub, lineHeight: 1.5 }}><b style={{ color: LH.ink }}>End of sequence.</b> After attempt {attempts.length} with no response, the lead stops receiving outreach — handle what happens next under <b style={{ color: LH.ink }}>Exit rules</b>. A qualifying outcome ends the sequence at any point, well before the last attempt.</span></div>
       </div>;
       if (step === 3) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
