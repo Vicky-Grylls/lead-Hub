@@ -32304,6 +32304,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const duplicateAttempt = id => setAttempts(a => { const i = a.findIndex(x => x.id === id); return i < 0 ? a : [...a.slice(0, i + 1), { ...a[i], id: wuid() }, ...a.slice(i + 1)]; });
     const [openStep, setOpenStep] = useState(null); // selected node in the flow builder
     const [railOpen, setRailOpen] = useState(true); // wizard step rail collapsible
+    const [confirmClose, setConfirmClose] = useState(false); // confirm before leaving campaign setup
     // Exit
     const [exitJoin, setExitJoin] = useState('or');
     const [exitConds, setExitConds] = useState([{ id: wuid(), field: 'job.current_status', op: 'is any of', val: ['Qualified', 'Disqualified'] }]);
@@ -32482,7 +32483,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       const wConn = <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 18, background: LH.border }} /></div>;
       const wPill = txt => <div style={{ display: 'flex', justifyContent: 'center' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 12px', borderRadius: 999, background: '#f1f0ec', border: '1px solid ' + LH.borderSoft, fontSize: 12, fontWeight: 600, color: LH.body }}><Ic name="timer" size={13} color={LH.sub} />{txt}</span></div>;
       if (step === 2) return (() => {
-        const fnode = (id, icon, bg, fg, title, sub, chip) => { const selN = openStep === id; return <div onClick={() => setOpenStep(id)} style={{ maxWidth: 460, margin: '0 auto', background: '#fff', border: '1.5px solid ' + (selN ? LH.blue : LH.border), borderRadius: 12, boxShadow: selN ? '0 0 0 3px ' + LH.blueBg : '0 1px 2px rgba(0,0,0,.04)', padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer', transition: 'border-color .12s, box-shadow .12s' }}>
+        const fnode = (id, icon, bg, fg, title, sub, chip) => { const selN = openStep === id; return <div onClick={() => setOpenStep(o => o === id ? null : id)} style={{ maxWidth: 460, margin: '0 auto', background: '#fff', border: '1.5px solid ' + (selN ? LH.blue : LH.border), borderRadius: 12, boxShadow: selN ? '0 0 0 3px ' + LH.blueBg : '0 1px 2px rgba(0,0,0,.04)', padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer', transition: 'border-color .12s, box-shadow .12s' }}>
           <div style={{ width: 34, height: 34, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={16} color={fg} /></div>
           <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{title}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div></div>
           {chip && <span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 8px', borderRadius: 7, background: '#f1f0ec', fontSize: 11, fontWeight: 600, color: LH.sub, flexShrink: 0 }}>{chip}</span>}
@@ -32524,7 +32525,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
           <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 'min(400px,94%)', background: '#fff', borderLeft: '1px solid ' + LH.borderSoft, boxShadow: '-8px 0 22px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', transform: panelOpen ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .24s cubic-bezier(0.32,0.72,0,1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
-              <button onClick={() => setOpenStep(null)} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="arrow-left" size={18} color={LH.ink} /></button>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.muted }}>{sel && sel.trigger ? 'Trigger' : 'Step settings'}</span>
               <div style={{ flex: 1 }} />
               {sel && !sel.trigger && <button onClick={() => onToast && onToast('Pick a different channel below to replace this step')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="repeat" size={13} color={LH.sub} />Replace step</button>}
             </div>
@@ -32662,11 +32663,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const shell = <div style={{ width: '100%', height: '100%', background: '#fff', borderRadius: embed ? 0 : 16, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: embed ? 'none' : '0 24px 60px rgba(0,0,0,.3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="send" size={15} color={LH.primary} /></div><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>{name || 'New campaign'}</span><div style={{ width: 118 }}><Dropdown value={status} height={28} options={['Draft', 'Active', 'Inactive'].map(s => ({ value: s, label: s }))} onChange={setStatus} /></div><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: LH.muted }}><Ic name="check" size={12} color={LH.green} />Auto-saved</span></div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
+          <button onClick={() => setConfirmClose(true)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
         </div>
-        <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-          <div style={{ width: railOpen ? 230 : 52, flexShrink: 0, borderRight: '1px solid ' + LH.borderSoft, padding: railOpen ? 14 : '14px 8px', background: LH.bg, display: 'flex', flexDirection: 'column', transition: 'width .18s ease' }}>
-            <button onClick={() => setRailOpen(o => !o)} title={railOpen ? 'Collapse' : 'Expand'} style={{ alignSelf: railOpen ? 'flex-end' : 'center', width: 28, height: 28, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, flexShrink: 0 }}><Ic name={railOpen ? 'chevrons-left' : 'chevrons-right'} size={15} color={LH.sub} /></button>
+        <div style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative' }}>
+          <button onClick={() => setRailOpen(o => !o)} title={railOpen ? 'Collapse' : 'Expand'} style={{ position: 'absolute', top: 20, left: (railOpen ? 230 : 52) - 13, zIndex: 20, width: 26, height: 26, borderRadius: 999, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 5px rgba(0,0,0,.12)', transition: 'left .18s ease' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name={railOpen ? 'chevron-left' : 'chevron-right'} size={14} color={LH.sub} /></button>
+          <div style={{ width: railOpen ? 230 : 52, flexShrink: 0, borderRight: '1px solid ' + LH.borderSoft, padding: railOpen ? '14px' : '14px 8px', background: LH.bg, display: 'flex', flexDirection: 'column', transition: 'width .18s ease' }}>
             <div style={{ flex: 1 }}>
               {prefixSteps.map((s, pi) => <div key={'pre' + pi} onClick={() => onPrefix && onPrefix(pi)} title={s} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: railOpen ? '9px 10px' : '9px 0', justifyContent: railOpen ? 'flex-start' : 'center', borderRadius: 9, marginBottom: 3, cursor: onPrefix ? 'pointer' : 'default' }}>
                 <span style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: LH.green, color: '#fff' }}>✓</span>
@@ -32688,6 +32689,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               : (() => { const audOk = conds.some(c => c.field); const ok = name.trim() && tz && audOk; return <Btn kind="primary" icon={editing ? 'check' : 'rocket'} onClick={() => { if (!ok) return; if (editing) { updateCampaign(editing.name, { name: name.trim(), status, records: audienceType === 'new' ? 0 : enrolledCount, goal, audienceType }); } else { addCampaign({ name: name.trim(), by: 'Ethan Brooks', bi: 'E', status: status === 'Draft' ? 'Active' : status, records: audienceType === 'new' ? 0 : enrolledCount, date: fmtNow(), goal, audienceType }); } onCreate(); }} style={{ opacity: ok ? 1 : 0.5 }}>{editing ? 'Save changes' : 'Publish campaign'}</Btn>; })()}
           </div>
         </div>
+        {confirmClose && <div onClick={() => setConfirmClose(false)} style={{ position: 'fixed', inset: 0, zIndex: 4000, background: 'rgba(20,18,15,.42)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: 404, maxWidth: '94vw', background: '#fff', borderRadius: 14, boxShadow: '0 24px 60px rgba(0,0,0,.3)', padding: 22 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: LH.amberBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="alert-triangle" size={17} color={LH.amber} /></div><div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>Leave campaign setup?</div></div>
+            <div style={{ fontSize: 13, color: LH.sub, lineHeight: 1.55, marginBottom: 18 }}>Your progress is auto-saved. Keep it as a draft to finish later, or discard these steps.</div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
+              <Btn onClick={() => setConfirmClose(false)}>Keep editing</Btn>
+              <button onClick={() => { setConfirmClose(false); onClose(); }} style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.red, cursor: 'pointer' }}>Discard</button>
+              <Btn kind="primary" icon="check" onClick={() => { if (name.trim()) { if (editing) { updateCampaign(editing.name, { name: name.trim(), status: 'Draft', records: audienceType === 'new' ? 0 : enrolledCount, goal, audienceType }); } else { addCampaign({ name: name.trim(), by: 'Ethan Brooks', bi: 'E', status: 'Draft', records: audienceType === 'new' ? 0 : enrolledCount, date: fmtNow(), goal, audienceType }); } onToast && onToast('Saved as draft'); } setConfirmClose(false); onClose(); }}>Save as draft</Btn>
+            </div>
+          </div>
+        </div>}
       </div>;
     const pbModal = pbPreview && pbFile && <ChOverlay title={pbFile.name} sub="Playbook preview" width={780} onClose={() => setPbPreview(false)} foot={<Btn onClick={() => setPbPreview(false)}>Close</Btn>}>
       {pbFile.kind === 'image'
