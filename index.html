@@ -34247,43 +34247,56 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   // sub-question once answered — the checklist branches on the lead's answers.
   const PLAYBOOKS = [
     { id: 'lead-qual', name: 'Lead Qualification', tag: 'One playbook · branches on answers', qs: [
-      { q: 'Are you the homeowner or the decision-maker?', req: true },
-      { q: 'Is the property within our service area?', req: true },
-      { q: 'What roof issue are you experiencing?', req: true, branch: 'Storm/hail? → capture date of loss & carrier' },
-      { q: 'Is there active leaking or recent storm damage?', req: true, branch: 'If leaking → flag as emergency, dispatch in 24–48h' },
-      { q: 'Is this being filed as an insurance claim?', req: true, branch: 'If yes → capture claim # and adjuster status' },
-      { q: 'What is your target timeframe to get it fixed?', req: true },
-      { q: 'Property address / service area?', req: true },
-      { q: 'Best callback number and time?', req: false },
-      { q: 'Budget range you have in mind?', req: false },
-      { q: 'How did you hear about us?', req: false }
+      { q: 'Are you the homeowner or the decision-maker?', req: true, type: 'select', opts: ['Homeowner', 'Authorized decision-maker', 'Neither / tenant'] },
+      { q: 'Is the property within our service area?', req: true, type: 'select', opts: ['Yes', 'No', 'Not sure'] },
+      { q: 'What roof issue are you experiencing?', req: true, type: 'select', opts: ['Storm / hail damage', 'Active leak', 'Aging / general wear', 'Missing shingles', 'Other'], branch: 'Storm/hail? → capture date of loss & carrier' },
+      { q: 'Is there active leaking or recent storm damage?', req: true, type: 'select', opts: ['Active leak', 'Recent storm', 'Neither'], branch: 'If leaking → flag as emergency, dispatch in 24–48h' },
+      { q: 'Is this being filed as an insurance claim?', req: true, type: 'select', opts: ['Yes', 'No', 'Maybe / not sure'], branch: 'If yes → capture claim # and adjuster status' },
+      { q: 'What is your target timeframe to get it fixed?', req: true, type: 'select', opts: ['ASAP / emergency', 'Within 1 month', '1–3 months', 'Just exploring'] },
+      { q: 'Property address / service area?', req: true, type: 'text', ph: 'Street, city, ZIP' },
+      { q: 'Best callback number and time?', req: false, type: 'text', ph: 'e.g. (469) 555-0172, evenings' },
+      { q: 'Budget range you have in mind?', req: false, type: 'text', ph: 'e.g. $8k–$12k' },
+      { q: 'How did you hear about us?', req: false, type: 'select', opts: ['Google', 'Referral', 'Angi / Thumbtack', 'Social', 'Other'] }
     ] }
   ];
+  const PLAYBOOK_LEADS = ['Erin Patel', 'Sarah Mitchell', 'Caleb Norris', 'David Moore', 'Marcus Reed'];
   function PlaybookDock({ playbook, anchor, onCollapse }) {
     const qs = playbook.qs;
     const [ans, setAns] = useState({});
-    const toggle = i => setAns(a => ({ ...a, [i]: !a[i] }));
+    const [leadName, setLeadName] = useState(PLAYBOOK_LEADS[0]);
+    const setA = (i, v) => setAns(a => ({ ...a, [i]: v }));
+    const filled = i => { const v = ans[i]; return v != null && String(v).trim() !== ''; };
     const reqIdx = qs.map((q, i) => q.req ? i : -1).filter(i => i >= 0);
-    const reqLeft = reqIdx.filter(i => !ans[i]).length;
-    const answered = Object.values(ans).filter(Boolean).length;
+    const reqLeft = reqIdx.filter(i => !filled(i)).length;
+    const answered = qs.map((q, i) => i).filter(filled).length;
     const outcome = reqLeft === 0 ? { label: 'Qualified', bg: LH.greenBg, fg: LH.green, ic: 'check-circle' } : { label: 'Not qualified — ' + reqLeft + ' required left', bg: LH.amberBg, fg: LH.amber, ic: 'alert-circle' };
-    const W = 380;
+    const initials = leadName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const W = 396;
     const left = anchor ? Math.max(12, Math.min(anchor.left, window.innerWidth - W - 12)) : window.innerWidth - W - 16;
     const bottom = anchor ? anchor.bottom : 60;
-    return <div style={{ position: 'fixed', left, bottom, zIndex: 2500, width: W, maxWidth: '94vw', height: 520, maxHeight: 'calc(100vh - 120px)', background: '#fff', borderRadius: 14, border: '1px solid ' + LH.border, boxShadow: '0 24px 60px rgba(0,0,0,.28)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+    const inp = { width: '100%', height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 12.5, color: LH.ink, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' };
+    return <div style={{ position: 'fixed', left, bottom, zIndex: 2500, width: W, maxWidth: '94vw', height: 540, maxHeight: 'calc(100vh - 120px)', background: '#fff', borderRadius: 14, border: '1px solid ' + LH.border, boxShadow: '0 24px 60px rgba(0,0,0,.28)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 14px', borderBottom: '1px solid ' + LH.borderSoft }}>
         <div style={{ width: 28, height: 28, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="book-open" size={15} color={LH.primary} /></div>
         <div style={{ flex: 1, minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{playbook.name}</span><span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '.05em', color: LH.primary, background: LH.tint, borderRadius: 999, padding: '1px 7px' }}>PLAYBOOK</span></div><div style={{ fontSize: 11, color: LH.muted }}>{playbook.tag} · {qs.length} questions</div></div>
         <button onClick={onCollapse} title="Collapse" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Ic name="chevron-down" size={18} color={LH.sub} /></button>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: outcome.bg, borderBottom: '1px solid ' + LH.borderSoft }}><Ic name={outcome.ic} size={15} color={outcome.fg} /><span style={{ fontSize: 12.5, fontWeight: 700, color: outcome.fg }}>{outcome.label}</span><span style={{ fontSize: 11.5, color: LH.muted, marginLeft: 'auto' }}>{answered}/{qs.length} answered</span></div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px 12px' }}>
-        {qs.map((q, i) => { const on = !!ans[i]; return <div key={i} onClick={() => toggle(i)} style={{ display: 'flex', gap: 10, padding: '10px 10px', borderRadius: 9, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-          <span style={{ width: 19, height: 19, borderRadius: 6, flexShrink: 0, marginTop: 1, border: '1.5px solid ' + (on ? LH.green : LH.border), background: on ? LH.green : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on && <Ic name="check" size={12} color="#fff" />}</span>
-          <div style={{ flex: 1 }}><div style={{ fontSize: 13, color: on ? LH.muted : LH.ink, fontWeight: 500, lineHeight: 1.4, textDecoration: on ? 'line-through' : 'none' }}>{q.q}</div>{q.req && <span style={{ display: 'inline-block', marginTop: 4, fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: LH.amber, background: LH.amberBg, borderRadius: 999, padding: '1px 7px' }}>REQUIRED</span>}{on && q.branch && <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '5px 8px', borderRadius: 7, background: LH.tint, fontSize: 11, color: LH.primary, fontWeight: 500 }}><Ic name="git-branch" size={12} color={LH.primary} />{q.branch}</div>}</div>
-        </div>; })}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: '1px solid ' + LH.borderSoft }}>
+        <div style={{ width: 28, height: 28, borderRadius: 999, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10.5, fontWeight: 700, flexShrink: 0 }}>{initials}</div>
+        <div style={{ minWidth: 0 }}><div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '.06em', color: LH.muted }}>ASSOCIATED LEAD</div><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{leadName}</div></div>
+        <div style={{ width: 130, marginLeft: 'auto', flexShrink: 0 }}><Dropdown value={leadName} height={30} options={PLAYBOOK_LEADS.map(o => ({ value: o, label: o }))} onChange={setLeadName} /></div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}><span style={{ fontSize: 11.5, color: LH.muted, flex: 1 }}>Runs on SMS, email or a live call</span><Btn kind="primary" icon="check" onClick={onCollapse}>Save to lead</Btn></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: outcome.bg, borderBottom: '1px solid ' + LH.borderSoft }}><Ic name={outcome.ic} size={15} color={outcome.fg} /><span style={{ fontSize: 12.5, fontWeight: 700, color: outcome.fg }}>{outcome.label}</span><span style={{ fontSize: 11.5, color: LH.muted, marginLeft: 'auto' }}>{answered}/{qs.length} answered</span></div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 14px 14px' }}>
+        {qs.map((q, i) => <div key={i} style={{ marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, lineHeight: 1.35 }}>{q.q}</span>{q.req && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.04em', color: LH.amber, background: LH.amberBg, borderRadius: 999, padding: '1px 6px', flexShrink: 0 }}>REQUIRED</span>}</div>
+          {q.type === 'select'
+            ? <Dropdown value={ans[i] || ''} placeholder="Select an answer…" height={34} options={q.opts.map(o => ({ value: o, label: o }))} onChange={v => setA(i, v)} />
+            : <input value={ans[i] || ''} onChange={e => setA(i, e.target.value)} placeholder={q.ph || 'Type an answer…'} style={inp} />}
+          {filled(i) && q.branch && <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '5px 8px', borderRadius: 7, background: LH.tint, fontSize: 11, color: LH.primary, fontWeight: 500 }}><Ic name="git-branch" size={12} color={LH.primary} />{q.branch}</div>}
+        </div>)}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}><span style={{ fontSize: 11.5, color: LH.muted, flex: 1 }}>Runs on SMS, email or a live call</span><Btn kind="primary" icon="check" onClick={onCollapse}>Save to {leadName.split(' ')[0]}</Btn></div>
     </div>;
   }
   // Linear-style floating cluster (bottom-right): clock (recents) · Agent · one pill per playbook name.
