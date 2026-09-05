@@ -32302,7 +32302,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const removeAttempt = id => setAttempts(a => (a.length > 1 ? a.filter(x => x.id !== id) : a));
     const addAttempt = () => setAttempts(a => [...a, { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 1, unit: 'day' } }]);
     const duplicateAttempt = id => setAttempts(a => { const i = a.findIndex(x => x.id === id); return i < 0 ? a : [...a.slice(0, i + 1), { ...a[i], id: wuid() }, ...a.slice(i + 1)]; });
-    const [openStep, setOpenStep] = useState(null); // attempt id expanded in the flow builder
+    const [openStep, setOpenStep] = useState(null); // selected node in the flow builder
+    const [railOpen, setRailOpen] = useState(true); // wizard step rail collapsible
     // Exit
     const [exitJoin, setExitJoin] = useState('or');
     const [exitConds, setExitConds] = useState([{ id: wuid(), field: 'job.current_status', op: 'is any of', val: ['Qualified', 'Disqualified'] }]);
@@ -32480,56 +32481,50 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       const WZ_CH = { sms: { icon: 'message-square', label: 'Send SMS', short: 'SMS', bg: LH.tint, fg: LH.ink }, call: { icon: 'phone', label: 'Place call', short: 'Call', bg: LH.blueBg, fg: LH.blue }, email: { icon: 'mail', label: 'Send email', short: 'Email', bg: '#efe9de', fg: '#8a6d3b' }, voice_drop: { icon: 'mic', label: 'Voice drop', short: 'Voice', bg: LH.tint, fg: LH.ink }, video_drop: { icon: 'video', label: 'Video drop', short: 'Video', bg: '#efe9de', fg: '#8a6d3b' }, task: { icon: 'square-check-big', label: 'Create task', short: 'Task', bg: LH.greenBg, fg: LH.green } };
       const wConn = <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 18, background: LH.border }} /></div>;
       const wPill = txt => <div style={{ display: 'flex', justifyContent: 'center' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 12px', borderRadius: 999, background: '#f1f0ec', border: '1px solid ' + LH.borderSoft, fontSize: 12, fontWeight: 600, color: LH.body }}><Ic name="timer" size={13} color={LH.sub} />{txt}</span></div>;
-      if (step === 2) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="headphones" size={19} color={LH.primary} /></div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Attempt sequence</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Nova works each lead through these attempts in order, waiting between them. The sequence is <b style={{ color: LH.ink }}>outcome-based</b> — it stops the moment the lead qualifies, disqualifies, replies, or opts out. There is no fixed calendar; waits are relative to the previous attempt.</div>
-        <Card style={{ padding: 16, marginBottom: 18 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>SEND WINDOW · DAYS</div>
-            <div style={{ display: 'flex', gap: 5 }}>{DOW.map((d, i) => <button key={i} onClick={() => setSendDays({ ...sendDays, [i]: !sendDays[i] })} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + (sendDays[i] ? LH.primary : LH.border), background: sendDays[i] ? LH.primary : '#fff', color: sendDays[i] ? '#fff' : LH.sub, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>{d}</button>)}</div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', rowGap: 12, paddingTop: 14, marginTop: 14, borderTop: '1px solid ' + LH.borderSoft }}>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>BUSINESS HOURS</div>
-              <div style={{ fontSize: 13, color: LH.body, marginTop: 4 }}>Only send during set hours — waits that land outside roll to the next open window</div>
+      if (step === 2) return (() => {
+        const fnode = (id, icon, bg, fg, title, sub, chip) => { const selN = openStep === id; return <div onClick={() => setOpenStep(id)} style={{ maxWidth: 460, margin: '0 auto', background: '#fff', border: '1.5px solid ' + (selN ? LH.blue : LH.border), borderRadius: 12, boxShadow: selN ? '0 0 0 3px ' + LH.blueBg : '0 1px 2px rgba(0,0,0,.04)', padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer', transition: 'border-color .12s, box-shadow .12s' }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={16} color={fg} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{title}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div></div>
+          {chip && <span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 8px', borderRadius: 7, background: '#f1f0ec', fontSize: 11, fontWeight: 600, color: LH.sub, flexShrink: 0 }}>{chip}</span>}
+        </div>; };
+        const bconn = <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 20, background: LH.blueBd }} /></div>;
+        const bpill = txt => <div style={{ display: 'flex', justifyContent: 'center' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 24, padding: '0 11px', borderRadius: 999, background: LH.blueBg, fontSize: 11.5, fontWeight: 600, color: LH.blue }}><Ic name="timer" size={12} color={LH.blue} />{txt}</span></div>;
+        const sel = openStep === 'trigger' ? { trigger: true } : attempts.find(a => a.id === openStep);
+        const selIdx = sel && !sel.trigger ? attempts.findIndex(a => a.id === openStep) : -1;
+        const nextOf = i => i < attempts.length - 1 ? { title: 'Step ' + (i + 2) + ': ' + (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).label, icon: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).icon, fg: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).fg, bg: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).bg, cond: 'if no response' } : { title: 'Exit — Qualified or Disqualified', icon: 'log-out', fg: LH.sub, bg: '#f1f0ec', cond: 'sequence end' };
+        const panelOpen = openStep && openStep !== 'exit';
+        return <div style={{ position: 'relative', flex: 1, minWidth: 0, alignSelf: 'stretch', display: 'flex', overflow: 'hidden' }}>
+          <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', background: '#fbfaf8', backgroundImage: 'radial-gradient(circle, #e3ddd0 1px, transparent 1px)', backgroundSize: '18px 18px', padding: '22px 26px 44px', paddingRight: panelOpen ? 424 : 26, transition: 'padding-right .24s ease' }}>
+            <div style={{ maxWidth: 620, margin: '0 auto' }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="headphones" size={19} color={LH.primary} /></div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Attempt sequence</div>
+              <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Nova works each lead through these attempts in order — <b style={{ color: LH.ink }}>outcome-based</b>, stopping the moment the lead qualifies, disqualifies, replies, or opts out. Click a step to configure it.</div>
+              <Card style={{ padding: 16, marginBottom: 18 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>SEND WINDOW · DAYS</div>
+                  <div style={{ display: 'flex', gap: 5 }}>{DOW.map((d, i) => <button key={i} onClick={() => setSendDays({ ...sendDays, [i]: !sendDays[i] })} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + (sendDays[i] ? LH.primary : LH.border), background: sendDays[i] ? LH.primary : '#fff', color: sendDays[i] ? '#fff' : LH.sub, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>{d}</button>)}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', rowGap: 12, paddingTop: 14, marginTop: 14, borderTop: '1px solid ' + LH.borderSoft }}>
+                  <div><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>BUSINESS HOURS</div><div style={{ fontSize: 13, color: LH.body, marginTop: 4 }}>Only send during set hours — waits that land outside roll to the next open window</div></div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}><Toggle on={bizHours} onChange={setBizHours} /><div style={{ display: 'flex', gap: 8, alignItems: 'center', opacity: bizHours ? 1 : 0.4, pointerEvents: bizHours ? 'auto' : 'none' }}><div style={{ width: 118 }}><Dropdown value="9:00 am" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div><span style={{ color: LH.muted, fontSize: 12 }}>to</span><div style={{ width: 118 }}><Dropdown value="8:00 pm" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div></div></div>
+                </div>
+              </Card>
+              <div style={{ padding: '6px 0' }}>
+                {fnode('trigger', 'user-plus', LH.greenBg, LH.green, 'Lead enrolled', 'Enters on create — first attempt fires immediately')}
+                {attempts.map((a, i) => { const c = WZ_CH[a.ch] || WZ_CH.sms; const preview = (a.body && a.body.trim()) || (a.subject && a.subject.trim()) || ('Configure this ' + c.label.toLowerCase()); const unitLabel = (WAIT_UNITS.find(u => u[0] === ((a.wait && a.wait.unit) || 'day')) || ['day', 'days'])[1]; return <div key={a.id}>
+                  {bconn}{bpill(i === 0 ? 'On enrollment · fires immediately' : 'Wait ' + (a.wait && a.wait.n != null ? a.wait.n : 1) + ' ' + unitLabel + ' · if no response')}{bconn}
+                  {fnode(a.id, c.icon, c.bg, c.fg, 'Step ' + (i + 1) + ': ' + c.label, preview, c.short)}
+                </div>; })}
+                {bconn}
+                <div style={{ display: 'flex', justifyContent: 'center' }}><button onClick={() => { const na = { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 1, unit: 'day' } }; setAttempts(a => [...a, na]); setOpenStep(na.id); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 36, padding: '0 16px', borderRadius: 9, border: '1px dashed ' + LH.border, background: '#fff', color: LH.primary, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} onMouseEnter={e => { e.currentTarget.style.background = LH.tint; e.currentTarget.style.borderColor = LH.primary; }} onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = LH.border; }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button></div>
+                {bconn}{bpill('If qualified or disqualified')}{bconn}
+                {fnode('exit', 'log-out', '#f1f0ec', LH.sub, 'Exit — Qualified or Disqualified', 'Also exits on reply, opt-out, or Nova DND')}
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              <Toggle on={bizHours} onChange={setBizHours} />
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', opacity: bizHours ? 1 : 0.4, pointerEvents: bizHours ? 'auto' : 'none' }}><div style={{ width: 118 }}><Dropdown value="9:00 am" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div><span style={{ color: LH.muted, fontSize: 12 }}>to</span><div style={{ width: 118 }}><Dropdown value="8:00 pm" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div></div>
-            </div>
           </div>
-        </Card>
-        {(() => {
-          // Node card on the canvas — selected gets a blue outline; click opens the right settings sheet.
-          const fnode = (id, icon, bg, fg, title, sub, chip) => { const selN = openStep === id; return <div onClick={() => setOpenStep(id)} style={{ maxWidth: 460, margin: '0 auto', background: '#fff', border: '1.5px solid ' + (selN ? LH.blue : LH.border), borderRadius: 12, boxShadow: selN ? '0 0 0 3px ' + LH.blueBg : '0 1px 2px rgba(0,0,0,.04)', padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer', transition: 'border-color .12s, box-shadow .12s' }}>
-            <div style={{ width: 34, height: 34, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={16} color={fg} /></div>
-            <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{title}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div></div>
-            {chip && <span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 8px', borderRadius: 7, background: '#f1f0ec', fontSize: 11, fontWeight: 600, color: LH.sub, flexShrink: 0 }}>{chip}</span>}
-          </div>; };
-          const bconn = <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 20, background: LH.blueBd }} /></div>;
-          const bpill = txt => <div style={{ display: 'flex', justifyContent: 'center' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 24, padding: '0 11px', borderRadius: 999, background: LH.blueBg, fontSize: 11.5, fontWeight: 600, color: LH.blue }}><Ic name="timer" size={12} color={LH.blue} />{txt}</span></div>;
-          const sel = openStep === 'trigger' ? { trigger: true } : attempts.find(a => a.id === openStep);
-          const selIdx = sel && !sel.trigger ? attempts.findIndex(a => a.id === openStep) : -1;
-          const nextOf = i => i < attempts.length - 1 ? { title: 'Step ' + (i + 2) + ': ' + (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).label, icon: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).icon, fg: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).fg, bg: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).bg, cond: 'if no response' } : { title: 'Exit — Qualified or Disqualified', icon: 'log-out', fg: LH.sub, bg: '#f1f0ec', cond: 'sequence end' };
-          return <>
-          {/* Canvas */}
-          <div style={{ position: 'relative', background: '#fbfaf8', backgroundImage: 'radial-gradient(circle, #e3ddd0 1px, transparent 1px)', backgroundSize: '18px 18px', border: '1px solid ' + LH.borderSoft, borderRadius: 14, padding: '26px 16px 30px' }}>
-            {fnode('trigger', 'user-plus', LH.greenBg, LH.green, 'Lead enrolled', 'Enters on create — first attempt fires immediately')}
-            {attempts.map((a, i) => { const c = WZ_CH[a.ch] || WZ_CH.sms; const preview = (a.body && a.body.trim()) || (a.subject && a.subject.trim()) || ('Configure this ' + c.label.toLowerCase()); const unitLabel = (WAIT_UNITS.find(u => u[0] === ((a.wait && a.wait.unit) || 'day')) || ['day', 'days'])[1]; return <div key={a.id}>
-              {bconn}{bpill(i === 0 ? 'On enrollment · fires immediately' : 'Wait ' + (a.wait && a.wait.n != null ? a.wait.n : 1) + ' ' + unitLabel + ' · if no response')}{bconn}
-              {fnode(a.id, c.icon, c.bg, c.fg, 'Step ' + (i + 1) + ': ' + c.label, preview, c.short)}
-            </div>; })}
-            {bconn}
-            <div style={{ display: 'flex', justifyContent: 'center' }}><button onClick={() => { const na = { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 1, unit: 'day' } }; setAttempts(a => [...a, na]); setOpenStep(na.id); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 36, padding: '0 16px', borderRadius: 9, border: '1px dashed ' + LH.border, background: '#fff', color: LH.primary, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} onMouseEnter={e => { e.currentTarget.style.background = LH.tint; e.currentTarget.style.borderColor = LH.primary; }} onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = LH.border; }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button></div>
-            {bconn}{bpill('If qualified or disqualified')}{bconn}
-            {fnode('exit', 'log-out', '#f1f0ec', LH.sub, 'Exit — Qualified or Disqualified', 'Also exits on reply, opt-out, or Nova DND')}
-          </div>
-          {/* Right settings sheet */}
-          {openStep && openStep !== 'exit' && <div onClick={() => setOpenStep(null)} style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(20,18,15,.28)' }} />}
-          <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(400px,96vw)', background: '#fff', zIndex: 3001, boxShadow: '-16px 0 48px rgba(0,0,0,.2)', display: 'flex', flexDirection: 'column', transform: (openStep && openStep !== 'exit') ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .26s cubic-bezier(0.32,0.72,0,1)', fontFamily: "'Inter',ui-sans-serif,system-ui" }} onClick={e => e.stopPropagation()}>
+          <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 'min(400px,94%)', background: '#fff', borderLeft: '1px solid ' + LH.borderSoft, boxShadow: '-8px 0 22px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', transform: panelOpen ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .24s cubic-bezier(0.32,0.72,0,1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
-              <button onClick={() => setOpenStep(null)} title="Back" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="arrow-left" size={18} color={LH.ink} /></button>
+              <button onClick={() => setOpenStep(null)} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="arrow-left" size={18} color={LH.ink} /></button>
               <div style={{ flex: 1 }} />
               {sel && !sel.trigger && <button onClick={() => onToast && onToast('Pick a different channel below to replace this step')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="repeat" size={13} color={LH.sub} />Replace step</button>}
             </div>
@@ -32562,10 +32557,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               </>; })()}
             </div>
           </div>
-          </>;
-        })()}
-        <div style={{ marginTop: 14, border: '1px solid ' + LH.borderSoft, borderRadius: 10, background: LH.bg, padding: '12px 14px', display: 'flex', gap: 9 }}><Ic name="flag" size={15} color={LH.sub} style={{ flexShrink: 0, marginTop: 1 }} /><span style={{ fontSize: 12.5, color: LH.sub, lineHeight: 1.5 }}><b style={{ color: LH.ink }}>End of sequence.</b> After attempt {attempts.length} with no response, the lead stops receiving outreach — handle what happens next under <b style={{ color: LH.ink }}>Exit rules</b>. A qualifying outcome ends the sequence at any point, well before the last attempt.</span></div>
-      </div>;
+        </div>;
+      })();
       if (step === 3) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="book-open" size={19} color={LH.primary} /></div>
         <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Qualification playbook</div>
@@ -32672,19 +32665,20 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
         </div>
         <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-          <div style={{ width: 230, flexShrink: 0, borderRight: '1px solid ' + LH.borderSoft, padding: 14, background: LH.bg, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ width: railOpen ? 230 : 52, flexShrink: 0, borderRight: '1px solid ' + LH.borderSoft, padding: railOpen ? 14 : '14px 8px', background: LH.bg, display: 'flex', flexDirection: 'column', transition: 'width .18s ease' }}>
+            <button onClick={() => setRailOpen(o => !o)} title={railOpen ? 'Collapse' : 'Expand'} style={{ alignSelf: railOpen ? 'flex-end' : 'center', width: 28, height: 28, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, flexShrink: 0 }}><Ic name={railOpen ? 'chevrons-left' : 'chevrons-right'} size={15} color={LH.sub} /></button>
             <div style={{ flex: 1 }}>
-              {prefixSteps.map((s, pi) => <div key={'pre' + pi} onClick={() => onPrefix && onPrefix(pi)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, marginBottom: 3, cursor: onPrefix ? 'pointer' : 'default' }}>
+              {prefixSteps.map((s, pi) => <div key={'pre' + pi} onClick={() => onPrefix && onPrefix(pi)} title={s} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: railOpen ? '9px 10px' : '9px 0', justifyContent: railOpen ? 'flex-start' : 'center', borderRadius: 9, marginBottom: 3, cursor: onPrefix ? 'pointer' : 'default' }}>
                 <span style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: LH.green, color: '#fff' }}>✓</span>
-                <span style={{ fontSize: 12.5, fontWeight: 500, color: LH.body }}>{s}</span>
+                {railOpen && <span style={{ fontSize: 12.5, fontWeight: 500, color: LH.body }}>{s}</span>}
               </div>)}
-              {WIZ_STEPS.map((s, i) => i < skipN ? null : <div key={s} onClick={() => setStep(i)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, marginBottom: 3, cursor: 'pointer', background: step === i ? '#fff' : 'transparent', border: '1px solid ' + (step === i ? LH.border : 'transparent') }}>
+              {WIZ_STEPS.map((s, i) => i < skipN ? null : <div key={s} onClick={() => setStep(i)} title={s} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: railOpen ? '9px 10px' : '9px 0', justifyContent: railOpen ? 'flex-start' : 'center', borderRadius: 9, marginBottom: 3, cursor: 'pointer', background: step === i && railOpen ? '#fff' : 'transparent', border: '1px solid ' + (step === i && railOpen ? LH.border : 'transparent') }}>
                 <span style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: i < step ? LH.green : (i === step ? LH.primary : '#f1f0ec'), color: i <= step ? '#fff' : LH.muted }}>{i < step ? '✓' : prefixSteps.length + (i - skipN) + 1}</span>
-                <span style={{ fontSize: 12.5, fontWeight: step === i ? 600 : 500, color: step === i ? LH.ink : LH.sub }}>{s}</span>
+                {railOpen && <span style={{ fontSize: 12.5, fontWeight: step === i ? 600 : 500, color: step === i ? LH.ink : LH.sub }}>{s}</span>}
               </div>)}
             </div>
           </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '26px 30px' }}>{stepBody()}</div>
+          <div style={{ flex: 1, minWidth: 0, overflow: step === 2 ? 'hidden' : 'auto', padding: step === 2 ? 0 : '26px 30px', display: step === 2 ? 'flex' : 'block' }}>{stepBody()}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
           <div style={{ display: 'flex', gap: 8 }}>
