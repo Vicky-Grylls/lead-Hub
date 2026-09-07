@@ -31081,8 +31081,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const phone = '469-555-0172';
     const toast = m => onToast && onToast(m);
     // Match the side sheet's tab set exactly.
-    const PTABS = [['details', 'Overview'], ['communication', 'Communication'], ['qualification', 'Qualification'], ['activity', 'Activity'], ['campaign', 'Campaign'], ['notes', 'Notes'], ['tasks', 'Tasks']];
-    const MTABS = [['files', 'Attachments']];
+    const PTABS = [['details', 'Overview'], ['communication', 'Communication'], ['qualification', 'Qualification'], ['activity', 'Activity'], ['campaign', 'Campaign']];
+    const MTABS = [['notes', 'Notes'], ['tasks', 'Tasks'], ['files', 'Attachments']];
     const moreActive = MTABS.some(([k]) => k === tab);
     const moreLabel = moreActive ? MTABS.find(([k]) => k === tab)[1] : '+' + MTABS.length + ' More';
     const addNote = () => { if (!noteText.trim()) return; setNotes(ns => [{ text: noteText.trim(), who: 'You', when: 'Just now' }, ...ns]); setNoteText(''); };
@@ -31168,8 +31168,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
         {/* Center column */}
         <div style={{ flex: 1, minWidth: 0, borderRight: '1px solid ' + LH.borderSoft, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid ' + LH.borderSoft, flexWrap: 'wrap', position: 'relative', flexShrink: 0, background: '#fff', padding: '14px 22px 0' }}>
-            {PTABS.map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ padding: '9px 13px', fontSize: 12.5, fontWeight: 600, color: tab === k ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (tab === k ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{l}</button>)}
+          <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid ' + LH.borderSoft, flexWrap: 'nowrap', position: 'relative', flexShrink: 0, background: '#fff', padding: '14px 22px 0', whiteSpace: 'nowrap' }}>
+            {PTABS.map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ padding: '9px 13px', fontSize: 12.5, fontWeight: 600, color: tab === k ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (tab === k ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer', flexShrink: 0 }}>{l}</button>)}
             <button onClick={() => setMoreTabsOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '9px 13px', fontSize: 12.5, fontWeight: 600, color: moreActive ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (moreActive ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{moreLabel}<Ic name={moreTabsOpen ? 'chevron-up' : 'chevron-down'} size={13} color={LH.muted} /></button>
             {moreTabsOpen && <div onMouseLeave={() => setMoreTabsOpen(false)} style={{ position: 'absolute', top: 44, right: 12, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, width: 170 }}>{MTABS.map(([k, l]) => <div key={k} onClick={() => { setTab(k); setMoreTabsOpen(false); }} style={{ padding: '8px 10px', borderRadius: 7, fontSize: 13, fontWeight: 500, color: tab === k ? LH.ink : LH.body, background: tab === k ? LH.tint : 'transparent', cursor: 'pointer' }} onMouseEnter={e => { if (tab !== k) e.currentTarget.style.background = '#f6f4ef'; }} onMouseLeave={e => { if (tab !== k) e.currentTarget.style.background = 'transparent'; }}>{l}</div>)}</div>}
           </div>
