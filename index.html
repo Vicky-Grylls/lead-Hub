@@ -30211,7 +30211,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const kebabIcColor = a => a === 'Delete lead' ? LH.red : a === 'Mark as lost' ? LH.amber : LH.sub;
     return <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 12 }}>
-        <LeadAvatar name={lead.name} size={40} style={{ borderRadius: 11 }} />
+        <div style={{ width: 40, height: 40, borderRadius: 11, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>{initials}</div>
         <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink, lineHeight: 1.3, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.name}</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: LH.sub, marginBottom: 14 }}><Ic name="map-pin" size={13} color={LH.muted} />{address}</div>
@@ -30950,7 +30950,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </LeadCollapse>
         <LeadCollapse title="Contact" open={open.contact} onToggle={() => toggle('contact')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}>
-            <LeadAvatar name={lead.name} size={32} />
+            <div style={{ width: 32, height: 32, borderRadius: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: '#dbeafe', fontSize: 11, fontWeight: 600, color: '#2563eb' }}>{initials}</div>
             <div style={{ flex: 1, minWidth: 0 }}><span style={{ display: 'block', fontSize: 12, color: '#262626', fontWeight: 500 }}>{lead.name}</span><span style={{ fontSize: 11, color: '#737373', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>{email}</span></div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="phone" size={14} color="#a3a3a3" /><Ic name="mail" size={14} color="#a3a3a3" /></div>
           </div>
