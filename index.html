@@ -8,6 +8,19 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
+<style id="zuper-tokens">
+  /* Zuper design system tokens (from web-design-system skill) */
+  .bg-primary { background-color: #1E293B; }
+  .text-primary { color: #1E293B; }
+  .border-primary { border-color: #1E293B; }
+  .bg-product-light { background-color: #FCEDE8; }
+  .bg-theme-light { background-color: #FDFDFC; }
+  .bg-theme { background-color: #f8f2ec; }
+  .shadow-2xs { box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
+  .shadow-xs  { box-shadow: 0 1px 3px 0 rgba(0,0,0,0.07); }
+  .border-border { border-color: #E2E8F0; }
+  .text-md { font-size: 0.8125rem; line-height: 1.15rem; }
+</style>
 <script src="https://unpkg.com/lucide@latest"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -30574,10 +30587,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [dlc10, setDlc10] = useState('none');
     const setDlc10Status = v => setDlc10(v);
     const kpis = [
-      { label: 'Received today', value: 28, accent: LH.ink },
-      { label: 'Qualified today', value: 7, accent: LH.green },
-      { label: 'In drip', value: 41, accent: '#6d28d9' },
-      { label: 'Awaiting human', value: 3, accent: LH.primary }
+      { label: 'Received today', value: 28, badge: '+11%', go: 'lead-pipeline' },
+      { label: 'Qualified today', value: 7, badge: '+6%', go: 'lead-pipeline' },
+      { label: 'In drip', value: 41, badge: '−3%', go: 'lead-pipeline' },
+      { label: 'Awaiting human', value: 3, badge: '2 new', go: 'lead-pipeline' },
+      { label: 'Converted', value: 12, badge: '+2', go: 'lead-pipeline' }
     ];
     const tiles = [
       { id: 'lead-pipeline', icon: 'filter', title: 'Pipeline', desc: '6 active leads across 7 stages', accent: LH.blue },
@@ -30601,7 +30615,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const firstOpen = steps.findIndex(s => stepStatus(s) === 'open');
     const list = setupTab === 'Setup' ? steps : recs;
     return <div>
-      <div style={{ display: 'flex', gap: 12, marginBottom: 22 }}>{kpis.map(k => <StatCard key={k.label} {...k} />)}</div>
+      <div className="flex space-x-3 select-none" style={{ marginBottom: 22 }}>{kpis.map(k => <div key={k.label} role="button" tabIndex={0} onClick={() => onNavigate(k.go)} className="h-20 p-3 flex-col flex justify-center flex-auto bg-white border shadow-xs cursor-pointer rounded-md border-gray-200">
+        <div className="flex items-center justify-between text-base text-gray-400 font-medium whitespace-nowrap">
+          <span className="text-gray-500 flex items-center space-x-1.5 min-w-0"><span className="truncate">{k.label}</span></span>
+          <span className="text-blue-500 bg-blue-50 rounded-md leading-tight p-1.5">{k.badge}</span>
+        </div>
+        <div className="text-2xl font-semibold whitespace-nowrap text-gray-900">{k.value}</div>
+      </div>)}</div>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
         <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 17, fontWeight: 700, color: LH.ink }}>Next steps for you</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Follow the steps below to tailor Lead Hub to your workflow.</div></div>
         <button onClick={toggleNextSteps} title={nextStepsOpen ? 'Collapse' : 'Expand'} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name={nextStepsOpen ? 'chevron-up' : 'chevron-down'} size={16} color={LH.sub} /></button>
