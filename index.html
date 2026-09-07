@@ -32651,9 +32651,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       const wPill = txt => <div style={{ display: 'flex', justifyContent: 'center' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 12px', borderRadius: 999, background: '#f1f0ec', border: '1px solid ' + LH.borderSoft, fontSize: 12, fontWeight: 600, color: LH.body }}><Ic name="timer" size={13} color={LH.sub} />{txt}</span></div>;
       if (step === 2) return (() => {
         const fnode = (id, icon, bg, fg, title, sub, chip) => { const selN = openStep === id; return <div onClick={() => setOpenStep(o => o === id ? null : id)} style={{ maxWidth: 460, margin: '0 auto', background: '#fff', border: '1.5px solid ' + (selN ? LH.blue : LH.border), borderRadius: 12, boxShadow: selN ? '0 0 0 3px ' + LH.blueBg : '0 1px 2px rgba(0,0,0,.04)', padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer', transition: 'border-color .12s, box-shadow .12s' }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={16} color={fg} /></div>
-          <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{title}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div></div>
-          {chip && <span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 8px', borderRadius: 7, background: '#f1f0ec', fontSize: 11, fontWeight: 600, color: LH.sub, flexShrink: 0 }}>{chip}</span>}
+          {chip
+            ? <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: LH.ink }}>{chip}</span>
+            : <>
+                <div style={{ width: 34, height: 34, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={16} color={fg} /></div>
+                <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{title}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div></div>
+              </>}
         </div>; };
         const bconn = <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 20, background: LH.blueBd }} /></div>;
         const bpill = txt => <div style={{ display: 'flex', justifyContent: 'center' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 24, padding: '0 11px', borderRadius: 999, background: LH.blueBg, fontSize: 11.5, fontWeight: 600, color: LH.blue }}><Ic name="timer" size={12} color={LH.blue} />{txt}</span></div>;
