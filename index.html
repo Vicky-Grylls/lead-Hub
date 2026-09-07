@@ -32467,7 +32467,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const addAttempt = () => setAttempts(a => [...a, { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 1, unit: 'day' } }]);
     const duplicateAttempt = id => setAttempts(a => { const i = a.findIndex(x => x.id === id); return i < 0 ? a : [...a.slice(0, i + 1), { ...a[i], id: wuid() }, ...a.slice(i + 1)]; });
     const [openStep, setOpenStep] = useState(null); // selected node in the flow builder
-    const [panelWide, setPanelWide] = useState(false); // expandable step editor side sheet
+    const [panelW, setPanelW] = useState(400); // step editor side sheet width (toggle + drag-resize)
+    const panelWide = panelW > 520;
+    const startPanelDrag = e => { e.preventDefault(); const move = ev => { const w = Math.min(920, Math.max(340, window.innerWidth - ev.clientX)); setPanelW(w); }; const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.body.style.userSelect = ''; }; document.body.style.userSelect = 'none'; document.addEventListener('mousemove', move); document.addEventListener('mouseup', up); };
     const [railOpen, setRailOpen] = useState(true); // wizard step rail collapsible
     const [confirmClose, setConfirmClose] = useState(false); // confirm before leaving campaign setup
     // Exit
@@ -32660,12 +32662,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         const nextOf = i => i < attempts.length - 1 ? { title: 'Step ' + (i + 2) + ': ' + (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).label, icon: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).icon, fg: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).fg, bg: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).bg, cond: 'if no response' } : { title: 'Exit — Qualified or Disqualified', icon: 'log-out', fg: LH.sub, bg: '#f1f0ec', cond: 'sequence end' };
         const panelOpen = openStep && openStep !== 'exit';
         return <div style={{ position: 'relative', flex: 1, minWidth: 0, alignSelf: 'stretch', display: 'flex', overflow: 'hidden' }}>
-          <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', background: '#fbfaf8', backgroundImage: 'radial-gradient(circle, #e3ddd0 1px, transparent 1px)', backgroundSize: '18px 18px', padding: '22px 26px 44px', paddingRight: panelOpen ? (panelWide ? 740 : 424) : 26, transition: 'padding-right .24s ease' }}>
+          <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', background: '#fbfaf8', backgroundImage: 'radial-gradient(circle, #e3ddd0 1px, transparent 1px)', backgroundSize: '18px 18px', padding: '22px 26px 44px', paddingRight: panelOpen ? panelW + 24 : 26, transition: 'padding-right .18s ease' }}>
             <div style={{ maxWidth: 620, margin: '0 auto' }}>
               <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="headphones" size={19} color={LH.primary} /></div>
               <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Attempt sequence</div>
               <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Nova works each lead through these attempts in order — <b style={{ color: LH.ink }}>outcome-based</b>, stopping the moment the lead qualifies, disqualifies, replies, or opts out. Click a step to configure it.</div>
-              <Card style={{ padding: 16, marginBottom: 18 }}>
+              <Card style={{ padding: 16, marginBottom: 18, maxWidth: 460, marginLeft: 'auto', marginRight: 'auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>SEND WINDOW · DAYS</div>
                   <div style={{ display: 'flex', gap: 5 }}>{DOW.map((d, i) => <button key={i} onClick={() => setSendDays({ ...sendDays, [i]: !sendDays[i] })} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + (sendDays[i] ? LH.primary : LH.border), background: sendDays[i] ? LH.primary : '#fff', color: sendDays[i] ? '#fff' : LH.sub, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>{d}</button>)}</div>
@@ -32688,13 +32690,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               </div>
             </div>
           </div>
-          <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: panelWide ? 'min(720px,96%)' : 'min(400px,94%)', background: '#fff', borderLeft: '1px solid ' + LH.borderSoft, boxShadow: '-8px 0 22px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', transform: panelOpen ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .24s cubic-bezier(0.32,0.72,0,1), width .2s ease' }}>
+          <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: panelW, maxWidth: '96%', background: '#fff', borderLeft: '1px solid ' + LH.borderSoft, boxShadow: '-8px 0 22px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', transform: panelOpen ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .24s cubic-bezier(0.32,0.72,0,1)' }}>
+            <div onMouseDown={startPanelDrag} title="Drag to resize" style={{ position: 'absolute', top: 0, left: -3, bottom: 0, width: 6, cursor: 'col-resize', zIndex: 5 }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(59,130,246,.25)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 16px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
               {sel && !sel.trigger
                 ? (() => { const c = WZ_CH[sel.ch] || WZ_CH.sms; return <><span style={{ width: 26, height: 26, borderRadius: 7, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={c.icon} size={14} color={c.fg} /></span><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Step {selIdx + 1} · {c.label}</span></>; })()
                 : <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.muted }}>{sel && sel.trigger ? 'Trigger' : 'Step settings'}</span>}
               <div style={{ flex: 1 }} />
-              <button onClick={() => setPanelWide(w => !w)} title={panelWide ? 'Collapse' : 'Expand'} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={panelWide ? 'minimize-2' : 'maximize-2'} size={15} color={LH.sub} /></button>
+              <button onClick={() => setPanelW(w => w > 520 ? 400 : 760)} title={panelWide ? 'Collapse' : 'Expand'} style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={panelWide ? 'minimize-2' : 'maximize-2'} size={15} color={LH.sub} /></button>
               <button onClick={() => setOpenStep(null)} title="Close" style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name="x" size={16} color={LH.sub} /></button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
