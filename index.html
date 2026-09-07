@@ -29850,7 +29850,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {kv('Description', (lead.note && lead.note !== 'Manual entry' ? lead.note : '') || 'Roof replacement after storm damage — wants an inspection this week.')}
           {kv('Category', lead.score >= 70 ? 'Paid' : 'Organic')}
           {kv('Lead source', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, height: 16, borderRadius: 5, background: LH.blueBg, color: LH.blue, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>{lead.src[0]}</span>{lead.src}</span>)}
-          {kv('Lead owner', 'Maria Gonzalez · sold-by')}
+          {kv('Assigned', 'Maria Gonzalez')}
           {kv('Lead value', '$' + (6 + (lead.score % 9)) + ',500 potential')}
           {kv('Converted job', lead.jobId ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: LH.green, fontWeight: 600 }}><Ic name="briefcase" size={13} color={LH.green} />#{lead.jobId}</span> : <span style={{ color: LH.muted }}>Not converted</span>)}
           {kv('Close-won amount', lead.jobId ? '$26,585' : <span style={{ color: LH.muted }}>—</span>)}
@@ -31002,7 +31002,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <Ic name="pencil" size={14} color="#a3a3a3" />
       </div>
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        <LeadCollapse title="Signed (1)" open={open.csr} onToggle={() => toggle('csr')}>
+        <LeadCollapse title="Assigned (1)" open={open.csr} onToggle={() => toggle('csr')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}>
             <LeadAvatar name="Maria Gonzalez" size={32} />
             <div style={{ flex: 1 }}><span style={{ display: 'block', fontSize: 12, color: '#262626', fontWeight: 500 }}>Maria Gonzalez</span><span style={{ fontSize: 11, color: '#737373' }}>Pre Sales</span></div>
@@ -31491,14 +31491,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </div>
       </div>
-      {showKpi && (() => { const KPIS = [{ k: 'received', label: 'Received today', value: '28', badge: '+11%' }, { k: 'contacted', label: 'Contacted', value: leads.filter(l => l.col === 'Contacted').length }, { k: 'engaged', label: 'Engaged', value: leads.filter(l => l.col === 'Engaged').length, badge: '2 new', accent: LH.primary }, { k: 'qualified', label: 'Qualified', value: leads.filter(l => l.col === 'Qualified').length, badge: '+6%' }, { k: 'converted', label: 'Converted', value: leads.filter(l => l.col === 'Converted').length, accent: LH.green }, { k: 'disqualified', label: 'Disqualified', value: leads.filter(l => l.col === 'Disqualified').length }]; return <div className="flex space-x-3 select-none" style={{ marginBottom: 16 }}>
-        {KPIS.map(x => { const on = kpi === x.k; return <div key={x.k} onClick={() => setKpi(k => k === x.k ? null : x.k)} className="px-3 py-2.5 flex-col flex justify-center flex-auto rounded-lg cursor-pointer" style={{ minWidth: 0, border: '1px solid ' + (on ? LH.ink : LH.border), background: on ? LH.tint : '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.07)' }}>
+      {showKpi && (() => { const tot = Math.max(1, leads.length); const cnt = c => leads.filter(l => l.col === c).length; const conv = cnt('Converted') + cnt('Converted as Job'); const active = leads.filter(l => l.col !== 'Converted' && l.col !== 'Converted as Job' && l.col !== 'Disqualified').length; const KPIS = [{ label: 'New today', value: '28', badge: '+11%' }, { label: 'Speed to first touch', value: '3 min', accent: LH.green }, { label: 'Qualification rate', value: Math.round((cnt('Qualified') + conv) / tot * 100) + '%', badge: '+6%' }, { label: 'Conversion rate', value: Math.round(conv / tot * 100) + '%', accent: LH.primary }, { label: 'Active in pipeline', value: active }, { label: 'Avg time to qualify', value: '1d 20h' }]; return <div className="flex space-x-3 select-none" style={{ marginBottom: 16 }}>
+        {KPIS.map((x, xi) => <div key={xi} className="px-3 py-2.5 flex-col flex justify-center flex-auto rounded-lg" style={{ minWidth: 0, border: '1px solid ' + LH.border, background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.07)' }}>
           <div className="flex items-center justify-between gap-1.5 text-md font-medium whitespace-nowrap">
             <span className="text-gray-500 truncate">{x.label}</span>
             {x.badge && <span className="text-blue-500 bg-blue-50 rounded-md leading-tight px-1.5 py-0.5 text-xs font-semibold">{x.badge}</span>}
           </div>
           <div className="text-xl font-semibold whitespace-nowrap mt-0.5" style={{ color: x.accent || LH.ink }}>{x.value}</div>
-        </div>; })}
+        </div>)}
       </div>; })()}
       {view === 'kanban'
         ? <LeadsKanban leads={filtered} onMove={boardMove} onCardClick={setSelId} selId={selId} cardCfg={cardCfg} />
