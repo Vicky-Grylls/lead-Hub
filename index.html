@@ -30260,7 +30260,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const act = (shown && shown.act) || DIANE_ACT;
     const addTask = () => { if (!tTitle.trim()) return; setTasks(ts => [{ title: tTitle.trim(), type: tType, who: tWho, due: tDue, done: false }, ...ts]); setTTitle(''); setTaskOpen(false); onToast && onToast('Task created — “' + tTitle.trim() + '”'); };
     const addNote = () => { if (!noteText.trim()) return; setNotes(ns => [{ text: noteText.trim(), who: 'You', when: 'Just now' }, ...ns]); setNoteText(''); };
-    const PRIMARY_TABS = [['details', 'Overview'], ['activity', 'Activity'], ['tasks', 'Tasks'], ['notes', 'Notes'], ['qualification', 'Qualification'], ['campaign', 'Campaign']];
+    const PRIMARY_TABS = [['details', 'Overview'], ['communication', 'Communication'], ['qualification', 'Qualification'], ['activity', 'Activity'], ['campaign', 'Campaign'], ['notes', 'Notes'], ['tasks', 'Tasks']];
     const MORE_TABS = [['communication', 'Communication'], ['files', 'Attachments']];
     const moreActive = MORE_TABS.some(([k]) => k === tab);
     const moreLabel = moreActive ? (MORE_TABS.find(([k]) => k === tab)[1]) : ('+' + MORE_TABS.length + ' More');
@@ -31075,8 +31075,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const phone = '469-555-0172';
     const toast = m => onToast && onToast(m);
     // Match the side sheet's tab set exactly.
-    const PTABS = [['details', 'Overview'], ['activity', 'Activity'], ['tasks', 'Tasks'], ['notes', 'Notes'], ['qualification', 'Qualification'], ['campaign', 'Campaign']];
-    const MTABS = [['communication', 'Communication'], ['files', 'Attachments']];
+    const PTABS = [['details', 'Overview'], ['communication', 'Communication'], ['qualification', 'Qualification'], ['activity', 'Activity'], ['campaign', 'Campaign'], ['notes', 'Notes'], ['tasks', 'Tasks']];
+    const MTABS = [['files', 'Attachments']];
     const moreActive = MTABS.some(([k]) => k === tab);
     const moreLabel = moreActive ? MTABS.find(([k]) => k === tab)[1] : '+' + MTABS.length + ' More';
     const addNote = () => { if (!noteText.trim()) return; setNotes(ns => [{ text: noteText.trim(), who: 'You', when: 'Just now' }, ...ns]); setNoteText(''); };
