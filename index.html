@@ -30625,12 +30625,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const firstOpen = steps.findIndex(s => stepStatus(s) === 'open');
     const list = setupTab === 'Setup' ? steps : recs;
     return <div>
-      <div className="flex space-x-3 select-none" style={{ marginBottom: 22 }}>{kpis.map(k => <div key={k.label} role="button" tabIndex={0} onClick={() => onNavigate(k.go)} className="h-20 p-3 flex-col flex justify-center flex-auto bg-white border shadow-xs cursor-pointer rounded-md border-gray-200">
-        <div className="flex items-center justify-between text-base text-gray-400 font-medium whitespace-nowrap">
+      <div className="flex space-x-3 select-none" style={{ marginBottom: 22 }}>{kpis.map(k => <div key={k.label} role="button" tabIndex={0} onClick={() => onNavigate(k.go)} className="px-3 py-2.5 flex-col flex justify-center flex-auto bg-white border shadow-xs cursor-pointer rounded-lg border-gray-200">
+        <div className="flex items-center justify-between text-md text-gray-400 font-medium whitespace-nowrap">
           <span className="text-gray-500 flex items-center space-x-1.5 min-w-0"><span className="truncate">{k.label}</span></span>
-          <span className="text-blue-500 bg-blue-50 rounded-md leading-tight p-1.5">{k.badge}</span>
+          <span className="text-blue-500 bg-blue-50 rounded-md leading-tight px-1.5 py-0.5 text-xs">{k.badge}</span>
         </div>
-        <div className="text-2xl font-semibold whitespace-nowrap text-gray-900">{k.value}</div>
+        <div className="text-xl font-semibold whitespace-nowrap text-gray-900 mt-0.5">{k.value}</div>
       </div>)}</div>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
         <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 17, fontWeight: 700, color: LH.ink }}>Next steps for you</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Follow the steps below to tailor Lead Hub to your workflow.</div></div>
