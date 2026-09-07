@@ -29877,13 +29877,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const reached = jobId ? 4 : ({ 'New lead': 0, 'Contacting': 1, 'Qualifying': 1, 'Needs human': 1, 'In drip': 1, 'Qualified': 2, 'Converted as Job': 4, 'Completed': 4 }[lead.col] ?? 0);
     return <Card style={{ padding: '16px 14px', marginBottom: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14, padding: '0 2px' }}><Ic name="route" size={15} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Lead lifecycle</span></div>
-      <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-        {STAGES.map((s, i) => { const done = i < reached; const cur = i === reached; const on = done || cur; const bg = done ? LH.green : cur ? LH.primary : '#f1f0ec'; return <div key={s.k} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-          {i > 0 && <div style={{ position: 'absolute', top: 15, right: '50%', width: '100%', height: 2, background: i <= reached ? LH.green : LH.border }} />}
-          <div style={{ position: 'relative', zIndex: 1, width: 32, height: 32, borderRadius: 999, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={done ? 'check' : s.ic} size={15} color={on ? '#fff' : LH.muted} /></div>
-          <div style={{ fontSize: 11.5, fontWeight: 600, color: on ? LH.ink : LH.muted, marginTop: 6, textAlign: 'center', lineHeight: 1.25 }}>{s.k}</div>
-          <div style={{ fontSize: 10, color: LH.muted, marginTop: 1, textAlign: 'center' }}>{s.cap}</div>
-        </div>; })}
+      <div style={{ display: 'flex', gap: 3 }}>
+        {STAGES.map((s, i) => { const done = i < reached; const cur = i === reached; const on = done || cur; const first = i === 0; const last = i === STAGES.length - 1;
+          const bg = done ? LH.green : cur ? LH.primary : LH.tint; const fg = on ? '#fff' : LH.sub;
+          const clip = first ? 'polygon(0 0, calc(100% - 11px) 0, 100% 50%, calc(100% - 11px) 100%, 0 100%)'
+            : last ? 'polygon(0 0, 100% 0, 100% 100%, 0 100%, 11px 50%)'
+            : 'polygon(0 0, calc(100% - 11px) 0, 100% 50%, calc(100% - 11px) 100%, 0 100%, 11px 50%)';
+          return <div key={s.k} title={s.cap} style={{ flex: 1, minWidth: 0, height: 34, background: bg, clipPath: clip, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: first ? 0 : 9 }}>
+            <span style={{ fontSize: 11.5, fontWeight: 600, color: fg, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 6px' }}>{s.k}</span>
+          </div>; })}
       </div>
     </Card>;
   }
