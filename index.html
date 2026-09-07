@@ -32088,7 +32088,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   const wuid = () => 'w' + (++WUID);
 
   // Custom dropdown
-  function Dropdown({ value, onChange, options, groups, multi, placeholder = 'Select…', width, height = 36 }) {
+  function Dropdown({ value, onChange, options, groups, multi, placeholder = 'Select…', width, height = 36, dropUp }) {
     const [open, setOpen] = useState(false);
     const ref = useRef(null);
     useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, [open]);
@@ -32108,7 +32108,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div onClick={() => setOpen(o => !o)} style={{ height, borderRadius: 8, border: '1px solid ' + (open ? LH.primary : LH.border), background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, padding: '0 10px', fontSize: 13, color: has ? LH.ink : LH.muted, cursor: 'pointer', fontWeight: has ? 600 : 400 }}>
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span><Ic name={open ? 'chevron-up' : 'chevron-down'} size={14} color={LH.muted} />
       </div>
-      {open && <div style={{ position: 'absolute', top: height + 4, left: 0, minWidth: '100%', zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, maxHeight: 260, overflowY: 'auto' }}>
+      {open && <div style={{ position: 'absolute', ...(dropUp ? { bottom: height + 4 } : { top: height + 4 }), left: 0, minWidth: '100%', zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, maxHeight: 260, overflowY: 'auto' }}>
         {groups ? groups.map(g => <div key={g.title}><div style={{ fontSize: 11, color: LH.muted, padding: '6px 11px 3px', fontWeight: 600 }}>{g.title}</div>{g.items.map(item)}</div>) : options.map(item)}
       </div>}
     </div>;
@@ -34416,7 +34416,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
           <span style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap' }}>Lead</span>
-          <div style={{ flex: 1, minWidth: 0, maxWidth: 180 }}><Dropdown value={leadName} height={30} options={PLAYBOOK_LEADS.map(o => ({ value: o, label: o }))} onChange={setLeadName} /></div>
+          <div style={{ flex: 1, minWidth: 0, maxWidth: 180 }}><Dropdown value={leadName} height={30} dropUp options={PLAYBOOK_LEADS.map(o => ({ value: o, label: o }))} onChange={setLeadName} /></div>
         </div>
         <Btn kind="primary" icon="check" onClick={onCollapse}>Save to {leadName.split(' ')[0]}</Btn>
       </div>
