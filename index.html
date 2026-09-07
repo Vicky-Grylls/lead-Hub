@@ -30305,13 +30305,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
           {tab === 'details' && <>
-            {cardCfg && <div style={{ marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: LH.muted }}>CARD</span>
-                {onCustomize && <button onClick={onCustomize} title="Customize card" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}><Ic name="sliders" size={13} color={LH.primary} />Customize</button>}
-              </div>
-              <div style={{ background: '#f1f0ec', border: '1px solid ' + LH.borderSoft, borderRadius: 12, padding: 10 }}><LeadKanbanCard lead={shown} cfg={cardCfg} selected={false} dragging={false} onClick={() => {}} onDragStart={() => {}} onDragEnd={() => {}} /></div>
-            </div>}
             <LeadHeaderBlock lead={shown} onToast={onToast} slim onConvert={onConvert} />
             {shown.jobId && <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 10, padding: '10px 12px' }}><span style={{ width: 28, height: 28, borderRadius: 7, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={14} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.green }}>Converted to inspection job</div><div style={{ fontSize: 11.5, color: LH.sub }}>Job #{shown.jobId}</div></div><button onClick={() => onToast && onToast('Opening Job #' + shown.jobId + '…')} style={{ fontSize: 12, fontWeight: 600, color: LH.green, background: 'none', border: 'none', cursor: 'pointer' }}>View</button></div>}
             <div style={{ marginTop: 16 }}><LeadAISummary lead={shown} /></div>
@@ -31573,11 +31566,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <button onClick={() => setCustOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: 20, minHeight: 0 }}>
-            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 10 }}>ATTRIBUTES · {onN} shown</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{CARD_ATTRS.map(([k, l, ic]) => { const on = !!cardCfg[k]; return <button key={k} onClick={() => setCardCfg(c => ({ ...c, [k]: !c[k] }))} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 32, padding: '0 12px', borderRadius: 999, border: '1px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', color: on ? LH.ink : LH.body, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}><Ic name={on ? 'check' : ic} size={13} color={on ? LH.primary : LH.sub} />{l}</button>; })}</div>
-            <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 14, lineHeight: 1.5 }}>Name always shows. Click a chip to add or remove it from every board card.</div>
-            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, margin: '22px 0 10px' }}>LIVE PREVIEW</div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 10 }}>LIVE PREVIEW</div>
             <div style={{ background: '#f1f0ec', border: '1px solid ' + LH.borderSoft, borderRadius: 12, padding: 12, maxWidth: 300 }}><LeadKanbanCard lead={sample} cfg={cardCfg} selected={false} dragging={false} onClick={() => {}} onDragStart={() => {}} onDragEnd={() => {}} /></div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, margin: '24px 0 4px' }}>ATTRIBUTES · {onN} shown</div>
+            <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 8, lineHeight: 1.5 }}>Name always shows. Toggle attributes to add or remove them from every board card.</div>
+            <div>{CARD_ATTRS.map(([k, l, ic]) => { const on = !!cardCfg[k]; return <div key={k} onClick={() => setCardCfg(c => ({ ...c, [k]: !c[k] }))} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 8px', borderRadius: 8, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              <span style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, border: '1.5px solid ' + (on ? LH.primary : LH.border), background: on ? LH.primary : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on && <Ic name="check" size={12} color="#fff" />}</span>
+              <Ic name={ic} size={14} color={LH.sub} />
+              <span style={{ fontSize: 13, fontWeight: 500, color: LH.ink }}>{l}</span>
+            </div>; })}</div>
           </div>
           <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
             <button onClick={() => setCardCfg({ source: true, score: true, age: true, fields: true, note: true })} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Reset to default</button>
