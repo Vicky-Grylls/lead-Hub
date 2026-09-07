@@ -32667,8 +32667,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             </div>
           </div>
           <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 'min(400px,94%)', background: '#fff', borderLeft: '1px solid ' + LH.borderSoft, boxShadow: '-8px 0 22px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', transform: panelOpen ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .24s cubic-bezier(0.32,0.72,0,1)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.muted }}>{sel && sel.trigger ? 'Trigger' : 'Step settings'}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 16px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+              {sel && !sel.trigger
+                ? (() => { const c = WZ_CH[sel.ch] || WZ_CH.sms; return <><span style={{ width: 26, height: 26, borderRadius: 7, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={c.icon} size={14} color={c.fg} /></span><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Step {selIdx + 1} · {c.label}</span></>; })()
+                : <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.muted }}>{sel && sel.trigger ? 'Trigger' : 'Step settings'}</span>}
               <div style={{ flex: 1 }} />
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
@@ -32682,10 +32684,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 {attempts[0] && <div onClick={() => setOpenStep(attempts[0].id)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 12px', border: '1px solid ' + LH.border, borderRadius: 10, cursor: 'pointer' }}><div style={{ width: 28, height: 28, borderRadius: 8, background: (WZ_CH[attempts[0].ch] || WZ_CH.sms).bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={(WZ_CH[attempts[0].ch] || WZ_CH.sms).icon} size={14} color={(WZ_CH[attempts[0].ch] || WZ_CH.sms).fg} /></div><span style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>Step 1: {(WZ_CH[attempts[0].ch] || WZ_CH.sms).label}</span></div>}
               </>}
               {sel && !sel.trigger && (() => { const c = WZ_CH[sel.ch] || WZ_CH.sms; const nx = nextOf(selIdx); return <>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}><Ic name={c.icon} size={19} color={c.fg} /></div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>Step {selIdx + 1}: {c.label}</div>
-                <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 3, lineHeight: 1.5 }}>Configure what Nova sends or does at this attempt.</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, margin: '20px 0 10px' }}>Configuration</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, margin: '2px 0 10px' }}>Configuration</div>
                 {selIdx > 0 && <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
                   <span style={{ fontSize: 12.5, color: LH.sub }}>Wait</span>
                   <input type="number" min={1} value={sel.wait.n != null ? sel.wait.n : 1} onChange={e => setAttemptWait(sel.id, { n: Math.max(1, Number(e.target.value) || 1) })} style={{ width: 58, height: 30, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 8px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit' }} />
