@@ -28738,15 +28738,19 @@ let LEAD_SRC_STORE=[
   {id:'s7',name:'Walk-in',enabled:false}
 ];
 let LEAD_STAGE_STORE=[
-  {id:'st1',name:'New',color:'#3b82f6'},{id:'st2',name:'Contacting',color:'#8b5cf6'},
-  {id:'st3',name:'Qualifying',color:'#f59e0b'},{id:'st4',name:'Human',color:'#06b6d4'},
-  {id:'st5',name:'Drip',color:'#a855f7'},{id:'st6',name:'Qualified',color:'#16a34a'},
-  {id:'st7',name:'Inspection',color:'#0891b2'}
+  {id:'st1',name:'New',color:'#3b82f6'},{id:'st2',name:'Contacted',color:'#22c55e'},
+  {id:'st3',name:'Engaged',color:'#6d28d9'},{id:'st4',name:'Qualifying',color:'#8b5cf6'},
+  {id:'st5',name:'Qualified',color:'#16a34a'},{id:'st6',name:'Converted',color:'#0ea5e9'},
+  {id:'st7',name:'Disqualified',color:'#dc2626'},{id:'st8',name:'Lost',color:'#6b7280'},
+  {id:'st9',name:'Rejected',color:'#b45309'},{id:'st10',name:'Duplicate',color:'#64748b'}
 ];
+// Lead stage & status are the same taxonomy.
 let LEAD_STATUS_STORE=[
-  {id:'ls1',name:'New Lead',color:'#3b82f6'},{id:'ls2',name:'Nurture',color:'#f59e0b'},
-  {id:'ls3',name:'Qualified',color:'#16a34a'},{id:'ls4',name:'Not Qualified',color:'#ef4444'},
-  {id:'ls5',name:'Converted',color:'#7c3aed'},{id:'ls6',name:'Lost',color:'#6b7280'}
+  {id:'ls1',name:'New',color:'#3b82f6'},{id:'ls2',name:'Contacted',color:'#22c55e'},
+  {id:'ls3',name:'Engaged',color:'#6d28d9'},{id:'ls4',name:'Qualifying',color:'#8b5cf6'},
+  {id:'ls5',name:'Qualified',color:'#16a34a'},{id:'ls6',name:'Converted',color:'#0ea5e9'},
+  {id:'ls7',name:'Disqualified',color:'#dc2626'},{id:'ls8',name:'Lost',color:'#6b7280'},
+  {id:'ls9',name:'Rejected',color:'#b45309'},{id:'ls10',name:'Duplicate',color:'#64748b'}
 ];
 let LEAD_CAMP_STORE=[
   {id:'c1',name:'Speed-to-Lead Drip',chans:'SMS · Call · Email',enabled:true},
@@ -28865,7 +28869,7 @@ function LeadGeneralSettings({setActiveId}){
   const [convertStatus,setConvertStatus]=useState('Qualified');
   const [autoJob,setAutoJob]=useState(false);
   const [jobStatus,setJobStatus]=useState('Scheduled');
-  const LEAD_STATUS_OPTS=['New lead','Contacting','Qualifying','Qualified','In drip','Needs human','Converted','Nurture','Lost'];
+  const LEAD_STATUS_OPTS=['New','Contacted','Engaged','Qualifying','Qualified','Converted','Disqualified','Lost','Rejected','Duplicate'];
   const JOB_STATUS_OPTS=['New','Scheduled','Assigned','In Progress','On Hold','Completed','Cancelled'];
   return RCE(React.Fragment,null,
     RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiTool,title:'General Lead Settings',sub:'How leads are owned, assigned and de-duplicated',onSave:()=>setActiveId('modules/Leads')}),
@@ -29575,13 +29579,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     'Awaiting human': { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
     'Not connected': { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' },
     New: { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
-    'New lead': { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
-    Contacting: { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd },
+    Contacted: { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd },
+    Engaged: { bg: '#f3eefe', fg: '#6d28d9', bd: '#ddd0f7' },
     Qualifying: { bg: '#f3eefe', fg: '#6d28d9', bd: '#ddd0f7' },
-    'Needs human': { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
-    'Converted as Job': { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
+    Converted: { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd },
     'Disqualified': { bg: '#fdecec', fg: LH.red, bd: '#f2d0d0' },
-    'In drip': { bg: '#f3eefe', fg: '#6d28d9', bd: '#ddd0f7' },
+    Lost: { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' },
+    Rejected: { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
+    Duplicate: { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' },
     Draft: { bg: '#f1f0ec', fg: '#8b8578', bd: '#e2ddd2' },
     Paused: { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd },
     Completed: { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd }
@@ -29691,37 +29696,43 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   /* ─────────── data ─────────── */
   const PIPE_LEADS = [
-    { id: 'l1', col: 'New lead', score: 34, name: 'Jordan Blake', note: 'Phone intake', src: 'Manual', age: '8d', status: 'New lead', fields: '1/9' },
-    { id: 'l1b', col: 'New lead', score: 29, name: 'Kevin Alvarez', note: 'Website form', src: 'Website Booking', age: '5h', status: 'New lead', fields: '2/9' },
-    { id: 'l1c', col: 'New lead', score: 41, name: 'Tessa Ward', note: 'Missing shingles', src: 'Meta Ads', age: '2d', status: 'New lead', fields: '1/9' },
-    { id: 'l2', col: 'Contacting', score: 76, name: 'Sarah Mitchell', note: 'Roof leak after rain', src: 'Thumbtack', age: '18m', status: 'Contacting', fields: '6/9' },
-    { id: 'l2b', col: 'Contacting', score: 63, name: 'Paige Sullivan', note: 'Storm damage', src: 'Angi', age: '40m', status: 'Contacting', fields: '4/9' },
-    { id: 'l2c', col: 'Contacting', score: 58, name: 'Owen Brooks', note: 'Gutter estimate', src: 'Google LSA', age: '1h', status: 'Contacting', fields: '3/9' },
+    { id: 'l1', col: 'New', score: 34, name: 'Jordan Blake', note: 'Phone intake', src: 'Manual', age: '8d', status: 'New', fields: '1/9' },
+    { id: 'l1b', col: 'New', score: 29, name: 'Kevin Alvarez', note: 'Website form', src: 'Website Booking', age: '5h', status: 'New', fields: '2/9' },
+    { id: 'l1c', col: 'New', score: 41, name: 'Tessa Ward', note: 'Missing shingles', src: 'Meta Ads', age: '2d', status: 'New', fields: '1/9' },
+    { id: 'l2', col: 'Contacted', score: 76, name: 'Sarah Mitchell', note: 'Roof leak after rain', src: 'Thumbtack', age: '18m', status: 'Contacted', fields: '6/9' },
+    { id: 'l2b', col: 'Contacted', score: 63, name: 'Paige Sullivan', note: 'Storm damage', src: 'Angi', age: '40m', status: 'Contacted', fields: '4/9' },
+    { id: 'l2c', col: 'Contacted', score: 58, name: 'Owen Brooks', note: 'Gutter estimate', src: 'Google LSA', age: '1h', status: 'Contacted', fields: '3/9' },
+    { id: 'l7', col: 'Engaged', score: 68, name: 'Marcus Reed', note: 'Missing shingles', src: 'Google LSA', age: '4h', status: 'Engaged', fields: '6/9' },
+    { id: 'l7b', col: 'Engaged', score: 64, name: 'Hana Kim', note: 'Complex insurance claim', src: 'Angi', age: '3h', status: 'Engaged', fields: '6/9' },
+    { id: 'l7c', col: 'Engaged', score: 54, name: 'Erin Patel', note: 'Free roof inspection request', src: 'Meta Ads', age: '4d', status: 'Engaged', fields: '3/9' },
+    { id: 'l7d', col: 'Engaged', score: 51, name: 'Camille Diaz', note: 'Comparing quotes', src: 'Website Booking', age: '5d', status: 'Engaged', fields: '4/9' },
     { id: 'l3', col: 'Qualifying', score: 81, name: 'Caleb Norris', note: 'Canvassing follow-up', src: 'SalesRabbit', age: '1d', status: 'Qualifying', fields: '5/9' },
     { id: 'l3b', col: 'Qualifying', score: 73, name: 'Nina Foster', note: 'Skylight replacement', src: 'Angi', age: '6h', status: 'Qualifying', fields: '7/9' },
     { id: 'l3c', col: 'Qualifying', score: 69, name: 'Diego Ramos', note: 'Roof age check', src: 'Thumbtack', age: '2d', status: 'Qualifying', fields: '5/9' },
-    { id: 'l4', col: 'Needs human', score: 68, name: 'Marcus Reed', note: 'Missing shingles', src: 'Google LSA', age: '4h', status: 'Needs human', fields: '6/9' },
-    { id: 'l4b', col: 'Needs human', score: 64, name: 'Hana Kim', note: 'Complex insurance claim', src: 'Angi', age: '3h', status: 'Needs human', fields: '6/9' },
-    { id: 'l5', col: 'In drip', score: 54, name: 'Erin Patel', note: 'Free roof inspection request', src: 'Meta Ads', age: '4d', status: 'In drip', fields: '3/9' },
-    { id: 'l5b', col: 'In drip', score: 48, name: 'Blake Turner', note: 'Not ready yet', src: 'Thumbtack', age: '6d', status: 'In drip', fields: '2/9' },
-    { id: 'l5c', col: 'In drip', score: 51, name: 'Camille Diaz', note: 'Comparing quotes', src: 'Website Booking', age: '5d', status: 'In drip', fields: '4/9' },
     { id: 'l6', col: 'Qualified', score: 89, name: 'Diane Walsh', note: 'Storm damage inspection', src: 'Angi', age: '2h', status: 'Qualified', fields: '9/9' },
     { id: 'l6b', col: 'Qualified', score: 84, name: 'Grant Wells', note: 'Full roof replacement', src: 'Google LSA', age: '1d', status: 'Qualified', fields: '9/9' },
-    { id: 'l6c', col: 'Qualified', score: 80, name: 'Yara Haddad', note: 'Insurance-approved repair', src: 'Angi', age: '5h', status: 'Qualified', fields: '8/9' }
+    { id: 'l6c', col: 'Qualified', score: 80, name: 'Yara Haddad', note: 'Insurance-approved repair', src: 'Angi', age: '5h', status: 'Qualified', fields: '8/9' },
+    { id: 'l8', col: 'Converted', score: 91, name: 'Priya Nair', note: 'Signed roof replacement', src: 'Angi', age: '1d', status: 'Converted', fields: '9/9', jobId: 'JOB-4821' },
+    { id: 'l9', col: 'Disqualified', score: 22, name: 'Trent Boyd', note: 'Out of service area', src: 'Meta Ads', age: '3d', status: 'Disqualified', fields: '2/9' },
+    { id: 'l10', col: 'Lost', score: 46, name: 'Gina Ruiz', note: 'Went with competitor', src: 'Thumbtack', age: '7d', status: 'Lost', fields: '5/9' },
+    { id: 'l11', col: 'Rejected', score: 12, name: 'Sam Cole', note: 'Spam / not a homeowner', src: 'Website form', age: '2d', status: 'Rejected', fields: '1/9' },
+    { id: 'l12', col: 'Duplicate', score: 30, name: 'Kevin Alvarez', note: 'Duplicate of l1b', src: 'Website Booking', age: '4h', status: 'Duplicate', fields: '2/9' }
   ];
-  const COL_STAGE = { 'New lead': 0, 'Contacting': 1, 'Qualifying': 2, 'Needs human': 3, 'In drip': 4, 'Qualified': 5, 'Converted as Job': 6, 'Disqualified': 7 };
-  const COL_DOT = { 'New lead': '#3b82f6', 'Contacting': '#22c55e', 'Qualifying': '#8b5cf6', 'Needs human': '#f59e0b', 'In drip': '#6d28d9', 'Qualified': '#16a34a', 'Converted as Job': '#0ea5e9', 'Disqualified': '#dc2626' };
+  const COL_STAGE = { 'New': 0, 'Contacted': 1, 'Engaged': 2, 'Qualifying': 3, 'Qualified': 4, 'Converted': 5, 'Disqualified': 6, 'Lost': 7, 'Rejected': 8, 'Duplicate': 9 };
+  const COL_DOT = { 'New': '#3b82f6', 'Contacted': '#22c55e', 'Engaged': '#6d28d9', 'Qualifying': '#8b5cf6', 'Qualified': '#16a34a', 'Converted': '#0ea5e9', 'Disqualified': '#dc2626', 'Lost': '#6b7280', 'Rejected': '#b45309', 'Duplicate': '#64748b' };
   const PIPE_COLS = [
-    { key: 'New lead', hint: 'Captured from source' },
-    { key: 'Contacting', hint: 'Speed-to-lead active' },
+    { key: 'New', hint: 'Captured from source' },
+    { key: 'Contacted', hint: 'First touch made' },
+    { key: 'Engaged', hint: 'Two-way conversation' },
     { key: 'Qualifying', hint: 'Fields being captured' },
-    { key: 'Needs human', hint: 'CSR handoff required' },
-    { key: 'In drip', hint: 'Follow-up sequence' },
     { key: 'Qualified', hint: 'Ready for Sales Hub' },
-    { key: 'Converted as Job', hint: 'Converted handoff' },
-    { key: 'Disqualified', hint: 'Terminal — logged, no opportunity' }
+    { key: 'Converted', hint: 'Converted to a job' },
+    { key: 'Disqualified', hint: 'Terminal — not a fit' },
+    { key: 'Lost', hint: 'Terminal — lost to competitor' },
+    { key: 'Rejected', hint: 'Terminal — spam / invalid' },
+    { key: 'Duplicate', hint: 'Terminal — duplicate record' }
   ];
-  const STAGES = ['New', 'Contacting', 'Qualifying', 'Human', 'Drip', 'Qualified', 'Inspection'];
+  const STAGES = ['New', 'Contacted', 'Engaged', 'Qualifying', 'Qualified', 'Converted', 'Disqualified', 'Lost', 'Rejected', 'Duplicate'];
   const DIANE_FIELDS = ['Property address', 'Roof type', 'Damage type', 'Insurance claim', 'Homeowner name', 'Best contact time', 'Urgency', 'Spouse decision', 'Previous estimates'];
   const DIANE_ACT = [
     { t: '2h ago', who: 'System', msg: 'Lead created from Angi storm lead form.' },
@@ -29738,9 +29749,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     l6: 'Speed-to-Lead Drip', l6b: 'Speed-to-Lead Drip', l6c: 'Storm Season Re-engage'
   };
   const leadCampaign = l => !l ? null : (l.campaign || LEAD_CAMPAIGN[l.id] || (
-    ['Contacting', 'Qualifying', 'Needs human'].includes(l.col) ? 'Speed-to-Lead Drip'
-    : l.col === 'In drip' ? 'Storm Season Re-engage'
-    : l.col === 'Qualified' || l.col === 'Completed' ? 'Speed-to-Lead Drip' : null));
+    ['Contacted', 'Qualifying'].includes(l.col) ? 'Speed-to-Lead Drip'
+    : l.col === 'Engaged' ? 'Storm Season Re-engage'
+    : l.col === 'Qualified' || l.col === 'Converted' ? 'Speed-to-Lead Drip' : null));
   const LEAD_CAMPAIGN_OPTS = ['Speed-to-Lead Drip', 'Storm Season Re-engage', 'Estimate Follow-up', 'Insurance Claim Assist', 'Gutter Season Push', 'Winback — Cold Leads'];
   // Campaign card in the lead side sheet — shows the enrolled campaign with an edit action to move it.
   function LeadCampaignCard({ lead, onToast }) {
@@ -29806,7 +29817,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [localStatus, setLocalStatus] = useState(curCol);
     const status = boardMode ? curCol : localStatus;
     // Predefined status enum (MVP). Terminal states are Qualified and Disqualified; the rest are intermediate.
-    const STATUS_OPTS = boardMode ? PIPE_COLS.map(c => c.key) : ['New', 'Contacting', 'Qualifying', 'Follow-up w/ estimator', 'Qualified', 'Disqualified'];
+    const STATUS_OPTS = PIPE_COLS.map(c => c.key);
     const st = TONE[status] || TONE.Draft;
     const [statusOpen, setStatusOpen] = useState(false);
     const isDisq = /disqualified|dead|lost/i.test(status);
@@ -29874,7 +29885,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { k: 'Converted', ic: 'git-merge', cap: 'To a job' },
       { k: 'Inspection Job', ic: 'briefcase', cap: jobId ? '#' + jobId : 'Scheduled' }
     ];
-    const reached = jobId ? 4 : ({ 'New lead': 0, 'Contacting': 1, 'Qualifying': 1, 'Needs human': 1, 'In drip': 1, 'Qualified': 2, 'Converted as Job': 4, 'Completed': 4 }[lead.col] ?? 0);
+    const reached = jobId ? 4 : ({ 'New': 0, 'Contacted': 1, 'Engaged': 1, 'Qualifying': 1, 'Qualified': 2, 'Converted': 4, 'Disqualified': 1, 'Lost': 1, 'Rejected': 0, 'Duplicate': 0 }[lead.col] ?? 0);
     return <Card style={{ padding: '16px 14px', marginBottom: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14, padding: '0 2px' }}><Ic name="route" size={15} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Lead lifecycle</span></div>
       <div style={{ display: 'flex', gap: 3 }}>
@@ -30108,7 +30119,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const src = lead.src || 'an inbound source';
     const score = lead.score || 0;
     const temp = score >= 80 ? 'hot' : score >= 60 ? 'warm' : 'cooling';
-    const status = lead.status || lead.col || 'New lead';
+    const status = lead.status || lead.col || 'New';
     const svc = (lead.note && !/manual|imported/i.test(lead.note)) ? lead.note.toLowerCase() : 'a roofing project';
     const summary = first + ' arrived from ' + src + (lead.age && lead.age !== 'Now' ? ' ' + lead.age + ' ago' : '') + ' about ' + svc + '. Currently ' + status + ' (' + temp + '). Nova has engaged over SMS and a call, confirmed storm damage, and is working the lead toward a booked inspection.';
     const highlights = [
@@ -30264,7 +30275,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     useEffect(() => { setTasks(lead && lead.tasks ? lead.tasks : []); setNotes(lead && lead.notes ? lead.notes : []); setTab('details'); setTaskOpen(false); }, [lead && lead.id]);
     useEffect(() => { const h = e => { if (e.key === 'Escape') onClose(); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, [onClose]);
     const captured = shown ? parseInt(shown.fields || '0') : 0;
-    const qualified = shown && (shown.col === 'Qualified' || shown.col === 'Completed');
+    const qualified = shown && (shown.col === 'Qualified' || shown.col === 'Converted');
     const act = (shown && shown.act) || DIANE_ACT;
     const addTask = () => { if (!tTitle.trim()) return; setTasks(ts => [{ title: tTitle.trim(), type: tType, who: tWho, due: tDue, done: false }, ...ts]); setTTitle(''); setTaskOpen(false); onToast && onToast('Task created — “' + tTitle.trim() + '”'); };
     const addNote = () => { if (!noteText.trim()) return; setNotes(ns => [{ text: noteText.trim(), who: 'You', when: 'Just now' }, ...ns]); setNoteText(''); };
@@ -30611,8 +30622,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const kpis = [
       { label: 'Received today', value: 28, badge: '+11%', go: 'lead-pipeline' },
       { label: 'Qualified today', value: 7, badge: '+6%', go: 'lead-pipeline' },
-      { label: 'In drip', value: 41, badge: '−3%', go: 'lead-pipeline' },
-      { label: 'Awaiting human', value: 3, badge: '2 new', go: 'lead-pipeline' },
+      { label: 'Engaged', value: 41, badge: '−3%', go: 'lead-pipeline' },
+      { label: 'Contacted', value: 9, badge: '2 new', go: 'lead-pipeline' },
       { label: 'Converted', value: 12, badge: '+2', go: 'lead-pipeline' }
     ];
     const tiles = [
@@ -30888,7 +30899,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const statuses = [
       { name: 'Qualified', color: '#075985', dot: '#38bdf8', bg: '#f0f9ff', border: '#bae6fd', user: 'Nova AI', initials: 'N', avatarBg: '#93c5fd', desc: 'All qualification criteria met — storm damage confirmed, roof ~15 yrs. Ready to convert to an inspection job.', date: 'Aug 5, 2026', time: '4:12 PM', checklist: true, current: true, durationInStatus: '4h' },
       { name: 'Contacted', color: '#5b21b6', dot: '#a78bfa', bg: '#f5f3ff', border: '#ddd6fe', user: 'Maria Gonzalez', initials: 'MG', avatarBg: '#c4b5fd', desc: 'Outbound call answered — customer confirmed availability for a free inspection this week.', date: 'Aug 4, 2026', time: '3:20 PM', quote: true, durationInStatus: '22h' },
-      { name: 'New lead', color: '#0f766e', dot: '#2dd4bf', bg: '#f0fdfa', border: '#99f6e4', user: 'System', initials: 'S', avatarBg: '#5eead4', desc: 'Lead created from ' + (lead.src || 'Google LSA') + ' — auto-assigned to Maria Gonzalez.', date: 'Aug 3, 2026', time: '12:34 PM', durationInStatus: '1d 3h' }
+      { name: 'New', color: '#0f766e', dot: '#2dd4bf', bg: '#f0fdfa', border: '#99f6e4', user: 'System', initials: 'S', avatarBg: '#5eead4', desc: 'Lead created from ' + (lead.src || 'Google LSA') + ' — auto-assigned to Maria Gonzalez.', date: 'Aug 3, 2026', time: '12:34 PM', durationInStatus: '1d 3h' }
     ];
     const durationHrs = [4, 22, 27];
     const totalHrs = 53;
@@ -30900,7 +30911,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ padding: '16px 16px 8px' }}>
-          <LeadDropdown label="Update status..." onPick={s => onToast && onToast('Status updated to ' + s)} options={[{ label: 'New lead', dot: '#2dd4bf' }, { label: 'Contacted', dot: '#a78bfa' }, { label: 'Needs human', dot: '#fbbf24' }, { label: 'Qualified', dot: '#38bdf8' }, { label: 'Converted', dot: '#34d399' }, { label: 'Lost', dot: '#f87171' }]} />
+          <LeadDropdown label="Update status..." onPick={s => onToast && onToast('Status updated to ' + s)} options={PIPE_COLS.map(c => ({ label: c.key, dot: COL_DOT[c.key] }))} />
         </div>
         <div style={{ padding: '0 16px 16px' }}>
           {statuses.map((s, i) => {
@@ -31339,11 +31350,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [viewName, setViewName] = useState('');
     const [custOpen, setCustOpen] = useState(false);
     const [cardCfg, setCardCfg] = useState({ score: true, source: true, age: true, fields: true });
-    const matchKpi = l => !kpi || (kpi === 'received' ? ageHours(l.age) < 24 : kpi === 'qualified' ? l.col === 'Qualified' : kpi === 'drip' ? l.col === 'In drip' : kpi === 'human' ? l.col === 'Needs human' : kpi === 'contacting' ? l.col === 'Contacting' : kpi === 'converted' ? l.col === 'Converted as Job' : true);
+    const matchKpi = l => !kpi || (kpi === 'received' ? ageHours(l.age) < 24 : kpi === 'qualified' ? l.col === 'Qualified' : kpi === 'engaged' ? l.col === 'Engaged' : kpi === 'contacted' ? l.col === 'Contacted' : kpi === 'converted' ? l.col === 'Converted' : kpi === 'disqualified' ? l.col === 'Disqualified' : true);
     const ASSIGNEES = ['Maria Gonzalez', 'Tyson Silva', 'Michael Richardson', 'Marcus Webb'];
     const assigneeOf = l => ASSIGNEES[(l.id.charCodeAt(1) + l.id.length) % ASSIGNEES.length];
     const CAMPS = ['Speed-to-Lead Drip', 'Estimate Follow-up', 'Storm Season Re-engage', 'Insurance Claim Assist', 'Gutter Season Push'];
-    const campaignOf = l => l.col === 'New lead' ? null : CAMPS[(l.name.length + l.score) % CAMPS.length];
+    const campaignOf = l => l.col === 'New' ? null : CAMPS[(l.name.length + l.score) % CAMPS.length];
     const SRC_TAG = { 'Angi': 'Marketplace', 'Thumbtack': 'Marketplace', 'HomeAdvisor': 'Marketplace', 'Google LSA': 'Paid ads', 'Meta Ads': 'Paid ads', 'SalesRabbit': 'Canvassing', 'RepCard': 'Canvassing', 'Website Booking': 'Inbound', 'Website form': 'Inbound', 'Manual': 'Manual' };
     const leadTags = l => { const t = [l.score >= 80 ? 'Hot' : l.score >= 60 ? 'Warm' : 'Cold']; const s = SRC_TAG[l.src]; if (s) t.push(s); return t; };
     const tagTone = t => t === 'Hot' ? { bg: LH.redBg, fg: LH.red } : t === 'Warm' ? { bg: LH.amberBg, fg: LH.amber } : t === 'Cold' ? { bg: '#f1f0ec', fg: LH.sub } : { bg: LH.tint, fg: LH.body };
@@ -31375,25 +31386,25 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const qualified = shown && shown.col === 'Qualified';
     const move = (id, col) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col, status: col } : l));
     const [convertLead, setConvertLead] = useState(null);
-    const convertLeadTo = (id, jobId) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col: 'Converted as Job', status: 'Converted as Job', jobId } : l));
+    const convertLeadTo = (id, jobId) => setLeads(ls => ls.map(l => l.id === id ? { ...l, col: 'Converted', status: 'Converted', jobId } : l));
     const uid = () => 'ln' + Date.now().toString(36) + Math.floor(Math.random() * 46656).toString(36);
     const addLead = d => {
-      const stage = d.stage || 'New lead';
+      const stage = d.stage || 'New';
       const filled = ['name', 'email', 'phone', 'src', 'note'].filter(k => d[k] && String(d[k]).trim()).length;
       const lead = { id: uid(), col: stage, status: stage, score: d.score || 32, name: d.name.trim(), note: (d.note || '').trim() || 'Manual entry', src: d.src || 'Manual', age: 'Now', fields: filled + '/9', email: (d.email || '').trim(), phone: (d.phone || '').trim() };
       setLeads(ls => [lead, ...ls]);
       return lead;
     };
     const addLeads = arr => {
-      const mk = (d, i) => { const filled = ['name', 'email', 'phone', 'source'].filter(k => d[k] && String(d[k]).trim()).length; return { id: uid() + i, col: 'New lead', status: 'New lead', score: 30 + (i * 7) % 40, name: (d.name || 'Unnamed').trim(), note: 'Imported lead', src: (d.source || '').trim() || 'Import', age: 'Now', fields: filled + '/9', email: (d.email || '').trim(), phone: (d.phone || '').trim() }; };
+      const mk = (d, i) => { const filled = ['name', 'email', 'phone', 'source'].filter(k => d[k] && String(d[k]).trim()).length; return { id: uid() + i, col: 'New', status: 'New', score: 30 + (i * 7) % 40, name: (d.name || 'Unnamed').trim(), note: 'Imported lead', src: (d.source || '').trim() || 'Import', age: 'Now', fields: filled + '/9', email: (d.email || '').trim(), phone: (d.phone || '').trim() }; };
       setLeads(ls => [...arr.map(mk), ...ls]);
     };
     // Moving a lead into "Converted as Job" runs the conversion flow instead of a silent move.
-    const boardMove = (id, col) => { if (col === 'Converted as Job') { const l = leads.find(x => x.id === id); if (l && !l.jobId) { startLeadConvert(l, jid => convertLeadTo(id, jid), () => setConvertLead(l)); return; } } move(id, col); };
+    const boardMove = (id, col) => { if (col === 'Converted') { const l = leads.find(x => x.id === id); if (l && !l.jobId) { startLeadConvert(l, jid => convertLeadTo(id, jid), () => setConvertLead(l)); return; } } move(id, col); };
     const filtered = leads.filter(l => (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && (fCity === 'All' || LEAD_CITY(l) === fCity) && matchKpi(l) && (!search.trim() || (l.name + ' ' + (l.note || '')).toLowerCase().includes(search.trim().toLowerCase())));
     useEffect(() => { const h = e => { if (e.key === 'Escape') setSelId(null); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, []);
     // If we arrived here from "Create lead from call", create the lead from the captured data and open its page.
-    useEffect(() => { const d = window.__lhOpenLead; if (d && d.name) { window.__lhOpenLead = null; const lead = addLead({ name: d.name, phone: d.phone, email: d.email, src: d.src || 'Phone', note: d.service || d.note || '', stage: d.stage || 'New lead', score: d.score }); openPage(lead); } }, []);
+    useEffect(() => { const d = window.__lhOpenLead; if (d && d.name) { window.__lhOpenLead = null; const lead = addLead({ name: d.name, phone: d.phone, email: d.email, src: d.src || 'Phone', note: d.service || d.note || '', stage: d.stage || 'New', score: d.score }); openPage(lead); } }, []);
     const pageIdx = pageLead ? filtered.findIndex(l => l.id === pageLead.id) : -1;
     const navLead = dir => { const ni = pageIdx + dir; if (pageIdx >= 0 && ni >= 0 && ni < filtered.length) setPageLead(filtered[ni]); };
     if (pageLead) return <LeadDetailsPage key={pageLead.id} lead={pageLead} onBack={closePage} onToast={onToast} onConvert={convertLeadTo} onNav={navLead} hasPrev={pageIdx > 0} hasNext={pageIdx >= 0 && pageIdx < filtered.length - 1} pos={pageIdx + 1} total={filtered.length} />;
@@ -31450,7 +31461,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </div>
       </div>
-      {showKpi && (() => { const KPIS = [{ k: 'received', label: 'Received today', value: '28', badge: '+11%' }, { k: 'qualified', label: 'Qualified today', value: '7', badge: '+6%' }, { k: 'contacting', label: 'Contacting', value: leads.filter(l => l.col === 'Contacting').length }, { k: 'drip', label: 'In drip', value: '41', badge: '−3%' }, { k: 'human', label: 'Awaiting human', value: '3', badge: '2 new', accent: LH.primary }, { k: 'converted', label: 'Converted', value: leads.filter(l => l.col === 'Converted as Job').length, accent: LH.green }]; return <div className="flex space-x-3 select-none" style={{ marginBottom: 16 }}>
+      {showKpi && (() => { const KPIS = [{ k: 'received', label: 'Received today', value: '28', badge: '+11%' }, { k: 'contacted', label: 'Contacted', value: leads.filter(l => l.col === 'Contacted').length }, { k: 'engaged', label: 'Engaged', value: leads.filter(l => l.col === 'Engaged').length, badge: '2 new', accent: LH.primary }, { k: 'qualified', label: 'Qualified', value: leads.filter(l => l.col === 'Qualified').length, badge: '+6%' }, { k: 'converted', label: 'Converted', value: leads.filter(l => l.col === 'Converted').length, accent: LH.green }, { k: 'disqualified', label: 'Disqualified', value: leads.filter(l => l.col === 'Disqualified').length }]; return <div className="flex space-x-3 select-none" style={{ marginBottom: 16 }}>
         {KPIS.map(x => { const on = kpi === x.k; return <div key={x.k} onClick={() => setKpi(k => k === x.k ? null : x.k)} className="px-3 py-2.5 flex-col flex justify-center flex-auto rounded-lg cursor-pointer" style={{ minWidth: 0, border: '1px solid ' + (on ? LH.ink : LH.border), background: on ? LH.tint : '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.07)' }}>
           <div className="flex items-center justify-between gap-1.5 text-md font-medium whitespace-nowrap">
             <span className="text-gray-500 truncate">{x.label}</span>
@@ -31582,10 +31593,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [settingsSec, setSettingsSec] = useState('general');
     // Snapshot of the last-saved settings state; Save is enabled only when the current state differs.
     const [savedSnap, setSavedSnap] = useState(() => JSON.stringify({ name: row.name, status: row.status, nEvents: NOTIF_EVENTS.reduce((a, e) => { a[e.key] = e.dflt; return a; }, {}), nCh: { inapp: true, email: true, sms: false, slack: false }, nEmail: 'lead-alerts@hillroofing.com', nSlack: '#lead-alerts', nSms: '(+1) 650 206 1172', nRep: true, nOwner: true, nExtra: [], nDigest: false }));
-    const SCORE_BY_STAGE = { Qualified: 86, Completed: 90, Contacting: 62, Qualifying: 58, 'In drip': 48 };
+    const SCORE_BY_STAGE = { Qualified: 86, Converted: 90, Contacted: 62, Qualifying: 58, Engaged: 48 };
     const openEnrollment = c => setSelLead({
       id: c.n, name: c.n, note: c.last, src: c.src, status: c.stage, col: c.stage,
-      score: SCORE_BY_STAGE[c.stage] || 55, fields: c.last && c.last.match(/(\d+)\/9/) ? c.last.match(/(\d+)\/9/)[1] : (c.stage === 'Qualified' || c.stage === 'Completed' ? '9' : c.stage === 'Contacting' ? '3' : '5'),
+      score: SCORE_BY_STAGE[c.stage] || 55, fields: c.last && c.last.match(/(\d+)\/9/) ? c.last.match(/(\d+)\/9/)[1] : (c.stage === 'Qualified' || c.stage === 'Converted' ? '9' : c.stage === 'Contacted' ? '3' : '5'),
       act: [
         { who: 'System', t: c.when, msg: c.n + ' enrolled from ' + c.src + '.' },
         { who: 'Nova', t: c.when, msg: c.last + '.' },
@@ -31644,15 +31655,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </div>;
     const RECENT_FIXED = [
       { n: 'Daniel Thompson', src: 'Angi', stage: 'Qualified', tone: 'Qualified', last: 'Nova call · answered', when: '12m ago' },
-      { n: 'Rosa Nguyen', src: 'Thumbtack', stage: 'Contacting', tone: 'New', last: 'SMS sent', when: '40m ago' },
-      { n: 'Kevin Alvarez', src: 'Angi', stage: 'In drip', tone: 'In drip', last: 'Day 3 SMS', when: '3h ago' },
-      { n: 'Nina Foster', src: 'Meta Ads', stage: 'Qualifying', tone: 'New', last: 'Nova call · 4/9 fields', when: '5h ago' },
-      { n: 'Grant Wells', src: 'Google LSA', stage: 'Completed', tone: 'Qualified', last: 'Sequence completed', when: '1d ago' }
+      { n: 'Rosa Nguyen', src: 'Thumbtack', stage: 'Contacted', tone: 'Contacted', last: 'SMS sent', when: '40m ago' },
+      { n: 'Kevin Alvarez', src: 'Angi', stage: 'Engaged', tone: 'Engaged', last: 'Day 3 SMS', when: '3h ago' },
+      { n: 'Nina Foster', src: 'Meta Ads', stage: 'Qualifying', tone: 'Qualifying', last: 'Nova call · 4/9 fields', when: '5h ago' },
+      { n: 'Grant Wells', src: 'Google LSA', stage: 'Converted', tone: 'Converted', last: 'Sequence completed', when: '1d ago' }
     ];
     const R_FIRST = ['Marcus', 'Paige', 'Dana', 'Owen', 'Bianca', 'Trevor', 'Sofia', 'Andre', 'Hannah', 'Leon', 'Mia', 'Caleb', 'Ruby', 'Victor', 'Elena', 'Jonah', 'Tara', 'Wyatt', 'Nadia', 'Gabe', 'Ivy', 'Simon', 'Farah', 'Cole', 'Maya', 'Dylan', 'Zoe', 'Reid', 'Amara', 'Kyle'];
     const R_LAST = ['Reed', 'Raman', 'Whitfield', 'Castillo', 'Flores', 'Hunt', 'Marin', 'Cole', 'Yates', 'Park', 'Chen', 'Nash', 'Ortiz', 'Popov', 'Singh', 'Brooks', 'Khan', 'Rivera', 'Coleman', 'Wu', 'Aziz', 'Barrett', 'Lin', 'Frost', 'Adams', 'Palmer', 'Beck', 'Dunn', 'Voss', 'Carter'];
     const R_SRC = ['Angi', 'Thumbtack', 'Google LSA', 'Meta Ads', 'Website Booking'];
-    const R_STAGE = [['Qualified', 'Qualified', 'Nova call · answered'], ['Contacting', 'New', 'SMS sent'], ['In drip', 'In drip', 'Day 3 SMS'], ['Qualifying', 'New', 'Nova call · 4/9 fields'], ['Completed', 'Qualified', 'Sequence completed'], ['Contacting', 'New', 'Email delivered']];
+    const R_STAGE = [['Qualified', 'Qualified', 'Nova call · answered'], ['Contacted', 'Contacted', 'SMS sent'], ['Engaged', 'Engaged', 'Day 3 SMS'], ['Qualifying', 'Qualifying', 'Nova call · 4/9 fields'], ['Converted', 'Converted', 'Sequence completed'], ['Contacted', 'Contacted', 'Email delivered']];
     const R_WHEN = ['1h ago', '2h ago', '4h ago', '6h ago', '9h ago', '14h ago', '1d ago', '2d ago', '3d ago', '4d ago'];
     const recent = enrolled <= RECENT_FIXED.length ? RECENT_FIXED.slice(0, enrolled) : RECENT_FIXED.concat(Array.from({ length: enrolled - RECENT_FIXED.length }, (_, k) => { const i = k + RECENT_FIXED.length; const s = R_STAGE[i % R_STAGE.length]; return { n: R_FIRST[i % R_FIRST.length] + ' ' + R_LAST[(i * 7 + 3) % R_LAST.length], src: R_SRC[i % R_SRC.length], stage: s[0], tone: s[1], last: s[2], when: R_WHEN[i % R_WHEN.length] }; }));
     const config = [
@@ -31671,8 +31682,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ];
     const needsAttention = [
       { n: 'Kevin Alvarez', src: 'Angi', reason: 'Opted out', tone: 'Paused', detail: 'Replied STOP to SMS', when: '2h ago', icon: 'ban' },
-      { n: 'Rachel Bennett', src: 'Thumbtack', reason: 'Sent to rep', tone: 'In drip', detail: 'Escalated to human — asked for a callback', when: '4h ago', icon: 'user-check' },
-      { n: 'Marcus Reed', src: 'Website Booking', reason: 'Sent to rep', tone: 'In drip', detail: 'Nova DND — awaiting human follow-up', when: '6h ago', icon: 'user-check' },
+      { n: 'Rachel Bennett', src: 'Thumbtack', reason: 'Sent to rep', tone: 'Engaged', detail: 'Escalated to human — asked for a callback', when: '4h ago', icon: 'user-check' },
+      { n: 'Marcus Reed', src: 'Website Booking', reason: 'Sent to rep', tone: 'Engaged', detail: 'Nova DND — awaiting human follow-up', when: '6h ago', icon: 'user-check' },
       { n: 'Dana Whitfield', src: 'Meta Ads', reason: 'Delivery failed', tone: 'New', detail: 'Email bounced — invalid address', when: '1d ago', icon: 'alert-triangle' }
     ];
     const tasks = [
@@ -31720,7 +31731,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div></div> : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.muted }}>No one enrolled yet.</div>}
     </Card>;
     const reasonTone = { 'Opted out': { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd }, 'Sent to rep': { bg: LH.blueBg, fg: LH.blue, bd: LH.blueBd }, 'Delivery failed': { bg: '#fbeaea', fg: LH.red, bd: '#f2d0d0' } };
-    const openAttention = a => openEnrollment({ n: a.n, src: a.src, last: a.detail, stage: a.reason === 'Sent to rep' ? 'Qualifying' : 'In drip', when: a.when });
+    const openAttention = a => openEnrollment({ n: a.n, src: a.src, last: a.detail, stage: a.reason === 'Sent to rep' ? 'Qualifying' : 'Engaged', when: a.when });
     const needsCard = <Card style={{ padding: 0, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><Ic name="alert-circle" size={15} color={LH.primary} /><span style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>Needs attention</span>{enrolled ? <span style={{ fontSize: 11.5, fontWeight: 700, color: '#fff', background: LH.primary, borderRadius: 999, padding: '1px 7px' }}>{needsAttention.length}</span> : null}</div>
       {enrolled ? needsAttention.map((a, i) => { const rt = reasonTone[a.reason] || reasonTone['Opted out']; return <div key={i} onClick={() => openAttention(a)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < needsAttention.length - 1 ? '1px solid ' + LH.borderSoft : 'none', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -32482,13 +32493,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [exitJoin, setExitJoin] = useState('or');
     const [exitConds, setExitConds] = useState([{ id: wuid(), field: 'job.current_status', op: 'is any of', val: ['Qualified', 'Disqualified'] }]);
     const [replyStatusOn, setReplyStatusOn] = useState(true);
-    const [replyStatus, setReplyStatus] = useState('Needs attention');
+    const [replyStatus, setReplyStatus] = useState('Contacted');
     const [replyTaskOn, setReplyTaskOn] = useState(false);
     const [replyTaskType, setReplyTaskType] = useState('Call back');
     const [replyAssignee, setReplyAssignee] = useState('Assigned to me');
     // Actions when the lead finishes the full sequence without exiting earlier.
     const [doneStatusOn, setDoneStatusOn] = useState(true);
-    const [doneStatus, setDoneStatus] = useState('Nurture — no response');
+    const [doneStatus, setDoneStatus] = useState('Engaged');
     const [doneTaskOn, setDoneTaskOn] = useState(false);
     const [doneTaskType, setDoneTaskType] = useState('Call back');
     const [doneAssignee, setDoneAssignee] = useState('Assigned to me');
@@ -32562,7 +32573,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                   <div style={{ width: 30, height: 30, borderRadius: 999, background: LH.tint, color: LH.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{(c.first[0] + c.last[0])}</div>
                   <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink, textDecoration: rm ? 'line-through' : 'none' }}>{c.name}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{c.email}</div></div>
                   <span style={{ fontSize: 11.5, color: LH.sub, width: 80 }}>{c.source}</span>
-                  <Pill label={c.status} tone={c.status === 'Qualified' ? 'Qualified' : c.status === 'New Lead' ? 'New' : 'In drip'} />
+                  <Pill label={c.status} tone={c.status === 'Qualified' ? 'Qualified' : c.status === 'New Lead' ? 'New' : 'Engaged'} />
                   <span style={{ fontSize: 11.5, color: LH.muted, width: 60, textAlign: 'right' }}>{c.service}</span>
                   {rm
                     ? <button onClick={() => restoreContact(c.id)} style={{ fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', width: 62, textAlign: 'right' }}>Restore</button>
@@ -32783,14 +32794,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <Card style={{ padding: 16, marginTop: 22 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>When a customer replies</div>
           <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 14px' }}>A reply to any SMS or email triggers these actions.</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={replyStatusOn} onChange={setReplyStatusOn} /><span style={{ fontSize: 13, color: LH.body }}>Change the lead status to</span><div style={{ width: 190, opacity: replyStatusOn ? 1 : 0.5, pointerEvents: replyStatusOn ? 'auto' : 'none' }}><Dropdown value={replyStatus} height={32} options={['Needs attention', 'Contacting', 'Qualifying', 'Qualified', 'Hot lead'].map(o => ({ value: o, label: o }))} onChange={setReplyStatus} /></div></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={replyStatusOn} onChange={setReplyStatusOn} /><span style={{ fontSize: 13, color: LH.body }}>Change the lead status to</span><div style={{ width: 190, opacity: replyStatusOn ? 1 : 0.5, pointerEvents: replyStatusOn ? 'auto' : 'none' }}><Dropdown value={replyStatus} height={32} options={['Contacted', 'Engaged', 'Qualifying', 'Qualified'].map(o => ({ value: o, label: o }))} onChange={setReplyStatus} /></div></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Toggle on={replyTaskOn} onChange={setReplyTaskOn} /><span style={{ fontSize: 13, color: LH.body }}>Create a task and assign it to a user</span></div>
           {replyTaskOn && <div style={{ display: 'flex', gap: 10, marginTop: 10, marginLeft: 44, flexWrap: 'wrap' }}><div style={{ width: 180 }}><Dropdown value={replyTaskType} height={32} options={TASK_TYPES.map(o => ({ value: o, label: o }))} onChange={setReplyTaskType} /></div><div style={{ width: 200 }}><Dropdown value={replyAssignee} height={32} options={REPS.map(o => ({ value: o, label: o }))} onChange={setReplyAssignee} /></div></div>}
         </Card>
         <Card style={{ padding: 16, marginTop: 14 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>When the sequence completes</div>
           <div style={{ fontSize: 12.5, color: LH.sub, margin: '2px 0 14px' }}>The lead ran through all {attempts.length} attempt{attempts.length !== 1 ? 's' : ''} without a qualifying outcome. Decide what happens next.</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={doneStatusOn} onChange={setDoneStatusOn} /><span style={{ fontSize: 13, color: LH.body }}>Change the lead status to</span><div style={{ width: 210, opacity: doneStatusOn ? 1 : 0.5, pointerEvents: doneStatusOn ? 'auto' : 'none' }}><Dropdown value={doneStatus} height={32} options={['Nurture — no response', 'Needs attention', 'Cold', 'Not qualified', 'Long-term follow-up'].map(o => ({ value: o, label: o }))} onChange={setDoneStatus} /></div></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={doneStatusOn} onChange={setDoneStatusOn} /><span style={{ fontSize: 13, color: LH.body }}>Change the lead status to</span><div style={{ width: 210, opacity: doneStatusOn ? 1 : 0.5, pointerEvents: doneStatusOn ? 'auto' : 'none' }}><Dropdown value={doneStatus} height={32} options={['Engaged', 'Disqualified', 'Lost', 'Rejected'].map(o => ({ value: o, label: o }))} onChange={setDoneStatus} /></div></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}><Toggle on={doneCampOn} onChange={setDoneCampOn} /><span style={{ fontSize: 13, color: LH.body }}>Move to another campaign</span><div style={{ width: 210, opacity: doneCampOn ? 1 : 0.5, pointerEvents: doneCampOn ? 'auto' : 'none' }}><Dropdown value={doneCamp} height={32} options={['Storm Season Re-engage', 'Estimate Follow-up', 'Gutter Season Push', 'Winback — Cold Leads'].map(o => ({ value: o, label: o }))} onChange={setDoneCamp} /></div></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Toggle on={doneTaskOn} onChange={setDoneTaskOn} /><span style={{ fontSize: 13, color: LH.body }}>Create a task and assign it to a user</span></div>
           {doneTaskOn && <div style={{ display: 'flex', gap: 10, marginTop: 10, marginLeft: 44, flexWrap: 'wrap' }}><div style={{ width: 180 }}><Dropdown value={doneTaskType} height={32} options={TASK_TYPES.map(o => ({ value: o, label: o }))} onChange={setDoneTaskType} /></div><div style={{ width: 200 }}><Dropdown value={doneAssignee} height={32} options={REPS.map(o => ({ value: o, label: o }))} onChange={setDoneAssignee} /></div></div>}
@@ -32910,7 +32921,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     { key: 'jobs', name: 'Jobs', icon: 'briefcase', flow: 'calls', desc: 'Scheduled or completed jobs — call to confirm or follow up.' }
   ];
   const GEN_FIELDS = {
-    leads: [{ v: 'lead.source', l: 'Lead source', opts: ['Angi', 'Thumbtack', 'Google LSA', 'Meta', 'Website Booking', 'SalesRabbit'] }, { v: 'lead.status', l: 'Status', opts: ['New Lead', 'Contacting', 'Qualifying', 'Needs human'] }, { v: 'lead.score', l: 'Lead score', type: 'number' }, { v: 'lead.city', l: 'City', opts: ['Dallas', 'Plano', 'Frisco', 'Austin', 'Houston'] }],
+    leads: [{ v: 'lead.source', l: 'Lead source', opts: ['Angi', 'Thumbtack', 'Google LSA', 'Meta', 'Website Booking', 'SalesRabbit'] }, { v: 'lead.status', l: 'Status', opts: ['New', 'Contacted', 'Engaged', 'Qualifying', 'Qualified', 'Converted', 'Disqualified', 'Lost', 'Rejected', 'Duplicate'] }, { v: 'lead.score', l: 'Lead score', type: 'number' }, { v: 'lead.city', l: 'City', opts: ['Dallas', 'Plano', 'Frisco', 'Austin', 'Houston'] }],
     customers: [{ v: 'customer.type', l: 'Customer type', opts: ['Residential', 'Commercial'] }, { v: 'customer.tags', l: 'Tags', opts: ['VIP', 'Repeat customer', 'Membership', 'Warranty', 'Storm area'] }, { v: 'customer.ltv', l: 'Lifetime value ($)', type: 'number' }, { v: 'customer.last_service', l: 'Last service date', type: 'date' }],
     invoices: [{ v: 'invoice.status', l: 'Invoice status', opts: ['Draft', 'Sent', 'Overdue', 'Partially paid', 'Paid'] }, { v: 'invoice.amount', l: 'Amount due ($)', type: 'number' }, { v: 'invoice.days_overdue', l: 'Days overdue', type: 'number' }, { v: 'invoice.due_date', l: 'Due date', type: 'date' }],
     estimates: [{ v: 'estimate.status', l: 'Estimate status', opts: ['Draft', 'Sent', 'Viewed', 'Approved', 'Declined'] }, { v: 'estimate.amount', l: 'Estimate amount ($)', type: 'number' }, { v: 'estimate.sent_date', l: 'Sent date', type: 'date' }],
@@ -33557,7 +33568,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
   function NewLeadForm({ sources, assignees, onClose, onToast, onCreate, prefill }) {
     const pf = prefill || {};
-    const [f, setF] = useState({ name: pf.name || '', email: pf.email || '', phone: pf.phone || '', src: pf.src || (sources && sources[0]) || 'Manual', assignee: (assignees && assignees[0]) || '', note: '', stage: 'New lead', notes: '', address: '' });
+    const [f, setF] = useState({ name: pf.name || '', email: pf.email || '', phone: pf.phone || '', src: pf.src || (sources && sources[0]) || 'Manual', assignee: (assignees && assignees[0]) || '', note: '', stage: 'New', notes: '', address: '' });
     const [pb, setPb] = useState({ q1: 'Within service territory', q2: '', q3: '', q4: '', roofType: '', sidingType: '', q6: '', q6other: '', q7: '', q8: '', owner: '', when: '' });
     const [pbId, setPbId] = useState('shield');
     const [shown, setShown] = useState(false);
@@ -33569,9 +33580,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const inp = { width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
     const lbl = { fontSize: 12, fontWeight: 600, color: LH.body, marginBottom: 5, display: 'block' };
     const canSave = !!f.name.trim();
-    const STAGES = ['New lead', 'Contacting', 'Qualifying', 'Needs human'];
+    const STAGES = ['New', 'Contacted', 'Engaged', 'Qualifying'];
     const oc = leadOutcome(pbId, pb);
-    const create = () => { if (!canSave) return; const stage = oc.state === 'qualified' ? 'Qualifying' : (oc.state === 'hold' || oc.state === 'disqualified') ? 'Needs human' : f.stage; onCreate({ ...f, stage, qualification: oc, playbook: getPlaybook(pbId).name }); };
+    const create = () => { if (!canSave) return; const stage = oc.state === 'qualified' ? 'Qualifying' : oc.state === 'disqualified' ? 'Disqualified' : oc.state === 'hold' ? 'Engaged' : f.stage; onCreate({ ...f, stage, qualification: oc, playbook: getPlaybook(pbId).name }); };
     return ReactDOM.createPortal(<div onMouseDown={onClose} style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(8,6,5,0.35)', display: 'flex', justifyContent: 'flex-end', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
     <div onMouseDown={e => e.stopPropagation()} style={{ width: 'min(640px,96vw)', height: '100%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,0.16)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1)' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}><div><div style={{ fontSize: 15.5, fontWeight: 700, color: LH.ink }}>New lead</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Add a lead and qualify it against the playbook.</div></div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
@@ -33983,7 +33994,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { label: 'Total leads', value: '3,964', delta: '+11.4%', good: true },
       { label: 'Qualified', value: '1,863', delta: '+6.4%', good: true },
       { label: 'Converted', value: '612', delta: '+2.1%', good: true },
-      { label: 'In drip', value: '1,489', delta: '-3.2%', good: false },
+      { label: 'Engaged', value: '1,489', delta: '-3.2%', good: false },
       { label: 'Avg speed-to-lead', value: '3 min', delta: '-8.4%', good: true },
       { label: 'AI-handled', value: '88%', delta: '+5.1%', good: true, hi: true },
       { label: 'Avg to qualify', value: '1d 20h', delta: '-4.4%', good: true }
@@ -34389,7 +34400,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </>}
         </div>
         <div style={{ padding: 12, borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}>
-          {mode === 'lead' && <Btn kind="primary" icon="plus" onClick={() => { const name = (lf.name || '').trim(); if (!name) { showToast('Enter a name to create the lead'); return; } const stage = oc.state === 'qualified' ? 'Qualified' : oc.state === 'disqualified' ? 'Disqualified' : 'New lead'; try { window.dispatchEvent(new CustomEvent('lead-hub:create-open-lead', { detail: { name, phone: lf.phone, email: lf.email, service: lf.service, src: 'Phone', stage, score: oc.state === 'qualified' ? 78 : undefined } })); } catch (e) {} onClose && onClose(); }} style={{ width: '100%', justifyContent: 'center' }}>Create lead from call</Btn>}
+          {mode === 'lead' && <Btn kind="primary" icon="plus" onClick={() => { const name = (lf.name || '').trim(); if (!name) { showToast('Enter a name to create the lead'); return; } const stage = oc.state === 'qualified' ? 'Qualified' : oc.state === 'disqualified' ? 'Disqualified' : 'New'; try { window.dispatchEvent(new CustomEvent('lead-hub:create-open-lead', { detail: { name, phone: lf.phone, email: lf.email, service: lf.service, src: 'Phone', stage, score: oc.state === 'qualified' ? 78 : undefined } })); } catch (e) {} onClose && onClose(); }} style={{ width: '100%', justifyContent: 'center' }}>Create lead from call</Btn>}
           <Btn icon="calendar-clock" onClick={() => setTaskOpen(true)} style={{ width: '100%', justifyContent: 'center', marginTop: mode === 'lead' ? 8 : 0 }}>Create follow-up task</Btn>
         </div>
       </div>
