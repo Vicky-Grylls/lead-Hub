@@ -30300,10 +30300,23 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 16, paddingTop: 14 }}><LeadPrimaryDetails lead={shown} onToast={onToast} onMove={onMove} /></div>
           </>}
           {tab === 'intel' && <LeadIntakeIntelligence lead={shown} onToast={onToast} bare />}
-          {tab === 'activity' && <div>{act.map((a, i) => <div key={i} style={{ display: 'flex', gap: 10, paddingBottom: 14 }}>
-            <div style={{ width: 26, height: 26, borderRadius: 7, flexShrink: 0, background: a.who === 'Nova' ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={a.who === 'Nova' ? 'sparkles' : 'settings'} size={13} color={a.who === 'Nova' ? LH.primary : LH.sub} /></div>
-            <div style={{ flex: 1 }}><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.45 }}>{a.msg}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 2 }}>{a.who} · {a.t || a.when}</div></div>
-          </div>)}</div>}
+          {tab === 'activity' && <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+              <Ic name="filter" size={15} color={LH.sub} />
+              {['All activity types', 'All users', 'Date range'].map(l => <button key={l} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 28, padding: '0 10px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 11.5, fontWeight: 500, color: LH.sub, cursor: 'pointer' }}>{l}<Ic name="chevron-down" size={12} color={LH.muted} /></button>)}
+            </div>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginBottom: 12 }}>Today</div>
+            {act.map((a, i) => { const last = i === act.length - 1; const nova = a.who === 'Nova'; return <div key={i} style={{ display: 'flex', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                <span style={{ width: 28, height: 28, borderRadius: 999, background: nova ? LH.tint : '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={a.ic || (nova ? 'sparkles' : 'settings')} size={13} color={nova ? LH.primary : LH.sub} /></span>
+                {!last && <span style={{ flex: 1, width: 2, background: LH.borderSoft, minHeight: 16, marginTop: 3 }} />}
+              </div>
+              <div style={{ flex: 1, minWidth: 0, paddingBottom: last ? 2 : 16 }}>
+                <div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.45 }}>{a.msg}</div>
+                <div style={{ fontSize: 11, color: LH.muted, marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 4 }}><Ic name="clock" size={11} color={LH.muted} />{a.t || a.when}</div>
+              </div>
+            </div>; })}
+          </div>}
           {tab === 'tasks' && <div>
             {taskOpen ? <div style={{ border: '1px solid ' + LH.border, borderRadius: 10, padding: 12, marginBottom: 12 }}>
               <input value={tTitle} onChange={e => setTTitle(e.target.value)} placeholder="Task title" autoFocus style={{ width: '100%', height: 34, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none', marginBottom: 8 }} />
