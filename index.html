@@ -30840,12 +30840,18 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
     </Card>;
   }
+  // Stages past "Converted" (index > 5) are terminal — grouped into one collapsed "Closed" lane.
+  const TERMINAL_COLS = LEAD_COLS.filter(c => COL_STAGE[c.key] > 5);
+  const ACTIVE_COLS = LEAD_COLS.filter(c => COL_STAGE[c.key] <= 5);
   function LeadsKanban({ leads, onMove, onCardClick, selId, cardCfg }) {
     const [dragId, setDragId] = useState(null);
     const [overCol, setOverCol] = useState(null);
+    const [termOpen, setTermOpen] = useState({});
     const drop = key => { if (dragId) onMove(dragId, key); setDragId(null); setOverCol(null); };
+    const card = l => <LeadKanbanCard key={l.id} lead={l} cfg={cardCfg} selected={selId === l.id} dragging={dragId === l.id} onClick={onCardClick} onDragStart={setDragId} onDragEnd={() => { setDragId(null); setOverCol(null); }} />;
+    const termTotal = leads.filter(l => COL_STAGE[l.col] > 5).length;
     return <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
-      {LEAD_COLS.map(col => {
+      {ACTIVE_COLS.map(col => {
         const cj = leads.filter(l => l.col === col.key);
         const over = overCol === col.key;
         return <div key={col.key}
@@ -30860,11 +30866,39 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1, minHeight: 0 }}>
-            {cj.length ? cj.map(l => <LeadKanbanCard key={l.id} lead={l} cfg={cardCfg} selected={selId === l.id} dragging={dragId === l.id} onClick={onCardClick} onDragStart={setDragId} onDragEnd={() => { setDragId(null); setOverCol(null); }} />)
+            {cj.length ? cj.map(card)
               : <div style={{ fontSize: 11.5, color: LH.muted, padding: '14px 0', textAlign: 'center' }}>Drop a lead here</div>}
           </div>
         </div>;
       })}
+      {/* Closed lane — terminal stages grouped, each an independent drop target + collapsible section */}
+      <div style={{ width: 248, flexShrink: 0, borderRadius: 12, background: '#eef0f2', padding: '10px 10px 12px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 250px)', border: '1px dashed #d5d9df' }}>
+        <div style={{ marginBottom: 10, padding: '0 2px', display: 'flex', alignItems: 'center', gap: 7 }}>
+          <Ic name="archive" size={13} color={LH.sub} /><span style={{ fontSize: 12.5, fontWeight: 700, color: '#374151' }}>Closed</span><span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 17, height: 17, borderRadius: 999, fontSize: 10.5, fontWeight: 600, color: LH.sub, background: 'rgba(0,0,0,.06)', padding: '0 5px' }}>{termTotal}</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto', flex: 1, minHeight: 0 }}>
+          {TERMINAL_COLS.map(col => {
+            const cj = leads.filter(l => l.col === col.key);
+            const over = overCol === col.key;
+            const open = termOpen[col.key];
+            return <div key={col.key}
+              onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setOverCol(col.key); }}
+              onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setOverCol(null); }}
+              onDrop={e => { e.preventDefault(); drop(col.key); }}
+              style={{ borderRadius: 9, background: over ? '#e2e5e9' : '#fff', border: '1px solid ' + (over ? '#cbd5e1' : LH.border), padding: 6, transition: 'background 150ms' }}>
+              <button onClick={() => setTermOpen(o => ({ ...o, [col.key]: !o[col.key] }))} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 7, background: 'none', border: 'none', cursor: 'pointer', padding: '3px 2px' }}>
+                <Ic name={open ? 'chevron-down' : 'chevron-right'} size={13} color={LH.muted} />
+                <span style={{ width: 8, height: 8, borderRadius: 999, background: col.dot, flexShrink: 0 }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{col.key}</span>
+                <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 17, height: 17, borderRadius: 999, fontSize: 10.5, fontWeight: 600, color: LH.sub, background: 'rgba(0,0,0,.06)', padding: '0 5px' }}>{cj.length}</span>
+              </button>
+              {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+                {cj.length ? cj.map(card) : <div style={{ fontSize: 11, color: LH.muted, padding: '8px 0', textAlign: 'center' }}>No leads</div>}
+              </div>}
+            </div>;
+          })}
+        </div>
+      </div>
     </div>;
   }
 
@@ -31401,6 +31435,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     };
     // Moving a lead into "Converted as Job" runs the conversion flow instead of a silent move.
     const boardMove = (id, col) => { if (col === 'Converted') { const l = leads.find(x => x.id === id); if (l && !l.jobId) { startLeadConvert(l, jid => convertLeadTo(id, jid), () => setConvertLead(l)); return; } } move(id, col); };
+    const removeLead = id => setLeads(ls => ls.filter(l => l.id !== id));
+    const setLeadStatus = (id, status) => setLeads(ls => ls.map(l => l.id === id ? { ...l, status } : l));
+    const [rowMenu, setRowMenu] = useState(null); // lead id whose row action menu is open
     const filtered = leads.filter(l => (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && (fCity === 'All' || LEAD_CITY(l) === fCity) && matchKpi(l) && (!search.trim() || (l.name + ' ' + (l.note || '')).toLowerCase().includes(search.trim().toLowerCase())));
     useEffect(() => { const h = e => { if (e.key === 'Escape') setSelId(null); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, []);
     // If we arrived here from "Create lead from call", create the lead from the captured data and open its page.
@@ -31427,14 +31464,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           <DateRangePicker />
-          <div style={{ position: 'relative' }}>
-            <button onClick={() => setNewOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 34, padding: '0 13px', borderRadius: 9, border: '1px solid ' + LH.primary, background: LH.primary, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}><Ic name="plus" size={15} color="#fff" />New lead<span style={{ width: 1, height: 16, background: 'rgba(255,255,255,.25)', margin: '0 1px' }} /><Ic name="chevron-down" size={13} color="#fff" /></button>
-            {newOpen && <div onMouseLeave={() => setNewOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 200 }}>
-              {[['user-plus', 'New lead', 'new'], ['upload', 'Import leads', 'import'], ['div'], ['radio', 'Connect source', 'channels']].map(([ic, l, f], k) => ic === 'div'
-                ? <div key={'d' + k} style={{ height: 1, background: LH.borderSoft, margin: '5px 0' }} />
-                : <div key={l} onClick={() => { setNewOpen(false); if (f === 'channels') { onNavigate ? onNavigate('lead-channels') : (onToast && onToast('Opening Channels…')); } else setFlow(f); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={LH.sub} />{l}</div>)}
-            </div>}
-          </div>
+          <button onClick={() => setFlow('new')} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 34, padding: '0 14px', borderRadius: 9, border: '1px solid ' + LH.primary, background: LH.primary, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}><Ic name="plus" size={15} color="#fff" />New lead</button>
         </div>
       </div>
       {/* Row 2 — filters, search, customize, KPI toggle, view switch */}
@@ -31474,17 +31504,23 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         ? <LeadsKanban leads={filtered} onMove={boardMove} onCardClick={setSelId} selId={selId} cardCfg={cardCfg} />
         : <Card style={{ padding: 0, overflowX: 'auto', overflowY: 'hidden' }}>
           <table style={{ width: '100%', minWidth: 1240, borderCollapse: 'collapse' }}>
-            <thead><tr>{[['Name', 190], ['Stage', 120], ['Source', 150], ['Signed', 150], ['Email', 210], ['Phone', 130], ['Campaigns', 170], ['Tags', 150], ['Age', 70]].map(([h, w]) => <th key={h} style={{ textAlign: 'left', padding: '8px 14px', fontSize: 11, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w || 'auto' }}>{h}</th>)}</tr></thead>
+            <thead><tr>{[['Name', 180], ['Stage', 120], ['Status', 120], ['Source', 140], ['Assigned', 160], ['Email', 200], ['Phone', 130], ['Campaign', 160], ['Age', 64], ['', 48]].map(([h, w], hi) => <th key={hi} style={{ textAlign: 'left', padding: '8px 14px', fontSize: 11, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w || 'auto' }}>{h}</th>)}</tr></thead>
             <tbody>{filtered.map((l, i) => { const bb = i < filtered.length - 1 ? '1px solid ' + LH.borderSoft : 'none'; return <tr key={l.id} onClick={() => openPage(l)} style={{ cursor: 'pointer', background: '#fff' }} onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
-              <td style={{ padding: '8px 14px', borderBottom: bb }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap' }}>{l.name}</div></td>
+              <td style={{ padding: '8px 14px', borderBottom: bb }}><div onClick={e => { e.stopPropagation(); openPage(l); }} style={{ fontSize: 13, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.color = LH.primary} onMouseLeave={e => e.currentTarget.style.color = LH.ink}>{l.name}</div></td>
               <td style={{ padding: '8px 14px', borderBottom: bb }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, color: LH.body, whiteSpace: 'nowrap' }}><span style={{ width: 8, height: 8, borderRadius: 999, flexShrink: 0, background: COL_DOT[l.col] || LH.sub }} />{l.col}</span></td>
+              <td style={{ padding: '8px 14px', borderBottom: bb }}><Pill label={l.status || l.col} /></td>
               <td style={{ padding: '8px 14px', borderBottom: bb }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 24, padding: '0 10px', borderRadius: 999, border: '1px solid ' + LH.border, background: '#fff', color: LH.body, fontSize: 11.5, fontWeight: 600, whiteSpace: 'nowrap' }}><span style={{ width: 6, height: 6, borderRadius: 999, flexShrink: 0, background: LH.sub }} />{l.src}</span></td>
               <td style={{ padding: '8px 14px', borderBottom: bb }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}><LeadAvatar name={assigneeOf(l)} size={24} /><span style={{ fontSize: 12, color: LH.body }}>{assigneeOf(l)}</span></span></td>
               <td style={{ padding: '8px 14px', borderBottom: bb, fontSize: 12, color: LH.body, whiteSpace: 'nowrap' }}>{emailOf(l)}</td>
               <td style={{ padding: '8px 14px', borderBottom: bb, fontSize: 12, color: LH.body, whiteSpace: 'nowrap' }}>{phoneOf(l)}</td>
-              <td style={{ padding: '8px 14px', borderBottom: bb }}>{campaignOf(l) ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 22, padding: '0 9px', borderRadius: 7, background: '#f1f0ec', color: LH.body, fontSize: 11.5, fontWeight: 600, maxWidth: 168, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}><Ic name="megaphone" size={12} color={LH.sub} />{campaignOf(l)}</span> : <span style={{ fontSize: 11.5, color: LH.muted }}>Not enrolled</span>}</td>
-              <td style={{ padding: '8px 14px', borderBottom: bb }}><span style={{ display: 'inline-flex', gap: 5, whiteSpace: 'nowrap' }}>{leadTags(l).map(t => { const tn = tagTone(t); return <span key={t} style={{ display: 'inline-flex', alignItems: 'center', height: 21, padding: '0 8px', borderRadius: 999, background: tn.bg, color: tn.fg, fontSize: 11, fontWeight: 600 }}>{t}</span>; })}</span></td>
+              <td style={{ padding: '8px 14px', borderBottom: bb }}>{campaignOf(l) ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 22, padding: '0 9px', borderRadius: 7, background: '#f1f0ec', color: LH.body, fontSize: 11.5, fontWeight: 600, maxWidth: 158, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}><Ic name="megaphone" size={12} color={LH.sub} />{campaignOf(l)}</span> : <span style={{ fontSize: 11.5, color: LH.muted }}>Not enrolled</span>}</td>
               <td style={{ padding: '8px 14px', borderBottom: bb, fontSize: 12, color: LH.muted, whiteSpace: 'nowrap' }}>{l.age}</td>
+              <td style={{ padding: '8px 10px', borderBottom: bb }} onClick={e => e.stopPropagation()}><div style={{ position: 'relative' }}>
+                <button onClick={() => setRowMenu(m => m === l.id ? null : l.id)} title="Actions" style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: rowMenu === l.id ? '#f1f0ec' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f1f0ec'} onMouseLeave={e => { if (rowMenu !== l.id) e.currentTarget.style.background = 'none'; }}><Ic name="more-vertical" size={16} color={LH.sub} /></button>
+                {rowMenu === l.id && <div onMouseLeave={() => setRowMenu(null)} style={{ position: 'absolute', top: 30, right: 0, zIndex: 40, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.16)', padding: 5, width: 180 }}>
+                  {[['eye', 'View details', () => openPage(l)], ['x-circle', 'Mark as lost', () => { boardMove(l.id, 'Disqualified'); setLeadStatus(l.id, 'Lost'); onToast && onToast(l.name + ' marked as lost'); }], ['copy', 'Mark as duplicate', () => { setLeadStatus(l.id, 'Duplicate'); onToast && onToast(l.name + ' marked as duplicate'); }], ['trash-2', 'Delete', () => { removeLead(l.id); onToast && onToast(l.name + ' deleted'); }]].map(([ic, lbl, fn]) => <div key={lbl} onClick={() => { setRowMenu(null); fn(); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 12.5, color: lbl === 'Delete' ? LH.red : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={lbl === 'Delete' ? LH.red : LH.sub} />{lbl}</div>)}
+                </div>}
+              </div></td>
             </tr>; })}{!filtered.length && <tr><td colSpan={10} style={{ padding: 40, textAlign: 'center', fontSize: 13, color: LH.muted }}>No leads match the filters.</td></tr>}</tbody>
           </table>
         </Card>}
@@ -31710,7 +31746,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const rCsr = n => R_CSRS[rhash(n + 'x') % R_CSRS.length];
     const rEmail = n => n.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com';
     const rInit = n => n.split(' ').map(w => w[0]).join('').slice(0, 2);
-    const ECOLS = [['Name', 168], ['Source', 148], ['Signed', 172], ['Email', 210], ['Phone', 128], ['Last activity', 182], ['Status', 116], ['Age', 58]];
+    const ECOLS = [['Name', 168], ['Source', 148], ['Assigned', 172], ['Email', 210], ['Phone', 128], ['Last activity', 182], ['Status', 116], ['Age', 58]];
     const ETW = ECOLS.reduce((a, c) => a + c[1], 0) + 32;
     const eHead = <div style={{ display: 'flex', alignItems: 'center', padding: '9px 16px', borderBottom: '1px solid ' + LH.borderSoft, background: LH.bg, position: 'sticky', top: 0, zIndex: 1 }}>{ECOLS.map(([l, w], j) => <span key={l} style={{ width: w, flexShrink: 0, fontSize: 11, fontWeight: 700, color: LH.muted, letterSpacing: '.02em', textAlign: l === 'Age' ? 'right' : 'left' }}>{l}</span>)}</div>;
     const eCell = (w, node, right) => <span style={{ width: w, flexShrink: 0, minWidth: 0, fontSize: 12.5, color: LH.body, textAlign: right ? 'right' : 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 10 }}>{node}</span>;
