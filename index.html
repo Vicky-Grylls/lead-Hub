@@ -496,7 +496,7 @@ function TopNavBar({ extraTab, extraTabs = [], activeExtra = null, onSelectExtra
     if (activeId === id) setActiveId(tabs[0]?.id ?? '');
   };
   const [acctOpen, setAcctOpen] = React.useState(false);
-  const dsOn = (() => { try { return localStorage.getItem('zuper_ds') === '1'; } catch (e) { return false; } })();
+  const dsOn = (() => { try { return localStorage.getItem('zuper_ds') !== '0'; } catch (e) { return true; } })();
   const setDs = v => { try { localStorage.setItem('zuper_ds', v ? '1' : '0'); } catch (e) {} location.reload(); };
   return /*#__PURE__*/React.createElement("div", {
     className: "h-[44px] flex items-center shrink-0",
@@ -15260,7 +15260,7 @@ function TopNavBar({ extraTab, extraTabs = [], activeExtra = null, onSelectExtra
     if (activeId === id) setActiveId(tabs[0]?.id ?? '');
   };
   const [acctOpen, setAcctOpen] = React.useState(false);
-  const dsOn = (() => { try { return localStorage.getItem('zuper_ds') === '1'; } catch (e) { return false; } })();
+  const dsOn = (() => { try { return localStorage.getItem('zuper_ds') !== '0'; } catch (e) { return true; } })();
   const setDs = v => { try { localStorage.setItem('zuper_ds', v ? '1' : '0'); } catch (e) {} location.reload(); };
   return /*#__PURE__*/React.createElement("div", {
     className: "h-[44px] flex items-center shrink-0",
@@ -24229,7 +24229,7 @@ function TopNavBar(){
   const[activeId,setActiveId]=React.useState('1');
   const remove=id=>{setTabs(p=>p.filter(t=>t.id!==id));if(activeId===id)setActiveId(tabs[0]?.id??'');};
   const[acctOpen,setAcctOpen]=React.useState(false);
-  const dsOn=(()=>{try{return localStorage.getItem('zuper_ds')==='1';}catch(e){return false;}})();
+  const dsOn=(()=>{try{return localStorage.getItem('zuper_ds')!=='0';}catch(e){return true;}})();
   const setDs=v=>{try{localStorage.setItem('zuper_ds',v?'1':'0');}catch(e){}location.reload();};
   return(
     <div className="h-[44px] flex items-center shrink-0" style={{background:'#f8f5f0'}}>
@@ -29538,7 +29538,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     red: '#dc2626', redBg: '#fee2e2', redBd: '#fecaca',
     blue: '#2563eb', blueBg: '#eff6ff', blueBd: '#dbeafe'
   };
-  const DS_ON = (() => { try { return localStorage.getItem('zuper_ds') === '1'; } catch (e) { return false; } })();
+  const DS_ON = (() => { try { return localStorage.getItem('zuper_ds') !== '0'; } catch (e) { return true; } })();
   const LH = DS_ON ? ZUPER_LH : LEGACY_LH;
 
   // Icon via lucide (reuse global lucide loaded by the shell)
