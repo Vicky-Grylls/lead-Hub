@@ -30729,18 +30729,30 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   const LEAD_COLS = PIPE_COLS.map(c => ({ ...c, dot: COL_DOT[c.key] }));
 
   function LeadKanbanCard({ lead, onClick, onDragStart, onDragEnd, dragging, selected, cfg }) {
-    cfg = cfg || { score: true, source: true, age: true, fields: true };
+    cfg = cfg || { source: true, score: true, age: true, fields: true, note: true };
+    const scoreColor = lead.score >= 80 ? LH.primary : lead.score >= 60 ? '#c9922e' : '#9c9b96';
+    const metaRow = cfg.source || cfg.stage || cfg.status;
+    const footRow = cfg.fields || cfg.age;
     return <div draggable onClick={() => onClick(lead.id)}
       onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; onDragStart(lead.id); }}
       onDragEnd={onDragEnd}
       style={{ background: '#fff', border: '1px solid ' + (selected ? LH.primary : LH.border), borderRadius: 10, padding: '8px 10px', boxShadow: selected ? '0 0 0 3px rgba(31,31,29,0.10)' : '0 1px 2px rgba(0,0,0,.05)', cursor: 'grab', opacity: dragging ? 0.4 : 1, transition: 'opacity 150ms, box-shadow 150ms, border-color 150ms' }}
       onMouseEnter={e => { if (!dragging && !selected) { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,.08)'; e.currentTarget.style.borderColor = '#cbd5e1'; } }}
       onMouseLeave={e => { if (!selected) { e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,.05)'; e.currentTarget.style.borderColor = LH.border; } }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: (cfg.source || cfg.age) ? 5 : 0 }}>
-        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.name}</div><div style={{ fontSize: 10.5, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.note}</div></div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.name}</div>{cfg.note && lead.note && <div style={{ fontSize: 10.5, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.note}</div>}</div>
+        {cfg.score && <span style={{ fontSize: 10.5, fontWeight: 700, color: scoreColor, background: '#f6f4ef', borderRadius: 6, padding: '1px 6px', flexShrink: 0 }}>{lead.score}</span>}
       </div>
-      {(cfg.source || cfg.age) && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>{cfg.source ? <Pill label={lead.src} tone="New" /> : <span />}{cfg.age && <span style={{ fontSize: 10.5, color: LH.muted }}>{lead.age}</span>}</div>}
-      {cfg.fields && <div style={{ fontSize: 10.5, color: LH.sub, marginTop: 5 }}>{lead.fields} fields</div>}
+      {metaRow && <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+        {cfg.source && <Pill label={lead.src} tone="New" />}
+        {cfg.stage && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: LH.body }}><span style={{ width: 7, height: 7, borderRadius: 999, background: COL_DOT[lead.col] || LH.sub }} />{lead.col}</span>}
+        {cfg.status && <Pill label={lead.status || lead.col} />}
+      </div>}
+      {(cfg.phone || cfg.email) && <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {cfg.phone && <span style={{ fontSize: 10.5, color: LH.sub, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="phone" size={11} color={LH.muted} />{lead.phone || '469-555-0172'}</span>}
+        {cfg.email && <span style={{ fontSize: 10.5, color: LH.sub, display: 'inline-flex', alignItems: 'center', gap: 5, minWidth: 0 }}><Ic name="mail" size={11} color={LH.muted} /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.email || (lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com')}</span></span>}
+      </div>}
+      {footRow && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>{cfg.fields ? <span style={{ fontSize: 10.5, color: LH.sub }}>{lead.fields} fields</span> : <span />}{cfg.age && <span style={{ fontSize: 10.5, color: LH.muted }}>{lead.age}</span>}</div>}
     </div>;
   }
 
@@ -31383,7 +31395,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [viewOpen, setViewOpen] = useState(false);
     const [viewName, setViewName] = useState('');
     const [custOpen, setCustOpen] = useState(false);
-    const [cardCfg, setCardCfg] = useState({ score: true, source: true, age: true, fields: true });
+    const [cardCfg, setCardCfg] = useState({ score: true, source: true, age: true, fields: true, note: true });
     const matchKpi = l => !kpi || (kpi === 'received' ? ageHours(l.age) < 24 : kpi === 'qualified' ? l.col === 'Qualified' : kpi === 'engaged' ? l.col === 'Engaged' : kpi === 'contacted' ? l.col === 'Contacted' : kpi === 'converted' ? l.col === 'Converted' : kpi === 'disqualified' ? l.col === 'Disqualified' : true);
     const ASSIGNEES = ['Maria Gonzalez', 'Tyson Silva', 'Michael Richardson', 'Marcus Webb'];
     const assigneeOf = l => ASSIGNEES[(l.id.charCodeAt(1) + l.id.length) % ASSIGNEES.length];
@@ -31484,14 +31496,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><Toggle on={!showKpi} onChange={() => setShowKpi(k => !k)} /><span onClick={() => setShowKpi(k => !k)} style={{ fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}>Hide KPIs</span></div>
           <div style={{ position: 'relative', width: 210 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 10, top: 9 }} /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search leads" style={{ width: '100%', height: 32, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px 0 30px', fontSize: 12.5, color: LH.ink, outline: 'none' }} /></div>
-          {view === 'kanban' && <div style={{ position: 'relative' }}>
-            <button onClick={() => setCustOpen(o => !o)} title="Customize board" style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid ' + (custOpen ? LH.primary : LH.border), background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="sliders" size={15} color={LH.sub} /></button>
-            {custOpen && <div onMouseLeave={() => setCustOpen(false)} style={{ position: 'absolute', top: 36, right: 0, zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 11, boxShadow: '0 12px 32px rgba(0,0,0,.14)', width: 220, padding: 8 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, padding: '4px 8px 2px' }}>Customize board</div>
-              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, padding: '4px 8px 4px' }}>CARD FIELDS</div>
-              {[['source', 'Source'], ['fields', 'Field progress'], ['age', 'Age']].map(([k, l]) => { const on = cardCfg[k]; return <div key={k} onClick={() => setCardCfg(c => ({ ...c, [k]: !c[k] }))} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 8px', borderRadius: 7, fontSize: 12.5, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{l}<span style={{ width: 16, height: 16, borderRadius: 5, flexShrink: 0, border: '1.5px solid ' + (on ? LH.primary : LH.border), background: on ? LH.primary : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on && <Ic name="check" size={11} color="#fff" />}</span></div>; })}
-            </div>}
-          </div>}
+          {view === 'kanban' && <button onClick={() => setCustOpen(o => !o)} title="Customize card" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 8, border: '1px solid ' + (custOpen ? LH.primary : LH.border), background: '#fff', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: LH.body }}><Ic name="sliders" size={15} color={LH.sub} />Customize card</button>}
           <div style={{ display: 'inline-flex', border: '1px solid ' + LH.border, borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
             {[['kanban', 'layout-grid', 'Board'], ['list', 'list', 'List']].map(([v, ic, lbl], vi) => <button key={v} onClick={() => setView(v)} title={lbl} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 32, border: 'none', borderLeft: vi > 0 ? '1px solid ' + LH.border : 'none', background: view === v ? LH.tint : '#fff', color: view === v ? LH.ink : LH.sub, cursor: 'pointer' }}><Ic name={ic} size={15} color={view === v ? LH.ink : LH.sub} /></button>)}
           </div>
@@ -31555,6 +31560,29 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {convertLead && <ConvertToJobModal lead={convertLead} onClose={() => setConvertLead(null)} onToast={onToast} onConverted={jid => convertLeadTo(convertLead.id, jid)} />}
       {flow === 'new' && <NewLeadForm sources={SRCS.filter(s => s !== 'All')} assignees={ASSIGNEES} onClose={() => setFlow(null)} onToast={onToast} onCreate={d => { const lead = addLead(d); setFlow(null); onToast('Lead “' + lead.name + '” added to ' + lead.col); setKpi(null); clearF(); setSelId(lead.id); }} />}
       {flow === 'import' && <ImportFlow onClose={() => setFlow(null)} onToast={onToast} onImport={rows => { addLeads(rows); setKpi(null); clearF(); }} />}
+      {custOpen && (() => { const CARD_ATTRS = [['source', 'Source', 'tag'], ['stage', 'Stage', 'flag'], ['status', 'Status', 'activity'], ['score', 'Lead score', 'star'], ['age', 'Age', 'clock'], ['fields', 'Field progress', 'list-checks'], ['phone', 'Phone', 'phone'], ['email', 'Email', 'mail'], ['note', 'Service interest', 'wrench']]; const sample = filtered[0] || { id: 'sample', name: 'Jordan Blake', note: 'Roof inspection', src: 'Angi', age: '2h', score: 82, col: 'Engaged', status: 'Working', fields: 6, phone: '469-555-0172', email: 'jordan.blake@gmail.com' }; const onN = CARD_ATTRS.filter(a => cardCfg[a[0]]).length; return ReactDOM.createPortal(<div onMouseDown={() => setCustOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(8,6,5,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+        <div onMouseDown={e => e.stopPropagation()} style={{ width: 'min(720px,94vw)', background: '#fff', borderRadius: 16, boxShadow: '0 24px 60px rgba(0,0,0,.28)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft }}>
+            <div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Customize card</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Pick which attributes show on board cards.</div></div>
+            <button onClick={() => setCustOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 262px' }}>
+            <div style={{ padding: '16px 20px', borderRight: '1px solid ' + LH.borderSoft }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 10 }}>ATTRIBUTES · {onN} shown</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{CARD_ATTRS.map(([k, l, ic]) => { const on = !!cardCfg[k]; return <button key={k} onClick={() => setCardCfg(c => ({ ...c, [k]: !c[k] }))} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 32, padding: '0 12px', borderRadius: 999, border: '1px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', color: on ? LH.ink : LH.body, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}><Ic name={on ? 'check' : ic} size={13} color={on ? LH.primary : LH.sub} />{l}</button>; })}</div>
+              <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 14, lineHeight: 1.5 }}>Name always shows. Click a chip to add or remove it from every board card.</div>
+            </div>
+            <div style={{ padding: '16px 20px', background: LH.bg }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 10 }}>LIVE PREVIEW</div>
+              <div style={{ background: '#f1f0ec', border: '1px solid ' + LH.borderSoft, borderRadius: 12, padding: 10 }}><LeadKanbanCard lead={sample} cfg={cardCfg} selected={false} dragging={false} onClick={() => {}} onDragStart={() => {}} onDragEnd={() => {}} /></div>
+            </div>
+          </div>
+          <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button onClick={() => setCardCfg({ source: true, score: true, age: true, fields: true, note: true })} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Reset to default</button>
+            <Btn kind="primary" onClick={() => setCustOpen(false)}>Done</Btn>
+          </div>
+        </div>
+      </div>, document.body); })()}
     </div>;
   }
 
@@ -33635,7 +33663,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [pbId, setPbId] = useState('shield');
     const [shown, setShown] = useState(false);
     const [mapOpen, setMapOpen] = useState(false);
-    const [pbOpen, setPbOpen] = useState(true);
+    const [pbOpen, setPbOpen] = useState(false);
     useEffect(() => { const t = setTimeout(() => setShown(true), 10); const h = e => { if (e.key === 'Escape') onClose(); }; document.addEventListener('keydown', h); return () => { clearTimeout(t); document.removeEventListener('keydown', h); }; }, []);
     const set = (k, v) => setF(p => ({ ...p, [k]: v }));
     const setQ = (k, v) => setPb(p => ({ ...p, [k]: v }));
@@ -33661,14 +33689,19 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
           <div><label style={lbl}>Lead source</label><Dropdown value={f.src} options={(sources || []).map(s => ({ value: s, label: s }))} onChange={v => set('src', v)} /></div>
           <div><label style={lbl}>Stage</label><Dropdown value={f.stage} options={STAGES.map(s => ({ value: s, label: s }))} onChange={v => set('stage', v)} /></div>
-          <div><label style={lbl}>Signed</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
+          <div><label style={lbl}>Assigned</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
           <div><label style={lbl}>Service interest</label><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="e.g. Roof inspection" style={inp} /></div>
           <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Notes</label><textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional context…" style={{ ...inp, height: 70, padding: 10, resize: 'vertical' }} /></div>
         </div>
-        {/* Playbook & qualification — same form, below basic info */}
+        {/* Playbook & qualification — collapsed by default; expand to qualify inline */}
         <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid ' + LH.borderSoft }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}><Ic name="book-open" size={15} color={LH.primary} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Playbook &amp; qualification</span></div>
-          <QualifyPlaybook pbId={pbId} setPbId={setPbId} pb={pb} setPb={setPb} />
+          <div onClick={() => setPbOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
+            <Ic name="book-open" size={15} color={LH.primary} />
+            <span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Playbook &amp; qualification</span>
+            <span style={{ fontSize: 11.5, color: LH.muted, fontWeight: 500 }}>Optional</span>
+            <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: LH.sub, fontWeight: 600 }}>{pbOpen ? 'Hide' : 'Qualify now'}<Ic name={pbOpen ? 'chevron-up' : 'chevron-down'} size={15} color={LH.sub} /></span>
+          </div>
+          {pbOpen && <div style={{ marginTop: 14 }}><QualifyPlaybook pbId={pbId} setPbId={setPbId} pb={pb} setPb={setPb} /></div>}
         </div>
       </div>
       <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="plus" onClick={create} style={{ opacity: canSave ? 1 : 0.5 }}>Create lead</Btn></div>
