@@ -34400,25 +34400,26 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     return <div style={{ position: 'fixed', left, bottom, zIndex: 2500, width: W, maxWidth: '94vw', height: 540, maxHeight: 'calc(100vh - 120px)', background: '#fff', borderRadius: 14, border: '1px solid ' + LH.border, boxShadow: '0 24px 60px rgba(0,0,0,.28)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 14px', borderBottom: '1px solid ' + LH.borderSoft }}>
         <div style={{ width: 28, height: 28, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="book-open" size={15} color={LH.primary} /></div>
-        <div style={{ flex: 1, minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{playbook.name}</span><span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '.05em', color: LH.primary, background: LH.tint, borderRadius: 999, padding: '1px 7px' }}>PLAYBOOK</span></div><div style={{ fontSize: 11, color: LH.muted }}>{playbook.tag} · {qs.length} questions</div></div>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{playbook.name}</div><div style={{ fontSize: 11, color: LH.muted }}>{qs.length} questions · runs on SMS, email or a live call</div></div>
         <button onClick={onCollapse} title="Collapse" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Ic name="chevron-down" size={18} color={LH.sub} /></button>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: '1px solid ' + LH.borderSoft }}>
-        <div style={{ width: 28, height: 28, borderRadius: 999, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10.5, fontWeight: 700, flexShrink: 0 }}>{initials}</div>
-        <div style={{ minWidth: 0 }}><div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '.06em', color: LH.muted }}>ASSOCIATED LEAD</div><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{leadName}</div></div>
-        <div style={{ width: 130, marginLeft: 'auto', flexShrink: 0 }}><Dropdown value={leadName} height={30} options={PLAYBOOK_LEADS.map(o => ({ value: o, label: o }))} onChange={setLeadName} /></div>
-      </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: outcome.bg, borderBottom: '1px solid ' + LH.borderSoft }}><Ic name={outcome.ic} size={15} color={outcome.fg} /><span style={{ fontSize: 12.5, fontWeight: 700, color: outcome.fg }}>{outcome.label}</span><span style={{ fontSize: 11.5, color: LH.muted, marginLeft: 'auto' }}>{answered}/{qs.length} answered</span></div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 14px 14px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px 14px' }}>
         {qs.map((q, i) => <div key={i} style={{ marginBottom: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, lineHeight: 1.35 }}>{q.q}</span>{q.req && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.04em', color: LH.amber, background: LH.amberBg, borderRadius: 999, padding: '1px 6px', flexShrink: 0 }}>REQUIRED</span>}</div>
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, lineHeight: 1.35, marginBottom: 6 }}>{q.q}{q.req && <span style={{ color: LH.red, marginLeft: 3 }}>*</span>}</div>
           {q.type === 'select'
             ? <Dropdown value={ans[i] || ''} placeholder="Select an answer…" height={34} options={q.opts.map(o => ({ value: o, label: o }))} onChange={v => setA(i, v)} />
             : <input value={ans[i] || ''} onChange={e => setA(i, e.target.value)} placeholder={q.ph || 'Type an answer…'} style={inp} />}
           {filled(i) && q.branch && <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '5px 8px', borderRadius: 7, background: LH.tint, fontSize: 11, color: LH.primary, fontWeight: 500 }}><Ic name="git-branch" size={12} color={LH.primary} />{q.branch}</div>}
         </div>)}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}><span style={{ fontSize: 11.5, color: LH.muted, flex: 1 }}>Runs on SMS, email or a live call</span><Btn kind="primary" icon="check" onClick={onCollapse}>Save to {leadName.split(' ')[0]}</Btn></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
+          <span style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap' }}>Lead</span>
+          <div style={{ flex: 1, minWidth: 0, maxWidth: 180 }}><Dropdown value={leadName} height={30} options={PLAYBOOK_LEADS.map(o => ({ value: o, label: o }))} onChange={setLeadName} /></div>
+        </div>
+        <Btn kind="primary" icon="check" onClick={onCollapse}>Save to {leadName.split(' ')[0]}</Btn>
+      </div>
     </div>;
   }
   // Linear-style floating cluster (bottom-right): clock (recents) · Agent · one pill per playbook name.
