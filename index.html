@@ -31450,8 +31450,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </div>
       </div>
-      {showKpi && (() => { const KPIS = [{ k: 'received', label: 'Received today', value: '28' }, { k: 'qualified', label: 'Qualified today', value: '7' }, { k: 'contacting', label: 'Contacting', value: leads.filter(l => l.col === 'Contacting').length }, { k: 'drip', label: 'In drip', value: '41' }, { k: 'human', label: 'Awaiting human', value: '3', accent: LH.primary }, { k: 'converted', label: 'Converted', value: leads.filter(l => l.col === 'Converted as Job').length, accent: LH.green }]; return <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 10, marginBottom: 16 }}>
-        {KPIS.map(x => { const on = kpi === x.k; return <div key={x.k} onClick={() => setKpi(k => k === x.k ? null : x.k)} style={{ border: '1px solid ' + (on ? LH.ink : LH.border), background: on ? LH.tint : '#fff', borderRadius: 10, padding: '10px 12px', cursor: 'pointer', transition: 'border-color .12s' }}><div style={{ fontSize: 21, fontWeight: 700, color: x.accent || LH.ink, lineHeight: 1.1 }}>{x.value}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{x.label}</div></div>; })}
+      {showKpi && (() => { const KPIS = [{ k: 'received', label: 'Received today', value: '28', badge: '+11%' }, { k: 'qualified', label: 'Qualified today', value: '7', badge: '+6%' }, { k: 'contacting', label: 'Contacting', value: leads.filter(l => l.col === 'Contacting').length }, { k: 'drip', label: 'In drip', value: '41', badge: '−3%' }, { k: 'human', label: 'Awaiting human', value: '3', badge: '2 new', accent: LH.primary }, { k: 'converted', label: 'Converted', value: leads.filter(l => l.col === 'Converted as Job').length, accent: LH.green }]; return <div className="flex space-x-3 select-none" style={{ marginBottom: 16 }}>
+        {KPIS.map(x => { const on = kpi === x.k; return <div key={x.k} onClick={() => setKpi(k => k === x.k ? null : x.k)} className="px-3 py-2.5 flex-col flex justify-center flex-auto rounded-lg cursor-pointer" style={{ minWidth: 0, border: '1px solid ' + (on ? LH.ink : LH.border), background: on ? LH.tint : '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.07)' }}>
+          <div className="flex items-center justify-between gap-1.5 text-md font-medium whitespace-nowrap">
+            <span className="text-gray-500 truncate">{x.label}</span>
+            {x.badge && <span className="text-blue-500 bg-blue-50 rounded-md leading-tight px-1.5 py-0.5 text-xs font-semibold">{x.badge}</span>}
+          </div>
+          <div className="text-xl font-semibold whitespace-nowrap mt-0.5" style={{ color: x.accent || LH.ink }}>{x.value}</div>
+        </div>; })}
       </div>; })()}
       {view === 'kanban'
         ? <LeadsKanban leads={filtered} onMove={boardMove} onCardClick={setSelId} selId={selId} cardCfg={cardCfg} />
