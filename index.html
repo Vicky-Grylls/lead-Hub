@@ -32665,15 +32665,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', background: '#fbfaf8', backgroundImage: 'radial-gradient(circle, #e3ddd0 1px, transparent 1px)', backgroundSize: '18px 18px', padding: '22px 26px 44px', paddingRight: panelOpen ? panelW + 24 : 26, transition: 'padding-right .18s ease' }}>
             <div style={{ maxWidth: 620, margin: '0 auto' }}>
               <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="headphones" size={19} color={LH.primary} /></div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Attempt sequence</div>
-              <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Nova works each lead through these attempts in order — <b style={{ color: LH.ink }}>outcome-based</b>, stopping the moment the lead qualifies, disqualifies, replies, or opts out. Click a step to configure it.</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink, marginBottom: 18 }}>Attempt sequence</div>
               <Card style={{ padding: 16, marginBottom: 18, maxWidth: 460, marginLeft: 'auto', marginRight: 'auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>SEND WINDOW · DAYS</div>
                   <div style={{ display: 'flex', gap: 5 }}>{DOW.map((d, i) => <button key={i} onClick={() => setSendDays({ ...sendDays, [i]: !sendDays[i] })} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid ' + (sendDays[i] ? LH.primary : LH.border), background: sendDays[i] ? LH.primary : '#fff', color: sendDays[i] ? '#fff' : LH.sub, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>{d}</button>)}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', rowGap: 12, paddingTop: 14, marginTop: 14, borderTop: '1px solid ' + LH.borderSoft }}>
-                  <div><div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>BUSINESS HOURS</div><div style={{ fontSize: 13, color: LH.body, marginTop: 4 }}>Only send during set hours — waits that land outside roll to the next open window</div></div>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>BUSINESS HOURS</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}><Toggle on={bizHours} onChange={setBizHours} /><div style={{ display: 'flex', gap: 8, alignItems: 'center', opacity: bizHours ? 1 : 0.4, pointerEvents: bizHours ? 'auto' : 'none' }}><div style={{ width: 118 }}><Dropdown value="9:00 am" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div><span style={{ color: LH.muted, fontSize: 12 }}>to</span><div style={{ width: 118 }}><Dropdown value="8:00 pm" options={TIMES.map(t => ({ value: t, label: t }))} onChange={() => {}} /></div></div></div>
                 </div>
               </Card>
