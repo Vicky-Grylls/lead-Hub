@@ -29593,6 +29593,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </span>;
   }
 
+  // Deterministic avatar photo per person (falls back to initials if the image fails).
+  const LH_AV_IMG = name => { const s = String(name || ''); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return 'https://i.pravatar.cc/80?img=' + (1 + h % 70); };
+  function LeadAvatar({ name, size = 24, style }) {
+    const init = String(name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    return <span style={{ position: 'relative', width: size, height: size, borderRadius: 999, overflow: 'hidden', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: LH.tint, color: LH.primary, fontSize: Math.round(size * 0.42), fontWeight: 700, ...style }}>{init}<img src={LH_AV_IMG(name)} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.currentTarget.style.display = 'none'; }} /></span>;
+  }
   function Btn({ children, kind = 'secondary', icon, onClick, style }) {
     const base = { display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all .12s', whiteSpace: 'nowrap' };
     const skin = kind === 'primary'
@@ -30205,7 +30211,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const kebabIcColor = a => a === 'Delete lead' ? LH.red : a === 'Mark as lost' ? LH.amber : LH.sub;
     return <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 12 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 11, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>{initials}</div>
+        <LeadAvatar name={lead.name} size={40} style={{ borderRadius: 11 }} />
         <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink, lineHeight: 1.3, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.name}</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: LH.sub, marginBottom: 14 }}><Ic name="map-pin" size={13} color={LH.muted} />{address}</div>
@@ -30936,15 +30942,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <Ic name="pencil" size={14} color="#a3a3a3" />
       </div>
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        <LeadCollapse title="Assigned CSR (1)" open={open.csr} onToggle={() => toggle('csr')}>
+        <LeadCollapse title="Signed (1)" open={open.csr} onToggle={() => toggle('csr')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}>
-            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" style={{ width: 32, height: 32, borderRadius: 999, flexShrink: 0 }} />
-            <div style={{ flex: 1 }}><span style={{ display: 'block', fontSize: 12, color: '#262626', fontWeight: 500 }}>Maria Gonzalez</span><span style={{ fontSize: 11, color: '#737373' }}>Pre Sales CSR</span></div>
+            <LeadAvatar name="Maria Gonzalez" size={32} />
+            <div style={{ flex: 1 }}><span style={{ display: 'block', fontSize: 12, color: '#262626', fontWeight: 500 }}>Maria Gonzalez</span><span style={{ fontSize: 11, color: '#737373' }}>Pre Sales</span></div>
           </div>
         </LeadCollapse>
         <LeadCollapse title="Contact" open={open.contact} onToggle={() => toggle('contact')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}>
-            <div style={{ width: 32, height: 32, borderRadius: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: '#dbeafe', fontSize: 11, fontWeight: 600, color: '#2563eb' }}>{initials}</div>
+            <LeadAvatar name={lead.name} size={32} />
             <div style={{ flex: 1, minWidth: 0 }}><span style={{ display: 'block', fontSize: 12, color: '#262626', fontWeight: 500 }}>{lead.name}</span><span style={{ fontSize: 11, color: '#737373', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>{email}</span></div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic name="phone" size={14} color="#a3a3a3" /><Ic name="mail" size={14} color="#a3a3a3" /></div>
           </div>
@@ -31436,12 +31442,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         ? <LeadsKanban leads={filtered} onMove={boardMove} onCardClick={setSelId} selId={selId} cardCfg={cardCfg} />
         : <Card style={{ padding: 0, overflowX: 'auto', overflowY: 'hidden' }}>
           <table style={{ width: '100%', minWidth: 1240, borderCollapse: 'collapse' }}>
-            <thead><tr>{[['Name', 190], ['Stage', 120], ['Source', 150], ['Assigned CSR', 150], ['Email', 210], ['Phone', 130], ['Campaigns', 170], ['Tags', 150], ['Age', 70]].map(([h, w]) => <th key={h} style={{ textAlign: 'left', padding: '8px 14px', fontSize: 11, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w || 'auto' }}>{h}</th>)}</tr></thead>
+            <thead><tr>{[['Name', 190], ['Stage', 120], ['Source', 150], ['Signed', 150], ['Email', 210], ['Phone', 130], ['Campaigns', 170], ['Tags', 150], ['Age', 70]].map(([h, w]) => <th key={h} style={{ textAlign: 'left', padding: '8px 14px', fontSize: 11, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w || 'auto' }}>{h}</th>)}</tr></thead>
             <tbody>{filtered.map((l, i) => { const bb = i < filtered.length - 1 ? '1px solid ' + LH.borderSoft : 'none'; return <tr key={l.id} onClick={() => openPage(l)} style={{ cursor: 'pointer', background: '#fff' }} onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
               <td style={{ padding: '8px 14px', borderBottom: bb }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap' }}>{l.name}</div></td>
               <td style={{ padding: '8px 14px', borderBottom: bb }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, color: LH.body, whiteSpace: 'nowrap' }}><span style={{ width: 8, height: 8, borderRadius: 999, flexShrink: 0, background: COL_DOT[l.col] || LH.sub }} />{l.col}</span></td>
               <td style={{ padding: '8px 14px', borderBottom: bb }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 24, padding: '0 10px', borderRadius: 999, border: '1px solid ' + LH.border, background: '#fff', color: LH.body, fontSize: 11.5, fontWeight: 600, whiteSpace: 'nowrap' }}><span style={{ width: 6, height: 6, borderRadius: 999, flexShrink: 0, background: LH.sub }} />{l.src}</span></td>
-              <td style={{ padding: '8px 14px', borderBottom: bb }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}><span style={{ width: 24, height: 24, borderRadius: 999, flexShrink: 0, background: LH.tint, color: LH.primary, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10.5, fontWeight: 700 }}>{assigneeOf(l).split(' ').map(w => w[0]).join('').slice(0, 2)}</span><span style={{ fontSize: 12, color: LH.body }}>{assigneeOf(l)}</span></span></td>
+              <td style={{ padding: '8px 14px', borderBottom: bb }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}><LeadAvatar name={assigneeOf(l)} size={24} /><span style={{ fontSize: 12, color: LH.body }}>{assigneeOf(l)}</span></span></td>
               <td style={{ padding: '8px 14px', borderBottom: bb, fontSize: 12, color: LH.body, whiteSpace: 'nowrap' }}>{emailOf(l)}</td>
               <td style={{ padding: '8px 14px', borderBottom: bb, fontSize: 12, color: LH.body, whiteSpace: 'nowrap' }}>{phoneOf(l)}</td>
               <td style={{ padding: '8px 14px', borderBottom: bb }}>{campaignOf(l) ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 22, padding: '0 9px', borderRadius: 7, background: '#f1f0ec', color: LH.body, fontSize: 11.5, fontWeight: 600, maxWidth: 168, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}><Ic name="megaphone" size={12} color={LH.sub} />{campaignOf(l)}</span> : <span style={{ fontSize: 11.5, color: LH.muted }}>Not enrolled</span>}</td>
@@ -31672,7 +31678,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const rCsr = n => R_CSRS[rhash(n + 'x') % R_CSRS.length];
     const rEmail = n => n.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com';
     const rInit = n => n.split(' ').map(w => w[0]).join('').slice(0, 2);
-    const ECOLS = [['Name', 168], ['Source', 148], ['Assigned CSR', 172], ['Email', 210], ['Phone', 128], ['Last activity', 182], ['Status', 116], ['Age', 58]];
+    const ECOLS = [['Name', 168], ['Source', 148], ['Signed', 172], ['Email', 210], ['Phone', 128], ['Last activity', 182], ['Status', 116], ['Age', 58]];
     const ETW = ECOLS.reduce((a, c) => a + c[1], 0) + 32;
     const eHead = <div style={{ display: 'flex', alignItems: 'center', padding: '9px 16px', borderBottom: '1px solid ' + LH.borderSoft, background: LH.bg, position: 'sticky', top: 0, zIndex: 1 }}>{ECOLS.map(([l, w], j) => <span key={l} style={{ width: w, flexShrink: 0, fontSize: 11, fontWeight: 700, color: LH.muted, letterSpacing: '.02em', textAlign: l === 'Age' ? 'right' : 'left' }}>{l}</span>)}</div>;
     const eCell = (w, node, right) => <span style={{ width: w, flexShrink: 0, minWidth: 0, fontSize: 12.5, color: LH.body, textAlign: right ? 'right' : 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 10 }}>{node}</span>;
@@ -31683,7 +31689,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {recent.map((c, i) => { return <div key={i} onClick={() => openEnrollment(c)} style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: i < recent.length - 1 ? '1px solid ' + LH.borderSoft : 'none', cursor: 'pointer', background: selLead && selLead.id === c.n ? '#faf8f4' : 'transparent' }} onMouseEnter={e => e.currentTarget.style.background = '#faf8f4'} onMouseLeave={e => e.currentTarget.style.background = selLead && selLead.id === c.n ? '#faf8f4' : 'transparent'}>
           {eCell(ECOLS[0][1], <span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{c.n}</span>)}
           {eCell(ECOLS[1][1], <Pill label={c.src} tone="New" />)}
-          {eCell(ECOLS[2][1], <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><span style={{ width: 22, height: 22, borderRadius: 999, background: LH.tint, color: LH.ink, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9.5, fontWeight: 700, flexShrink: 0 }}>{rInit(rCsr(c.n))}</span>{rCsr(c.n)}</span>)}
+          {eCell(ECOLS[2][1], <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><LeadAvatar name={rCsr(c.n)} size={22} />{rCsr(c.n)}</span>)}
           {eCell(ECOLS[3][1], rEmail(c.n))}
           {eCell(ECOLS[4][1], '469-555-0172')}
           {eCell(ECOLS[5][1], c.last)}
@@ -33553,7 +33559,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
           <div><label style={lbl}>Lead source</label><Dropdown value={f.src} options={(sources || []).map(s => ({ value: s, label: s }))} onChange={v => set('src', v)} /></div>
           <div><label style={lbl}>Stage</label><Dropdown value={f.stage} options={STAGES.map(s => ({ value: s, label: s }))} onChange={v => set('stage', v)} /></div>
-          <div><label style={lbl}>Assigned CSR</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
+          <div><label style={lbl}>Signed</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
           <div><label style={lbl}>Service interest</label><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="e.g. Roof inspection" style={inp} /></div>
           <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Notes</label><textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional context…" style={{ ...inp, height: 70, padding: 10, resize: 'vertical' }} /></div>
         </div>
