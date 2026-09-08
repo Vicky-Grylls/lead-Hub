@@ -32572,6 +32572,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const insertAttempt = (i, obj) => setAttempts(a => [...a.slice(0, i), obj, ...a.slice(i)]);
     const moveAttempt = (from, to) => setAttempts(a => { if (from == null || to == null || from === to || from < 0 || from >= a.length) return a; const na = a.slice(); const [it] = na.splice(from, 1); const dst = from < to ? to - 1 : to; na.splice(Math.max(0, Math.min(na.length, dst)), 0, it); return na; });
     const [showVars, setShowVars] = useState(false); // step panel: variables helper open
+    const [addStepAt, setAddStepAt] = useState(null); // gap index for the Add-Step type picker modal
+    const [stepQ, setStepQ] = useState('');     // Add-Step modal search
     const [addAt, setAddAt] = useState(null);   // gap index whose +popover is open
     const [dragIdx, setDragIdx] = useState(null); // attempt index being dragged
     const [overIdx, setOverIdx] = useState(null); // attempt index being hovered as drop target
@@ -32771,7 +32773,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ width: 2, height: '100%', background: LH.blueBd }} />
           <button onClick={() => setAddAt(a => a === i ? null : i)} title="Insert here" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', width: 22, height: 22, borderRadius: 999, border: '1.5px dashed ' + (addAt === i ? LH.primary : LH.border), background: '#fff', color: addAt === i ? LH.primary : LH.sub, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3 }} onMouseEnter={e => { e.currentTarget.style.borderColor = LH.primary; e.currentTarget.style.color = LH.primary; }} onMouseLeave={e => { if (addAt !== i) { e.currentTarget.style.borderColor = LH.border; e.currentTarget.style.color = LH.sub; } }}><Ic name="plus" size={12} /></button>
           {addAt === i && <div onMouseLeave={() => setAddAt(null)} style={{ position: 'absolute', top: '50%', left: 'calc(50% + 20px)', transform: 'translateY(-50%)', zIndex: 20, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 30px rgba(0,0,0,.16)', padding: 5, width: 168 }}>
-            {[['zap', 'Add Step', () => { const na = { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 0, unit: 'min' } }; insertAttempt(i, na); setAddAt(null); setOpenStep(na.id); }], ['timer', 'Add Wait', () => { const na = { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 1, unit: 'day' } }; insertAttempt(i, na); setAddAt(null); setOpenStep(na.id); }]].map(([ic, lbl, fn]) => <div key={lbl} onClick={fn} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={ic === 'zap' ? '#d9932b' : LH.sub} />{lbl}</div>)}
+            {[['zap', 'Add Step', () => { setAddAt(null); setStepQ(''); setAddStepAt(i); }], ['timer', 'Add Wait', () => { const na = { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 1, unit: 'day' } }; insertAttempt(i, na); setAddAt(null); setOpenStep(na.id); }]].map(([ic, lbl, fn]) => <div key={lbl} onClick={fn} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={ic === 'zap' ? '#d9932b' : LH.sub} />{lbl}</div>)}
           </div>}
         </div>;
         const bconn = <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 20, background: LH.blueBd }} /></div>;
@@ -32880,9 +32882,25 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                     <Toggle on={!!sel.remix} onChange={v => stepPatch({ remix: v })} />
                   </div>
                 </>}
+                <div style={{ height: 1, background: LH.borderSoft, margin: '18px 0' }} />
+                {secLbl('OUTCOME & NEXT ACTION')}
+                <label style={lab}>Wait for outcome</label>
+                <div style={{ marginBottom: 16 }}><Dropdown value={sel.outcome || 'no_response'} options={[['no_response', 'No response'], ['no_answer', 'No answer'], ['not_qualified', 'Not qualified'], ['opted_out', 'Opted out']].map(([v, l]) => ({ value: v, label: l }))} onChange={v => stepPatch({ outcome: v })} /></div>
+                <label style={lab}>Then do this</label>
+                <div><Dropdown value={sel.action || 'next'} options={[['next', 'Continue to next step'], ['retry', 'Wait & retry this step'], ['exit', 'Exit campaign'], ['task', 'Create a follow-up task'], ['notify', 'Notify lead owner']].map(([v, l]) => ({ value: v, label: l }))} onChange={v => stepPatch({ action: v })} /></div>
                 </>; })()}
             </div>
           </div>
+          {addStepAt != null && (() => { const STEP_TYPES = [{ group: 'COMMUNICATION', items: [{ ch: 'sms', label: 'Send SMS', icon: 'message-square' }, { ch: 'email', label: 'Send Email', icon: 'mail' }, { ch: 'call', label: 'AI Agent Call', icon: 'phone' }, { ch: 'voice_drop', label: 'Voicemail Drop', icon: 'mic' }, { ch: 'video_drop', label: 'Video Drop', icon: 'video' }] }, { group: 'TASKS & PROJECTS', items: [{ ch: 'task', label: 'Create Task', icon: 'square-check-big' }] }]; const q = stepQ.trim().toLowerCase(); const pick = t => { const na = { id: wuid(), ch: t.ch, body: '', wait: { mode: 'after', n: addStepAt === 0 ? 0 : 1, unit: addStepAt === 0 ? 'min' : 'day' } }; insertAttempt(addStepAt, na); setAddStepAt(null); setOpenStep(na.id); }; return ReactDOM.createPortal(<div onMouseDown={() => setAddStepAt(null)} style={{ position: 'fixed', inset: 0, zIndex: 4000, background: 'rgba(8,6,5,0.35)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '11vh', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+            <div onMouseDown={e => e.stopPropagation()} style={{ width: 'min(560px,94vw)', maxHeight: '72vh', background: '#fff', borderRadius: 16, boxShadow: '0 24px 60px rgba(0,0,0,.28)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 12px' }}><div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>Add step</div><button onClick={() => setAddStepAt(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
+              <div style={{ padding: '0 20px 12px' }}><input value={stepQ} onChange={e => setStepQ(e.target.value)} autoFocus placeholder="Search steps…" style={{ width: '100%', height: 40, borderRadius: 9, border: '1.5px solid ' + LH.primary, padding: '0 12px', fontSize: 13.5, color: LH.ink, outline: 'none', boxSizing: 'border-box' }} /></div>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px 14px' }}>{STEP_TYPES.map(grp => { const items = grp.items.filter(it => !q || it.label.toLowerCase().includes(q)); if (!items.length) return null; return <div key={grp.group} style={{ marginBottom: 6 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, padding: '10px 8px 6px' }}>{grp.group}</div>
+                {items.map(it => { const c = WZ_CH[it.ch] || WZ_CH.sms; return <div key={it.ch} onClick={() => pick(it)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 10px', borderRadius: 9, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><span style={{ width: 30, height: 30, borderRadius: 8, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={it.icon} size={15} color={c.fg} /></span><span style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink }}>{it.label}</span></div>; })}
+              </div>; })}</div>
+            </div>
+          </div>, document.body); })()}
         </div>;
       })();
       if (step === 3) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
