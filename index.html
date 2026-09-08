@@ -32571,6 +32571,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [openStep, setOpenStep] = useState(null); // selected node in the flow builder
     const insertAttempt = (i, obj) => setAttempts(a => [...a.slice(0, i), obj, ...a.slice(i)]);
     const moveAttempt = (from, to) => setAttempts(a => { if (from == null || to == null || from === to || from < 0 || from >= a.length) return a; const na = a.slice(); const [it] = na.splice(from, 1); const dst = from < to ? to - 1 : to; na.splice(Math.max(0, Math.min(na.length, dst)), 0, it); return na; });
+    const [showVars, setShowVars] = useState(false); // step panel: variables helper open
     const [addAt, setAddAt] = useState(null);   // gap index whose +popover is open
     const [dragIdx, setDragIdx] = useState(null); // attempt index being dragged
     const [overIdx, setOverIdx] = useState(null); // attempt index being hovered as drop target
@@ -32823,21 +32824,73 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 <div style={{ fontSize: 12, color: LH.sub, marginBottom: 10 }}>Jump to the next step in this flow.</div>
                 {attempts[0] && <div onClick={() => setOpenStep(attempts[0].id)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 12px', border: '1px solid ' + LH.border, borderRadius: 10, cursor: 'pointer' }}><div style={{ width: 28, height: 28, borderRadius: 8, background: (WZ_CH[attempts[0].ch] || WZ_CH.sms).bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={(WZ_CH[attempts[0].ch] || WZ_CH.sms).icon} size={14} color={(WZ_CH[attempts[0].ch] || WZ_CH.sms).fg} /></div><span style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>Step 1: {(WZ_CH[attempts[0].ch] || WZ_CH.sms).label}</span></div>}
               </>}
-              {sel && !sel.trigger && (() => { const c = WZ_CH[sel.ch] || WZ_CH.sms; const nx = nextOf(selIdx); return <>
-                <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, margin: '2px 0 10px' }}>Configuration</div>
-                {selIdx > 0 && <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-                  <span style={{ fontSize: 12.5, color: LH.sub }}>Wait</span>
-                  <input type="number" min={1} value={sel.wait.n != null ? sel.wait.n : 1} onChange={e => setAttemptWait(sel.id, { n: Math.max(1, Number(e.target.value) || 1) })} style={{ width: 58, height: 30, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 8px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit' }} />
-                  <div style={{ width: 110 }}><Dropdown value={sel.wait.unit || 'day'} height={30} options={WAIT_UNITS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => setAttemptWait(sel.id, { unit: v })} /></div>
-                  <span style={{ fontSize: 12.5, color: LH.sub }}>after previous · if no response</span>
-                </div>}
-                <StepEditor step={sel} timingMode="none" onChange={ns => setAttempt(sel.id, ns)} onRemove={() => { removeAttempt(sel.id); setOpenStep(null); }} onDuplicate={() => duplicateAttempt(sel.id)} />
-                <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, margin: '20px 0 3px' }}>Next steps</div>
-                <div style={{ fontSize: 12, color: LH.sub, marginBottom: 10 }}>Jump to the next step in this flow.</div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 22, padding: '0 9px', borderRadius: 999, background: LH.blueBg, color: LH.blue, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>{nx.cond}</div>
-                <div onClick={() => { if (selIdx < attempts.length - 1) setOpenStep(attempts[selIdx + 1].id); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 12px', border: '1px solid ' + LH.border, borderRadius: 10, cursor: selIdx < attempts.length - 1 ? 'pointer' : 'default' }}><div style={{ width: 28, height: 28, borderRadius: 8, background: nx.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={nx.icon} size={14} color={nx.fg} /></div><span style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{nx.title}</span></div>
-              </>; })()}
+              {sel && !sel.trigger && (() => { const c = WZ_CH[sel.ch] || WZ_CH.sms; const stepPatch = p => setAttempt(sel.id, { ...sel, ...p }); const isEmail = sel.ch === 'email'; const isSms = sel.ch === 'sms'; const isCall = sel.ch === 'call';
+                const fld = { width: '100%', height: 38, borderRadius: 9, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', background: '#fff' };
+                const lab = { fontSize: 12.5, fontWeight: 700, color: LH.ink, display: 'block', marginBottom: 6 };
+                const req = <span style={{ color: LH.red }}> *</span>;
+                const secLbl = t => <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, margin: '0 0 12px' }}>{t}</div>;
+                const CH_OPTS = [['sms', 'Send SMS'], ['email', 'Send email'], ['call', 'Place call'], ['voice_drop', 'Voice drop'], ['video_drop', 'Video drop'], ['task', 'Create task']];
+                const helper = isEmail ? 'When this step occurs, an email is sent to the contact via the email account associated with the assigned user — or another team member if one is selected.' : isSms ? "When this step occurs, the text below is sent to the contact's phone number. Automated text messages use PRO credits." : isCall ? 'When this step occurs, Nova places an outbound call to the contact and follows the qualification playbook.' : 'Configure what happens when this step runs.';
+                const fromLabel = isEmail ? 'Send email from' : isSms ? 'Send text from' : 'Call from';
+                const fromOpts = isEmail ? ["Assigned user's inbox", 'Inside Sales', 'Support', 'no-reply@company.com'] : ['Inside Sales', 'Main line', "Assigned user's number"];
+                const VARS = ['{{contact_fname}}', '{{contact_lname}}', '{{user_fname}}', '{{user_lname}}', '{{company_name}}'].concat(isEmail ? ['{{email_signature}}'] : []);
+                const TB = ['bold', 'underline', 'italic', 'strikethrough', 'palette', 'eraser', 'align-left', 'align-right', 'list', 'list-ordered', 'link', 'image'];
+                return <>
+                {/* Step status */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '-18px -18px 16px', padding: '12px 18px', background: LH.bg, borderBottom: '1px solid ' + LH.borderSoft }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Step status</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: sel.active !== false ? LH.green : LH.muted }}>{sel.active !== false ? 'Active' : 'Paused'}</span><Toggle on={sel.active !== false} onChange={v => stepPatch({ active: v })} /></div>
+                </div>
+                {/* Step configuration */}
+                {secLbl('STEP CONFIGURATION')}
+                <label style={lab}>Step type</label>
+                <div style={{ marginBottom: 16 }}><Dropdown value={sel.ch} options={CH_OPTS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => stepPatch({ ch: v })} /></div>
+                <label style={lab}>When does this run?</label>
+                {selIdx === 0
+                  ? <div style={{ ...fld, display: 'flex', alignItems: 'center', color: LH.sub, marginBottom: 16 }}>Starts immediately</div>
+                  : <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}><span style={{ fontSize: 12.5, color: LH.sub }}>Wait</span><input type="number" min={1} value={sel.wait && sel.wait.n != null ? sel.wait.n : 1} onChange={e => setAttemptWait(sel.id, { n: Math.max(0, Number(e.target.value) || 0) })} style={{ width: 62, height: 38, borderRadius: 9, border: '1px solid ' + LH.border, padding: '0 10px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit' }} /><div style={{ width: 120 }}><Dropdown value={(sel.wait && sel.wait.unit) || 'day'} options={WAIT_UNITS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => setAttemptWait(sel.id, { unit: v })} /></div><span style={{ fontSize: 12.5, color: LH.sub }}>after previous · if no response</span></div>}
+                <label style={lab}>Conditional logic</label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }}><span onClick={() => stepPatch({ conditional: !sel.conditional })} style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, border: '1.5px solid ' + (sel.conditional ? LH.primary : LH.border), background: sel.conditional ? LH.primary : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{sel.conditional && <Ic name="check" size={12} color="#fff" />}</span><span style={{ fontSize: 13, color: LH.body }} onClick={() => stepPatch({ conditional: !sel.conditional })}>Only run this step if certain conditions are met</span></label>
+                <div style={{ height: 1, background: LH.borderSoft, margin: '18px 0' }} />
+                {/* Channel configuration */}
+                {secLbl(c.short.toUpperCase() + ' CONFIGURATION')}
+                <div style={{ fontSize: 12.5, color: LH.sub, lineHeight: 1.5, marginBottom: 14 }}>{helper}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: showVars ? 12 : 16 }}>
+                  <button onClick={() => setShowVars(v => !v)} style={{ height: 34, padding: '0 13px', borderRadius: 8, border: '1px solid ' + (showVars ? LH.primary : LH.border), background: showVars ? LH.tint : '#fff', fontSize: 12.5, fontWeight: 600, color: showVars ? LH.primary : LH.body, cursor: 'pointer' }}>{showVars ? 'Hide variables' : 'Show variables'}</button>
+                  <button onClick={() => onToast && onToast('Test ' + c.short.toLowerCase() + ' sent')} style={{ height: 34, padding: '0 13px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}>Send test</button>
+                </div>
+                {showVars && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16, padding: 12, borderRadius: 10, border: '1px solid ' + LH.borderSoft, background: LH.bg }}>{VARS.map(v => <button key={v} onClick={() => stepPatch({ body: (sel.body || '') + v })} style={{ height: 26, padding: '0 9px', borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', fontSize: 11.5, fontWeight: 600, color: LH.primary, cursor: 'pointer', fontFamily: 'ui-monospace,monospace' }}>{v}</button>)}</div>}
+                <label style={lab}>Select contact{req}</label>
+                <div style={{ marginBottom: 16 }}><Dropdown value={sel.contact || "Project's main contact"} options={["Project's main contact", 'Assigned lead owner', 'All contacts on lead'].map(o => ({ value: o, label: o }))} onChange={v => stepPatch({ contact: v })} /></div>
+                <label style={lab}>{fromLabel}{req}</label>
+                <div style={{ marginBottom: 16 }}><Dropdown value={sel.fromAcct || ''} placeholder="Choose an option…" options={fromOpts.map(o => ({ value: o, label: o }))} onChange={v => stepPatch({ fromAcct: v })} /></div>
+                {isEmail && <><label style={lab}>Subject{req}</label><input value={sel.subject || ''} onChange={e => stepPatch({ subject: e.target.value })} placeholder="e.g. Ready to help!" style={{ ...fld, marginBottom: 16 }} /></>}
+                <label style={lab}>{isEmail ? 'Body' : isCall ? 'Call script / guidance' : 'Text message'}{req}</label>
+                {isEmail
+                  ? <div style={{ border: '1px solid ' + LH.border, borderRadius: 10, overflow: 'hidden', marginBottom: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', padding: '7px 8px', borderBottom: '1px solid ' + LH.borderSoft, background: LH.bg }}>
+                        <div style={{ height: 28, padding: '0 8px', borderRadius: 6, border: '1px solid ' + LH.border, background: '#fff', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: LH.body, marginRight: 4 }}>Paragraph<Ic name="chevron-down" size={12} color={LH.muted} /></div>
+                        {TB.map(ic => <button key={ic} title={ic} style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#e9e5dc'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name={ic} size={14} color={LH.sub} /></button>)}
+                      </div>
+                      <textarea value={sel.body || ''} onChange={e => stepPatch({ body: e.target.value })} placeholder={'Hi {{contact_fname}},\n\nI just received your inquiry…'} style={{ width: '100%', height: 190, border: 'none', padding: 12, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5, boxSizing: 'border-box' }} />
+                    </div>
+                  : <><textarea value={sel.body || ''} onChange={e => stepPatch({ body: e.target.value })} placeholder={isCall ? 'Guidance for Nova on this call…' : 'Hi {{contact_fname}}, this is {{user_fname}} with {{company_name}}…'} style={{ width: '100%', height: 150, borderRadius: 10, border: '1px solid ' + LH.border, padding: 12, fontSize: 13, color: LH.body, outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5, boxSizing: 'border-box', marginBottom: 4 }} />
+                    {isSms && <div style={{ textAlign: 'right', fontSize: 11.5, color: LH.muted, marginBottom: 8 }}>{(sel.body || '').length} characters</div>}</>}
+                {!isCall && <>
+                  <label style={{ ...lab, marginTop: 8 }}>Attach image/file <span style={{ fontWeight: 500, color: LH.muted }}>(max size: {isEmail ? '5 MB' : '1 MB'})</span></label>
+                  <button style={{ height: 38, padding: '0 15px', borderRadius: 9, border: '1px solid ' + LH.border, background: LH.bg, fontSize: 13, fontWeight: 600, color: LH.body, cursor: 'pointer', marginBottom: 14 }}>Select file</button>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', marginBottom: 16 }}><span onClick={() => stepPatch({ attachAssignee: !sel.attachAssignee })} style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, border: '1.5px solid ' + (sel.attachAssignee ? LH.primary : LH.border), background: sel.attachAssignee ? LH.primary : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{sel.attachAssignee && <Ic name="check" size={12} color="#fff" />}</span><span style={{ fontSize: 13, color: LH.body }} onClick={() => stepPatch({ attachAssignee: !sel.attachAssignee })}>Attach assignee's unique file</span></label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 10, border: '1px solid ' + LH.borderSoft }}>
+                    <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Remix with AI</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1 }}>Personalize message using conversation history</div></div>
+                    <Toggle on={!!sel.remix} onChange={v => stepPatch({ remix: v })} />
+                  </div>
+                </>}
+                </>; })()}
             </div>
+            {sel && !sel.trigger && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+              <button onClick={() => { removeAttempt(sel.id); setOpenStep(null); }} style={{ height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid ' + LH.redBd, background: LH.redBg, color: LH.red, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+              <div style={{ display: 'flex', gap: 8 }}><Btn onClick={() => setOpenStep(null)}>Cancel</Btn><Btn kind="primary" onClick={() => setOpenStep(null)}>Save</Btn></div>
+            </div>}
           </div>
         </div>;
       })();
