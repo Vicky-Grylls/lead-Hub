@@ -32569,6 +32569,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const addAttempt = () => setAttempts(a => [...a, { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 1, unit: 'day' } }]);
     const duplicateAttempt = id => setAttempts(a => { const i = a.findIndex(x => x.id === id); return i < 0 ? a : [...a.slice(0, i + 1), { ...a[i], id: wuid() }, ...a.slice(i + 1)]; });
     const [openStep, setOpenStep] = useState(null); // selected node in the flow builder
+    const insertAttempt = (i, obj) => setAttempts(a => [...a.slice(0, i), obj, ...a.slice(i)]);
+    const moveAttempt = (from, to) => setAttempts(a => { if (from == null || to == null || from === to || from < 0 || from >= a.length) return a; const na = a.slice(); const [it] = na.splice(from, 1); const dst = from < to ? to - 1 : to; na.splice(Math.max(0, Math.min(na.length, dst)), 0, it); return na; });
+    const [addAt, setAddAt] = useState(null);   // gap index whose +popover is open
+    const [dragIdx, setDragIdx] = useState(null); // attempt index being dragged
+    const [overIdx, setOverIdx] = useState(null); // attempt index being hovered as drop target
     const [panelW, setPanelW] = useState(400); // step editor side sheet width (toggle + drag-resize)
     const panelWide = panelW > 520;
     const startPanelDrag = e => { e.preventDefault(); const move = ev => { const w = Math.min(920, Math.max(340, window.innerWidth - ev.clientX)); setPanelW(w); }; const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.body.style.userSelect = ''; }; document.body.style.userSelect = 'none'; document.addEventListener('mousemove', move); document.addEventListener('mouseup', up); };
@@ -32742,14 +32747,32 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       const wConn = <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 18, background: LH.border }} /></div>;
       const wPill = txt => <div style={{ display: 'flex', justifyContent: 'center' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 12px', borderRadius: 999, background: '#f1f0ec', border: '1px solid ' + LH.borderSoft, fontSize: 12, fontWeight: 600, color: LH.body }}><Ic name="timer" size={13} color={LH.sub} />{txt}</span></div>;
       if (step === 2) return (() => {
-        const fnode = (id, icon, bg, fg, title, sub, chip) => { const selN = openStep === id; return <div onClick={() => setOpenStep(o => o === id ? null : id)} style={{ maxWidth: 460, margin: '0 auto', background: '#fff', border: '1.5px solid ' + (selN ? LH.blue : LH.border), borderRadius: 12, boxShadow: selN ? '0 0 0 3px ' + LH.blueBg : '0 1px 2px rgba(0,0,0,.04)', padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer', transition: 'border-color .12s, box-shadow .12s' }}>
-          {chip
-            ? <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: LH.ink }}>{chip}</span>
-            : <>
-                <div style={{ width: 34, height: 34, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={16} color={fg} /></div>
-                <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{title}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div></div>
-              </>}
+        const ib = { width: 26, height: 26, borderRadius: 7, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' };
+        const fnode = (id, icon, bg, fg, title, sub, act) => { const selN = openStep === id; const isOver = act && overIdx === act.index && dragIdx != null && dragIdx !== act.index; return <div
+          draggable={!!act}
+          onDragStart={act ? (e => { e.dataTransfer.effectAllowed = 'move'; setDragIdx(act.index); }) : undefined}
+          onDragEnd={act ? (() => { setDragIdx(null); setOverIdx(null); }) : undefined}
+          onDragOver={act ? (e => { e.preventDefault(); if (overIdx !== act.index) setOverIdx(act.index); }) : undefined}
+          onDrop={act ? (e => { e.preventDefault(); moveAttempt(dragIdx, act.index > dragIdx ? act.index + 1 : act.index); setDragIdx(null); setOverIdx(null); }) : undefined}
+          onClick={() => setOpenStep(o => o === id ? null : id)}
+          onMouseEnter={act ? (e => { const r = e.currentTarget.querySelector('[data-acts]'); if (r) r.style.opacity = 1; }) : undefined}
+          onMouseLeave={act ? (e => { const r = e.currentTarget.querySelector('[data-acts]'); if (r) r.style.opacity = 0; }) : undefined}
+          style={{ maxWidth: 460, margin: '0 auto', background: '#fff', border: '1.5px solid ' + (selN || isOver ? LH.blue : LH.border), borderRadius: 12, boxShadow: selN ? '0 0 0 3px ' + LH.blueBg : '0 1px 2px rgba(0,0,0,.04)', padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer', transition: 'border-color .12s, box-shadow .12s', opacity: act && dragIdx === act.index ? 0.4 : 1 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={icon} size={16} color={fg} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>{title}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div></div>
+          {act && <div data-acts style={{ display: 'flex', alignItems: 'center', gap: 2, opacity: 0, transition: 'opacity .12s' }}>
+            <button onClick={e => { e.stopPropagation(); act.onDup(); }} title="Duplicate" style={ib} onMouseEnter={e => e.currentTarget.style.background = '#f1f0ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="copy" size={14} color={LH.sub} /></button>
+            <button onClick={e => { e.stopPropagation(); act.onEdit(); }} title="Edit" style={ib} onMouseEnter={e => e.currentTarget.style.background = '#f1f0ec'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="pencil" size={14} color={LH.sub} /></button>
+            <span title="Drag to reorder" onClick={e => e.stopPropagation()} style={{ cursor: 'grab', display: 'flex', padding: '0 2px', marginLeft: 2 }}><Ic name="grip-vertical" size={16} color={LH.muted} /></span>
+          </div>}
         </div>; };
+        const gapPlus = i => <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', height: 22 }}>
+          <div style={{ width: 2, height: '100%', background: LH.blueBd }} />
+          <button onClick={() => setAddAt(a => a === i ? null : i)} title="Insert here" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', width: 22, height: 22, borderRadius: 999, border: '1.5px dashed ' + (addAt === i ? LH.primary : LH.border), background: '#fff', color: addAt === i ? LH.primary : LH.sub, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3 }} onMouseEnter={e => { e.currentTarget.style.borderColor = LH.primary; e.currentTarget.style.color = LH.primary; }} onMouseLeave={e => { if (addAt !== i) { e.currentTarget.style.borderColor = LH.border; e.currentTarget.style.color = LH.sub; } }}><Ic name="plus" size={12} /></button>
+          {addAt === i && <div onMouseLeave={() => setAddAt(null)} style={{ position: 'absolute', top: '50%', left: 'calc(50% + 20px)', transform: 'translateY(-50%)', zIndex: 20, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 30px rgba(0,0,0,.16)', padding: 5, width: 168 }}>
+            {[['zap', 'Add Step', () => { const na = { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 0, unit: 'min' } }; insertAttempt(i, na); setAddAt(null); setOpenStep(na.id); }], ['timer', 'Add Wait', () => { const na = { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 1, unit: 'day' } }; insertAttempt(i, na); setAddAt(null); setOpenStep(na.id); }]].map(([ic, lbl, fn]) => <div key={lbl} onClick={fn} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={ic === 'zap' ? '#d9932b' : LH.sub} />{lbl}</div>)}
+          </div>}
+        </div>;
         const bconn = <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 20, background: LH.blueBd }} /></div>;
         const bpill = txt => <div style={{ display: 'flex', justifyContent: 'center' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 24, padding: '0 11px', borderRadius: 999, background: LH.blueBg, fontSize: 11.5, fontWeight: 600, color: LH.blue }}><Ic name="timer" size={12} color={LH.blue} />{txt}</span></div>;
         const sel = openStep === 'trigger' ? { trigger: true } : attempts.find(a => a.id === openStep);
@@ -32772,12 +32795,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <div style={{ padding: '6px 0' }}>
                 {fnode('trigger', 'user-plus', LH.greenBg, LH.green, 'Lead enrolled', 'Enters on create — first attempt fires immediately')}
                 {attempts.map((a, i) => { const c = WZ_CH[a.ch] || WZ_CH.sms; const preview = (a.body && a.body.trim()) || (a.subject && a.subject.trim()) || ('Configure this ' + c.label.toLowerCase()); const unitLabel = (WAIT_UNITS.find(u => u[0] === ((a.wait && a.wait.unit) || 'day')) || ['day', 'days'])[1]; return <div key={a.id}>
-                  {bconn}{bpill(i === 0 ? 'On enrollment · fires immediately' : 'Wait ' + (a.wait && a.wait.n != null ? a.wait.n : 1) + ' ' + unitLabel + ' · if no response')}{bconn}
-                  {fnode(a.id, c.icon, c.bg, c.fg, 'Step ' + (i + 1) + ' · ' + c.label, preview)}
+                  {gapPlus(i)}{bpill(i === 0 ? 'On enrollment · fires immediately' : 'Wait ' + (a.wait && a.wait.n != null ? a.wait.n : 1) + ' ' + unitLabel + ' · if no response')}{bconn}
+                  {fnode(a.id, c.icon, c.bg, c.fg, 'Step ' + (i + 1) + ' · ' + c.label, preview, { index: i, onDup: () => duplicateAttempt(a.id), onEdit: () => setOpenStep(a.id) })}
                 </div>; })}
-                {bconn}
-                <div style={{ display: 'flex', justifyContent: 'center' }}><button onClick={() => { const na = { id: wuid(), ch: 'sms', body: '', wait: { mode: 'after', n: 1, unit: 'day' } }; setAttempts(a => [...a, na]); setOpenStep(na.id); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 36, padding: '0 16px', borderRadius: 9, border: '1px dashed ' + LH.border, background: '#fff', color: LH.primary, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} onMouseEnter={e => { e.currentTarget.style.background = LH.tint; e.currentTarget.style.borderColor = LH.primary; }} onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = LH.border; }}><Ic name="plus" size={15} color={LH.primary} />Add a step</button></div>
-                {bconn}{bpill('If qualified or disqualified')}{bconn}
+                {gapPlus(attempts.length)}{bpill('If qualified or disqualified')}{bconn}
                 {fnode('exit', 'log-out', '#f1f0ec', LH.sub, 'Exit — Qualified or Disqualified', 'Also exits on reply, opt-out, or Nova DND')}
               </div>
             </div>
