@@ -32616,9 +32616,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
     const stepBody = () => {
       if (step === 0) { const goalSel = CAMPAIGN_GOALS.find(g => g.key === goal) || CAMPAIGN_GOALS[0]; const audDesc = (AUDIENCE_TYPES.find(a => a.key === goalSel.aud) || {}).desc; const pickGoal = v => { setGoal(v); const g = CAMPAIGN_GOALS.find(x => x.key === v); if (g && g.aud !== audienceType) { setAudienceType(g.aud); setConds(g.aud === 'existing' ? existingConds() : newLeadConds()); setRemovedIds(new Set()); } }; return <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="send" size={19} color={LH.primary} /></div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Campaign setup</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>Name it and set the goal. The goal decides who the campaign is for and how the next steps are configured.</div>
         <label style={{ fontSize: 12, fontWeight: 600, color: LH.body }}>Campaign name <span style={{ color: LH.red }}>*</span></label>
         <input value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', height: 38, borderRadius: 9, border: '1px solid ' + (name.trim() ? LH.border : LH.red), padding: '0 12px', fontSize: 14, color: LH.ink, margin: '6px 0 4px', outline: 'none' }} />
         {!name.trim() && <div style={{ fontSize: 11.5, color: LH.red, marginBottom: 6 }}>A campaign name is required.</div>}
@@ -32630,11 +32627,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ fontSize: 11.5, color: LH.muted, marginBottom: 16 }}>{goalSel.desc} {audDesc}</div>
       </div>; }
       if (step === 1) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="filter" size={19} color={LH.primary} /></div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Audience</div>
         {audienceType === 'new'
           ? <>
-            <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px', maxWidth: 640 }}>Configure which incoming leads qualify — by source and other rules. New leads enrol automatically as they arrive, so there are no existing records to match yet.</div>
             {(() => { const TRIGGERS = [{ key: 'source', title: 'Source-based', desc: 'Enrol leads from specific sources — Angi, Meta, Website, and more.' }, { key: 'value', title: 'Value-based', desc: 'Enrol leads above a value or score threshold.' }, { key: 'creation', title: 'On lead creation', desc: 'Enrol every new lead the moment it is created.' }]; const cur = TRIGGERS.find(t => t.key === enrollTrigger) || TRIGGERS[0]; return <div style={{ marginBottom: 18 }}>
               <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.04em', color: LH.muted, marginBottom: 8 }}>ENROLLMENT TRIGGER</div>
               <Dropdown value={enrollTrigger} options={TRIGGERS.map(t => ({ value: t.key, label: t.title }))} onChange={setEnrollTrigger} />
@@ -32646,7 +32640,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <div style={{ marginTop: 20, display: 'flex', alignItems: 'flex-start', gap: 9, padding: '12px 14px', borderRadius: 10, background: LH.bg, border: '1px solid ' + LH.borderSoft }}><Ic name="inbox" size={15} color={LH.sub} style={{ marginTop: 1 }} /><div style={{ fontSize: 12.5, color: LH.sub, lineHeight: 1.5 }}>Matching leads will appear in the pipeline once these sources start delivering. Nothing to enrol right now — this campaign runs on new arrivals.</div></div>
           </>
           : <>
-            <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>Configure which existing customers qualify. Customers are evaluated on their profile — matching customers are enrolled automatically.</div>
             <Conditions rows={conds} setRows={setConds} join={join} setJoin={setJoin} groups={FIELD_GROUPS.filter(g => g.title === 'Customer')} addField="customer.type" />
             <Card style={{ marginTop: 20, padding: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px', borderBottom: '1px solid ' + LH.borderSoft }}>
@@ -32736,9 +32729,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         const groupTitle = commTab === 'sms' ? 'SMS settings' : commTab === 'email' ? 'Email settings' : 'Call settings';
         const groupSub = commTab === 'sms' ? 'The number your texts send from, and STOP opt-out handling.' : commTab === 'email' ? 'Sender identity, tracking, and unsubscribe handling.' : 'Outbound number and voice agent. Guidance and the qualification playbook live in the Playbook step.';
         return <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="radio" size={19} color={LH.primary} /></div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>How this campaign reaches out</div>
-          <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Set up each channel below. SMS and calls share one outbound number.</div>
           <div style={{ display: 'flex', gap: 6, padding: 4, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 11, marginBottom: 18 }}>
             {TABS.map(([k, l, ic]) => <button key={k} onClick={() => setCommTab(k)} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 36, borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: commTab === k ? '#fff' : 'transparent', color: commTab === k ? LH.ink : LH.sub, boxShadow: commTab === k ? '0 1px 2px rgba(0,0,0,.06)' : 'none' }}><Ic name={ic} size={15} color={commTab === k ? LH.primary : LH.muted} />{l}</button>)}
           </div>
@@ -32769,8 +32759,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         return <div style={{ position: 'relative', flex: 1, minWidth: 0, alignSelf: 'stretch', display: 'flex', overflow: 'hidden' }}>
           <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', background: '#fbfaf8', backgroundImage: 'radial-gradient(circle, #e3ddd0 1px, transparent 1px)', backgroundSize: '18px 18px', padding: '22px 26px 44px', paddingRight: panelOpen ? panelW + 24 : 26, transition: 'padding-right .18s ease' }}>
             <div style={{ maxWidth: 620, margin: '0 auto' }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="headphones" size={19} color={LH.primary} /></div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink, marginBottom: 18 }}>Attempt sequence</div>
               <Card style={{ padding: 16, marginBottom: 18, maxWidth: 460, marginLeft: 'auto', marginRight: 'auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, width: 130, flexShrink: 0 }}>SEND WINDOW · DAYS</div>
@@ -32833,9 +32821,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>;
       })();
       if (step === 3) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="book-open" size={19} color={LH.primary} /></div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Qualification playbook</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 20px', maxWidth: 640 }}>One channel-agnostic playbook. Nova asks these on SMS, email, or a call — whichever channel the lead is on — to qualify them consistently.</div>
         <Card style={{ padding: 15, marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}><Ic name="library" size={15} color={LH.primary} /><label style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Start from the Playbook library</label></div>
           <div style={{ fontSize: 11.5, color: LH.sub, marginBottom: 8 }}>Load a saved playbook from AI Workforce — you can still tweak the questions below.</div>
@@ -32869,9 +32854,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </Card>
       </div>;
       if (step === 5) return <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="log-out" size={19} color={LH.primary} /></div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>When should we stop reaching out?</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Exit is automatic — no setup required. Leads unenrol the moment they reach a terminal outcome.</div>
         <Card style={{ padding: 16, display: 'flex', alignItems: 'flex-start', gap: 12, background: LH.greenBg, border: '1px solid ' + LH.greenBd }}>
           <div style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="check-circle" size={17} color={LH.green} /></div>
           <div><div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Auto-unenroll on Qualified or Disqualified</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 3, lineHeight: 1.5 }}>On by default for every campaign — same as an invoice-paid auto-exit from a dunning sequence. Reaching a terminal lead outcome removes the record automatically; there is nothing to configure.</div></div>
@@ -32915,9 +32897,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       ];
       const problems = []; if (!name.trim()) problems.push('Campaign name is required (Basic details).'); if (!tz) problems.push('Campaign time zone is required (Basic details).'); if (!conds.filter(c => c.field).length) problems.push('Add at least one audience condition.');
       return <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}><Ic name="clipboard-check" size={19} color={LH.primary} /></div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: LH.ink }}>Review & publish</div>
-        <div style={{ fontSize: 13, color: LH.sub, margin: '4px 0 18px' }}>Check each section, then publish to make the campaign Active. Publishing enrolls newly created matching customers.</div>
         {problems.length > 0 && <div style={{ background: LH.redBg, border: '1px solid ' + LH.redBd, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: LH.red, marginBottom: 4 }}>Resolve {problems.length} issue{problems.length > 1 ? 's' : ''} before publishing</div>
           {problems.map((p, k) => <div key={k} style={{ fontSize: 12, color: '#a11', marginTop: 2 }}>• {p}</div>)}
