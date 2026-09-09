@@ -29917,6 +29917,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [shown, setShown] = useState(false);
     const [avOpen, setAvOpen] = useState(false);
     const [detailed, setDetailed] = useState(false);
+    const [fullJob, setFullJob] = useState(null); // full-page detailed job builder (prefill fields)
     useEffect(() => { const t = setTimeout(() => setShown(true), 20); return () => clearTimeout(t); }, []);
     const close = () => { setShown(false); setTimeout(onClose, 240); };
     const jobId = 'JN-2456' + String(78 + (lead.name.length * 7 + (lead.score || 50)) % 21).padStart(2, '0');
@@ -29978,11 +29979,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     return <div onClick={close} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: PB_DOCK_H, zIndex: 500, background: shown ? 'rgba(20,18,15,.42)' : 'rgba(20,18,15,0)', transition: 'background .24s ease', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 'min(520px,96vw)', background: '#fff', boxShadow: '-16px 0 48px rgba(0,0,0,.22)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1)' }}>{shell}</div>
       {avOpen && <LeadAvailModal assignees={CREW} onClose={() => setAvOpen(false)} onApply={s => { setTech(s.who); setDate(s.day); setTime((s.time.split('–')[0] || s.time).trim()); setAvOpen(false); onToast && onToast('Booked ' + s.who + ' · ' + s.day + ' ' + s.time); }} />}
-      {detailed && <DetailedJobModal lead={lead} initial={{ title: 'Inspection — ' + lead.name, desc, customer: lead.name, property: address, category, priority, service }} categories={CATEGORIES} services={SERVICES} onClose={() => setDetailed(false)} onToast={onToast} onCreate={fx => { setDesc(fx.desc); if (fx.category) setCategory(fx.category); if (fx.priority) setPriority(fx.priority); setDetailed(false); create(); }} />}
+      {detailed && <DetailedJobModal lead={lead} initial={{ title: 'Inspection — ' + lead.name, desc, customer: lead.name, property: address, category, priority, service }} categories={CATEGORIES} services={SERVICES} onClose={() => setDetailed(false)} onToast={onToast} onDetailed={fx => { setDetailed(false); setFullJob({ ...fx, date, time, tech }); }} onCreate={fx => { setDesc(fx.desc); if (fx.category) setCategory(fx.category); if (fx.priority) setPriority(fx.priority); setDetailed(false); create(); }} />}
+      {fullJob && <FullJobPage lead={lead} initial={fullJob} categories={CATEGORIES} services={SERVICES} crew={CREW} dates={DATES} times={TIMESL} onClose={() => setFullJob(null)} onToast={onToast} onCreate={fx => { setDesc(fx.desc || desc); if (fx.category) setCategory(fx.category); if (fx.priority) setPriority(fx.priority); if (fx.tech) setTech(fx.tech); if (fx.date) setDate(fx.date); if (fx.time) setTime(fx.time); setFullJob(null); create(); }} />}
     </div>;
   }
   // Full job creation (Prelude "Create New Job" fields) — reached via "Create detailed job" from the convert sheet.
-  function DetailedJobModal({ lead, initial, categories, services, onClose, onToast, onCreate }) {
+  function DetailedJobModal({ lead, initial, categories, services, onClose, onToast, onCreate, onDetailed }) {
     const i = initial || {};
     const [j, setJ] = useState({ title: i.title || '', desc: i.desc || '', customer: i.customer || '', org: '', property: i.property || '', category: i.category || '', service: i.service || (services && services[0]) || '', tags: '', priority: i.priority || 'Standard' });
     const [shown, setShown] = useState(false);
@@ -29996,7 +29998,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div onMouseDown={e => e.stopPropagation()} style={{ width: 'min(640px,96vw)', maxHeight: '88vh', background: '#fff', borderRadius: 16, boxShadow: '0 24px 60px rgba(0,0,0,.28)', display: 'flex', flexDirection: 'column', overflow: 'hidden', opacity: shown ? 1 : 0, transform: shown ? 'scale(1)' : 'scale(.98)', transition: 'opacity .18s, transform .18s' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>Create new job</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}><button onClick={() => onToast && onToast('Opening the full job builder…')} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Create detailed job</button><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}><button onClick={() => onDetailed && onDetailed(j)} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Create detailed job</button><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 20, minHeight: 0 }}>
           {row('Job title', <input value={j.title} onChange={e => set('title', e.target.value)} placeholder="Job title" autoFocus style={inp} />, true)}
@@ -30012,6 +30014,58 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
           <Btn onClick={onClose}>Cancel</Btn>
           <Btn kind="primary" icon="plus" onClick={() => { if (!ok) { onToast && onToast('Job title and category are required'); return; } onCreate && onCreate(j); }} style={{ opacity: ok ? 1 : 0.55 }}>Create</Btn>
+        </div>
+      </div>
+    </div>, document.body);
+  }
+  // Full-page detailed job builder (Prelude "job details — layout customization" style). Opened from
+  // the "Create detailed job" link. Sectioned layout + summary rail, full viewport.
+  function FullJobPage({ lead, initial, categories, services, crew, dates, times, onClose, onToast, onCreate }) {
+    const i = initial || {};
+    const [j, setJ] = useState({ title: i.title || ('Inspection — ' + (lead ? lead.name : '')), desc: i.desc || '', jobType: 'Inspection', service: i.service || (services && services[0]) || 'Roofing', category: i.category || '', priority: i.priority || 'Standard', tags: i.tags || '', customer: i.customer || (lead ? lead.name : ''), org: i.org || '', property: i.property || '', address: i.property || '', date: i.date || 'Tomorrow', time: i.time || '9:00 am', tech: i.tech || (crew && crew[0]) || '', dur: '1 hr', material: '', stories: '1', carrier: '', gate: '', po: '' });
+    const [shown, setShown] = useState(false);
+    useEffect(() => { const t = setTimeout(() => setShown(true), 10); const h = e => { if (e.key === 'Escape') onClose(); }; document.addEventListener('keydown', h); return () => { clearTimeout(t); document.removeEventListener('keydown', h); }; }, []);
+    const set = (k, v) => setJ(p => ({ ...p, [k]: v }));
+    const ok = !!j.title.trim() && !!j.category;
+    const inp = { width: '100%', height: 40, borderRadius: 9, border: '1px solid ' + LH.border, padding: '0 12px', fontSize: 13.5, color: LH.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
+    const lab = { fontSize: 12.5, fontWeight: 600, color: LH.body, marginBottom: 6, display: 'block' };
+    const fld = (label, node, req) => <div><label style={lab}>{label}{req && <span style={{ color: LH.red }}> *</span>}</label>{node}</div>;
+    const secCard = (title, sub, children) => <Card style={{ padding: 20, marginBottom: 16 }}>
+      <div style={{ marginBottom: 16 }}><div style={{ fontSize: 14.5, fontWeight: 700, color: LH.ink }}>{title}</div>{sub && <div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>{sub}</div>}</div>
+      {children}
+    </Card>;
+    const grid = children => <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>{children}</div>;
+    return ReactDOM.createPortal(<div style={{ position: 'fixed', inset: 0, zIndex: 6000, background: LH.bg, display: 'flex', flexDirection: 'column', fontFamily: "'Inter',ui-sans-serif,system-ui", opacity: shown ? 1 : 0, transition: 'opacity .16s' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 22px', background: '#fff', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+        <button onClick={onClose} title="Back" style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="arrow-left" size={16} color={LH.sub} /></button>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>Create job</div><div style={{ fontSize: 12.5, color: LH.muted }}>Detailed job for {lead ? lead.name : 'lead'} · from lead conversion</div></div>
+        <Btn onClick={onClose}>Cancel</Btn>
+        <Btn kind="primary" icon="plus" onClick={() => { if (!ok) { onToast && onToast('Job title and category are required'); return; } onCreate && onCreate(j); }} style={{ opacity: ok ? 1 : 0.55 }}>Create job</Btn>
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '22px 22px 60px', display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 320px', gap: 20, alignItems: 'start' }}>
+          <div style={{ minWidth: 0 }}>
+            {secCard('Job information', 'Title, type, and how it should be prioritized.', <>
+              <div style={{ marginBottom: 16 }}>{fld('Job title', <input value={j.title} onChange={e => set('title', e.target.value)} placeholder="Job title" style={inp} />, true)}</div>
+              <div style={{ marginBottom: 16 }}>{fld('Job description', <textarea value={j.desc} onChange={e => set('desc', e.target.value)} placeholder="Describe the work…" style={{ ...inp, height: 90, padding: 12, resize: 'vertical', lineHeight: 1.5 }} />)}</div>
+              {grid(<>{fld('Job type', <Dropdown value={j.jobType} options={['Inspection', 'Repair', 'Installation', 'Maintenance', 'Estimate'].map(o => ({ value: o, label: o }))} onChange={v => set('jobType', v)} />)}{fld('Service type', <Dropdown value={j.service} options={(services || []).map(o => ({ value: o, label: o }))} onChange={v => set('service', v)} />)}{fld('Category', <Dropdown value={j.category} placeholder="Select category" options={(categories || []).map(o => ({ value: o, label: o }))} onChange={v => set('category', v)} />, true)}{fld('Priority', <Dropdown value={j.priority} options={['Low', 'Standard', 'High', 'Urgent'].map(o => ({ value: o, label: o }))} onChange={v => set('priority', v)} />)}</>)}
+              <div style={{ marginTop: 16 }}>{fld('Tags', <input value={j.tags} onChange={e => set('tags', e.target.value)} placeholder="Enter tags, comma-separated" style={inp} />)}</div>
+            </>)}
+            {secCard('Customer & property', 'Who the job is for and where the work happens.', <>{grid(<>{fld('Customer', <Dropdown value={j.customer} placeholder="Select customer" options={[j.customer || (lead && lead.name), 'New customer…'].filter(Boolean).map(o => ({ value: o, label: o }))} onChange={v => set('customer', v)} />)}{fld('Organization', <Dropdown value={j.org} placeholder="Select organization" options={['Hill Roofing', 'Homeowner (no org)'].map(o => ({ value: o, label: o }))} onChange={v => set('org', v)} />)}</>)}
+              <div style={{ marginTop: 16 }}>{fld('Property', <Dropdown value={j.property} placeholder="Select property" options={[j.property, 'Add new property…'].filter(Boolean).map(o => ({ value: o, label: o }))} onChange={v => set('property', v)} />)}</div>
+            </>)}
+            {secCard('Schedule', 'Book a technician now or leave it unscheduled.', <>{grid(<>{fld('Date', <Dropdown value={j.date} options={((dates || []).indexOf(j.date) < 0 ? [j.date] : []).concat(dates || []).map(o => ({ value: o, label: o }))} onChange={v => set('date', v)} />)}{fld('Time', <Dropdown value={j.time} options={((times || []).indexOf(j.time) < 0 ? [j.time] : []).concat(times || []).map(o => ({ value: o, label: o }))} onChange={v => set('time', v)} />)}{fld('Assign technician', <Dropdown value={j.tech} options={(crew || []).map(o => ({ value: o, label: o }))} onChange={v => set('tech', v)} />)}{fld('Duration', <Dropdown value={j.dur} options={['30 min', '1 hr', '1.5 hrs', '2 hrs'].map(o => ({ value: o, label: o }))} onChange={v => set('dur', v)} />)}</>)}</>)}
+            {secCard('Additional details', 'Custom fields for this job type (layout-customization).', <>{grid(<>{fld('Roof material', <Dropdown value={j.material} placeholder="Select material" options={['Asphalt shingle', 'Architectural shingle', 'Metal standing seam', 'Concrete tile', 'Wood shake'].map(o => ({ value: o, label: o }))} onChange={v => set('material', v)} />)}{fld('Stories', <Dropdown value={j.stories} options={['1', '2', '3+'].map(o => ({ value: o, label: o }))} onChange={v => set('stories', v)} />)}{fld('Insurance carrier', <input value={j.carrier} onChange={e => set('carrier', e.target.value)} placeholder="e.g. State Farm" style={inp} />)}{fld('Gate / access code', <input value={j.gate} onChange={e => set('gate', e.target.value)} placeholder="Optional" style={inp} />)}</>)}
+              <div style={{ marginTop: 16 }}>{fld('PO number', <input value={j.po} onChange={e => set('po', e.target.value)} placeholder="Optional" style={inp} />)}</div>
+            </>)}
+          </div>
+          <div style={{ position: 'sticky', top: 0 }}>
+            <Card style={{ padding: 18 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: LH.ink, marginBottom: 12 }}>Summary</div>
+              {[['Title', j.title || '—'], ['Type', j.jobType + ' · ' + j.service], ['Category', j.category || 'Not set'], ['Priority', j.priority], ['Customer', j.customer || '—'], ['Property', j.property || '—'], ['When', j.date === 'Unscheduled' ? 'Unscheduled' : j.date + ' · ' + j.time], ['Technician', j.tech || '—']].map(([k, v]) => <div key={k} style={{ display: 'flex', gap: 10, padding: '7px 0', borderTop: k === 'Title' ? 'none' : '1px solid ' + LH.borderSoft }}><span style={{ width: 92, flexShrink: 0, fontSize: 12, color: LH.muted }}>{k}</span><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 500, minWidth: 0 }}>{v}</span></div>)}
+              <div style={{ marginTop: 14, fontSize: 11.5, color: LH.sub, lineHeight: 1.5, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '10px 12px' }}>Creating moves <b style={{ color: LH.ink }}>{lead ? lead.name : 'this lead'}</b> to <b style={{ color: LH.ink }}>Converted as Job</b>.</div>
+            </Card>
+          </div>
         </div>
       </div>
     </div>, document.body);
