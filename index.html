@@ -32877,8 +32877,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 {secLbl('STEP CONFIGURATION')}
                 <label style={lab}>Step type</label>
                 <div style={{ marginBottom: 16 }}><Dropdown value={sel.ch} options={CH_OPTS.map(([v, l]) => ({ value: v, label: l }))} onChange={v => { if (v === 'wait') setAttempt(sel.id, { id: sel.id, kind: 'wait', n: 1, unit: 'day' }); else stepPatch({ ch: v }); }} /></div>
-                <label style={lab}>When does this run?</label>
-                <div style={{ ...fld, display: 'flex', alignItems: 'center', color: LH.sub, marginBottom: 16 }}>Runs right after the previous step</div>
                 <div style={{ height: 1, background: LH.borderSoft, margin: '18px 0' }} />
                 {/* Channel configuration */}
                 {secLbl(c.short.toUpperCase() + ' CONFIGURATION')}
