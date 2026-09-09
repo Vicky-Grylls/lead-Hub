@@ -33756,12 +33756,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const checkEmail = () => { const e = f.email.trim(); if (!e) { setEmailErr(null); return; } setEmailErr('checking'); setTimeout(() => { const ok = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e) && !/reject|bounce|\.zzz$/i.test(e); setEmailErr(ok ? null : 'rejected'); }, 400); };
     const SCENARIOS = [['openlead', 'Caller with an open lead'], ['customer', 'Returning customer'], ['property', 'Address matches a property'], ['team', 'Assign to a team'], ['email', 'Email the API rejects']];
     const applyScenario = k => {
-      setDismiss({}); setSched(null); setEmailErr(null);
-      if (k === 'openlead') setF(p => ({ ...p, name: 'Sarah Mitchell', phone: '(512) 555-0148', email: '', src: (sources && sources.indexOf('Phone call') > -1) ? 'Phone call' : p.src, note: 'Roof repair', notes: 'Calling back, nobody has rung her yet' }));
-      else if (k === 'customer') setF(p => ({ ...p, name: 'Kevin Alvarez', phone: '(512) 555-0192', email: '' }));
-      else if (k === 'property') setF(p => ({ ...p, name: 'Denise Park', address: '4821 Meadow Ridge Dr, Austin TX 78749' }));
-      else if (k === 'team') { setF(p => ({ ...p, name: p.name.trim() || 'Jordan Blake' })); setAvOpen(true); }
-      else if (k === 'email') { setF(p => ({ ...p, name: p.name.trim() || 'Jordan Blake', email: 'jordan@bounced-domain.zzz' })); setEmailErr('checking'); setTimeout(() => setEmailErr('rejected'), 500); }
+      // Reset the form to a clean base so only the chosen scenario's state shows (one at a time).
+      const base = { name: '', email: '', phone: '', src: (sources && sources[0]) || 'Manual', assignee: (assignees && assignees[0]) || '', note: '', stage: 'New', notes: '', address: '' };
+      setDismiss({}); setSched(null); setEmailErr(null); setAvOpen(false);
+      if (k === 'openlead') setF({ ...base, name: 'Sarah Mitchell', phone: '(512) 555-0148', src: (sources && sources.indexOf('Phone call') > -1) ? 'Phone call' : base.src, note: 'Roof repair', notes: 'Calling back, nobody has rung her yet' });
+      else if (k === 'customer') setF({ ...base, name: 'Kevin Alvarez', phone: '(512) 555-0192' });
+      else if (k === 'property') setF({ ...base, name: 'Denise Park', address: '4821 Meadow Ridge Dr, Austin TX 78749' });
+      else if (k === 'team') { setF({ ...base, name: 'Jordan Blake' }); setAvOpen(true); }
+      else if (k === 'email') { setF({ ...base, name: 'Jordan Blake', email: 'jordan@bounced-domain.zzz' }); setEmailErr('checking'); setTimeout(() => setEmailErr('rejected'), 500); }
     };
     return ReactDOM.createPortal(<div onMouseDown={onClose} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: PB_DOCK_H, zIndex: 3000, background: 'rgba(8,6,5,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
     <div onMouseDown={e => e.stopPropagation()} style={{ width: 232, marginRight: 14, flexShrink: 0, background: '#fff', border: '1px solid ' + LH.borderSoft, borderRadius: 14, boxShadow: '0 20px 48px rgba(0,0,0,.18)', padding: 14, opacity: shown ? 1 : 0, transform: shown ? 'translateX(0)' : 'translateX(20px)', transition: 'opacity .28s, transform .28s cubic-bezier(0.32,0.72,0,1)' }}>
