@@ -33734,6 +33734,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [dismiss, setDismiss] = useState({}); // {openLead, customer, property}
     const [avOpen, setAvOpen] = useState(false); // check-availability modal
     const [sched, setSched] = useState(null);    // { who, day, time }
+    const [emailErr, setEmailErr] = useState(null); // null | 'checking' | 'rejected'
     useEffect(() => { const t = setTimeout(() => setShown(true), 10); const h = e => { if (e.key === 'Escape') onClose(); }; document.addEventListener('keydown', h); return () => { clearTimeout(t); document.removeEventListener('keydown', h); }; }, []);
     const set = (k, v) => setF(p => ({ ...p, [k]: v }));
     const setQ = (k, v) => setPb(p => ({ ...p, [k]: v }));
@@ -33752,15 +33753,31 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const customer = !dismiss.customer && nm ? CUSTOMERS.find(c => c.name.toLowerCase() === nm) : null;
     const property = !dismiss.property && f.address.trim() ? PROPERTIES.find(p => f.address.toLowerCase().includes(p.q)) : null;
     const dropBtn = { display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' };
+    const checkEmail = () => { const e = f.email.trim(); if (!e) { setEmailErr(null); return; } setEmailErr('checking'); setTimeout(() => { const ok = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e) && !/reject|bounce|\.zzz$/i.test(e); setEmailErr(ok ? null : 'rejected'); }, 400); };
+    const SCENARIOS = [['openlead', 'Caller with an open lead'], ['customer', 'Returning customer'], ['property', 'Address matches a property'], ['team', 'Assign to a team'], ['email', 'Email the API rejects']];
+    const applyScenario = k => {
+      setDismiss({}); setSched(null); setEmailErr(null);
+      if (k === 'openlead') setF(p => ({ ...p, name: 'Sarah Mitchell', phone: '(512) 555-0148', email: '', src: (sources && sources.indexOf('Phone call') > -1) ? 'Phone call' : p.src, note: 'Roof repair', notes: 'Calling back, nobody has rung her yet' }));
+      else if (k === 'customer') setF(p => ({ ...p, name: 'Kevin Alvarez', phone: '(512) 555-0192', email: '' }));
+      else if (k === 'property') setF(p => ({ ...p, name: 'Denise Park', address: '4821 Meadow Ridge Dr, Austin TX 78749' }));
+      else if (k === 'team') { setF(p => ({ ...p, name: p.name.trim() || 'Jordan Blake' })); setAvOpen(true); }
+      else if (k === 'email') { setF(p => ({ ...p, name: p.name.trim() || 'Jordan Blake', email: 'jordan@bounced-domain.zzz' })); setEmailErr('checking'); setTimeout(() => setEmailErr('rejected'), 500); }
+    };
     return ReactDOM.createPortal(<div onMouseDown={onClose} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: PB_DOCK_H, zIndex: 3000, background: 'rgba(8,6,5,0.35)', display: 'flex', justifyContent: 'flex-end', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
     <div onMouseDown={e => e.stopPropagation()} style={{ width: 'min(640px,96vw)', height: '100%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,0.16)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1)' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}><div><div style={{ fontSize: 15.5, fontWeight: 700, color: LH.ink }}>New lead</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Add a lead and qualify it against the playbook.</div></div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
       <div style={{ flex: 1, overflowY: 'auto', padding: 20, minHeight: 0 }}>
+        {/* Try a scenario — prefill the form to preview each inline state */}
+        <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 12, background: LH.bg, padding: 14, marginBottom: 18 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', color: LH.muted, marginBottom: 10 }}>TRY A SCENARIO</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{SCENARIOS.map(([k, l]) => <button key={k} onClick={() => applyScenario(k)} style={{ textAlign: 'left', height: 40, padding: '0 14px', borderRadius: 9, border: '1px solid ' + LH.border, background: '#fff', fontSize: 13.5, fontWeight: 500, color: LH.ink, cursor: 'pointer' }} onMouseEnter={e => { e.currentTarget.style.borderColor = LH.primary; e.currentTarget.style.background = LH.tint; }} onMouseLeave={e => { e.currentTarget.style.borderColor = LH.border; e.currentTarget.style.background = '#fff'; }}>{l}</button>)}</div>
+          <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 10, lineHeight: 1.5 }}>Or type freely. Phone and email are checked 400 ms after they lose focus.</div>
+        </div>
         {/* Basic info */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}><Ic name="user" size={15} color={LH.primary} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Basic info</span></div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Full name<span style={{ color: LH.red }}> *</span></label><input value={f.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Jordan Blake" autoFocus style={inp} /></div>
-          <div><label style={lbl}>Email</label><input value={f.email} onChange={e => set('email', e.target.value)} placeholder="name@email.com" style={inp} /></div>
+          <div><label style={lbl}>Email</label><input value={f.email} onChange={e => { set('email', e.target.value); if (emailErr) setEmailErr(null); }} onBlur={checkEmail} placeholder="name@email.com" style={{ ...inp, borderColor: emailErr === 'rejected' ? LH.red : LH.border }} />{emailErr === 'checking' && <div style={{ fontSize: 11, color: LH.muted, marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="loader" size={11} color={LH.muted} />Checking email…</div>}{emailErr === 'rejected' && <div style={{ fontSize: 11, color: LH.red, marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="alert-circle" size={11} color={LH.red} />The provider rejected this email — double-check it</div>}</div>
           <div><label style={lbl}>Phone</label><input value={f.phone} onChange={e => set('phone', e.target.value)} placeholder="(555) 555-5555" style={inp} /></div>
           {openLead && <div style={{ gridColumn: '1 / -1', borderRadius: 12, border: '1px solid ' + LH.amberBd, background: LH.amberBg, padding: '12px 14px' }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink, marginBottom: 8 }}>{openLead.name} already has an open lead</div>
