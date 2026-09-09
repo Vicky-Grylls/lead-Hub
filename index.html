@@ -32551,7 +32551,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     });
     // Attempts / outcome-based cadence (locked model: not a fixed-day drip). Seeded from any
     // launch (s2l) + day steps in init, flattened into an ordered attempt list with relative waits.
-    const WAIT_UNITS = [['min', 'min'], ['hour', 'hours'], ['day', 'days']];
+    const WAIT_UNITS = [['min', 'min'], ['hour', 'hours'], ['day', 'days'], ['week', 'weeks'], ['month', 'months']];
     const offsetToWait = off => { const m = Number(off) || 30; if (m % 1440 === 0) return { n: m / 1440, unit: 'day' }; if (m % 60 === 0) return { n: m / 60, unit: 'hour' }; return { n: m, unit: 'min' }; };
     const seedAttempts = () => {
       const out = [];
@@ -32779,7 +32779,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>; })()}
         </div>; };
         const bconn = <div style={{ display: 'flex', justifyContent: 'center' }}><div style={{ width: 2, height: 20, background: LH.border }} /></div>;
-        const bpill = txt => <div style={{ display: 'flex', justifyContent: 'center' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 12px', borderRadius: 999, background: '#fff', border: '1px solid ' + LH.border, fontSize: 11.5, fontWeight: 600, color: LH.body, boxShadow: '0 1px 2px rgba(16,24,40,.04)' }}><Ic name="timer" size={12} color={LH.muted} />{txt}</span></div>;
+        const bpill = (txt, onClick) => <div style={{ display: 'flex', justifyContent: 'center' }}><span onClick={onClick} title={onClick ? 'Edit delay' : undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 12px', borderRadius: 999, background: '#fff', border: '1px solid ' + LH.border, fontSize: 11.5, fontWeight: 600, color: LH.body, boxShadow: '0 1px 2px rgba(16,24,40,.04)', cursor: onClick ? 'pointer' : 'default', transition: 'border-color .12s, box-shadow .12s' }} onMouseEnter={onClick ? (e => { e.currentTarget.style.borderColor = LH.primary; e.currentTarget.style.boxShadow = '0 2px 8px rgba(16,24,40,.1)'; }) : undefined} onMouseLeave={onClick ? (e => { e.currentTarget.style.borderColor = LH.border; e.currentTarget.style.boxShadow = '0 1px 2px rgba(16,24,40,.04)'; }) : undefined}><Ic name="timer" size={12} color={LH.muted} />{txt}{onClick && <Ic name="pencil" size={11} color={LH.muted} />}</span></div>;
         const sel = openStep === 'trigger' ? { trigger: true } : attempts.find(a => a.id === openStep);
         const selIdx = sel && !sel.trigger ? attempts.findIndex(a => a.id === openStep) : -1;
         const nextOf = i => i < attempts.length - 1 ? { title: 'Step ' + (i + 2) + ': ' + (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).label, icon: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).icon, fg: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).fg, bg: (WZ_CH[attempts[i + 1].ch] || WZ_CH.sms).bg, cond: 'if no response' } : { title: 'Exit — Qualified or Disqualified', icon: 'log-out', fg: LH.sub, bg: '#f1f0ec', cond: 'sequence end' };
@@ -32800,7 +32800,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <div style={{ padding: '6px 0' }}>
                 {fnode('trigger', 'user-plus', LH.greenBg, LH.green, 'Lead enrolled', 'Enters on create — first attempt fires immediately')}
                 {attempts.map((a, i) => { const c = WZ_CH[a.ch] || WZ_CH.sms; const preview = (a.body && a.body.trim()) || (a.subject && a.subject.trim()) || ('Configure this ' + c.label.toLowerCase()); const unitLabel = (WAIT_UNITS.find(u => u[0] === ((a.wait && a.wait.unit) || 'day')) || ['day', 'days'])[1]; return <div key={a.id}>
-                  {gapPlus('a' + i, i)}{bpill(i === 0 ? 'On enrollment · fires immediately' : 'Wait ' + (a.wait && a.wait.n != null ? a.wait.n : 1) + ' ' + unitLabel + ' · if no response')}{gapPlus('b' + i, i)}
+                  {gapPlus('a' + i, i)}{bpill(i === 0 ? 'On enrollment · fires immediately' : 'Wait ' + (a.wait && a.wait.n != null ? a.wait.n : 1) + ' ' + unitLabel + ' · if no response', i === 0 ? undefined : () => setOpenStep(a.id))}{gapPlus('b' + i, i)}
                   {fnode(a.id, c.icon, c.bg, c.fg, 'Step ' + (i + 1) + ' · ' + c.label, preview, { index: i, onDup: () => duplicateAttempt(a.id), onEdit: () => setOpenStep(a.id) })}
                 </div>; })}
                 {gapPlus('a' + attempts.length, attempts.length)}{bpill('If qualified or disqualified')}{bconn}
