@@ -29916,6 +29916,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [done, setDone] = useState(null);
     const [shown, setShown] = useState(false);
     const [avOpen, setAvOpen] = useState(false);
+    const [detailed, setDetailed] = useState(false);
     useEffect(() => { const t = setTimeout(() => setShown(true), 20); return () => clearTimeout(t); }, []);
     const close = () => { setShown(false); setTimeout(onClose, 240); };
     const jobId = 'JN-2456' + String(78 + (lead.name.length * 7 + (lead.score || 50)) % 21).padStart(2, '0');
@@ -29944,7 +29945,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="git-merge" size={15} color={LH.primary} /></div><div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Convert to job</div><div style={{ fontSize: 12, color: LH.muted }}>{lead.name}</div></div></div>
-              <button onClick={close} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}><button onClick={() => setDetailed(true)} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' }}>Create detailed job</button><button onClick={close} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="x" size={18} color={LH.sub} /></button></div>
             </div>
           </div>
           <div style={{ padding: 20, overflowY: 'auto', flex: 1, minHeight: 0 }}>
@@ -29967,8 +29968,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '20px 0 12px' }}><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted }}>SCHEDULE</span><button onClick={() => setAvOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}><Ic name="calendar-search" size={13} color={LH.primary} />Check availability</button></div>
             <div style={{ display: 'flex', gap: 12 }}>{fld('Date (optional)', <Dropdown value={date} options={(DATES.indexOf(date) < 0 ? [date] : []).concat(DATES).map(o => ({ value: o, label: o }))} onChange={setDate} />)}{fld('Time', <Dropdown value={time} options={(TIMESL.indexOf(time) < 0 ? [time] : []).concat(TIMESL).map(o => ({ value: o, label: o }))} onChange={setTime} />)}</div>
             {fld('Assign technician', <Dropdown value={tech} options={CREW.map(o => ({ value: o, label: o }))} onChange={setTech} />)}
-            {fld('Duration', <Dropdown value={dur} options={DURS.map(o => ({ value: o, label: o }))} onChange={setDur} />)}
-            <div style={{ fontSize: 12, color: LH.sub, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '10px 12px', display: 'flex', gap: 8 }}><Ic name="calendar" size={14} color={LH.sub} /><span>{date === 'Unscheduled' ? 'Job will be created unscheduled — assign a date later from the job board.' : tech + ' will be booked for a ' + dur + ' inspection at ' + address + '.'}</span></div>
+            <div style={{ fontSize: 12, color: LH.sub, background: LH.bg, border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '10px 12px', display: 'flex', gap: 8 }}><Ic name="calendar" size={14} color={LH.sub} /><span>{date === 'Unscheduled' ? 'Job will be created unscheduled — assign a date later from the job board.' : tech + ' will be booked for an inspection at ' + address + ' on ' + date + ' · ' + time + '.'}</span></div>
           </div>
           <div style={{ padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}>
             <Btn onClick={close}>Cancel</Btn>
@@ -29978,7 +29978,43 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     return <div onClick={close} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: PB_DOCK_H, zIndex: 500, background: shown ? 'rgba(20,18,15,.42)' : 'rgba(20,18,15,0)', transition: 'background .24s ease', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
       <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 'min(520px,96vw)', background: '#fff', boxShadow: '-16px 0 48px rgba(0,0,0,.22)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1)' }}>{shell}</div>
       {avOpen && <LeadAvailModal assignees={CREW} onClose={() => setAvOpen(false)} onApply={s => { setTech(s.who); setDate(s.day); setTime((s.time.split('–')[0] || s.time).trim()); setAvOpen(false); onToast && onToast('Booked ' + s.who + ' · ' + s.day + ' ' + s.time); }} />}
+      {detailed && <DetailedJobModal lead={lead} initial={{ title: 'Inspection — ' + lead.name, desc, customer: lead.name, property: address, category, priority, service }} categories={CATEGORIES} services={SERVICES} onClose={() => setDetailed(false)} onToast={onToast} onCreate={fx => { setDesc(fx.desc); if (fx.category) setCategory(fx.category); if (fx.priority) setPriority(fx.priority); setDetailed(false); create(); }} />}
     </div>;
+  }
+  // Full job creation (Prelude "Create New Job" fields) — reached via "Create detailed job" from the convert sheet.
+  function DetailedJobModal({ lead, initial, categories, services, onClose, onToast, onCreate }) {
+    const i = initial || {};
+    const [j, setJ] = useState({ title: i.title || '', desc: i.desc || '', customer: i.customer || '', org: '', property: i.property || '', category: i.category || '', service: i.service || (services && services[0]) || '', tags: '', priority: i.priority || 'Standard' });
+    const [shown, setShown] = useState(false);
+    useEffect(() => { const t = setTimeout(() => setShown(true), 10); const h = e => { if (e.key === 'Escape') onClose(); }; document.addEventListener('keydown', h); return () => { clearTimeout(t); document.removeEventListener('keydown', h); }; }, []);
+    const set = (k, v) => setJ(p => ({ ...p, [k]: v }));
+    const ok = !!j.title.trim() && !!j.category;
+    const inp = { width: '100%', height: 38, borderRadius: 9, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
+    const lab = { fontSize: 12, fontWeight: 600, color: LH.body, marginBottom: 6, display: 'block' };
+    const row = (label, node, req) => <div style={{ marginBottom: 14 }}><label style={lab}>{label}{req && <span style={{ color: LH.red }}> *</span>}</label>{node}</div>;
+    return ReactDOM.createPortal(<div onMouseDown={onClose} onClick={e => e.stopPropagation()} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: PB_DOCK_H, zIndex: 5000, background: 'rgba(8,6,5,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div onMouseDown={e => e.stopPropagation()} style={{ width: 'min(640px,96vw)', maxHeight: '88vh', background: '#fff', borderRadius: 16, boxShadow: '0 24px 60px rgba(0,0,0,.28)', display: 'flex', flexDirection: 'column', overflow: 'hidden', opacity: shown ? 1 : 0, transform: shown ? 'scale(1)' : 'scale(.98)', transition: 'opacity .18s, transform .18s' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>Create new job</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}><button onClick={() => onToast && onToast('Opening the full job builder…')} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Create detailed job</button><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20, minHeight: 0 }}>
+          {row('Job title', <input value={j.title} onChange={e => set('title', e.target.value)} placeholder="Job title" autoFocus style={inp} />, true)}
+          {row('Job description', <textarea value={j.desc} onChange={e => set('desc', e.target.value)} placeholder="Describe the work…" style={{ ...inp, height: 80, padding: 11, resize: 'vertical', lineHeight: 1.5 }} />)}
+          {row('Customer', <Dropdown value={j.customer} placeholder="Select customer" options={[j.customer || lead.name, 'New customer…'].filter(Boolean).map(o => ({ value: o, label: o }))} onChange={v => set('customer', v)} />)}
+          {row('Organization', <Dropdown value={j.org} placeholder="Select organization" options={['Hill Roofing', 'Homeowner (no org)'].map(o => ({ value: o, label: o }))} onChange={v => set('org', v)} />)}
+          {row('Property', <Dropdown value={j.property} placeholder="Select property" options={[j.property, 'Add new property…'].filter(Boolean).map(o => ({ value: o, label: o }))} onChange={v => set('property', v)} />)}
+          {row('Service type', <Dropdown value={j.service} options={(services || []).map(o => ({ value: o, label: o }))} onChange={v => set('service', v)} />)}
+          {row('Category', <Dropdown value={j.category} placeholder="Select category" options={(categories || []).map(o => ({ value: o, label: o }))} onChange={v => set('category', v)} />, true)}
+          {row('Tags', <input value={j.tags} onChange={e => set('tags', e.target.value)} placeholder="Enter tags, comma-separated" style={inp} />)}
+          {row('Priority', <Dropdown value={j.priority} options={['Low', 'Standard', 'High', 'Urgent'].map(o => ({ value: o, label: o }))} onChange={v => set('priority', v)} />)}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '13px 20px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+          <Btn onClick={onClose}>Cancel</Btn>
+          <Btn kind="primary" icon="plus" onClick={() => { if (!ok) { onToast && onToast('Job title and category are required'); return; } onCreate && onCreate(j); }} style={{ opacity: ok ? 1 : 0.55 }}>Create</Btn>
+        </div>
+      </div>
+    </div>, document.body);
   }
   // §11 AI delighters — deterministic intake intelligence derived from a lead. Stable per lead
   // so the same homeowner always renders the same enrichment, spam score, dedup, and intent.
