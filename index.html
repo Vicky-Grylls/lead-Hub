@@ -33731,6 +33731,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [shown, setShown] = useState(false);
     const [mapOpen, setMapOpen] = useState(false);
     const [pbOpen, setPbOpen] = useState(false);
+    const [dismiss, setDismiss] = useState({}); // {openLead, customer, property}
+    const [avOpen, setAvOpen] = useState(false); // check-availability modal
+    const [sched, setSched] = useState(null);    // { who, day, time }
     useEffect(() => { const t = setTimeout(() => setShown(true), 10); const h = e => { if (e.key === 'Escape') onClose(); }; document.addEventListener('keydown', h); return () => { clearTimeout(t); document.removeEventListener('keydown', h); }; }, []);
     const set = (k, v) => setF(p => ({ ...p, [k]: v }));
     const setQ = (k, v) => setPb(p => ({ ...p, [k]: v }));
@@ -33740,6 +33743,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const STAGES = ['New', 'Contacted', 'Engaged', 'Qualifying'];
     const oc = leadOutcome(pbId, pb);
     const create = () => { if (!canSave) return; const stage = oc.state === 'qualified' ? 'Qualifying' : oc.state === 'disqualified' ? 'Disqualified' : oc.state === 'hold' ? 'Engaged' : f.stage; onCreate({ ...f, stage, qualification: oc, playbook: getPlaybook(pbId).name }); };
+    // Inline duplicate / returning-customer / property detection (demo data — matches typed name/address).
+    const nm = f.name.trim().toLowerCase();
+    const OPEN_LEADS = [{ name: 'Sarah Mitchell', stage: 'Contacted', when: '58 minutes ago', src: 'Thumbtack', owner: 'Tyson Reed' }, { name: 'Owen Brooks', stage: 'Engaged', when: '2 hours ago', src: 'Google LSA', owner: 'Tyson Silva' }];
+    const CUSTOMERS = [{ name: 'Kevin Alvarez', jobs: 2, last: 'March 2026' }, { name: 'Diane Walsh', jobs: 4, last: 'Jan 2026' }];
+    const PROPERTIES = [{ q: 'meadow ridge', addr: '4821 Meadow Ridge Dr, Austin TX 78749', owner: 'Denise Park' }, { q: 'oakwood', addr: '4821 Oakwood Dr, Plano TX 75024', owner: 'Caleb Norris' }];
+    const openLead = !dismiss.openLead && nm ? OPEN_LEADS.find(l => l.name.toLowerCase() === nm) : null;
+    const customer = !dismiss.customer && nm ? CUSTOMERS.find(c => c.name.toLowerCase() === nm) : null;
+    const property = !dismiss.property && f.address.trim() ? PROPERTIES.find(p => f.address.toLowerCase().includes(p.q)) : null;
+    const dropBtn = { display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' };
     return ReactDOM.createPortal(<div onMouseDown={onClose} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: PB_DOCK_H, zIndex: 3000, background: 'rgba(8,6,5,0.35)', display: 'flex', justifyContent: 'flex-end', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
     <div onMouseDown={e => e.stopPropagation()} style={{ width: 'min(640px,96vw)', height: '100%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,0.16)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transform: shown ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1)' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}><div><div style={{ fontSize: 15.5, fontWeight: 700, color: LH.ink }}>New lead</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Add a lead and qualify it against the playbook.</div></div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
@@ -33750,13 +33762,29 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Full name<span style={{ color: LH.red }}> *</span></label><input value={f.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Jordan Blake" autoFocus style={inp} /></div>
           <div><label style={lbl}>Email</label><input value={f.email} onChange={e => set('email', e.target.value)} placeholder="name@email.com" style={inp} /></div>
           <div><label style={lbl}>Phone</label><input value={f.phone} onChange={e => set('phone', e.target.value)} placeholder="(555) 555-5555" style={inp} /></div>
+          {openLead && <div style={{ gridColumn: '1 / -1', borderRadius: 12, border: '1px solid ' + LH.amberBd, background: LH.amberBg, padding: '12px 14px' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink, marginBottom: 8 }}>{openLead.name} already has an open lead</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 11 }}><Pill label={openLead.stage} /><span style={{ fontSize: 12, color: LH.sub }}>{openLead.when} · {openLead.src} · {openLead.owner}</span></div>
+            <div style={{ display: 'flex', gap: 8 }}><button onClick={() => { onToast && onToast('Opening ' + openLead.name + "'s existing lead"); onClose(); }} style={{ ...dropBtn, border: '1px solid ' + LH.amber, background: LH.amber, color: '#fff' }}>Open existing lead</button><button onClick={() => setDismiss(d => ({ ...d, openLead: true }))} style={{ ...dropBtn, border: '1px solid ' + LH.border, background: '#fff', color: LH.body }}>Create anyway</button></div>
+          </div>}
+          {!openLead && customer && <div style={{ gridColumn: '1 / -1', borderRadius: 12, border: '1px solid ' + LH.greenBd, background: LH.greenBg, padding: '12px 14px' }}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: LH.green, marginBottom: 6 }}>EXISTING CUSTOMER</div>
+            <div style={{ fontSize: 13, color: LH.ink, marginBottom: 11 }}><b>{customer.name}</b> · {customer.jobs} jobs · last job {customer.last}</div>
+            <div style={{ display: 'flex', gap: 8 }}><button onClick={() => { setDismiss(d => ({ ...d, customer: true })); onToast && onToast('Linked to existing contact — new lead under ' + customer.name); }} style={{ ...dropBtn, border: '1px solid ' + LH.green, background: LH.green, color: '#fff' }}>Use this contact</button><button onClick={() => setDismiss(d => ({ ...d, customer: true }))} style={{ ...dropBtn, border: '1px solid ' + LH.border, background: '#fff', color: LH.body }}>Not them</button></div>
+          </div>}
           <div style={{ gridColumn: '1 / -1' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={lbl}>Address</label><button onClick={() => setMapOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 5 }}><Ic name="map-pin" size={13} color={LH.primary} />Pick from map</button></div>
             <input value={f.address} onChange={e => set('address', e.target.value)} placeholder="Start typing or pick from map…" style={inp} />
+            {property && <div style={{ marginTop: 10, borderRadius: 12, border: '1px solid ' + LH.greenBd, background: LH.greenBg, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: LH.green, marginBottom: 6 }}>PROPERTY ON FILE</div>
+              <div style={{ fontSize: 13, color: LH.ink }}>{property.addr}</div>
+              <div style={{ fontSize: 12, color: LH.sub, marginBottom: 11 }}>Owner on file: {property.owner}</div>
+              <div style={{ display: 'flex', gap: 8 }}><button onClick={() => { set('address', property.addr); setDismiss(d => ({ ...d, property: true })); onToast && onToast('Property linked'); }} style={{ ...dropBtn, border: '1px solid ' + LH.green, background: LH.green, color: '#fff' }}>Link property</button><button onClick={() => setDismiss(d => ({ ...d, property: true }))} style={{ ...dropBtn, border: '1px solid ' + LH.border, background: '#fff', color: LH.body }}>Skip</button></div>
+            </div>}
           </div>
           <div><label style={lbl}>Lead source</label><Dropdown value={f.src} options={(sources || []).map(s => ({ value: s, label: s }))} onChange={v => set('src', v)} /></div>
           <div><label style={lbl}>Stage</label><Dropdown value={f.stage} options={STAGES.map(s => ({ value: s, label: s }))} onChange={v => set('stage', v)} /></div>
-          <div><label style={lbl}>Assigned</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
+          <div><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><label style={lbl}>Assigned</label><button onClick={() => setAvOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 5 }}><Ic name="calendar-search" size={13} color={LH.primary} />Check availability</button></div><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} />{sched && <div style={{ fontSize: 11.5, fontWeight: 600, color: LH.green, marginTop: 5, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="calendar-check" size={12} color={LH.green} />{sched.day} · {sched.time}</div>}</div>
           <div><label style={lbl}>Service interest</label><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="e.g. Roof inspection" style={inp} /></div>
           <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Notes</label><textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional context…" style={{ ...inp, height: 70, padding: 10, resize: 'vertical' }} /></div>
         </div>
@@ -33773,7 +33801,42 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
       <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="plus" onClick={create} style={{ opacity: canSave ? 1 : 0.5 }}>Create lead</Btn></div>
       {mapOpen && <LeadAddressPicker initial={f.address} onClose={() => setMapOpen(false)} onApply={a => set('address', a)} />}
+      {avOpen && <LeadAvailModal assignees={assignees} onClose={() => setAvOpen(false)} onApply={s => { set('assignee', s.who); setSched(s); setAvOpen(false); onToast && onToast('Scheduled ' + s.who + ' · ' + s.day + ' ' + s.time); }} />}
     </div>
+    </div>, document.body);
+  }
+  function LeadAvailModal({ assignees, onClose, onApply }) {
+    const days = (() => { const arr = []; const d = new Date(); for (let i = 0; i < 6; i++) { const x = new Date(d); x.setDate(d.getDate() + i); arr.push({ dow: x.toLocaleDateString('en-US', { weekday: 'short' }), num: String(x.getDate()).padStart(2, '0') }); } return arr; })();
+    const [day, setDay] = useState(0);
+    const [pick, setPick] = useState(null); // { who, time }
+    const [q, setQ] = useState('');
+    const SLOTS = ['9:45 AM – 11:45 AM', '11:45 AM – 1:45 PM', '1:45 PM – 3:45 PM'];
+    const users = (assignees && assignees.length ? assignees : ['Maria Gonzalez']).filter(u => !q || u.toLowerCase().includes(q.toLowerCase()));
+    useEffect(() => { const h = e => { if (e.key === 'Escape') onClose(); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, [onClose]);
+    const dl = days[day];
+    return ReactDOM.createPortal(<div onMouseDown={onClose} style={{ position: 'fixed', inset: 0, zIndex: 4000, background: 'rgba(8,6,5,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      <div onMouseDown={e => e.stopPropagation()} style={{ width: 'min(900px,96vw)', maxHeight: '86vh', background: '#fff', borderRadius: 16, boxShadow: '0 24px 60px rgba(0,0,0,.28)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}><div style={{ fontSize: 16, fontWeight: 700, color: LH.ink }}>Check availability</div><button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button></div>
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '260px 1fr', minHeight: 0 }}>
+          <div style={{ borderRight: '1px solid ' + LH.borderSoft, padding: 18, overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 700, color: LH.ink, marginBottom: 12 }}>{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 18 }}>{days.map((d, i) => { const on = day === i; return <button key={i} onClick={() => setDay(i)} style={{ width: 52, height: 58, borderRadius: 10, border: '1px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}><span style={{ fontSize: 11, color: on ? LH.primary : LH.sub, fontWeight: 600 }}>{d.dow}</span><span style={{ fontSize: 16, fontWeight: 700, color: on ? LH.primary : LH.ink }}>{d.num}</span></button>; })}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 10 }}>FILTERS</div>
+            {[['clock', 'Duration', '2 hours 0 min'], ['globe', 'Time zone', 'GMT+05:30'], ['map', 'Service territory', 'Any'], ['wrench', 'Skills', 'Any']].map(([ic, l, v]) => <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', borderBottom: '1px solid ' + LH.borderSoft }}><Ic name={ic} size={14} color={LH.sub} /><span style={{ fontSize: 12.5, color: LH.body, flex: 1 }}>{l}</span><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{v}</span></div>)}
+          </div>
+          <div style={{ padding: 18, overflowY: 'auto' }}>
+            <div style={{ position: 'relative', marginBottom: 14 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 11, top: 11 }} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search user" style={{ width: '100%', height: 36, borderRadius: 9, border: '1px solid ' + LH.border, padding: '0 12px 0 32px', fontSize: 13, color: LH.ink, outline: 'none', boxSizing: 'border-box' }} /></div>
+            {users.map((u, ui) => <div key={u} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 0', borderBottom: ui < users.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+              <LeadAvatar name={u} size={30} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: LH.ink, marginBottom: 8 }}>{u}</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{SLOTS.map(t => { const on = pick && pick.who === u && pick.time === t; return <button key={t} onClick={() => setPick({ who: u, time: t })} style={{ height: 34, padding: '0 12px', borderRadius: 8, border: '1px solid ' + (on ? LH.primary : LH.border), background: on ? LH.tint : '#fff', color: on ? LH.primary : LH.body, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>{t}</button>; })}</div>
+              </div>
+            </div>)}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, flexShrink: 0 }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" onClick={() => pick && onApply({ who: pick.who, day: dl.dow + ' ' + dl.num, time: pick.time })} style={{ opacity: pick ? 1 : 0.5 }}>Use this schedule</Btn></div>
+      </div>
     </div>, document.body);
   }
   function ImportFlow({ onClose, onToast, onImport }) {
