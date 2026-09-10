@@ -32959,8 +32959,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                   <div style={{ flex: 1 }}><Dropdown value="" placeholder="Insert snippet…" options={SNIPPETS.map(([l, t]) => ({ value: t, label: l }))} onChange={t => stepPatch({ body: (sel.body || '') + t })} /></div>
                   <div style={{ flex: 1 }}><Dropdown value="" placeholder="Choose a template…" options={TEMPLATES.map(t => ({ value: t.k, label: t.label }))} onChange={k => { const t = TEMPLATES.find(x => x.k === k); if (t) stepPatch(isEmail ? { subject: t.subject, body: t.body } : { body: t.body }); }} /></div>
                 </div>
-                <label style={lab}>Select contact{req}</label>
-                <div style={{ marginBottom: 16 }}><Dropdown value={sel.contact || "Project's main contact"} options={["Project's main contact", 'Assigned lead owner', 'All contacts on lead'].map(o => ({ value: o, label: o }))} onChange={v => stepPatch({ contact: v })} /></div>
                 {isEmail && <><label style={lab}>Subject{req}</label><input value={sel.subject || ''} onChange={e => stepPatch({ subject: e.target.value })} placeholder="e.g. Ready to help!" style={{ ...fld, marginBottom: 16 }} /></>}
                 <label style={lab}>{isEmail ? 'Body' : isCall ? 'Call script / guidance' : 'Text message'}{req}</label>
                 {isEmail
