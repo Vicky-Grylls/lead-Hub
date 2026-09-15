@@ -14272,6 +14272,7 @@ function App() {
   const handleNavigate = id => {
     if (id === 'work') setPage('list');else if (id === 'calendar') setPage('calendar');else if (id === 'dispatch') setPage('dispatch');else if (id === 'maps') setPage('maps');else if (id === 'leadhub' || id.indexOf('lead-') === 0) setPage(id);
   };
+  window.__leadNav = handleNavigate;
   const [isEditMode, setIsEditMode] = useState(false);
   const [changeCount, setChangeCount] = useState(0);
   const tabSnapshotRef = useRef(null);
@@ -28732,10 +28733,10 @@ const RCE=React.createElement;
 let LEAD_UID=1000; const leadUid=()=>'lf'+(++LEAD_UID);
 const LEAD_REPS=['Unassigned','Nova AI','Diane Cole','Marcus Lee','Sarah Chen','Tom Rivera'];
 let LEAD_SRC_STORE=[
-  {id:'s1',name:'Angi',enabled:true},{id:'s2',name:'Thumbtack',enabled:true},
-  {id:'s3',name:'Google LSA',enabled:true},{id:'s4',name:'Meta',enabled:true},
-  {id:'s5',name:'Website',enabled:true},{id:'s6',name:'Referral',enabled:true},
-  {id:'s7',name:'Walk-in',enabled:false}
+  {id:'s1',name:'Angi',enabled:true,cost:35},{id:'s2',name:'Thumbtack',enabled:true,cost:28},
+  {id:'s3',name:'Google LSA',enabled:true,cost:42},{id:'s4',name:'Meta',enabled:true,cost:18},
+  {id:'s5',name:'Website',enabled:true,cost:0},{id:'s6',name:'Referral',enabled:true,cost:0},
+  {id:'s7',name:'Walk-in',enabled:false,cost:0}
 ];
 let LEAD_STAGE_STORE=[
   {id:'st1',name:'New',color:'#3b82f6'},{id:'st2',name:'Contacted',color:'#22c55e'},
@@ -28876,14 +28877,8 @@ function LeadGeneralSettings({setActiveId}){
     leadScroll(RCE("div",{style:{borderTop:'1px solid #e8e7e2'}},
       RCE(SettingsFormRow,{label:'Default lead owner',sub:'Leads without a routing match are assigned here.'},
         RCE("select",{value:owner,onChange:e=>setOwner(e.target.value),style:leadSelectStyle},LEAD_REPS.map(r=>RCE("option",{key:r},r)))),
-      leadRowToggle('Auto-assign new leads','Route incoming leads automatically as they arrive.',autoAssign,()=>setAutoAssign(v=>!v)),
-      leadRowToggle('Round-robin distribution','Spread auto-assigned leads evenly across active reps.',roundRobin,()=>setRoundRobin(v=>!v)),
-      leadRowToggle('Duplicate detection','Flag leads matching an existing email or phone.',dedupe,()=>setDedupe(v=>!v)),
-      leadRowToggle('Require lead source','Lead source is mandatory when creating a lead.',requireSource,()=>setRequireSource(v=>!v)),
       RCE(SettingsFormRow,{label:'Lead aging alert',sub:'Warn when a lead sits untouched this many days.'},
         RCE("div",{style:{display:'flex',alignItems:'center',gap:8}},RCE("input",{type:'number',value:aging,onChange:e=>setAging(e.target.value),style:{...leadInput,width:90}}),RCE("span",{style:{fontSize:12.5,color:'#737373'}},"days"))),
-      RCE(SettingsFormRow,{label:'Default pipeline',sub:'Pipeline new leads enter unless overridden.'},
-        RCE("select",{value:defPipeline,onChange:e=>setDefPipeline(e.target.value),style:leadSelectStyle},['Roofing Sales','Storm Response','Commercial'].map(r=>RCE("option",{key:r},r)))),
       leadRowToggle('Nudge to create contact','Prompt to create a contact when a lead is marked Qualified.',autoConvert,()=>setAutoConvert(v=>!v),autoConvert),
       autoConvert&&RCE(SettingsFormRow,{label:'Status',tightTop:true},
         RCE("select",{value:convertStatus,onChange:e=>setConvertStatus(e.target.value),style:leadSelectStyle},LEAD_STATUS_OPTS.map(r=>RCE("option",{key:r},r)))),
@@ -28941,27 +28936,52 @@ function LeadCampaignSettings({setActiveId}){
 /* ─── Lead Sources ─── */
 function LeadSourcesSettings({setActiveId}){
   const [,force]=useState(0);const rr=()=>force(x=>x+1);
-  const [name,setName]=useState('');
-  const add=()=>{const n=name.trim();if(!n)return;LEAD_SRC_STORE.push({id:leadUid(),name:n,enabled:true});setName('');rr();};
+  const [modal,setModal]=useState(null); // null | {id?, name, cost}
+  const openNew=()=>setModal({name:'',cost:''});
+  const openEdit=s=>setModal({id:s.id,name:s.name,cost:s.cost==null?'':String(s.cost)});
+  const save=()=>{const n=(modal.name||'').trim();if(!n)return;const cost=Math.max(0,Number(modal.cost)||0);
+    if(modal.id){const s=LEAD_SRC_STORE.find(x=>x.id===modal.id);if(s){s.name=n;s.cost=cost;}}
+    else LEAD_SRC_STORE.push({id:leadUid(),name:n,enabled:true,cost:cost});
+    setModal(null);rr();};
   const del=id=>{LEAD_SRC_STORE=LEAD_SRC_STORE.filter(s=>s.id!==id);rr();};
-  const toggle=id=>{const s=LEAD_SRC_STORE.find(x=>x.id===id);if(s)s.enabled=!s.enabled;rr();};
+  const money=c=>c?('$'+c):'—';
+  const th={fontSize:11,fontWeight:700,letterSpacing:'.03em',color:'#737373',textTransform:'uppercase'};
   return RCE(React.Fragment,null,
-    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiTag,title:'Lead Sources',sub:'Sources power reporting and trigger source-specific custom fields'}),
+    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiTag,title:'Lead Sources ('+LEAD_SRC_STORE.length+')',sub:'Create and manage lead sources. Lead cost auto-carries to leads from that source.',action:RCE("button",{onClick:openNew,className:"hover-dark",style:leadBtnPrimary},"+ New Lead Source")}),
     leadScroll(RCE(React.Fragment,null,
-      RCE("div",{style:{display:'flex',gap:8,marginBottom:16}},
-        RCE("input",{value:name,onChange:e=>setName(e.target.value),onKeyDown:e=>{if(e.key==='Enter')add();},placeholder:'Add a lead source…',style:{...leadInput,maxWidth:320}}),
-        RCE("button",{onClick:add,className:"hover-dark",style:leadBtnPrimary},"Add Source")),
       RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden',background:'#fff'}},
-        LEAD_SRC_STORE.map((s,i)=>RCE("div",{key:s.id,className:"hover-warm",style:{display:'flex',alignItems:'center',gap:12,padding:'11px 16px',borderBottom:i<LEAD_SRC_STORE.length-1?'1px solid #f0eeea':'none'}},
-          RCE(TiTag,{size:14,color:"#9c9b96"}),
-          RCE("span",{style:{flex:1,fontSize:12.5,fontWeight:600,color:'#1f1f1d'}},s.name),
-          RCE("span",{style:{fontSize:11,fontWeight:600,color:s.enabled?'#16a34a':'#9c9b96'}},s.enabled?'Enabled':'Disabled'),
-          RCE(LeadToggle,{on:s.enabled,onToggle:()=>toggle(s.id)}),
-          RCE("button",{onClick:()=>del(s.id),className:"hover-subtle",title:"Delete",style:leadIconBtn},RCE(TiTrash2,{size:14,color:"#b0938f"}))))),
+        RCE("div",{style:{display:'flex',alignItems:'center',gap:12,padding:'11px 16px',background:'#faf9f7',borderBottom:'1px solid #f0eeea'}},
+          RCE("span",{style:{width:16}}),
+          RCE("span",{style:{flex:1,...th}},"Lead Source Name"),
+          RCE("span",{style:{width:110,textAlign:'right',...th}},"Lead Cost"),
+          RCE("span",{style:{width:70,textAlign:'right',...th}},"Actions")),
+        LEAD_SRC_STORE.map((s,i)=>RCE("div",{key:s.id,className:"hover-warm",style:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:i<LEAD_SRC_STORE.length-1?'1px solid #f0eeea':'none'}},
+          RCE("span",{style:{width:16,color:'#c9c8c3',cursor:'grab',fontSize:13,lineHeight:1}},"⣿"),
+          RCE("span",{style:{flex:1,fontSize:13,fontWeight:600,color:'#1f1f1d'}},s.name),
+          RCE("span",{style:{width:110,textAlign:'right',fontSize:12.5,fontWeight:600,color:s.cost?'#1f1f1d':'#9c9b96'}},money(s.cost)),
+          RCE("div",{style:{width:70,display:'flex',justifyContent:'flex-end',gap:6}},
+            RCE("button",{onClick:()=>openEdit(s),className:"hover-subtle",title:"Edit",style:leadIconBtn},RCE(TiPencil,{size:14,color:"#737373"})),
+            RCE("button",{onClick:()=>del(s.id),className:"hover-subtle",title:"Delete",style:leadIconBtn},RCE(TiTrash2,{size:14,color:"#b0938f"})))))),
       RCE("div",{style:{marginTop:14,padding:12,border:'1px solid #dbeafe',borderRadius:8,background:'#eff6ff',color:'#1e40af',fontSize:11.5,lineHeight:1.5}},
-        RCE("strong",null,"How this connects: "),"Lead source is the attribute custom-field groups trigger on. Attach a source to a field group in ",
+        RCE("strong",null,"How this connects: "),"Lead source drives reporting and source-specific custom fields; its ",RCE("strong",null,"lead cost")," is auto-applied to every lead created from that source. Attach a source to a field group in ",
         RCE("a",{onClick:()=>setActiveId('modules/Leads/fields'),style:{color:'#1d4ed8',fontWeight:700,cursor:'pointer',textDecoration:'underline'}},"Lead Custom Fields"),
-        " and its fields will only appear for leads from that source.")
+        " and its fields will only appear for leads from that source."),
+      modal&&RCE("div",{onMouseDown:()=>setModal(null),style:{position:'fixed',inset:0,zIndex:9000,background:'rgba(20,18,15,.4)',display:'flex',alignItems:'flex-start',justifyContent:'center',paddingTop:'14vh'}},
+        RCE("div",{onMouseDown:e=>e.stopPropagation(),style:{width:'min(480px,94vw)',background:'#fff',borderRadius:14,boxShadow:'0 24px 60px rgba(0,0,0,.28)',overflow:'hidden'}},
+          RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 20px',borderBottom:'1px solid #f0eeea'}},
+            RCE("div",{style:{fontSize:15.5,fontWeight:700,color:'#1f1f1d'}},modal.id?'Edit lead source':'New lead source'),
+            RCE("button",{onClick:()=>setModal(null),style:{background:'none',border:'none',cursor:'pointer',padding:4,fontSize:15,color:'#737373'}},"✕")),
+          RCE("div",{style:{padding:20}},
+            RCE("label",{style:{fontSize:12,fontWeight:600,color:'#4a4a46',display:'block',marginBottom:6}},"Source name ",RCE("span",{style:{color:'#dc2626'}},"*")),
+            RCE("input",{value:modal.name,autoFocus:true,onChange:e=>setModal(m=>({...m,name:e.target.value})),onKeyDown:e=>{if(e.key==='Enter')save();},placeholder:'Please enter source name',style:{...leadInput,width:'100%',marginBottom:16}}),
+            RCE("label",{style:{fontSize:12,fontWeight:600,color:'#4a4a46',display:'block',marginBottom:6}},"Lead cost"),
+            RCE("div",{style:{display:'flex',alignItems:'center',gap:8}},
+              RCE("span",{style:{fontSize:13,color:'#737373'}},"$"),
+              RCE("input",{type:'number',min:0,value:modal.cost,onChange:e=>setModal(m=>({...m,cost:e.target.value})),onKeyDown:e=>{if(e.key==='Enter')save();},placeholder:'0',style:{...leadInput,width:140}}),
+              RCE("span",{style:{fontSize:11.5,color:'#9c9b96'}},"per lead · auto-applied on creation"))),
+          RCE("div",{style:{display:'flex',justifyContent:'flex-end',gap:8,padding:'13px 20px',borderTop:'1px solid #f0eeea'}},
+            RCE("button",{onClick:()=>setModal(null),className:"hover-subtle",style:leadBtnGhost},"Cancel"),
+            RCE("button",{onClick:save,className:"hover-dark",style:{...leadBtnPrimary,opacity:(modal.name||'').trim()?1:.55}},modal.id?'Update':'Create'))))
     ),820));
 }
 
@@ -29450,22 +29470,18 @@ function LeadAgentDetail({setActiveId,id}){
     )));
 }
 function LeadAgentsSettings({setActiveId}){
-  const [on,setOn]=useState(LEAD_AGENTS_FULL.reduce((m,a)=>{m[a.id]=a.on;return m;},{}));
-  const [tone,setTone]=useState('Friendly and concise');
-  const [hitl,setHitl]=useState(true);
+  const openStudio=()=>{ if(window.__leadNav) window.__leadNav('lead-workforce'); };
   return RCE(React.Fragment,null,
-    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiHighlight,title:'AI Agents',sub:'Turn on Nova agents for qualification, routing and speed-to-lead',onSave:()=>setActiveId('modules/Leads')}),
-    leadScroll(RCE(React.Fragment,null,
-      RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden',background:'#fff'}},
-        LEAD_AGENTS_FULL.map((a,i)=>RCE("div",{key:a.id,onClick:()=>setActiveId('modules/Leads/agents/'+a.id),style:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:i<LEAD_AGENTS_FULL.length-1?'1px solid #f0eeea':'none',cursor:'pointer'},onMouseEnter:e=>e.currentTarget.style.background='#faf8f4',onMouseLeave:e=>e.currentTarget.style.background='#fff'},
-          RCE("div",{style:{width:32,height:32,borderRadius:8,background:'#efe7fb',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},RCE(TiHighlight,{size:16,color:"#7c3aed"})),
-          RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:13,fontWeight:600,color:'#1f1f1d'}},a.name),RCE("div",{style:{fontSize:11.5,color:'#9c9b96'}},a.role+' · '+a.metric)),
-          RCE("button",{onClick:e=>{e.stopPropagation();setOn(p=>({...p,[a.id]:!p[a.id]}));},style:{width:38,height:22,borderRadius:999,border:'none',background:on[a.id]?'#7c3aed':'#d9d5cc',position:'relative',cursor:'pointer',flexShrink:0,transition:'background .15s'}},RCE("span",{style:{position:'absolute',top:2,left:on[a.id]?18:2,width:18,height:18,borderRadius:999,background:'#fff',transition:'left .15s'}})),
-          RCE("span",{style:{fontSize:18,color:'#c4c2bd',flexShrink:0,lineHeight:1}},"›")))),
-      RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:'26px 0 2px'}},"Global"),
-      RCE("div",{style:{borderTop:'1px solid #e8e7e2'}},
-        RCE(SettingsFormRow,{label:'Default tone',sub:'How agents phrase their messages.'},RCE("input",{value:tone,onChange:e=>setTone(e.target.value),style:{...leadInput,width:280}})),
-        leadRowToggle('Human-in-the-loop as last resort','Only escalate to a rep when Nova can’t proceed on its own.',hitl,()=>setHitl(v=>!v)))
+    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiHighlight,title:'AI Agents',sub:'Nova agents are managed centrally in Agent Studio'}),
+    leadScroll(RCE("div",{style:{maxWidth:560,margin:'8px auto 0'}},
+      RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:14,background:'#fff',padding:'28px 26px',textAlign:'center'}},
+        RCE("div",{style:{width:52,height:52,borderRadius:13,background:'#efe7fb',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px'}},RCE(TiHighlight,{size:24,color:"#7c3aed"})),
+        RCE("div",{style:{fontSize:16,fontWeight:700,color:'#1f1f1d'}},"Agents live in Agent Studio"),
+        RCE("div",{style:{fontSize:13,color:'#5b5b57',lineHeight:1.55,margin:'8px auto 0',maxWidth:420}},"Every AI agent — qualification, routing, speed-to-lead — is configured in one place so they don’t get scattered across Leads, Connect and other modules. Manage them in Agent Studio."),
+        RCE("button",{onClick:openStudio,className:"hover-dark",style:{...leadBtnPrimary,margin:'18px auto 0',display:'inline-flex',alignItems:'center',gap:8}},"Open Agent Studio ↗")),
+      RCE("div",{style:{marginTop:14,padding:12,border:'1px solid #dbeafe',borderRadius:8,background:'#eff6ff',color:'#1e40af',fontSize:11.5,lineHeight:1.5}},
+        RCE("strong",null,"Why here? "),"This module no longer keeps a separate copy of agent settings. Playbooks that these agents run still live under ",
+        RCE("a",{onClick:()=>setActiveId('modules/Leads/playbook'),style:{color:'#1d4ed8',fontWeight:700,cursor:'pointer',textDecoration:'underline'}},"Playbooks"),".")
     )));
 }
 function SettingsLeadsRouter({activeId,setActiveId}){
@@ -30187,6 +30203,38 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>}
     </div>;
   }
+  // Shared per-lead communication feed (newest first) — used by the overview block and the full comm history.
+  function leadCommItems(lead) {
+    const first = (lead && lead.name ? lead.name.split(' ')[0] : 'there');
+    return [
+      { ch: 'sms', dir: 'out', who: 'Nova', title: 'Speed-to-lead drip · step 3', preview: 'Hi ' + first + ', still keen on that free roof inspection this week?', t: '1 day ago' },
+      { ch: 'call', dir: 'out', who: 'Nova', title: 'Nova qualification call', preview: 'Answered · 4:32 · confirmed storm damage, roof ~15 yrs', t: '1 day ago' },
+      { ch: 'email', dir: 'out', who: 'System', title: 'Free inspection offer', preview: 'Delivered · opened · clicked “Book inspection”', t: '2 days ago' },
+      { ch: 'call', dir: 'in', who: first, title: 'Inbound call', preview: '12s ring · left a voicemail', t: '2 days ago' },
+      { ch: 'sms', dir: 'in', who: first, title: 'Reply', preview: '“Yes, tomorrow evening would be fine.”', t: '3 days ago' },
+      { ch: 'email', dir: 'out', who: 'System', title: 'Welcome — how Nova works', preview: 'Delivered · opened', t: '4 days ago' }
+    ];
+  }
+  // Compact "Recent communication" block for the lead overview (latest 3) — sits under the AI summary.
+  function LeadCommOverview({ lead, onOpen }) {
+    if (!lead) return null;
+    const CH = { call: { ic: 'phone', fg: LH.green, bg: LH.greenBg }, sms: { ic: 'message-square', fg: LH.blue, bg: LH.blueBg }, email: { ic: 'mail', fg: LH.amber, bg: LH.amberBg } };
+    const items = leadCommItems(lead).slice(0, 3);
+    return <div style={{ borderRadius: 12, border: '1px solid ' + LH.borderSoft, background: '#fff', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', borderBottom: '1px solid ' + LH.borderSoft }}>
+        <Ic name="messages-square" size={15} color={LH.primary} />
+        <span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Recent communication</span>
+        {onOpen && <button onClick={onOpen} style={{ marginLeft: 'auto', fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>View all</button>}
+      </div>
+      <div>{items.map((c, i) => { const m = CH[c.ch] || CH.sms; return <div key={i} onClick={onOpen} style={{ display: 'flex', gap: 10, padding: '10px 14px', borderTop: i ? '1px solid ' + LH.borderSoft : 'none', cursor: onOpen ? 'pointer' : 'default' }}>
+        <span style={{ width: 28, height: 28, borderRadius: 8, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={m.ic} size={13} color={m.fg} /></span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title}</span><span style={{ fontSize: 10, fontWeight: 600, color: c.dir === 'in' ? LH.green : LH.muted, background: c.dir === 'in' ? LH.greenBg : '#f1f0ec', borderRadius: 999, padding: '0 6px', flexShrink: 0 }}>{c.dir === 'in' ? 'In' : 'Out'}</span><span style={{ marginLeft: 'auto', fontSize: 11, color: LH.muted, flexShrink: 0 }}>{c.t}</span></div>
+          <div style={{ fontSize: 11.5, color: LH.sub, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.preview}</div>
+        </div>
+      </div>; })}</div>
+    </div>;
+  }
   function LeadAISummary({ lead }) {
     const [open, setOpen] = useState(true);
     if (!lead) return null;
@@ -30383,6 +30431,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <LeadHeaderBlock lead={shown} onToast={onToast} slim onConvert={onConvert} />
             {shown.jobId && <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 10, padding: '10px 12px' }}><span style={{ width: 28, height: 28, borderRadius: 7, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={14} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.green }}>Converted to inspection job</div><div style={{ fontSize: 11.5, color: LH.sub }}>Job #{shown.jobId}</div></div><button onClick={() => onToast && onToast('Opening Job #' + shown.jobId + '…')} style={{ fontSize: 12, fontWeight: 600, color: LH.green, background: 'none', border: 'none', cursor: 'pointer' }}>View</button></div>}
             <div style={{ marginTop: 16 }}><LeadAISummary lead={shown} /></div>
+            <div style={{ marginTop: 14 }}><LeadCommOverview lead={shown} onOpen={() => setTab('communication')} /></div>
             <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 16, paddingTop: 14 }}><LeadPrimaryDetails lead={shown} onToast={onToast} onMove={onMove} /></div>
           </>}
           {tab === 'intel' && <LeadIntakeIntelligence lead={shown} onToast={onToast} bare />}
@@ -31128,14 +31177,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [chFilter, setChFilter] = useState('all');
     const first = (lead && lead.name ? lead.name.split(' ')[0] : 'there');
     const CH_META = { call: { ic: 'phone', fg: LH.green, bg: LH.greenBg, label: 'Call' }, sms: { ic: 'message-square', fg: LH.blue, bg: LH.blueBg, label: 'SMS' }, email: { ic: 'mail', fg: LH.amber, bg: LH.amberBg, label: 'Email' } };
-    const items = [
-      { ch: 'sms', dir: 'out', who: 'Nova', title: 'Speed-to-lead drip · step 3', preview: 'Hi ' + first + ', still keen on that free roof inspection this week?', t: '1 day ago' },
-      { ch: 'call', dir: 'out', who: 'Nova', title: 'Nova qualification call', preview: 'Answered · 4:32 · confirmed storm damage, roof ~15 yrs', t: '1 day ago' },
-      { ch: 'email', dir: 'out', who: 'System', title: 'Free inspection offer', preview: 'Delivered · opened · clicked “Book inspection”', t: '2 days ago' },
-      { ch: 'call', dir: 'in', who: first, title: 'Inbound call', preview: '12s ring · left a voicemail', t: '2 days ago' },
-      { ch: 'sms', dir: 'in', who: first, title: 'Reply', preview: '“Yes, tomorrow evening would be fine.”', t: '3 days ago' },
-      { ch: 'email', dir: 'out', who: 'System', title: 'Welcome — how Nova works', preview: 'Delivered · opened', t: '4 days ago' }
-    ];
+    const items = leadCommItems(lead);
     const shown = chFilter === 'all' ? items : items.filter(x => x.ch === chFilter);
     const FILTERS = [['all', 'All'], ['call', 'Calls'], ['sms', 'SMS'], ['email', 'Email']];
     return <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
@@ -31369,6 +31411,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {tab === 'files' && <div style={{ padding: '40px 0', textAlign: 'center' }}><Ic name="folder" size={30} color="#d8cdb8" style={{ margin: '0 auto 10px', width: 30, height: 30 }} /><div style={{ fontSize: 13, color: LH.sub }}>No attachments yet</div></div>}
           {tab === 'details' && <>
           <div style={{ marginBottom: 16 }}><LeadAISummary lead={lead} /></div>
+          <div style={{ marginBottom: 16 }}><LeadCommOverview lead={lead} onOpen={() => setTab('communication')} /></div>
           <LeadLifecycle lead={lead} jobId={jobId} />
           {jobId
             ? <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 11, padding: '12px 14px', marginBottom: 20 }}><span style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={16} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.green }}>Converted to inspection job #{jobId}</div><div style={{ fontSize: 12, color: LH.sub }}>An inspection is scheduled — this lead is now an active job.</div></div><Btn icon="external-link" onClick={() => toast('Opening Job #' + jobId + '…')}>View job</Btn></div>
