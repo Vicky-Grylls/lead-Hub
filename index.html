@@ -30218,7 +30218,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   // Compact "Recent communication" block for the lead overview (latest 3) — sits under the AI summary.
   function LeadCommOverview({ lead, onOpen }) {
     if (!lead) return null;
-    const CH = { call: { ic: 'phone', fg: LH.green, bg: LH.greenBg }, sms: { ic: 'message-square', fg: LH.blue, bg: LH.blueBg }, email: { ic: 'mail', fg: LH.amber, bg: LH.amberBg } };
+    const CH = { call: { ic: 'phone', fg: LH.green, bg: LH.greenBg, label: 'Call' }, sms: { ic: 'message-square', fg: LH.blue, bg: LH.blueBg, label: 'SMS' }, email: { ic: 'mail', fg: LH.amber, bg: LH.amberBg, label: 'Email' } };
     const items = leadCommItems(lead).slice(0, 3);
     return <div style={{ borderRadius: 12, border: '1px solid ' + LH.borderSoft, background: '#fff', overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', borderBottom: '1px solid ' + LH.borderSoft }}>
@@ -30226,11 +30226,18 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Recent communication</span>
         {onOpen && <button onClick={onOpen} style={{ marginLeft: 'auto', fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>View all</button>}
       </div>
-      <div>{items.map((c, i) => { const m = CH[c.ch] || CH.sms; return <div key={i} onClick={onOpen} style={{ display: 'flex', gap: 10, padding: '10px 14px', borderTop: i ? '1px solid ' + LH.borderSoft : 'none', cursor: onOpen ? 'pointer' : 'default' }}>
-        <span style={{ width: 28, height: 28, borderRadius: 8, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={m.ic} size={13} color={m.fg} /></span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title}</span><span style={{ fontSize: 10, fontWeight: 600, color: c.dir === 'in' ? LH.green : LH.muted, background: c.dir === 'in' ? LH.greenBg : '#f1f0ec', borderRadius: 999, padding: '0 6px', flexShrink: 0 }}>{c.dir === 'in' ? 'In' : 'Out'}</span><span style={{ marginLeft: 'auto', fontSize: 11, color: LH.muted, flexShrink: 0 }}>{c.t}</span></div>
-          <div style={{ fontSize: 11.5, color: LH.sub, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.preview}</div>
+      <div style={{ padding: '14px 14px 4px' }}>{items.map((x, i) => { const m = CH[x.ch] || CH.sms; const isLast = i === items.length - 1; return <div key={i} style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 30 }}>
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={x.dir === 'in' && x.ch === 'call' ? 'phone-incoming' : m.ic} size={14} color={m.fg} /></div>
+          {!isLast && <div style={{ flex: 1, width: 1, background: LH.borderSoft, minHeight: 14, marginTop: 4 }} />}
+        </div>
+        <div onClick={onOpen} style={{ flex: 1, minWidth: 0, paddingBottom: isLast ? 12 : 18, cursor: onOpen ? 'pointer' : 'default' }}>
+          <div style={{ borderRadius: 9, padding: 9, margin: '-9px', transition: 'background .12s' }} onMouseEnter={e => { if (onOpen) e.currentTarget.style.background = '#f6f4ef'; }} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>{m.label}</span><span style={{ fontSize: 10, fontWeight: 600, color: x.dir === 'in' ? LH.green : LH.sub, background: x.dir === 'in' ? LH.greenBg : '#f1f0ec', borderRadius: 999, padding: '1px 6px' }}>{x.dir === 'in' ? 'Inbound' : 'Outbound'}</span><span style={{ flex: 1 }} /><span style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap' }}>{x.t}</span></div>
+            <div style={{ fontSize: 12, color: LH.body, fontWeight: 600 }}>{x.title}</div>
+            <div style={{ fontSize: 11.5, color: LH.muted, lineHeight: 1.45, marginTop: 1 }}>{x.preview}</div>
+            <div style={{ marginTop: 3 }}><span style={{ fontSize: 10.5, color: LH.muted }}>{x.who}</span></div>
+          </div>
         </div>
       </div>; })}</div>
     </div>;
