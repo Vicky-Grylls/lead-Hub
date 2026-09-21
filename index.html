@@ -31647,7 +31647,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const valueOf = l => '$' + ((l.score || 50) * 90 + hashN(l.id + 'v', 1500)).toLocaleString();
     const LC_OPTS = ['Today', 'Yesterday', '2 days ago', '4 days ago', '1 week ago', '2 weeks ago'];
     const lastContactOf = l => LC_OPTS[hashN(l.id + 'lc', LC_OPTS.length)];
-    const countsOf = l => ({ notes: 1 + hashN(l.id + 'n', 5), tasks: hashN(l.id + 't', 4), files: hashN(l.id + 'f', 3) });
+    const notesCountOf = l => hashN(l.id + 'nn', 5) < 2 ? 1 + hashN(l.id + 'n', 4) : 0;
     const ageHours = a => { const n = parseInt(a) || 0; return a.indexOf('d') > -1 ? n * 24 : a.indexOf('h') > -1 ? n : a.indexOf('m') > -1 ? n / 60 : n; };
     const SRCS = ['All'].concat(Array.from(new Set(PIPE_LEADS.map(l => l.src))));
     const STATS = ['All'].concat(Array.from(new Set(PIPE_LEADS.map(l => l.status))));
@@ -31775,9 +31775,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               {[['Name', 240], ['Status', 120], ['Source', 140], ['Assigned', 160], ['Tags', 180], ['Potential value', 120], ['Last contact', 130], ['Address', 260], ['Email', 200], ['Phone', 130], ['Campaign', 168], ['Age', 64], ['', 48]].map(([h, w], hi) => <th key={hi} style={{ textAlign: 'left', padding: '8px 14px', fontSize: 11, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w || 'auto' }}>{h}</th>)}</tr></thead>
             <tbody>{filtered.map((l, i) => { const bb = i < filtered.length - 1 ? '1px solid ' + LH.borderSoft : 'none'; const on = sel2.includes(l.id); return <tr key={l.id} onClick={() => openPage(l)} style={{ cursor: 'pointer', background: on ? LH.tint : '#fff' }} onMouseEnter={e => { if (!on) e.currentTarget.style.background = '#f9fafb'; }} onMouseLeave={e => { e.currentTarget.style.background = on ? LH.tint : '#fff'; }}>
               <td style={{ padding: '8px 0 8px 16px', borderBottom: bb }} onClick={e => e.stopPropagation()}><input type="checkbox" checked={on} onChange={() => toggleSel(l.id)} style={{ cursor: 'pointer' }} /></td>
-              <td style={{ padding: '8px 14px', borderBottom: bb }}>{(() => { const cn = countsOf(l); return <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, whiteSpace: 'nowrap' }}>
+              <td style={{ padding: '8px 14px', borderBottom: bb }}>{(() => { const nc = notesCountOf(l); return <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, whiteSpace: 'nowrap' }}>
                 <span onClick={e => { e.stopPropagation(); openPage(l); }} style={{ fontSize: 13, fontWeight: 600, color: LH.ink, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.color = LH.primary} onMouseLeave={e => e.currentTarget.style.color = LH.ink}>{l.name}</span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>{[['sticky-note', cn.notes], ['square-check-big', cn.tasks], ['paperclip', cn.files]].filter(([, c]) => c > 0).map(([ic, c]) => <span key={ic} title={ic} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, color: LH.muted }}><Ic name={ic} size={12} color={LH.muted} />{c}</span>)}</span>
+                {nc > 0 && <span title={nc + ' notes'} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, color: LH.muted }}><Ic name="sticky-note" size={12} color={LH.muted} />{nc}</span>}
               </div>; })()}</td>
               <td style={{ padding: '8px 14px', borderBottom: bb }}><Pill label={l.status || l.col} /></td>
               <td style={{ padding: '8px 14px', borderBottom: bb }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 24, padding: '0 10px', borderRadius: 999, border: '1px solid ' + LH.border, background: '#fff', color: LH.body, fontSize: 11.5, fontWeight: 600, whiteSpace: 'nowrap' }}><span style={{ width: 6, height: 6, borderRadius: 999, flexShrink: 0, background: LH.sub }} />{l.src}</span></td>
