@@ -31618,6 +31618,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [fScore, setFScore] = useState('Any');
     const [fAge, setFAge] = useState('Any');
     const [fCity, setFCity] = useState('All');
+    const [fNext, setFNext] = useState('Any');
+    const [sortKey, setSortKey] = useState('created');
+    const [sortDir, setSortDir] = useState('desc');
+    const [sortOpen, setSortOpen] = useState(false);
     const [fOpen, setFOpen] = useState(null);
     const [kpi, setKpi] = useState(null);
     const [search, setSearch] = useState('');
@@ -31648,6 +31652,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const LC_OPTS = ['Today', 'Yesterday', '2 days ago', '4 days ago', '1 week ago', '2 weeks ago'];
     const lastContactOf = l => LC_OPTS[hashN(l.id + 'lc', LC_OPTS.length)];
     const notesCountOf = l => hashN(l.id + 'nn', 5) < 2 ? 1 + hashN(l.id + 'n', 4) : 0;
+    // Deterministic timestamps (ms) per lead for sorting / filtering.
+    const DAYMS = 86400000; const NOW = Date.now(); const sod = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
+    const createdAt = l => NOW - (2 + hashN(l.id + 'cr', 60)) * DAYMS;
+    const updatedAt = l => NOW - hashN(l.id + 'up', 12) * DAYMS;
+    const receivedAt = l => NOW - (1 + hashN(l.id + 'rc', 45)) * DAYMS;
+    const nextRaw = l => { const b = hashN(l.id + 'nx', 7); return b === 6 ? null : NOW + (b - 2) * DAYMS; }; // -2..+4 days, or null
+    const nextLabel = l => { const t = nextRaw(l); if (t == null) return { txt: '—', tone: LH.muted }; const dd = Math.round((sod(t) - sod(NOW)) / DAYMS); if (dd < 0) return { txt: 'Overdue', tone: LH.red }; if (dd === 0) return { txt: 'Today', tone: LH.amber }; if (dd === 1) return { txt: 'Tomorrow', tone: LH.body }; if (dd <= 7) return { txt: 'In ' + dd + 'd', tone: LH.body }; return { txt: new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), tone: LH.body }; };
+    const NEXT_OPTS = ['Any', 'Overdue', 'Today', 'This week', 'Later', 'No date'];
+    const matchNext = l => { if (fNext === 'Any') return true; const t = nextRaw(l); if (fNext === 'No date') return t == null; if (t == null) return false; const dd = Math.round((sod(t) - sod(NOW)) / DAYMS); if (fNext === 'Overdue') return dd < 0; if (fNext === 'Today') return dd === 0; if (fNext === 'This week') return dd >= 0 && dd <= 7; if (fNext === 'Later') return dd > 7; return true; };
+    const SORTS = [['created', 'Created at'], ['updated', 'Updated at'], ['received', 'Received at'], ['name', 'Name'], ['next', 'Next contact date']];
+    const sortVal = l => sortKey === 'name' ? l.name.toLowerCase() : sortKey === 'updated' ? updatedAt(l) : sortKey === 'received' ? receivedAt(l) : sortKey === 'next' ? (nextRaw(l) == null ? (sortDir === 'asc' ? Infinity : -Infinity) : nextRaw(l)) : createdAt(l);
     const ageHours = a => { const n = parseInt(a) || 0; return a.indexOf('d') > -1 ? n * 24 : a.indexOf('h') > -1 ? n : a.indexOf('m') > -1 ? n / 60 : n; };
     const SRCS = ['All'].concat(Array.from(new Set(PIPE_LEADS.map(l => l.src))));
     const STATS = ['All'].concat(Array.from(new Set(PIPE_LEADS.map(l => l.status))));
@@ -31655,8 +31670,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const SCORES = ['Any', '80+ (Hot)', '60–79 (Warm)', 'Below 60 (Cold)'];
     const AGES = ['Any', 'Under 1 day', '1–3 days', 'Over 3 days'];
     const CITY_OPTS = ['All'].concat(NA_CITIES.map(c => c.name).sort());
-    const anyF = fSource !== 'All' || fStatus !== 'All' || fAssigned !== 'All' || fScore !== 'Any' || fAge !== 'Any' || fCity !== 'All' || !!kpi;
-    const clearF = () => { setFSource('All'); setFStatus('All'); setFAssigned('All'); setFScore('Any'); setFAge('Any'); setFCity('All'); setKpi(null); };
+    const anyF = fSource !== 'All' || fStatus !== 'All' || fAssigned !== 'All' || fScore !== 'Any' || fAge !== 'Any' || fCity !== 'All' || fNext !== 'Any' || !!kpi;
+    const clearF = () => { setFSource('All'); setFStatus('All'); setFAssigned('All'); setFScore('Any'); setFAge('Any'); setFCity('All'); setFNext('Any'); setKpi(null); };
     const matchScore = s => fScore === 'Any' || (fScore[0] === '8' ? s >= 80 : fScore[0] === '6' ? s >= 60 && s < 80 : s < 60);
     const matchAge = h => fAge === 'Any' || (fAge === 'Under 1 day' ? h < 24 : fAge === '1–3 days' ? h >= 24 && h <= 72 : h > 72);
     const FilterDrop = ({ id, label, value, options, onChange }) => <div style={{ position: 'relative' }}>
@@ -31698,7 +31713,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [bulkMenu, setBulkMenu] = useState(null); // open bulk-action submenu key
     const toggleSel = id => setSel2(s => s.includes(id) ? s.filter(x => x !== id) : s.concat(id));
     const clearSel = () => { setSel2([]); setBulkMenu(null); };
-    const filtered = leads.filter(l => !l.archived && (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && (fCity === 'All' || LEAD_CITY(l) === fCity) && matchKpi(l) && (!search.trim() || (l.name + ' ' + (l.note || '')).toLowerCase().includes(search.trim().toLowerCase())));
+    const filtered = leads.filter(l => !l.archived && (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && (fCity === 'All' || LEAD_CITY(l) === fCity) && matchNext(l) && matchKpi(l) && (!search.trim() || (l.name + ' ' + (l.note || '')).toLowerCase().includes(search.trim().toLowerCase()))).sort((a, b) => { const va = sortVal(a), vb = sortVal(b); if (va < vb) return sortDir === 'asc' ? -1 : 1; if (va > vb) return sortDir === 'asc' ? 1 : -1; return 0; });
     useEffect(() => { const h = e => { if (e.key === 'Escape') setSelId(null); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, []);
     // If we arrived here from "Create lead from call", create the lead from the captured data and open its page.
     useEffect(() => { const d = window.__lhOpenLead; if (d && d.name) { window.__lhOpenLead = null; const lead = addLead({ name: d.name, phone: d.phone, email: d.email, src: d.src || 'Phone', note: d.service || d.note || '', stage: d.stage || 'New', score: d.score }); openPage(lead); } }, []);
@@ -31734,8 +31749,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <FilterDrop id="assn" label="Assigned:" value={fAssigned} options={ASSN} onChange={setFAssigned} />
         <FilterDrop id="age" label="Age:" value={fAge} options={AGES} onChange={setFAge} />
         <FilterDrop id="city" label="City:" value={fCity} options={CITY_OPTS} onChange={setFCity} />
+        <FilterDrop id="next" label="Next contact:" value={fNext} options={NEXT_OPTS} onChange={setFNext} />
         {anyF && <button onClick={clearF} style={{ height: 32, padding: '0 11px', borderRadius: 8, border: '1px solid transparent', background: 'transparent', fontSize: 12.5, color: LH.primary, fontWeight: 600, cursor: 'pointer' }}>Clear filters</button>}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setSortOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 8, border: '1px solid ' + (sortOpen ? LH.ink : LH.border), background: '#fff', fontSize: 12, color: LH.body, cursor: 'pointer' }}><Ic name="arrow-up-down" size={13} color={LH.sub} /><span style={{ color: LH.muted }}>Sort:</span><span style={{ fontWeight: 600 }}>{(SORTS.find(s => s[0] === sortKey) || SORTS[0])[1]}</span><Ic name={sortDir === 'asc' ? 'arrow-up' : 'arrow-down'} size={12} color={LH.muted} /></button>
+            {sortOpen && <div onMouseLeave={() => setSortOpen(false)} style={{ position: 'absolute', top: 36, right: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, minWidth: 190 }}>
+              {SORTS.map(([k, l]) => <div key={k} onClick={() => setSortKey(k)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '7px 10px', borderRadius: 6, fontSize: 12.5, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{l}{sortKey === k && <Ic name="check" size={13} color={LH.ink} />}</div>)}
+              <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 4, paddingTop: 4, display: 'flex', gap: 4 }}>{[['asc', 'Ascending', 'arrow-up'], ['desc', 'Descending', 'arrow-down']].map(([d, l, ic]) => <div key={d} onClick={() => setSortDir(d)} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 10px', borderRadius: 6, fontSize: 12, fontWeight: sortDir === d ? 600 : 500, color: sortDir === d ? LH.ink : LH.sub, background: sortDir === d ? LH.tint : 'transparent', cursor: 'pointer' }}><Ic name={ic} size={12} color={sortDir === d ? LH.ink : LH.sub} />{l}</div>)}</div>
+            </div>}
+          </div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><Toggle on={!showKpi} onChange={() => setShowKpi(k => !k)} /><span onClick={() => setShowKpi(k => !k)} style={{ fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}>Hide KPIs</span></div>
           <div style={{ position: 'relative', width: 210 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 10, top: 9 }} /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search leads" style={{ width: '100%', height: 32, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px 0 30px', fontSize: 12.5, color: LH.ink, outline: 'none' }} /></div>
           {view === 'kanban' && <button onClick={e => { const r = e.currentTarget.getBoundingClientRect(); setCustPos({ right: Math.max(12, window.innerWidth - r.right), top: r.bottom + 8 }); setCustAdd(false); setCustOpen(o => !o); }} title="Customize card" style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid ' + (custOpen ? LH.primary : LH.border), background: custOpen ? LH.tint : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="sliders" size={15} color={custOpen ? LH.primary : LH.sub} /></button>}
@@ -31769,10 +31792,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {view === 'kanban'
         ? <LeadsKanban leads={filtered} onMove={boardMove} onCardClick={setSelId} selId={selId} cardCfg={cardCfg} />
         : <Card style={{ padding: 0, overflowX: 'auto', overflowY: 'hidden' }}>
-          <table style={{ width: '100%', minWidth: 2040, borderCollapse: 'collapse' }}>
+          <table style={{ width: '100%', minWidth: 2180, borderCollapse: 'collapse' }}>
             <thead><tr>
               <th style={{ width: 38, padding: '8px 0 8px 16px', borderBottom: '1px solid ' + LH.border }}><input type="checkbox" checked={filtered.length > 0 && sel2.length === filtered.length} ref={el => { if (el) el.indeterminate = sel2.length > 0 && sel2.length < filtered.length; }} onChange={e => setSel2(e.target.checked ? filtered.map(l => l.id) : [])} style={{ cursor: 'pointer' }} /></th>
-              {[['Name', 240], ['Status', 120], ['Source', 140], ['Assigned', 160], ['Address', 260], ['Email', 200], ['Phone', 130], ['Campaign', 168], ['Age', 64], ['Tags', 180], ['Potential value', 120], ['Last contact', 130], ['', 48]].map(([h, w], hi) => <th key={hi} style={{ textAlign: 'left', padding: '8px 14px', fontSize: 11, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w || 'auto' }}>{h}</th>)}</tr></thead>
+              {[['Name', 240], ['Status', 120], ['Source', 140], ['Assigned', 160], ['Address', 260], ['Email', 200], ['Phone', 130], ['Campaign', 168], ['Age', 64], ['Tags', 180], ['Potential value', 120], ['Last contact', 130], ['Next contact', 130], ['', 48]].map(([h, w], hi) => <th key={hi} style={{ textAlign: 'left', padding: '8px 14px', fontSize: 11, fontWeight: 600, color: LH.sub, borderBottom: '1px solid ' + LH.border, whiteSpace: 'nowrap', width: w || 'auto' }}>{h}</th>)}</tr></thead>
             <tbody>{filtered.map((l, i) => { const bb = i < filtered.length - 1 ? '1px solid ' + LH.borderSoft : 'none'; const on = sel2.includes(l.id); return <tr key={l.id} onClick={() => openPage(l)} style={{ cursor: 'pointer', background: on ? LH.tint : '#fff' }} onMouseEnter={e => { if (!on) e.currentTarget.style.background = '#f9fafb'; }} onMouseLeave={e => { e.currentTarget.style.background = on ? LH.tint : '#fff'; }}>
               <td style={{ padding: '8px 0 8px 16px', borderBottom: bb }} onClick={e => e.stopPropagation()}><input type="checkbox" checked={on} onChange={() => toggleSel(l.id)} style={{ cursor: 'pointer' }} /></td>
               <td style={{ padding: '8px 14px', borderBottom: bb }}>{(() => { const nc = notesCountOf(l); return <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, whiteSpace: 'nowrap' }}>
@@ -31793,13 +31816,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <td style={{ padding: '8px 14px', borderBottom: bb }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>{leadTags(l).map(t => { const tn = tagTone(t); return <span key={t} style={{ fontSize: 10.5, fontWeight: 600, color: tn.fg, background: tn.bg, borderRadius: 999, padding: '2px 8px' }}>{t}</span>; })}</span></td>
               <td style={{ padding: '8px 14px', borderBottom: bb, fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap' }}>{valueOf(l)}</td>
               <td style={{ padding: '8px 14px', borderBottom: bb, fontSize: 12, color: LH.body, whiteSpace: 'nowrap' }}>{lastContactOf(l)}</td>
+              <td style={{ padding: '8px 14px', borderBottom: bb, whiteSpace: 'nowrap' }}>{(() => { const n = nextLabel(l); return <span style={{ fontSize: 12, fontWeight: n.txt === 'Overdue' || n.txt === 'Today' ? 600 : 500, color: n.tone }}>{n.txt}</span>; })()}</td>
               <td style={{ padding: '8px 10px', borderBottom: bb }} onClick={e => e.stopPropagation()}><div style={{ position: 'relative' }}>
                 <button onClick={() => setRowMenu(m => m === l.id ? null : l.id)} title="Actions" style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: rowMenu === l.id ? '#f1f0ec' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#f1f0ec'} onMouseLeave={e => { if (rowMenu !== l.id) e.currentTarget.style.background = 'none'; }}><Ic name="more-vertical" size={16} color={LH.sub} /></button>
                 {rowMenu === l.id && <div onMouseLeave={() => setRowMenu(null)} style={{ position: 'absolute', top: 30, right: 0, zIndex: 40, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.16)', padding: 5, width: 180 }}>
                   {[['eye', 'View details', () => openPage(l)], ['x-circle', 'Mark as lost', () => { boardMove(l.id, 'Disqualified'); setLeadStatus(l.id, 'Lost'); onToast && onToast(l.name + ' marked as lost'); }], ['copy', 'Mark as duplicate', () => { setLeadStatus(l.id, 'Duplicate'); onToast && onToast(l.name + ' marked as duplicate'); }], ['trash-2', 'Delete', () => { removeLead(l.id); onToast && onToast(l.name + ' deleted'); }]].map(([ic, lbl, fn]) => <div key={lbl} onClick={() => { setRowMenu(null); fn(); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 12.5, color: lbl === 'Delete' ? LH.red : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={lbl === 'Delete' ? LH.red : LH.sub} />{lbl}</div>)}
                 </div>}
               </div></td>
-            </tr>; })}{!filtered.length && <tr><td colSpan={14} style={{ padding: 40, textAlign: 'center', fontSize: 13, color: LH.muted }}>No leads match the filters.</td></tr>}</tbody>
+            </tr>; })}{!filtered.length && <tr><td colSpan={15} style={{ padding: 40, textAlign: 'center', fontSize: 13, color: LH.muted }}>No leads match the filters.</td></tr>}</tbody>
           </table>
         </Card>}
       {custOpen && (() => { const CARD_ATTRS = [['source', 'Source', 'tag'], ['status', 'Status', 'activity'], ['score', 'Lead score', 'star'], ['age', 'Age', 'clock'], ['fields', 'Field progress', 'list-checks'], ['phone', 'Phone', 'phone'], ['email', 'Email', 'mail'], ['note', 'Service interest', 'wrench']]; const sample = filtered[0] || { id: 'sample', name: 'Jordan Blake', note: 'Roof inspection', src: 'Angi', age: '2h', score: 82, col: 'Engaged', status: 'Working', fields: 6, phone: '469-555-0172', email: 'jordan.blake@gmail.com' }; const onN = CARD_ATTRS.filter(a => cardCfg[a[0]]).length; return <div style={{ position: 'fixed', top: (custPos && custPos.top) || 120, right: 20, bottom: PB_DOCK_H + 10, width: 'min(380px,96vw)', zIndex: 3000, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 14, boxShadow: '0 20px 48px rgba(0,0,0,.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
