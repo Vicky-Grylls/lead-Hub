@@ -34007,7 +34007,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
   function NewLeadForm({ sources, assignees, onClose, onToast, onCreate, prefill }) {
     const pf = prefill || {};
-    const [f, setF] = useState({ name: pf.name || '', email: pf.email || '', phone: pf.phone || '', src: pf.src || (sources && sources[0]) || 'Manual', assignee: (assignees && assignees[0]) || '', note: '', stage: 'New', notes: '', address: '' });
+    const [f, setF] = useState({ name: pf.name || '', email: pf.email || '', phone: pf.phone || '', src: pf.src || (sources && sources[0]) || 'Manual', assignee: (assignees && assignees[0]) || '', note: '', stage: 'New', notes: '', address: '', value: '', custom: {} });
     const [pb, setPb] = useState({ q1: 'Within service territory', q2: '', q3: '', q4: '', roofType: '', sidingType: '', q6: '', q6other: '', q7: '', q8: '', owner: '', when: '' });
     const [pbId, setPbId] = useState('shield');
     const [shown, setShown] = useState(false);
@@ -34023,9 +34023,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const inp = { width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
     const lbl = { fontSize: 12, fontWeight: 600, color: LH.body, marginBottom: 5, display: 'block' };
     const canSave = !!f.name.trim();
-    const STAGES = ['New', 'Contacted', 'Engaged', 'Qualifying'];
-    const oc = leadOutcome(pbId, pb);
-    const create = () => { if (!canSave) return; const stage = oc.state === 'qualified' ? 'Qualifying' : oc.state === 'disqualified' ? 'Disqualified' : oc.state === 'hold' ? 'Engaged' : f.stage; onCreate({ ...f, stage, qualification: oc, playbook: getPlaybook(pbId).name }); };
+    // Stage names come from backend; creation form shows positive stages only (Disqualified/Qualified excluded to enforce playbook flow). Default: New.
+    const STAGES = ['New', 'Contacted', 'Qualifying'];
+    const CUSTOM_FIELDS = [{ k: 'roofType', label: 'Roof type', type: 'select', opts: ['Asphalt shingle', 'Metal', 'Tile', 'Flat / TPO'] }, { k: 'roofAge', label: 'Roof age (years)', type: 'number' }, { k: 'carrier', label: 'Insurance carrier', type: 'text' }, { k: 'bestTime', label: 'Best time to contact', type: 'select', opts: ['Morning', 'Afternoon', 'Evening'] }];
+    const setCustom = (k, v) => setF(p => ({ ...p, custom: { ...p.custom, [k]: v } }));
+    const create = () => { if (!canSave) return; onCreate({ ...f, stage: f.stage }); };
     // Inline duplicate / returning-customer / property detection (demo data — matches typed name/address).
     const nm = f.name.trim().toLowerCase();
     const OPEN_LEADS = [{ name: 'Sarah Mitchell', stage: 'Contacted', when: '58 minutes ago', src: 'Thumbtack', owner: 'Tyson Reed' }, { name: 'Owen Brooks', stage: 'Engaged', when: '2 hours ago', src: 'Google LSA', owner: 'Tyson Silva' }];
@@ -34085,17 +34087,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div><label style={lbl}>Stage</label><Dropdown value={f.stage} options={STAGES.map(s => ({ value: s, label: s }))} onChange={v => set('stage', v)} /></div>
           <div><label style={lbl}>Lead owner</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
           <div><label style={lbl}>Service interest</label><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="e.g. Roof inspection" style={inp} /></div>
+          <div><label style={lbl}>Potential value</label><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13, color: LH.sub }}>$</span><input type="number" min={0} value={f.value} onChange={e => set('value', e.target.value)} placeholder="0" style={inp} /></div></div>
           <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Lead description</label><textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="What the customer is looking for…" style={{ ...inp, height: 70, padding: 10, resize: 'vertical' }} /></div>
         </div>
-        {/* Playbook & qualification — collapsed by default; expand to qualify inline */}
+        {/* Custom fields */}
         <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid ' + LH.borderSoft }}>
-          <div onClick={() => setPbOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
-            <Ic name="book-open" size={15} color={LH.primary} />
-            <span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Playbook &amp; qualification</span>
-            <span style={{ fontSize: 11.5, color: LH.muted, fontWeight: 500 }}>Optional</span>
-            <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: LH.sub, fontWeight: 600 }}>{pbOpen ? 'Hide' : 'Qualify now'}<Ic name={pbOpen ? 'chevron-up' : 'chevron-down'} size={15} color={LH.sub} /></span>
-          </div>
-          {pbOpen && <div style={{ marginTop: 14 }}><QualifyPlaybook pbId={pbId} setPbId={setPbId} pb={pb} setPb={setPb} /></div>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}><Ic name="list-checks" size={15} color={LH.primary} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Custom fields</span></div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>{CUSTOM_FIELDS.map(cf => <div key={cf.k}><label style={lbl}>{cf.label}</label>{cf.type === 'select' ? <Dropdown value={f.custom[cf.k] || ''} placeholder="Select…" options={cf.opts.map(o => ({ value: o, label: o }))} onChange={v => setCustom(cf.k, v)} /> : <input type={cf.type === 'number' ? 'number' : 'text'} value={f.custom[cf.k] || ''} onChange={e => setCustom(cf.k, e.target.value)} placeholder={cf.type === 'number' ? '0' : ''} style={inp} />}</div>)}</div>
         </div>
       </div>
       <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="plus" onClick={create} style={{ opacity: canSave ? 1 : 0.5 }}>Create lead</Btn></div>
