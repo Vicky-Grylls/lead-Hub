@@ -30488,7 +30488,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>{[['Sent', '3'], ['Opened', '2'], ['Replied', '1']].map(([l, v]) => <Card key={l} style={{ padding: 12 }}><div style={{ fontSize: 19, fontWeight: 700, color: LH.ink }}>{v}</div><div style={{ fontSize: 11.5, color: LH.muted }}>{l}</div></Card>)}</div></>
               : <div style={{ padding: '24px 0', textAlign: 'center', fontSize: 13, color: LH.sub }}>Not enrolled in a campaign</div>}
           </div>; })()}
-          {tab === 'communication' && <Card style={{ padding: 0, overflow: 'hidden' }}><LeadCommHistoryPanel lead={shown} onToast={onToast} onOpen={() => onToast && onToast('Opening in communication timeline…')} /></Card>}
+          {tab === 'communication' && <Card style={{ padding: 0, overflow: 'hidden', height: 'calc(100vh - 220px)', minHeight: 460 }}><LeadCommsTab lead={shown} onToast={onToast} /></Card>}
           {['files', 'emails', 'estimates', 'invoices', 'automations'].includes(tab) && <div style={{ padding: '40px 0', textAlign: 'center' }}><Ic name={tab === 'files' ? 'folder' : tab === 'emails' ? 'mail' : tab === 'estimates' ? 'file-text' : tab === 'invoices' ? 'receipt' : 'workflow'} size={30} color="#d8cdb8" style={{ margin: '0 auto 10px', width: 30, height: 30 }} /><div style={{ fontSize: 13, color: LH.sub }}>No {tab} yet</div></div>}
         </div>
       </>}
@@ -31179,6 +31179,121 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
     </div>;
   }
+  // Dated conversation thread for a lead — SMS + inline call events (All Messages) and emails.
+  function leadThread(lead) {
+    const first = (lead && lead.name ? lead.name.split(' ')[0] : 'there');
+    const d = n => { const x = new Date(); x.setDate(x.getDate() - n); return x; };
+    const at = (n, h, m) => { const x = d(n); x.setHours(h, m || 0, 0, 0); return x; };
+    const msgs = [
+      { id: 'm1', kind: 'email', dir: 'out', who: 'System', date: at(6, 9, 12), status: 'opened', subject: 'Welcome — how Nova works', body: 'Delivered · opened' },
+      { id: 'm2', kind: 'sms', dir: 'out', who: 'Nova', date: at(5, 10, 45), status: 'delivered', body: 'Hi ' + first + ' — thanks for reaching out! When works for a quick chat about your roof?' },
+      { id: 'm3', kind: 'call', dir: 'out', who: 'Nova', date: at(4, 11, 38), status: 'completed', dur: '1m 29s', rec: true, summary: true, body: 'Confirmed storm damage, roof ~15 yrs. Booked a free inspection.' },
+      { id: 'm4', kind: 'email', dir: 'in', who: first, date: at(4, 14, 2), status: 'received', subject: 'Re: Free inspection offer', body: 'Sounds good — is Thursday evening open?' },
+      { id: 'm5', kind: 'sms', dir: 'in', who: first, date: at(3, 18, 20), status: 'received', body: 'Yes, tomorrow evening would be fine.' },
+      { id: 'm6', kind: 'call', dir: 'in', who: first, date: at(2, 9, 5), status: 'missed', body: 'No one answered' },
+      { id: 'm7', kind: 'call', dir: 'in', who: first, date: at(2, 9, 6), status: 'voicemail', dur: '8s', rec: true, body: 'No one answered · 8s' },
+      { id: 'm8', kind: 'sms', dir: 'out', who: 'Nova', date: at(1, 17, 15), status: 'undelivered', jobRef: '108287-1', body: 'Still glad to inspect the storm damage, ' + first + '. Reply YES to grab a slot.' },
+      { id: 'm9', kind: 'call', dir: 'out', who: 'Nova', date: at(0, 10, 10), status: 'canceled', body: 'Nova called' },
+      { id: 'm10', kind: 'email', dir: 'out', who: 'System', date: at(1, 8, 30), status: 'delivered', subject: 'Your inspection is confirmed', body: 'Delivered' }
+    ];
+    return msgs.sort((a, b) => a.date - b.date);
+  }
+  function dayLabel(dt) {
+    const now = new Date(); const a = new Date(dt); a.setHours(0, 0, 0, 0); const b = new Date(now); b.setHours(0, 0, 0, 0);
+    const diff = Math.round((b - a) / 86400000);
+    if (diff === 0) return 'Today'; if (diff === 1) return 'Yesterday';
+    if (diff < 7) return dt.toLocaleDateString('en-US', { weekday: 'long' });
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function LeadConversation({ lead, onToast }) {
+    const [sub, setSub] = useState('all');      // 'all' | 'emails'
+    const [draft, setDraft] = useState('');
+    const [sent, setSent] = useState([]);       // outbound messages added this session
+    const [num, setNum] = useState('All Numbers');
+    const scrollRef = useRef(null);
+    const base = leadThread(lead);
+    const all = base.concat(sent).sort((a, b) => a.date - b.date);
+    const events = sub === 'emails' ? all.filter(e => e.kind === 'email') : all.filter(e => e.kind !== 'email');
+    useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [sub, sent.length]);
+    const first = (lead && lead.name ? lead.name.split(' ')[0] : 'there');
+    const time = dt => dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const CH = { sms: { ic: 'message-square' }, email: { ic: 'mail' } };
+    const CALL_META = { completed: { ic: 'phone-outgoing', fg: LH.green, bg: LH.greenBg, title: 'Completed' }, canceled: { ic: 'phone-outgoing', fg: LH.red, bg: LH.redBg, title: 'Canceled' }, missed: { ic: 'phone-missed', fg: LH.red, bg: LH.redBg, title: 'Missed Call' }, voicemail: { ic: 'voicemail', fg: LH.blue, bg: LH.blueBg, title: 'Voicemail' } };
+    const send = () => { const t = draft.trim(); if (!t) return; setSent(s => [...s, { id: 'sent' + s.length, kind: sub === 'emails' ? 'email' : 'sms', dir: 'out', who: 'You', date: new Date(), status: 'sent', subject: sub === 'emails' ? 'Reply' : undefined, body: t }]); setDraft(''); onToast && onToast((sub === 'emails' ? 'Email' : 'Message') + ' sent to ' + (lead ? lead.name : 'lead')); };
+    // one call-audio player open at a time
+    const [playing, setPlaying] = useState(null);
+    const CallCard = ev => { const m = CALL_META[ev.status] || CALL_META.completed; const play = playing === ev.id; return <div style={{ maxWidth: 340, border: '1px solid ' + LH.border, borderRadius: 12, background: '#fff', padding: '11px 13px', boxShadow: '0 1px 2px rgba(16,24,40,.05)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ width: 30, height: 30, borderRadius: 999, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={ev.dir === 'in' ? (ev.status === 'missed' ? 'phone-missed' : 'phone-incoming') : m.ic} size={15} color={m.fg} /></span>
+        <div style={{ flex: 1, minWidth: 0 }}><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{m.title}</span><span style={{ fontSize: 12, color: LH.sub }}> · {ev.who} {ev.dir === 'in' ? 'called' : 'called'}{ev.dur ? ' · ' + ev.dur : ''}</span></div>
+      </div>
+      {ev.rec && <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
+        <button onClick={() => setPlaying(p => p === ev.id ? null : ev.id)} style={{ width: 30, height: 30, borderRadius: 999, border: 'none', background: LH.blue, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={play ? 'pause' : 'play'} size={13} color="#fff" /></button>
+        <div style={{ flex: 1, height: 4, borderRadius: 999, background: '#e5e7eb', position: 'relative' }}><div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: play ? '38%' : '0%', background: LH.blue, borderRadius: 999, transition: 'width .3s' }} /></div>
+        <span style={{ fontSize: 11, color: LH.sub, whiteSpace: 'nowrap' }}>{play ? '00:32' : '00:00'} / {ev.dur ? (ev.dur === '8s' ? '00:08' : '01:24') : '01:24'}</span>
+        <Ic name="volume-2" size={14} color={LH.muted} /><span style={{ fontSize: 11, fontWeight: 600, color: LH.sub }}>1x</span>
+      </div>}
+      {ev.summary && <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 28, padding: '0 12px', borderRadius: 999, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.ink, cursor: 'pointer' }} onClick={() => onToast && onToast('AI call summary')}><Ic name="sparkles" size={13} color="#7c3aed" />Call Summary</span></div>}
+    </div>; };
+    const Bubble = ev => { const out = ev.dir === 'out'; const isCall = ev.kind === 'call';
+      const avatar = out ? <span style={{ width: 30, height: 30, borderRadius: 999, background: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="zap" size={14} color="#fff" /></span> : <LeadAvatar name={lead ? lead.name : 'Lead'} size={30} />;
+      const label = <div style={{ fontSize: 11, color: LH.muted, fontWeight: 600, marginBottom: 4, textAlign: out ? 'right' : 'left' }}>{ev.who}</div>;
+      let body;
+      if (isCall) body = CallCard(ev);
+      else if (ev.kind === 'email') body = <div style={{ maxWidth: 360, borderRadius: 12, border: '1px solid ' + LH.border, background: out ? LH.blueBg : '#fff', padding: '10px 13px' }}><div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}><Ic name="mail" size={13} color={LH.amber} /><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>{ev.subject}</span></div><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.5 }}>{ev.body}</div></div>;
+      else body = <div style={{ maxWidth: 320, borderRadius: 14, padding: '9px 13px', background: out ? LH.blueBg : LH.ink, color: out ? LH.ink : '#fff' }}>
+        <div style={{ fontSize: 13, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{ev.body}</div>
+        {ev.jobRef && <div style={{ marginTop: 8, paddingTop: 7, borderTop: '1px solid ' + (out ? LH.blueBd : 'rgba(255,255,255,.2)') }}><span onClick={() => onToast && onToast('Opening job ' + ev.jobRef)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: out ? LH.blue : '#fff', cursor: 'pointer' }}>{ev.jobRef} · View job<Ic name="external-link" size={12} color={out ? LH.blue : '#fff'} /></span></div>}
+      </div>;
+      const meta = <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: out ? 'flex-end' : 'flex-start', marginTop: 3 }}>{!isCall && <span style={{ fontSize: 10.5, color: LH.muted }}>{time(ev.date)}</span>}{ev.status === 'undelivered' && <span style={{ fontSize: 10.5, color: LH.red, fontWeight: 600 }}>Undelivered</span>}</div>;
+      return <div key={ev.id} style={{ display: 'flex', gap: 10, flexDirection: out ? 'row-reverse' : 'row', marginBottom: 16 }}>
+        {avatar}
+        <div style={{ minWidth: 0, maxWidth: '82%' }}>{label}{body}{meta}</div>
+      </div>;
+    };
+    // group by day
+    const groups = []; let cur = null;
+    events.forEach(ev => { const lbl = dayLabel(ev.date); if (!cur || cur.lbl !== lbl) { cur = { lbl, items: [] }; groups.push(cur); } cur.items.push(ev); });
+    return <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
+        {[['all', 'All Messages'], ['emails', 'Emails']].map(([k, l]) => { const on = sub === k; return <button key={k} onClick={() => setSub(k)} style={{ height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid ' + (on ? LH.border : 'transparent'), background: on ? '#fff' : 'transparent', boxShadow: on ? '0 1px 2px rgba(0,0,0,.06)' : 'none', fontSize: 12.5, fontWeight: 600, color: on ? LH.ink : LH.sub, cursor: 'pointer' }}>{l}</button>; })}
+      </div>
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid ' + LH.borderSoft }}>
+        <LeadAvatar name={lead ? lead.name : 'Lead'} size={30} />
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{lead ? lead.name : 'Lead'}</div><div style={{ fontSize: 11.5, color: LH.sub, display: 'inline-flex', alignItems: 'center', gap: 3 }}>Work<Ic name="chevron-down" size={12} color={LH.muted} /></div></div>
+        <button onClick={() => setNum(n => n === 'All Numbers' ? (lead && lead.phone) || '469-555-0172' : 'All Numbers')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: LH.body, background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="message-square" size={14} color={LH.sub} />{num}<Ic name="chevron-down" size={13} color={LH.muted} /></button>
+      </div>
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '16px 16px 8px', background: '#fbfaf8' }}>
+        {groups.map((g, gi) => <div key={gi}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 14px' }}><div style={{ flex: 1, height: 1, background: LH.borderSoft }} /><span style={{ fontSize: 11.5, fontWeight: 600, color: LH.sub, background: '#fff', border: '1px solid ' + LH.borderSoft, borderRadius: 999, padding: '3px 12px' }}>{g.lbl}</span><div style={{ flex: 1, height: 1, background: LH.borderSoft }} /></div>
+          {g.items.map(Bubble)}
+        </div>)}
+        {!events.length && <div style={{ padding: '40px 16px', textAlign: 'center', fontSize: 12.5, color: LH.muted }}>No {sub === 'emails' ? 'emails' : 'messages'} yet.</div>}
+      </div>
+      <div style={{ flexShrink: 0, borderTop: '1px solid ' + LH.borderSoft, padding: 12 }}>
+        <div style={{ border: '1px solid ' + LH.border, borderRadius: 12, background: '#fff', padding: '10px 12px' }}>
+          <textarea value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="Enter to send message / Shift + Enter for a new line" rows={2} style={{ width: '100%', border: 'none', outline: 'none', resize: 'none', fontSize: 13, color: LH.ink, fontFamily: 'inherit', lineHeight: 1.5, background: 'transparent' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
+            <button title="Attach" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="paperclip" size={16} color={LH.sub} /></button>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: LH.sub }}><Ic name={sub === 'emails' ? 'mail' : 'message-square'} size={14} color={LH.sub} />{sub === 'emails' ? 'Email' : 'Text Message'}</span>
+            <span style={{ flex: 1 }} />
+            {sub !== 'emails' && <span style={{ fontSize: 11.5, color: LH.muted }}>{draft.length}/160</span>}
+            <Btn kind="primary" onClick={send} style={{ height: 32, opacity: draft.trim() ? 1 : 0.5 }}>Send</Btn>
+          </div>
+        </div>
+      </div>
+    </div>;
+  }
+  // Communications tab wrapper — toggle between the conversation thread and the compact timeline.
+  function LeadCommsTab({ lead, onToast }) {
+    const [mode, setMode] = useState('conversation');
+    return <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      <div style={{ flexShrink: 0, display: 'flex', gap: 6, padding: '8px 12px', borderBottom: '1px solid ' + LH.borderSoft, background: '#fff' }}>
+        {[['conversation', 'Conversation', 'messages-square'], ['timeline', 'Timeline', 'list']].map(([k, l, ic]) => { const on = mode === k; return <button key={k} onClick={() => setMode(k)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid ' + (on ? LH.ink : LH.border), background: on ? LH.ink : '#fff', color: on ? '#fff' : LH.body, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}><Ic name={ic} size={14} color={on ? '#fff' : LH.sub} />{l}</button>; })}
+      </div>
+      <div style={{ flex: 1, minHeight: 0 }}>{mode === 'conversation' ? <LeadConversation lead={lead} onToast={onToast} /> : <LeadCommHistoryPanel lead={lead} onToast={onToast} onOpen={() => onToast && onToast('Opening in communication timeline…')} />}</div>
+    </div>;
+  }
   // Right-pane communication history — last calls / SMS / emails for this lead, filterable by channel.
   function LeadCommHistoryPanel({ lead, onToast, onOpen }) {
     const [chFilter, setChFilter] = useState('all');
@@ -31414,7 +31529,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8, marginBottom: 14 }}><Btn kind="primary" icon="plus" onClick={addNote} style={{ opacity: noteText.trim() ? 1 : 0.5 }}>Add note</Btn></div>
             {notes.length ? notes.map((nt, i) => <div key={i} style={{ padding: '10px 0', borderBottom: i < notes.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.45 }}>{nt.text}</div><div style={{ fontSize: 11, color: LH.muted, marginTop: 3 }}>{nt.who} · {nt.when}</div></div>) : <div style={{ padding: '20px 0', textAlign: 'center', fontSize: 13, color: LH.sub }}>No notes yet</div>}
           </div>}
-          {tab === 'communication' && <Card style={{ padding: 0, overflow: 'hidden' }}><LeadCommHistoryPanel lead={lead} onToast={onToast} onOpen={() => onToast && onToast('Opening in communication timeline…')} /></Card>}
+          {tab === 'communication' && <Card style={{ padding: 0, overflow: 'hidden', height: 'calc(100vh - 240px)', minHeight: 480 }}><LeadCommsTab lead={lead} onToast={onToast} /></Card>}
           {tab === 'files' && <div style={{ padding: '40px 0', textAlign: 'center' }}><Ic name="folder" size={30} color="#d8cdb8" style={{ margin: '0 auto 10px', width: 30, height: 30 }} /><div style={{ fontSize: 13, color: LH.sub }}>No attachments yet</div></div>}
           {tab === 'details' && <>
           <div style={{ marginBottom: 16 }}><LeadAISummary lead={lead} /></div>
