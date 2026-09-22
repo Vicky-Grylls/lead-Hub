@@ -29973,6 +29973,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               {rrow('Source', <Pill label={lead.src} tone="New" />)}
               {rrow('Address', address)}
               {rrow('Qualification', <span style={{ color: captured >= 9 ? LH.green : LH.body }}>{captured} of 9 fields captured</span>)}
+              {rrow('Customer', <span style={{ color: LH.green, fontWeight: 600 }}>New customer — {lead.name}</span>)}
             </Card>
             {/* Job details */}
             {secLbl('JOB DETAILS')}
@@ -30002,7 +30003,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   // Full job creation (Prelude "Create New Job" fields) — reached via "Create detailed job" from the convert sheet.
   function DetailedJobModal({ lead, initial, categories, services, onClose, onToast, onCreate, onDetailed }) {
     const i = initial || {};
-    const [j, setJ] = useState({ title: i.title || '', desc: i.desc || '', customer: i.customer || '', org: '', property: i.property || '', category: i.category || '', service: i.service || (services && services[0]) || '', tags: '', priority: i.priority || 'Standard' });
+    const newCust = 'New customer — ' + (lead ? lead.name : 'lead');
+    const [j, setJ] = useState({ title: i.title || '', desc: i.desc || '', customer: newCust, org: '', property: i.property || '', category: i.category || '', service: i.service || (services && services[0]) || '', tags: '', priority: i.priority || 'Standard' });
     const [shown, setShown] = useState(false);
     useEffect(() => { const t = setTimeout(() => setShown(true), 10); const h = e => { if (e.key === 'Escape') onClose(); }; document.addEventListener('keydown', h); return () => { clearTimeout(t); document.removeEventListener('keydown', h); }; }, []);
     const set = (k, v) => setJ(p => ({ ...p, [k]: v }));
@@ -30019,7 +30021,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ flex: 1, overflowY: 'auto', padding: 20, minHeight: 0 }}>
           {row('Job title', <input value={j.title} onChange={e => set('title', e.target.value)} placeholder="Job title" autoFocus style={inp} />, true)}
           {row('Job description', <textarea value={j.desc} onChange={e => set('desc', e.target.value)} placeholder="Describe the work…" style={{ ...inp, height: 80, padding: 11, resize: 'vertical', lineHeight: 1.5 }} />)}
-          {row('Customer', <Dropdown value={j.customer} placeholder="Select customer" options={[j.customer || lead.name, 'New customer…'].filter(Boolean).map(o => ({ value: o, label: o }))} onChange={v => set('customer', v)} />)}
+          {row('Customer', <><Dropdown value={j.customer} placeholder="Select customer" options={[newCust, 'Link an existing contact…'].map(o => ({ value: o, label: o }))} onChange={v => set('customer', v)} /><div style={{ fontSize: 11, color: LH.green, marginTop: 5 }}>Defaults to creating a new customer from this lead.</div></>)}
           {row('Organization', <Dropdown value={j.org} placeholder="Select organization" options={['Hill Roofing', 'Homeowner (no org)'].map(o => ({ value: o, label: o }))} onChange={v => set('org', v)} />)}
           {row('Property', <Dropdown value={j.property} placeholder="Select property" options={[j.property, 'Add new property…'].filter(Boolean).map(o => ({ value: o, label: o }))} onChange={v => set('property', v)} />)}
           {row('Service type', <Dropdown value={j.service} options={(services || []).map(o => ({ value: o, label: o }))} onChange={v => set('service', v)} />)}
@@ -30038,7 +30040,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   // the "Create detailed job" link. Sectioned layout + summary rail, full viewport.
   function FullJobPage({ lead, initial, categories, services, crew, dates, times, onClose, onToast, onCreate }) {
     const i = initial || {};
-    const [j, setJ] = useState({ title: i.title || ('Inspection — ' + (lead ? lead.name : '')), desc: i.desc || '', jobType: 'Inspection', service: i.service || (services && services[0]) || 'Roofing', category: i.category || '', priority: i.priority || 'Standard', tags: i.tags || '', customer: i.customer || (lead ? lead.name : ''), org: i.org || '', property: i.property || '', address: i.property || '', date: i.date || 'Tomorrow', time: i.time || '9:00 am', tech: i.tech || (crew && crew[0]) || '', dur: '1 hr', material: '', stories: '1', carrier: '', gate: '', po: '' });
+    const [j, setJ] = useState({ title: i.title || ('Inspection — ' + (lead ? lead.name : '')), desc: i.desc || '', jobType: 'Inspection', service: i.service || (services && services[0]) || 'Roofing', category: i.category || '', priority: i.priority || 'Standard', tags: i.tags || '', customer: 'New customer — ' + (lead ? lead.name : 'lead'), org: i.org || '', property: i.property || '', address: i.property || '', date: i.date || 'Tomorrow', time: i.time || '9:00 am', tech: i.tech || (crew && crew[0]) || '', dur: '1 hr', material: '', stories: '1', carrier: '', gate: '', po: '' });
     const [shown, setShown] = useState(false);
     useEffect(() => { const t = setTimeout(() => setShown(true), 10); const h = e => { if (e.key === 'Escape') onClose(); }; document.addEventListener('keydown', h); return () => { clearTimeout(t); document.removeEventListener('keydown', h); }; }, []);
     const set = (k, v) => setJ(p => ({ ...p, [k]: v }));
@@ -30067,7 +30069,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               {grid(<>{fld('Job type', <Dropdown value={j.jobType} options={['Inspection', 'Repair', 'Installation', 'Maintenance', 'Estimate'].map(o => ({ value: o, label: o }))} onChange={v => set('jobType', v)} />)}{fld('Service type', <Dropdown value={j.service} options={(services || []).map(o => ({ value: o, label: o }))} onChange={v => set('service', v)} />)}{fld('Category', <Dropdown value={j.category} placeholder="Select category" options={(categories || []).map(o => ({ value: o, label: o }))} onChange={v => set('category', v)} />, true)}{fld('Priority', <Dropdown value={j.priority} options={['Low', 'Standard', 'High', 'Urgent'].map(o => ({ value: o, label: o }))} onChange={v => set('priority', v)} />)}</>)}
               <div style={{ marginTop: 16 }}>{fld('Tags', <input value={j.tags} onChange={e => set('tags', e.target.value)} placeholder="Enter tags, comma-separated" style={inp} />)}</div>
             </>)}
-            {secCard('Customer & property', 'Who the job is for and where the work happens.', <>{grid(<>{fld('Customer', <Dropdown value={j.customer} placeholder="Select customer" options={[j.customer || (lead && lead.name), 'New customer…'].filter(Boolean).map(o => ({ value: o, label: o }))} onChange={v => set('customer', v)} />)}{fld('Organization', <Dropdown value={j.org} placeholder="Select organization" options={['Hill Roofing', 'Homeowner (no org)'].map(o => ({ value: o, label: o }))} onChange={v => set('org', v)} />)}</>)}
+            {secCard('Customer & property', 'Who the job is for and where the work happens.', <>{grid(<>{fld('Customer', <Dropdown value={j.customer} placeholder="Select customer" options={['New customer — ' + (lead ? lead.name : 'lead'), 'Link an existing contact…'].map(o => ({ value: o, label: o }))} onChange={v => set('customer', v)} />)}{fld('Organization', <Dropdown value={j.org} placeholder="Select organization" options={['Hill Roofing', 'Homeowner (no org)'].map(o => ({ value: o, label: o }))} onChange={v => set('org', v)} />)}</>)}
               <div style={{ marginTop: 16 }}>{fld('Property', <Dropdown value={j.property} placeholder="Select property" options={[j.property, 'Add new property…'].filter(Boolean).map(o => ({ value: o, label: o }))} onChange={v => set('property', v)} />)}</div>
             </>)}
             {secCard('Schedule', 'Book a technician now or leave it unscheduled.', <>{grid(<>{fld('Date', <Dropdown value={j.date} options={((dates || []).indexOf(j.date) < 0 ? [j.date] : []).concat(dates || []).map(o => ({ value: o, label: o }))} onChange={v => set('date', v)} />)}{fld('Time', <Dropdown value={j.time} options={((times || []).indexOf(j.time) < 0 ? [j.time] : []).concat(times || []).map(o => ({ value: o, label: o }))} onChange={v => set('time', v)} />)}{fld('Assign technician', <Dropdown value={j.tech} options={(crew || []).map(o => ({ value: o, label: o }))} onChange={v => set('tech', v)} />)}{fld('Duration', <Dropdown value={j.dur} options={['30 min', '1 hr', '1.5 hrs', '2 hrs'].map(o => ({ value: o, label: o }))} onChange={v => set('dur', v)} />)}</>)}</>)}
@@ -30339,10 +30341,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
     </div>;
   }
-  function LeadHeaderBlock({ lead, onToast, slim, onConvert }) {
+  function LeadHeaderBlock({ lead, onToast, slim, onConvert, onMove }) {
     const [flagged, setFlagged] = useState(false);
     const [kebabOpen, setKebabOpen] = useState(false);
     const [contactOpen, setContactOpen] = useState(false);
+    const [statusOpen, setStatusOpen] = useState(false);
     const toast = m => onToast && onToast(m);
     const initials = lead.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     const address = lead.address || '4821 Oakwood Dr, Plano, TX 75024';
@@ -30361,12 +30364,17 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
         {slim
           ? <>
-              {iconBtn('mail', 'Compose email')}
-              {iconBtn('phone', 'Calling ' + lead.name + '…')}
               {iconBtn('message-square', 'Texting ' + lead.name + '…')}
+              {iconBtn('phone', 'Calling ' + lead.name + '…')}
+              {iconBtn('mail', 'Compose email')}
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setStatusOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 9, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="activity" size={14} color={LH.sub} />Update status<Ic name="chevron-down" size={13} color={LH.muted} /></button>
+                {statusOpen && <div onMouseLeave={() => setStatusOpen(false)} style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.16)', padding: 5, width: 190, maxHeight: 300, overflowY: 'auto' }}>{STAGES.map(s => <div key={s} onClick={() => { setStatusOpen(false); if (onMove) onMove(lead.id, s); toast(lead.name + ' → ' + s); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 7, fontSize: 12.5, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><span style={{ width: 8, height: 8, borderRadius: 999, background: COL_DOT[s] || LH.sub }} />{s}</div>)}</div>}
+              </div>
+              <Btn icon="check" style={{ height: 34 }} onClick={() => { if (onMove) onMove(lead.id, 'Qualified'); toast(lead.name + ' marked qualified'); }}>Mark qualified</Btn>
               {lead.jobId
                 ? <Btn icon="external-link" style={{ height: 34 }} onClick={() => toast('Opening Job #' + lead.jobId + '…')}>View job</Btn>
-                : <Btn icon="briefcase" style={{ height: 34 }} onClick={() => { if (onConvert) onConvert(lead); else toast('Creating job for ' + lead.name + '…'); }}>Create job</Btn>}
+                : <Btn kind="primary" icon="briefcase" style={{ height: 34 }} onClick={() => { if (onConvert) onConvert(lead); else toast('Creating job for ' + lead.name + '…'); }}>Create new job</Btn>}
               <div style={{ position: 'relative' }}>
                 <button onClick={() => setKebabOpen(o => !o)} title="More" style={btnStyle(false)} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="more-vertical" size={15} color={LH.sub} /></button>
                 {kebabOpen && <div onMouseLeave={() => setKebabOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 210 }}>
@@ -30409,8 +30417,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const act = (shown && shown.act) || DIANE_ACT;
     const addTask = () => { if (!tTitle.trim()) return; setTasks(ts => [{ title: tTitle.trim(), type: tType, who: tWho, due: tDue, done: false }, ...ts]); setTTitle(''); setTaskOpen(false); onToast && onToast('Task created — “' + tTitle.trim() + '”'); };
     const addNote = () => { if (!noteText.trim()) return; setNotes(ns => [{ text: noteText.trim(), who: 'You', when: 'Just now' }, ...ns]); setNoteText(''); };
-    const PRIMARY_TABS = [['details', 'Overview'], ['communication', 'Communication'], ['qualification', 'Qualification'], ['activity', 'Activity'], ['campaign', 'Campaign'], ['notes', 'Notes'], ['tasks', 'Tasks']];
-    const MORE_TABS = [['communication', 'Communication'], ['files', 'Attachments']];
+    const PRIMARY_TABS = [['details', 'Overview'], ['communication', 'Communication'], ['notes', 'Notes'], ['activity', 'Activity']];
+    const MORE_TABS = [];
     const moreActive = MORE_TABS.some(([k]) => k === tab);
     const moreLabel = moreActive ? (MORE_TABS.find(([k]) => k === tab)[1]) : ('+' + MORE_TABS.length + ' More');
     return <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, zIndex: 40, width: expanded ? 680 : 524, maxWidth: '94%', background: '#fff', borderLeft: '1px solid #ece4d3', boxShadow: '-8px 0 28px rgba(0,0,0,.10)', display: 'flex', flexDirection: 'column', transform: lead ? 'translateX(0)' : 'translateX(101%)', transition: 'transform .28s cubic-bezier(0.32,0.72,0,1), width .2s' }}>
@@ -30426,16 +30434,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '0 14px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0, whiteSpace: 'nowrap', overflowX: 'auto' }}>
           {PRIMARY_TABS.map(([k, l]) => <button key={k} onClick={() => setTab(k)} style={{ padding: '11px 8px', fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0, color: tab === k ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (tab === k ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{l}</button>)}
-          <div style={{ position: 'relative', marginLeft: 'auto' }}>
+          {MORE_TABS.length > 0 && <div style={{ position: 'relative', marginLeft: 'auto' }}>
             <button onClick={() => setMoreTabOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '11px 10px', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', color: moreActive ? LH.ink : LH.sub, background: 'none', border: 'none', borderBottom: '2px solid ' + (moreActive ? LH.ink : 'transparent'), marginBottom: -1, cursor: 'pointer' }}>{moreLabel}<Ic name={moreTabOpen ? 'chevron-up' : 'chevron-down'} size={13} color={LH.muted} /></button>
             {moreTabOpen && <div onMouseLeave={() => setMoreTabOpen(false)} style={{ position: 'absolute', top: 42, right: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 190 }}>
               {MORE_TABS.map(([k, l]) => <div key={k} onClick={() => { setTab(k); setMoreTabOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, fontWeight: 500, color: tab === k ? LH.ink : LH.body, background: tab === k ? LH.tint : 'transparent', cursor: 'pointer' }} onMouseEnter={e => { if (tab !== k) e.currentTarget.style.background = '#f6f4ef'; }} onMouseLeave={e => { if (tab !== k) e.currentTarget.style.background = 'transparent'; }}>{l}</div>)}
             </div>}
-          </div>
+          </div>}
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
           {tab === 'details' && <>
-            <LeadHeaderBlock lead={shown} onToast={onToast} slim onConvert={onConvert} />
+            <LeadHeaderBlock lead={shown} onToast={onToast} slim onConvert={onConvert} onMove={onMove} />
             {shown.jobId && <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 10, padding: '10px 12px' }}><span style={{ width: 28, height: 28, borderRadius: 7, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={14} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.green }}>Converted to inspection job</div><div style={{ fontSize: 11.5, color: LH.sub }}>Job #{shown.jobId}</div></div><button onClick={() => onToast && onToast('Opening Job #' + shown.jobId + '…')} style={{ fontSize: 12, fontWeight: 600, color: LH.green, background: 'none', border: 'none', cursor: 'pointer' }}>View</button></div>}
             <div style={{ marginTop: 16 }}><LeadAISummary lead={shown} /></div>
             <div style={{ marginTop: 14 }}><LeadCommOverview lead={shown} onOpen={() => setTab('communication')} /></div>
@@ -31466,7 +31474,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, minHeight: 0 }}>
         {/* Left column */}
         <div style={{ width: 316, flexShrink: 0, padding: '18px 18px', borderRight: '1px solid ' + LH.borderSoft, overflowY: 'auto' }}>
-          <div style={{ marginBottom: 16 }}><LeadHeaderBlock lead={{ ...lead, jobId }} onToast={onToast} slim onConvert={doConvert} /></div>
+          <div style={{ marginBottom: 16 }}><LeadHeaderBlock lead={{ ...lead, jobId }} onToast={onToast} slim onConvert={doConvert} onMove={onMove} /></div>
           <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}><LeadPrimaryDetails lead={lead} onToast={onToast} /></div>
         </div>
         {/* Center column */}
