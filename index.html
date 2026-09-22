@@ -30223,22 +30223,21 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const CH = { call: { ic: 'phone', fg: LH.green, bg: LH.greenBg, label: 'Call' }, sms: { ic: 'message-square', fg: LH.blue, bg: LH.blueBg, label: 'SMS' }, email: { ic: 'mail', fg: LH.amber, bg: LH.amberBg, label: 'Email' } };
     const items = leadCommItems(lead).slice(0, 3);
     return <div style={{ borderRadius: 12, border: '1px solid ' + LH.borderSoft, background: '#fff', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', borderBottom: '1px solid ' + LH.borderSoft }}>
-        <Ic name="messages-square" size={15} color={LH.primary} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Recent communication</span>
-        {onOpen && <button onClick={onOpen} style={{ marginLeft: 'auto', fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>View all</button>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
+        <Ic name="messages-square" size={14} color={LH.primary} />
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Recent communication</span>
+        {onOpen && <button onClick={onOpen} style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>View all</button>}
       </div>
-      <div style={{ padding: '14px 14px 4px' }}>{items.map((x, i) => { const m = CH[x.ch] || CH.sms; const isLast = i === items.length - 1; return <div key={i} style={{ display: 'flex', gap: 12 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 30 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={x.dir === 'in' && x.ch === 'call' ? 'phone-incoming' : m.ic} size={14} color={m.fg} /></div>
-          {!isLast && <div style={{ flex: 1, width: 1, background: LH.borderSoft, minHeight: 14, marginTop: 4 }} />}
+      <div style={{ padding: '10px 12px 2px' }}>{items.map((x, i) => { const m = CH[x.ch] || CH.sms; const isLast = i === items.length - 1; return <div key={i} style={{ display: 'flex', gap: 9 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 24 }}>
+          <div style={{ width: 24, height: 24, borderRadius: 7, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={x.dir === 'in' && x.ch === 'call' ? 'phone-incoming' : m.ic} size={12} color={m.fg} /></div>
+          {!isLast && <div style={{ flex: 1, width: 1, background: LH.borderSoft, minHeight: 10, marginTop: 3 }} />}
         </div>
-        <div onClick={onOpen} style={{ flex: 1, minWidth: 0, paddingBottom: isLast ? 12 : 18, cursor: onOpen ? 'pointer' : 'default' }}>
-          <div style={{ borderRadius: 9, padding: 9, margin: '-9px', transition: 'background .12s' }} onMouseEnter={e => { if (onOpen) e.currentTarget.style.background = '#f6f4ef'; }} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>{m.label}</span><span style={{ fontSize: 10, fontWeight: 600, color: x.dir === 'in' ? LH.green : LH.sub, background: x.dir === 'in' ? LH.greenBg : '#f1f0ec', borderRadius: 999, padding: '1px 6px' }}>{x.dir === 'in' ? 'Inbound' : 'Outbound'}</span><span style={{ flex: 1 }} /><span style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap' }}>{x.t}</span></div>
-            <div style={{ fontSize: 12, color: LH.body, fontWeight: 600 }}>{x.title}</div>
-            <div style={{ fontSize: 11.5, color: LH.muted, lineHeight: 1.45, marginTop: 1 }}>{x.preview}</div>
-            <div style={{ marginTop: 3 }}><span style={{ fontSize: 10.5, color: LH.muted }}>{x.who}</span></div>
+        <div onClick={onOpen} style={{ flex: 1, minWidth: 0, paddingBottom: isLast ? 8 : 11, cursor: onOpen ? 'pointer' : 'default' }}>
+          <div style={{ borderRadius: 8, padding: 6, margin: '-6px', transition: 'background .12s' }} onMouseEnter={e => { if (onOpen) e.currentTarget.style.background = '#f6f4ef'; }} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ fontSize: 12, fontWeight: 700, color: LH.ink }}>{m.label}</span><span style={{ fontSize: 9.5, fontWeight: 600, color: x.dir === 'in' ? LH.green : LH.sub, background: x.dir === 'in' ? LH.greenBg : '#f1f0ec', borderRadius: 999, padding: '0 5px' }}>{x.dir === 'in' ? 'In' : 'Out'}</span><span style={{ flex: 1 }} /><span style={{ fontSize: 10.5, color: LH.muted, whiteSpace: 'nowrap' }}>{x.t}</span></div>
+            <div style={{ fontSize: 11.5, color: LH.body, fontWeight: 600, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{x.title}</div>
+            <div style={{ fontSize: 11, color: LH.muted, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{x.preview}</div>
           </div>
         </div>
       </div>; })}</div>
@@ -30253,11 +30252,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const temp = score >= 80 ? 'hot' : score >= 60 ? 'warm' : 'cooling';
     const status = lead.status || lead.col || 'New';
     const svc = (lead.note && !/manual|imported/i.test(lead.note)) ? lead.note.toLowerCase() : 'a roofing project';
-    const summary = first + ' arrived from ' + src + (lead.age && lead.age !== 'Now' ? ' ' + lead.age + ' ago' : '') + ' about ' + svc + '. Currently ' + status + ' (' + temp + '). Nova has engaged over SMS and a call, confirmed storm damage, and is working the lead toward a booked inspection.';
+    const summary = first + ' — ' + status + ' (' + temp + ') from ' + src + '. Storm damage confirmed; Nova is working toward a booked inspection.';
     const highlights = [
-      'From ' + src + ' · ' + temp + ' lead',
-      'Confirmed storm damage on the last call — roof ~15 yrs old',
-      'Next best step: book the free inspection while intent is high'
+      'Confirmed storm damage — roof ~15 yrs',
+      'Next: book the free inspection'
     ];
     return <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #e9d4ff', background: 'linear-gradient(169deg,#faf5ff,#eef4ff)' }}>
       <button onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
@@ -30368,16 +30366,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               {iconBtn('phone', 'Calling ' + lead.name + '…')}
               {iconBtn('mail', 'Compose email')}
               <div style={{ position: 'relative' }}>
-                <button onClick={() => setStatusOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 9, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="activity" size={14} color={LH.sub} />Update status<Ic name="chevron-down" size={13} color={LH.muted} /></button>
+                <button onClick={() => setStatusOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 9, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}>Update status<Ic name="chevron-down" size={13} color={LH.muted} /></button>
                 {statusOpen && <div onMouseLeave={() => setStatusOpen(false)} style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.16)', padding: 5, width: 190, maxHeight: 300, overflowY: 'auto' }}>{STAGES.map(s => <div key={s} onClick={() => { setStatusOpen(false); if (onMove) onMove(lead.id, s); toast(lead.name + ' → ' + s); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 7, fontSize: 12.5, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><span style={{ width: 8, height: 8, borderRadius: 999, background: COL_DOT[s] || LH.sub }} />{s}</div>)}</div>}
               </div>
-              <Btn icon="check" style={{ height: 34 }} onClick={() => { if (onMove) onMove(lead.id, 'Qualified'); toast(lead.name + ' marked qualified'); }}>Mark qualified</Btn>
-              {lead.jobId
-                ? <Btn icon="external-link" style={{ height: 34 }} onClick={() => toast('Opening Job #' + lead.jobId + '…')}>View job</Btn>
-                : <Btn kind="primary" icon="briefcase" style={{ height: 34 }} onClick={() => { if (onConvert) onConvert(lead); else toast('Creating job for ' + lead.name + '…'); }}>Create new job</Btn>}
+              {lead.jobId && <Btn icon="external-link" style={{ height: 34 }} onClick={() => toast('Opening Job #' + lead.jobId + '…')}>View job</Btn>}
               <div style={{ position: 'relative' }}>
                 <button onClick={() => setKebabOpen(o => !o)} title="More" style={btnStyle(false)} onMouseEnter={e => e.currentTarget.style.background = '#f5f2ec'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="more-vertical" size={15} color={LH.sub} /></button>
                 {kebabOpen && <div onMouseLeave={() => setKebabOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 210 }}>
+                  {!lead.jobId && <div onClick={() => { setKebabOpen(false); if (onConvert) onConvert(lead); else toast('Creating job for ' + lead.name + '…'); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, fontWeight: 600, color: LH.ink, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name="briefcase" size={14} color={LH.primary} />Create new job</div>}
+                  {!lead.jobId && <div style={{ height: 1, background: LH.borderSoft, margin: '5px 0' }} />}
                   {KEBAB_ITEMS.map((it, k) => it[0] === 'div'
                     ? <div key={'d' + k} style={{ height: 1, background: LH.borderSoft, margin: '5px 0' }} />
                     : <div key={it[1]} onClick={() => { setKebabOpen(false); if (it[1] === 'Create contact') setContactOpen(true); else toast(kebabMsg(it[1])); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: kebabColor(it[1]), cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={it[0]} size={14} color={kebabIcColor(it[1])} />{it[1]}</div>)}
