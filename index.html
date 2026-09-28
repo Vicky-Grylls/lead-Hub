@@ -34082,7 +34082,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div><label style={lbl}>Lead source</label><Dropdown value={f.src} options={(sources || []).map(s => ({ value: s, label: s }))} onChange={v => set('src', v)} /></div>
           <div><label style={lbl}>Stage</label><Dropdown value={f.stage} options={STAGES.map(s => ({ value: s, label: s }))} onChange={v => set('stage', v)} /></div>
           <div><label style={lbl}>Lead owner</label><Dropdown value={f.assignee} options={(assignees || []).map(s => ({ value: s, label: s }))} onChange={v => set('assignee', v)} /></div>
-          <div><label style={lbl}>Service interest</label><input value={f.note} onChange={e => set('note', e.target.value)} placeholder="e.g. Roof inspection" style={inp} /></div>
           <div><label style={lbl}>Potential value</label><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13, color: LH.sub }}>$</span><input type="number" min={0} value={f.value} onChange={e => set('value', e.target.value)} placeholder="0" style={inp} /></div></div>
           <div style={{ gridColumn: '1 / -1' }}><label style={lbl}>Lead description</label><textarea value={f.notes} onChange={e => set('notes', e.target.value)} placeholder="What the customer is looking for…" style={{ ...inp, height: 70, padding: 10, resize: 'vertical' }} /></div>
         </div>
