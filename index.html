@@ -30347,14 +30347,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink, lineHeight: 1.3, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.name}</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: LH.sub, marginBottom: 14 }}><Ic name="map-pin" size={13} color={LH.muted} />{address}</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'nowrap' }}>
         {slim
           ? <>
               {iconBtn('message-square', 'Texting ' + lead.name + '…')}
               {iconBtn('phone', 'Calling ' + lead.name + '…')}
               {iconBtn('mail', 'Compose email')}
               <div style={{ position: 'relative' }}>
-                <button onClick={() => setStatusOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 9, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}>Update status<Ic name="chevron-down" size={13} color={LH.muted} /></button>
+                <button onClick={() => setStatusOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 9, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer', whiteSpace: 'nowrap' }}>Update status</button>
                 {statusOpen && <div onMouseLeave={() => setStatusOpen(false)} style={{ position: 'absolute', top: 38, left: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.16)', padding: 5, width: 190, maxHeight: 300, overflowY: 'auto' }}>{STAGES.map(s => <div key={s} onClick={() => { setStatusOpen(false); if (onMove) onMove(lead.id, s); toast(lead.name + ' → ' + s); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 7, fontSize: 12.5, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><span style={{ width: 8, height: 8, borderRadius: 999, background: COL_DOT[s] || LH.sub }} />{s}</div>)}</div>}
               </div>
               {lead.jobId && <Btn icon="external-link" style={{ height: 34 }} onClick={() => toast('Opening Job #' + lead.jobId + '…')}>View job</Btn>}
