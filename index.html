@@ -34090,6 +34090,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}><Ic name="list-checks" size={15} color={LH.primary} /><span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Custom fields</span></div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>{CUSTOM_FIELDS.map(cf => <div key={cf.k}><label style={lbl}>{cf.label}</label>{cf.type === 'select' ? <Dropdown value={f.custom[cf.k] || ''} placeholder="Select…" options={cf.opts.map(o => ({ value: o, label: o }))} onChange={v => setCustom(cf.k, v)} /> : <input type={cf.type === 'number' ? 'number' : 'text'} value={f.custom[cf.k] || ''} onChange={e => setCustom(cf.k, e.target.value)} placeholder={cf.type === 'number' ? '0' : ''} style={inp} />}</div>)}</div>
         </div>
+        {/* Playbook & qualification — collapsed by default; expand to qualify inline */}
+        <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid ' + LH.borderSoft }}>
+          <div onClick={() => setPbOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
+            <Ic name="book-open" size={15} color={LH.primary} />
+            <span style={{ fontSize: 13.5, fontWeight: 700, color: LH.ink }}>Playbook &amp; qualification</span>
+            <span style={{ fontSize: 11.5, color: LH.muted, fontWeight: 500 }}>Optional</span>
+            <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: LH.sub, fontWeight: 600 }}>{pbOpen ? 'Hide' : 'Qualify now'}<Ic name={pbOpen ? 'chevron-up' : 'chevron-down'} size={15} color={LH.sub} /></span>
+          </div>
+          {pbOpen && <div style={{ marginTop: 14 }}><QualifyPlaybook pbId={pbId} setPbId={setPbId} pb={pb} setPb={setPb} /></div>}
+        </div>
       </div>
       <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" icon="plus" onClick={create} style={{ opacity: canSave ? 1 : 0.5 }}>Create lead</Btn></div>
       {mapOpen && <LeadAddressPicker initial={f.address} onClose={() => setMapOpen(false)} onApply={a => set('address', a)} />}
