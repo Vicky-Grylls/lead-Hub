@@ -34901,6 +34901,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     useEffect(() => { const el = txRef.current; if (el) el.scrollTop = el.scrollHeight; }, [tx.length]);
     const mmss = ('0' + Math.floor(secs / 60)).slice(-2) + ':' + ('0' + (secs % 60)).slice(-2);
     const showToast = m => { setToast(m); setTimeout(() => setToast(null), 2800); };
+    // Hang up: if we captured anything (lead mode + name or transcript), keep it as a post-call draft instead of closing.
+    const endCall = () => { if (mode === 'lead' && ((lf.name || '').trim() || tx.length)) { setPhase('ended'); showToast('Call ended — review the draft and create the lead'); } else { onClose(); } };
     const tog = k => setOpen(o => ({ ...o, [k]: !o[k] }));
     const setQ = (k, v) => setPb(p => ({ ...p, [k]: v }));
     const HL = [['Outstanding balance', '$790'], ['Lifetime Value', '$4,369'], ['Last Service Date', '11/01/2025'], ['Customer Since', '05/08/2024'], ['Account Manager', 'Lewis Hamilton']];
@@ -34931,10 +34933,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             {acc('quotes', 'file-text', 'Quotes', emptyBlock('Quotes', 'Create Quote'))}
             {acc('invoices', 'receipt', 'Invoices', emptyBlock('Invoices', 'Create Invoice'))}
           </> : <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderBottom: '1px solid ' + LH.borderSoft, background: LH.bg }}>
-              <span style={{ width: 26, height: 26, borderRadius: 7, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="user-plus" size={14} color={LH.primary} /></span>
-              <div style={{ minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>New caller · not in Zuper</div><div style={{ fontSize: 11, color: LH.muted }}>Capture &amp; qualify this lead on the call.</div></div>
-            </div>
+            {phase === 'ended'
+              ? <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderBottom: '1px solid ' + LH.borderSoft, background: LH.amberBg }}>
+                  <span style={{ width: 26, height: 26, borderRadius: 7, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="file-clock" size={14} color={LH.amber} /></span>
+                  <div style={{ minWidth: 0, flex: 1 }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Call ended · draft lead</div><div style={{ fontSize: 11, color: LH.sub }}>Review the captured details below and create the lead.</div></div>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: LH.amber, background: '#fff', border: '1px solid ' + LH.amberBd, borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>DRAFT</span>
+                </div>
+              : <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderBottom: '1px solid ' + LH.borderSoft, background: LH.bg }}>
+                  <span style={{ width: 26, height: 26, borderRadius: 7, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="user-plus" size={14} color={LH.primary} /></span>
+                  <div style={{ minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>New caller · not in Zuper</div><div style={{ fontSize: 11, color: LH.muted }}>Capture &amp; qualify this lead on the call.</div></div>
+                </div>}
             {acc('form', 'user', 'Lead details', <div style={{ display: 'flex', flexDirection: 'column', gap: 9, paddingTop: 2 }}>
               <div><label style={flbl}>Full name<span style={{ color: LH.red }}> *</span></label><input value={lf.name} onChange={e => setLf(s => ({ ...s, name: e.target.value }))} style={inp} /></div>
               <div style={{ display: 'flex', gap: 8 }}><div style={{ flex: 1 }}><label style={flbl}>Phone</label><input value={lf.phone} onChange={e => setLf(s => ({ ...s, phone: e.target.value }))} style={inp} /></div><div style={{ flex: 1 }}><label style={flbl}>Email</label><input value={lf.email} onChange={e => setLf(s => ({ ...s, email: e.target.value }))} placeholder="name@email.com" style={inp} /></div></div>
@@ -34967,15 +34975,20 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ width: 54, height: 54, borderRadius: 999, background: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{caller.avatar}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15.5, fontWeight: 700 }}>{caller.name}<Ic name="external-link" size={13} color={sub} /></div>
           <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.8)', marginTop: 3 }}>{caller.phone}</div>
-          <div style={{ fontSize: 12, color: sub, marginTop: 3 }}>{phase === 'incoming' ? 'Incoming call…' : 'On call · ' + mmss}</div>
+          <div style={{ fontSize: 12, color: sub, marginTop: 3 }}>{phase === 'incoming' ? 'Incoming call…' : phase === 'ended' ? 'Call ended · ' + mmss : 'On call · ' + mmss}</div>
           <div style={{ flex: 1, minHeight: 12 }} />
           {phase === 'incoming'
             ? <div style={{ display: 'flex', gap: 34, padding: '10px 0 14px' }}>{circleBtn('#dc2626', 'phone-off', '#fff', 'Ignore', onClose)}{circleBtn('#16a34a', 'phone', '#fff', 'Accept', () => setPhase('connected'))}</div>
+            : phase === 'ended'
+            ? <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '4px 0 14px', width: '100%' }}>
+                <span style={{ fontSize: 11.5, color: sub, textAlign: 'center', lineHeight: 1.5 }}>Captured details and the qualification are kept on the left as a draft.</span>
+                <div style={{ display: 'flex', gap: 24 }}>{circleBtn('rgba(255,255,255,.1)', 'phone', '#fff', 'Call back', () => { setPhase('connected'); showToast('Reconnecting…'); })}{circleBtn('rgba(255,255,255,.1)', 'x', '#fff', 'Dismiss', onClose)}</div>
+              </div>
             : <>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '14px 8px', width: '100%', padding: '4px 6px' }}>
                 {[['pause', 'Hold'], ['circle-dot', 'Record'], ['mic-off', 'Mute'], ['file-text', 'Notes'], ['phone-forwarded', 'Transfer'], ['more-horizontal', 'More']].map(([ic, l]) => circleBtn('rgba(255,255,255,.1)', ic, '#fff', l, () => showToast(l)))}
               </div>
-              <div style={{ padding: '8px 0 12px' }}>{circleBtn('#dc2626', 'phone-off', '#fff', '', onClose)}</div>
+              <div style={{ padding: '8px 0 12px' }}>{circleBtn('#dc2626', 'phone-off', '#fff', '', endCall)}</div>
             </>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '10px', background: navy2 }}>
