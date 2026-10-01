@@ -14767,6 +14767,10 @@ html,body,#root{width:100%;height:100%;margin:0;padding:0;overflow:hidden}
   from{opacity:0;transform:translateY(8px)}
   to  {opacity:1;transform:translateY(0)}
 }
+@keyframes lhPulse{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.35;transform:scale(.7)}
+}
 @keyframes fadeIn{
   from{opacity:0}
   to  {opacity:1}
@@ -34869,8 +34873,32 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [lf, setLf] = useState({ name: '', phone: CALL_NO, email: '', service: '' });
     const [pb, setPb] = useState({ q1: 'Within service territory', q2: '', q3: '', q4: '', roofType: '', sidingType: '', q6: '', q6other: '', q7: '', q8: '', owner: '', when: '' });
     const [pbId, setPbId] = useState('shield');
+    const [autofill, setAutofill] = useState('idle'); // idle | live | done — Nova fills the playbook from the call
+    const [tx, setTx] = useState([]); // live transcript lines { who, text }
+    const txRef = useRef(null);
     const caller = mode === 'customer' ? { name: 'David Moore', phone: CALL_NO, avatar: 'D' } : { name: 'Unknown number', phone: CALL_NO, avatar: '?' };
     useEffect(() => { if (phase !== 'connected') return; const t = setInterval(() => setSecs(s => s + 1), 1000); return () => clearInterval(t); }, [phase]);
+    // When the call is answered, Nova listens and progressively fills lead details + the qualification playbook.
+    useEffect(() => {
+      if (phase !== 'connected' || mode !== 'lead' || autofill !== 'idle') return;
+      setAutofill('live'); setOpen(o => ({ ...o, playbook: true, form: true }));
+      const steps = [
+        { who: 'Nova', text: 'Thanks for calling Shield Roofing — may I take your name?' },
+        { who: 'Caller', text: "Hi, this is Marcus Reed.", apply: () => setLf(s => ({ ...s, name: 'Marcus Reed', email: s.email || 'marcus.reed@gmail.com' })) },
+        { who: 'Nova', text: "Are you the homeowner, and is this a residential property?" },
+        { who: 'Caller', text: 'Yes, I own the house.', apply: () => setPb(p => ({ ...p, q2: 'Homeowner', q3: 'Residential' })) },
+        { who: 'Nova', text: 'What can we help you with today?' },
+        { who: 'Caller', text: 'My roof — some shingles came off in the last storm.', apply: () => { setPb(p => ({ ...p, q4: 'Roofing', q6: 'Storm damage' })); setLf(s => ({ ...s, service: s.service || 'Roof inspection' })); } },
+        { who: 'Nova', text: 'Have you filed an insurance claim?' },
+        { who: 'Caller', text: "Yes, the claim's already filed.", apply: () => setPb(p => ({ ...p, q7: 'Claim Filed' })) },
+        { who: 'Nova', text: "Great — I'll book you a free inspection.", apply: () => setPb(p => ({ ...p, q8: 'Inspection' })) }
+      ];
+      let i = 0; const timers = [];
+      const run = () => { if (i >= steps.length) { setAutofill('done'); return; } const st = steps[i++]; setTx(t => [...t, { who: st.who, text: st.text }]); if (st.apply) st.apply(); timers.push(setTimeout(run, 1500)); };
+      timers.push(setTimeout(run, 700));
+      return () => timers.forEach(clearTimeout);
+    }, [phase, mode]);
+    useEffect(() => { const el = txRef.current; if (el) el.scrollTop = el.scrollHeight; }, [tx.length]);
     const mmss = ('0' + Math.floor(secs / 60)).slice(-2) + ':' + ('0' + (secs % 60)).slice(-2);
     const showToast = m => { setToast(m); setTimeout(() => setToast(null), 2800); };
     const tog = k => setOpen(o => ({ ...o, [k]: !o[k] }));
@@ -34914,6 +34942,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               <button onClick={() => setLeadFull(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}><Ic name="external-link" size={12} color={LH.primary} />Open full form (address, map…)</button>
             </div>)}
             {acc('playbook', 'book-open', 'Qualification playbook', <div style={{ paddingTop: 2 }}>
+              {autofill !== 'idle' && <div style={{ marginBottom: 10, border: '1px solid ' + LH.borderSoft, borderRadius: 9, background: LH.bg, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 10px', borderBottom: '1px solid ' + LH.borderSoft }}>
+                  <Ic name="sparkles" size={13} color="#7c3aed" /><span style={{ fontSize: 11.5, fontWeight: 700, color: LH.ink, flex: 1 }}>Nova — live transcript</span>
+                  {autofill === 'live'
+                    ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, fontWeight: 600, color: '#7c3aed' }}><span style={{ width: 7, height: 7, borderRadius: 999, background: '#7c3aed', animation: 'lhPulse 1s ease-in-out infinite' }} />Listening &amp; auto-filling</span>
+                    : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 600, color: LH.green }}><Ic name="check" size={12} color={LH.green} />Auto-filled from call</span>}
+                </div>
+                <div ref={txRef} style={{ maxHeight: 118, overflowY: 'auto', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>{tx.map((l, i) => <div key={i} style={{ fontSize: 11.5, lineHeight: 1.4 }}><b style={{ color: l.who === 'Nova' ? '#7c3aed' : LH.ink }}>{l.who}:</b> <span style={{ color: LH.body }}>{l.text}</span></div>)}</div>
+              </div>}
               <QualifyPlaybook pbId={pbId} setPbId={setPbId} pb={pb} setPb={setPb} dense />
             </div>)}
           </>}
