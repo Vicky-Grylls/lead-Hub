@@ -29406,7 +29406,7 @@ function LeadPlaybookSettings({setActiveId}){
     RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiClipboardText,title:'Playbook Settings',sub:'One qualification playbook with branching and a binary outcome',onSave:()=>setActiveId('modules/Leads')}),
     leadScroll(RCE(React.Fragment,null,
       RCE("div",{style:{borderTop:'1px solid #e8e7e2'}},
-        RCE(SettingsFormRow,{label:'Default playbook',sub:'The single playbook Nova runs on inbound intake.'},RCE("input",{value:def,onChange:e=>setDef(e.target.value),style:{...leadInput,width:280}}))),
+        RCE(SettingsFormRow,{label:'Default playbook',sub:'The single playbook Nova runs on inbound intake.'},RCE("select",{value:def,onChange:e=>setDef(e.target.value),style:leadSelectStyle},playbooks.map(p=>RCE("option",{key:p.id||p.name,value:p.name},p.name))))),
       RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'26px 0 10px'}},
         RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:0}},"Playbooks"),
         RCE("button",{onClick:()=>setActiveId('modules/Leads/playbook/new'),style:{display:'inline-flex',alignItems:'center',gap:6,height:32,padding:'0 13px',borderRadius:8,border:'none',background:'#1f1f1d',color:'#fff',fontSize:12.5,fontWeight:600,cursor:'pointer'}},"+ New playbook")),
