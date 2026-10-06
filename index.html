@@ -32555,10 +32555,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   const wuid = () => 'w' + (++WUID);
 
   // Custom dropdown
-  function Dropdown({ value, onChange, options, groups, multi, placeholder = 'Select…', width, height = 36, dropUp }) {
+  function Dropdown({ value, onChange, options, groups, multi, placeholder = 'Select…', width, height = 36, dropUp, searchable, searchPlaceholder = 'Search…' }) {
     const [open, setOpen] = useState(false);
+    const [q, setQ] = useState('');
     const ref = useRef(null);
     useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, [open]);
+    useEffect(() => { if (!open) setQ(''); }, [open]);
+    const matchOpt = o => !q.trim() || String(o.label || o.value).toLowerCase().includes(q.trim().toLowerCase());
     const allOpts = groups ? groups.flatMap(g => g.items) : options;
     const has = multi ? (value && value.length) : (value !== undefined && value !== null && value !== '');
     const label = multi
@@ -32576,7 +32579,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span><Ic name={open ? 'chevron-up' : 'chevron-down'} size={14} color={LH.muted} />
       </div>
       {open && <div style={{ position: 'absolute', ...(dropUp ? { bottom: height + 4 } : { top: height + 4 }), left: 0, minWidth: '100%', zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, maxHeight: 260, overflowY: 'auto' }}>
-        {groups ? groups.map(g => <div key={g.title}><div style={{ fontSize: 11, color: LH.muted, padding: '6px 11px 3px', fontWeight: 600 }}>{g.title}</div>{g.items.map(item)}</div>) : options.map(item)}
+        {searchable && <div style={{ position: 'sticky', top: -5, background: '#fff', padding: '3px 3px 6px', marginBottom: 2 }}>
+          <div style={{ position: 'relative' }}>
+            <Ic name="search" size={13} color={LH.muted} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)' }} />
+            <input autoFocus value={q} onChange={e => setQ(e.target.value)} onClick={e => e.stopPropagation()} placeholder={searchPlaceholder} style={{ width: '100%', height: 30, borderRadius: 7, border: '1px solid ' + LH.border, padding: '0 10px 0 28px', fontSize: 12.5, color: LH.ink, outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+        </div>}
+        {(() => { if (groups) { const gs = groups.map(g => ({ ...g, items: g.items.filter(matchOpt) })).filter(g => g.items.length); return gs.length ? gs.map(g => <div key={g.title}><div style={{ fontSize: 11, color: LH.muted, padding: '6px 11px 3px', fontWeight: 600 }}>{g.title}</div>{g.items.map(item)}</div>) : <div style={{ padding: '10px 11px', fontSize: 12.5, color: LH.muted }}>No matches</div>; } const fo = options.filter(matchOpt); return fo.length ? fo.map(item) : <div style={{ padding: '10px 11px', fontSize: 12.5, color: LH.muted }}>No matches</div>; })()}
       </div>}
     </div>;
   }
@@ -35100,7 +35109,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
           <span style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap' }}>Lead</span>
-          <div style={{ flex: 1, minWidth: 0, maxWidth: 180 }}><Dropdown value={leadName} height={30} dropUp options={PLAYBOOK_LEADS.map(o => ({ value: o, label: o }))} onChange={setLeadName} /></div>
+          <div style={{ flex: 1, minWidth: 0, maxWidth: 180 }}><Dropdown value={leadName} height={30} dropUp searchable searchPlaceholder="Search leads…" options={PLAYBOOK_LEADS.map(o => ({ value: o, label: o }))} onChange={setLeadName} /></div>
         </div>
         <Btn kind="primary" icon="check" onClick={onCollapse}>Save to {leadName.split(' ')[0]}</Btn>
       </div>
