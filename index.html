@@ -34975,8 +34975,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </>}
         </div>
         <div style={{ padding: 12, borderTop: '1px solid ' + LH.borderSoft, background: LH.bg }}>
-          {mode === 'lead' && <Btn kind="primary" icon="plus" onClick={() => { const name = (lf.name || '').trim(); if (!name) { showToast('Enter a name to create the lead'); return; } const stage = oc.state === 'qualified' ? 'Qualified' : oc.state === 'disqualified' ? 'Disqualified' : 'New'; try { window.dispatchEvent(new CustomEvent('lead-hub:create-open-lead', { detail: { name, phone: lf.phone, email: lf.email, service: lf.service, src: 'Phone', stage, score: oc.state === 'qualified' ? 78 : undefined } })); } catch (e) {} onClose && onClose(); }} style={{ width: '100%', justifyContent: 'center' }}>Create lead from call</Btn>}
-          <Btn icon="calendar-clock" onClick={() => setTaskOpen(true)} style={{ width: '100%', justifyContent: 'center', marginTop: mode === 'lead' ? 8 : 0 }}>Create follow-up task</Btn>
+          {mode === 'lead' && <Btn kind="primary" onClick={() => { const name = (lf.name || '').trim(); if (!name) { showToast('Enter a name to create the lead'); return; } const stage = oc.state === 'qualified' ? 'Qualified' : oc.state === 'disqualified' ? 'Disqualified' : 'New'; try { window.dispatchEvent(new CustomEvent('lead-hub:create-open-lead', { detail: { name, phone: lf.phone, email: lf.email, service: lf.service, src: 'Phone', stage, score: oc.state === 'qualified' ? 78 : undefined } })); } catch (e) {} onClose && onClose(); }} style={{ width: '100%', justifyContent: 'center' }}>Create lead</Btn>}
+          <Btn onClick={() => setTaskOpen(true)} style={{ width: '100%', justifyContent: 'center', marginTop: mode === 'lead' ? 8 : 0 }}>Create follow-up task</Btn>
         </div>
       </div>
       {/* Call panel */}
