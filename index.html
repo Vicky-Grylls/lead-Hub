@@ -29357,7 +29357,9 @@ function LeadPlaybookDetail({setActiveId,id}){
   const [qs,setQs]=useState(base.qs.map(q=>({...q})));
   const [dragI,setDragI]=useState(null);
   const [overI,setOverI]=useState(null);
-  const sel=(value,onChange,opts,width)=>RCE("select",{value:value,onChange:e=>onChange(e.target.value),style:{...leadInput,width:width||'100%',paddingRight:30,cursor:'pointer',appearance:'auto',WebkitAppearance:'auto'}},opts.map(o=>{const v=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return RCE("option",{key:v,value:v},l);}));
+  const sel=(value,onChange,opts,width)=>RCE("div",{style:{position:'relative',width:width||'100%',display:'inline-block'}},
+    RCE("select",{value:value,onChange:e=>onChange(e.target.value),style:{...leadInput,width:'100%',paddingRight:30,cursor:'pointer',appearance:'none',WebkitAppearance:'none',MozAppearance:'none',textOverflow:'ellipsis'}},opts.map(o=>{const v=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return RCE("option",{key:v,value:v},l);})),
+    RCE("span",{style:{position:'absolute',right:11,top:'50%',transform:'translateY(-50%)',pointerEvents:'none',display:'flex'}},RCE(TiChevronDown,{size:14,color:"#9c9b96"})));
   const setQ=(i,patch)=>setQs(a=>a.map((x,j)=>j===i?{...x,...patch}:x));
   const reorder=(from,to)=>setQs(a=>{if(from==null||to==null||from===to)return a;const n=[...a];const m=n.splice(from,1)[0];n.splice(to,0,m);return n;});
   const addQ=(seed)=>setQs(a=>[...a,seed?{...seed}:{q:'New question',req:false,type:'text'}]);
@@ -29413,7 +29415,7 @@ function LeadPlaybookSettings({setActiveId}){
     RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiClipboardText,title:'Playbook Settings',sub:'One qualification playbook with branching and a binary outcome',onSave:()=>setActiveId('modules/Leads')}),
     leadScroll(RCE(React.Fragment,null,
       RCE("div",{style:{borderTop:'1px solid #e8e7e2'}},
-        RCE(SettingsFormRow,{label:'Default playbook',sub:'The single playbook Nova runs on inbound intake.'},RCE("select",{value:def,onChange:e=>setDef(e.target.value),style:leadSelectStyle},playbooks.map(p=>RCE("option",{key:p.id||p.name,value:p.name},p.name))))),
+        RCE(SettingsFormRow,{label:'Default playbook',sub:'The single playbook Nova runs on inbound intake.'},RCE("div",{style:{position:'relative',width:300,maxWidth:300}},RCE("select",{value:def,onChange:e=>setDef(e.target.value),style:{...leadSelectStyle,width:'100%',paddingRight:30,appearance:'none',WebkitAppearance:'none',MozAppearance:'none',cursor:'pointer'}},playbooks.map(p=>RCE("option",{key:p.id||p.name,value:p.name},p.name))),RCE("span",{style:{position:'absolute',right:11,top:'50%',transform:'translateY(-50%)',pointerEvents:'none',display:'flex'}},RCE(TiChevronDown,{size:14,color:"#9c9b96"}))))),
       RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'26px 0 10px'}},
         RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:0}},"Playbooks"),
         RCE("button",{onClick:()=>setActiveId('modules/Leads/playbook/new'),style:{display:'inline-flex',alignItems:'center',gap:6,height:32,padding:'0 13px',borderRadius:8,border:'none',background:'#1f1f1d',color:'#fff',fontSize:12.5,fontWeight:600,cursor:'pointer'}},"+ New playbook")),
