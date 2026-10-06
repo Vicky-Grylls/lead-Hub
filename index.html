@@ -29355,9 +29355,11 @@ function LeadPlaybookDetail({setActiveId,id}){
   const [handoff,setHandoff]=useState(base.handoff);
   const [instructions,setInstructions]=useState(base.instructions);
   const [qs,setQs]=useState(base.qs.map(q=>({...q})));
-  const sel=(value,onChange,opts,width)=>RCE("select",{value:value,onChange:e=>onChange(e.target.value),style:{...leadInput,width:width||'100%',cursor:'pointer'}},opts.map(o=>{const v=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return RCE("option",{key:v,value:v},l);}));
+  const [dragI,setDragI]=useState(null);
+  const [overI,setOverI]=useState(null);
+  const sel=(value,onChange,opts,width)=>RCE("select",{value:value,onChange:e=>onChange(e.target.value),style:{...leadInput,width:width||'100%',paddingRight:30,cursor:'pointer',appearance:'auto',WebkitAppearance:'auto'}},opts.map(o=>{const v=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return RCE("option",{key:v,value:v},l);}));
   const setQ=(i,patch)=>setQs(a=>a.map((x,j)=>j===i?{...x,...patch}:x));
-  const move=(i,d)=>setQs(a=>{const n=[...a];const j=i+d;if(j<0||j>=n.length)return a;const t=n[i];n[i]=n[j];n[j]=t;return n;});
+  const reorder=(from,to)=>setQs(a=>{if(from==null||to==null||from===to)return a;const n=[...a];const m=n.splice(from,1)[0];n.splice(to,0,m);return n;});
   const addQ=(seed)=>setQs(a=>[...a,seed?{...seed}:{q:'New question',req:false,type:'text'}]);
   const save=()=>{ if(!name.trim())return; const data={name:name.trim(),agent,tone,handoff,instructions,qs}; if(isNew){const p=LeadPlaybookStore.create(data);setActiveId('modules/Leads/playbook/'+p.id);} else {LeadPlaybookStore.update(id,data);setActiveId('modules/Leads/playbook');} };
   const lbl={fontSize:12,fontWeight:600,color:'#1f1f1d',display:'block',marginBottom:5};
@@ -29377,18 +29379,19 @@ function LeadPlaybookDetail({setActiveId,id}){
         RCE("div",null,RCE("label",{style:lbl},"Instructions for Nova"),RCE("textarea",{value:instructions,onChange:e=>setInstructions(e.target.value),placeholder:'How Nova should run this playbook…',style:{...leadInput,width:'100%',height:88,padding:10,resize:'vertical',lineHeight:1.5}}))),
       RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'0 0 10px'}},
         RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:0}},"Questions ("+qs.length+")"),
-        RCE("button",{onClick:()=>addQ(),style:{display:'inline-flex',alignItems:'center',gap:5,height:30,padding:'0 12px',borderRadius:8,border:'1px solid #e2ddd2',background:'#fff',fontSize:12.5,fontWeight:600,color:'#7c3aed',cursor:'pointer'}},"+ Add question")),
+        RCE("button",{onClick:()=>addQ(),className:"hover-dark",style:{display:'inline-flex',alignItems:'center',gap:5,height:30,padding:'0 14px',borderRadius:8,border:'none',background:'#1f1f1d',fontSize:12.5,fontWeight:600,color:'#fff',cursor:'pointer'}},"+ Add question")),
       RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden',background:'#fff'}},
         qs.length===0?RCE("div",{style:{padding:'22px 16px',textAlign:'center',fontSize:12.5,color:'#9c9b96'}},"No questions yet — add one below or start from a template."):
-        qs.map((x,i)=>RCE("div",{key:i,style:{padding:'12px 16px',borderBottom:i<qs.length-1?'1px solid #f0eeea':'none'}},
+        qs.map((x,i)=>RCE("div",{key:i,onDragOver:e=>{e.preventDefault();if(overI!==i)setOverI(i);},onDrop:e=>{e.preventDefault();reorder(dragI,i);setDragI(null);setOverI(null);},style:{padding:'12px 16px',borderBottom:i<qs.length-1?'1px solid #f0eeea':'none',background:dragI!==null&&overI===i&&dragI!==i?'#faf8f4':'transparent',opacity:dragI===i?0.4:1,transition:'background 120ms'}},
           RCE("div",{style:{display:'flex',alignItems:'center',gap:10}},
+            RCE("span",{draggable:true,onDragStart:e=>{setDragI(i);e.dataTransfer.effectAllowed='move';},onDragEnd:()=>{setDragI(null);setOverI(null);},title:'Drag to reorder',style:{cursor:'grab',color:'#c4c2bd',fontSize:15,lineHeight:1,flexShrink:0,userSelect:'none',padding:'0 1px'}},"⠿"),
             RCE("span",{style:{width:22,height:22,borderRadius:999,background:'#f1f0ec',color:'#737373',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},i+1),
             RCE("input",{value:x.q,onChange:e=>setQ(i,{q:e.target.value}),style:{flex:1,fontSize:13,color:'#1f1f1d',border:'none',outline:'none',background:'transparent'}}),
             sel(x.type||'text',v=>setQ(i,{type:v,options:v==='select'?(x.options||['Option 1','Option 2']):undefined}),PB_QTYPES,140),
-            RCE("button",{onClick:()=>setQ(i,{req:!x.req}),style:{fontSize:10.5,fontWeight:700,color:x.req?'#7c3aed':'#9c9b96',border:'none',background:'none',cursor:'pointer',flexShrink:0,width:64,textAlign:'right'}},x.req?'REQUIRED':'optional'),
-            RCE("button",{onClick:()=>move(i,-1),title:'Move up',style:{border:'none',background:'none',cursor:'pointer',color:'#c4c2bd',fontSize:14,padding:'0 2px'}},"↑"),
-            RCE("button",{onClick:()=>move(i,1),title:'Move down',style:{border:'none',background:'none',cursor:'pointer',color:'#c4c2bd',fontSize:14,padding:'0 2px'}},"↓"),
-            RCE("button",{onClick:()=>setQs(a=>a.filter((_,j)=>j!==i)),title:'Delete',style:{border:'none',background:'none',cursor:'pointer',color:'#c4c2bd',fontSize:14,padding:'0 2px'}},"✕")),
+            RCE("div",{style:{display:'flex',alignItems:'center',gap:7,flexShrink:0},title:x.req?'Required':'Optional'},
+              RCE("span",{style:{fontSize:11,fontWeight:600,color:x.req?'#1f1f1d':'#9c9b96'}},"Required"),
+              RCE(LeadToggle,{on:x.req,onToggle:()=>setQ(i,{req:!x.req})})),
+            RCE("button",{onClick:()=>setQs(a=>a.filter((_,j)=>j!==i)),title:'Delete',className:"hover-subtle",style:leadIconBtn},RCE(TiTrash2,{size:15,color:"#b4b2ad"}))),
           x.type==='select'?RCE("div",{style:{marginTop:8,marginLeft:32}},RCE("label",{style:{fontSize:10.5,fontWeight:600,color:'#9c9b96',display:'block',marginBottom:4}},"Options (comma-separated)"),RCE("input",{value:(x.options||[]).join(', '),onChange:e=>setQ(i,{options:e.target.value.split(',').map(s=>s.trim()).filter(Boolean)}),style:{...leadInput,width:'100%',height:30,fontSize:12}})):null))),
       RCE("div",{style:{marginTop:14}},RCE("div",{style:{fontSize:11,fontWeight:700,letterSpacing:'.05em',color:'#9c9b96',marginBottom:8}},"QUICK-ADD ROOFING QUESTIONS"),
         RCE("div",{style:{display:'flex',gap:8,flexWrap:'wrap'}},PB_SUGGEST.map((s,k)=>RCE("button",{key:k,onClick:()=>addQ(s),style:{height:30,padding:'0 11px',borderRadius:999,border:'1px solid #e2ddd2',background:'#fff',fontSize:12,fontWeight:500,color:'#5b5b57',cursor:'pointer'}},"+ "+s.q)))),
