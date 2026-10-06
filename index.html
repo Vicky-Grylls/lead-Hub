@@ -29397,9 +29397,6 @@ function LeadPlaybookDetail({setActiveId,id}){
           x.type==='select'?RCE("div",{style:{marginTop:8,marginLeft:32}},RCE("label",{style:{fontSize:10.5,fontWeight:600,color:'#9c9b96',display:'block',marginBottom:4}},"Options (comma-separated)"),RCE("input",{value:(x.options||[]).join(', '),onChange:e=>setQ(i,{options:e.target.value.split(',').map(s=>s.trim()).filter(Boolean)}),style:{...leadInput,width:'100%',height:30,fontSize:12}})):null))),
       RCE("div",{style:{marginTop:14}},RCE("div",{style:{fontSize:11,fontWeight:700,letterSpacing:'.05em',color:'#9c9b96',marginBottom:8}},"QUICK-ADD ROOFING QUESTIONS"),
         RCE("div",{style:{display:'flex',gap:8,flexWrap:'wrap'}},PB_SUGGEST.map((s,k)=>RCE("button",{key:k,onClick:()=>addQ(s),style:{height:30,padding:'0 11px',borderRadius:999,border:'1px solid #e2ddd2',background:'#fff',fontSize:12,fontWeight:500,color:'#5b5b57',cursor:'pointer'}},"+ "+s.q)))),
-      RCE("div",{style:{marginTop:18,display:'flex',gap:10,alignItems:'flex-start',border:'1px solid #e8e7e2',borderRadius:10,background:'#faf8f4',padding:'12px 14px'}},
-        RCE(TiClipboardText,{size:16,color:"#7c3aed"}),
-        RCE("div",{style:{fontSize:12,color:'#5b5b57',lineHeight:1.5}},"Channel-agnostic — Nova asks these on SMS, email or a live call. Outcome is binary — ",RCE("b",null,"qualified / not_qualified"),".")),
       isNew?null:RCE("div",{style:{marginTop:16}},RCE("button",{onClick:()=>{LeadPlaybookStore.remove(id);setActiveId('modules/Leads/playbook');},style:{fontSize:12.5,fontWeight:600,color:'#dc2626',background:'none',border:'none',cursor:'pointer',padding:0}},"Delete playbook"))
     )));
 }
