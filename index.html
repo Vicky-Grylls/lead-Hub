@@ -29339,14 +29339,14 @@ const pbStamp=()=>{const d=new Date();return d.toLocaleDateString(undefined,{mon
 // Summarize what changed between two playbook versions (added/removed/edited questions, renamed, instructions).
 const pbDiffSummary=(a,b)=>{const parts=[];const aq=a.qs||[],bq=b.qs||[];if(bq.length>aq.length)parts.push('+'+(bq.length-aq.length)+' question'+(bq.length-aq.length>1?'s':''));else if(bq.length<aq.length)parts.push('−'+(aq.length-bq.length)+' question'+(aq.length-bq.length>1?'s':''));const n=Math.min(aq.length,bq.length);let edited=0;for(let i=0;i<n;i++){if(JSON.stringify(aq[i])!==JSON.stringify(bq[i]))edited++;}if(edited)parts.push(edited+' edited');if((a.name||'')!==(b.name||''))parts.push('renamed');if((a.instructions||'')!==(b.instructions||''))parts.push('instructions updated');return parts.length?parts.join(' · '):'Updated';};
 const LeadPlaybookStore={
-  items:PB_SEED.map((p,i)=>({...p,version:1,history:[{version:1,at:pbStamp(),summary:'Initial version',by:'System'}],qs:p.qs.map(q=>({...q}))})),
+  items:PB_SEED.map((p,i)=>({...p,version:1,history:[{version:1,at:pbStamp(),summary:'Initial version',by:'System',snapshot:{name:p.name,instructions:p.instructions,agent:p.agent,tone:p.tone,handoff:p.handoff,qs:p.qs.map(q=>({...q}))}}],qs:p.qs.map(q=>({...q}))})),
   subs:[],
   emit(){this.subs.forEach(f=>f(this.items));},
   sub(fn){this.subs.push(fn);return ()=>{this.subs=this.subs.filter(s=>s!==fn);};},
   get(id){return this.items.find(p=>p.id===id);},
-  update(id,patch){this.items=this.items.map(p=>{if(p.id!==id)return p;const np={...p,...patch};const changed=JSON.stringify({n:p.name,ins:p.instructions,qs:p.qs})!==JSON.stringify({n:np.name,ins:np.instructions,qs:np.qs});if(changed){np.version=(p.version||1)+1;np.history=[{version:np.version,at:pbStamp(),summary:pbDiffSummary(p,np),by:'You'},...(p.history||[])];}return np;});this.emit();},
+  update(id,patch){this.items=this.items.map(p=>{if(p.id!==id)return p;const np={...p,...patch};const changed=JSON.stringify({n:p.name,ins:p.instructions,qs:p.qs})!==JSON.stringify({n:np.name,ins:np.instructions,qs:np.qs});if(changed){np.version=(p.version||1)+1;np.history=[{version:np.version,at:pbStamp(),summary:pbDiffSummary(p,np),by:'You',snapshot:{name:np.name,instructions:np.instructions,agent:np.agent,tone:np.tone,handoff:np.handoff,qs:(np.qs||[]).map(q=>({...q}))}},...(p.history||[])];}return np;});this.emit();},
   remove(id){this.items=this.items.filter(p=>p.id!==id);this.emit();},
-  create(data){const id='pb'+Date.now().toString(36);const p={id,name:'Untitled playbook',tag:'Custom',agent:'csr',outcome:'qualified / not_qualified',tone:'Friendly and concise',handoff:'Route low-confidence replies to CSR',instructions:'',qs:[],version:1,history:[{version:1,at:pbStamp(),summary:'Initial version',by:'You'}],...data,id};this.items=[...this.items,p];this.emit();return p;}
+  create(data){const id='pb'+Date.now().toString(36);const p={id,name:'Untitled playbook',tag:'Custom',agent:'csr',outcome:'qualified / not_qualified',tone:'Friendly and concise',handoff:'Route low-confidence replies to CSR',instructions:'',qs:[],version:1,...data,id};p.history=[{version:1,at:pbStamp(),summary:'Initial version',by:'You',snapshot:{name:p.name,instructions:p.instructions,agent:p.agent,tone:p.tone,handoff:p.handoff,qs:(p.qs||[]).map(q=>({...q}))}}];this.items=[...this.items,p];this.emit();return p;}
 };
 const usePlaybooks=()=>{const [items,setItems]=useState(LeadPlaybookStore.items);useEffect(()=>LeadPlaybookStore.sub(setItems),[]);return items;};
 function LeadPlaybookDetail({setActiveId,id}){
@@ -29365,6 +29365,7 @@ function LeadPlaybookDetail({setActiveId,id}){
   const [aiOpen,setAiOpen]=useState(false);
   const [aiBusy,setAiBusy]=useState(false);
   const [showHistory,setShowHistory]=useState(false);
+  const [viewVer,setViewVer]=useState(null);
   // Draft a full playbook from a short description of the contractor's trade, source mix and closed jobs.
   const draftFromAI=text=>{
     const t=(text||'').toLowerCase();
@@ -29466,11 +29467,28 @@ function LeadPlaybookDetail({setActiveId,id}){
           RCE(TiHistory,{size:16,color:"#737373"}),
           RCE("div",{style:{flex:1}},RCE("div",{style:{fontSize:13,fontWeight:700,color:'#1f1f1d'}},"Version history"),RCE("div",{style:{fontSize:11.5,color:'#9c9b96'}},"Currently v"+(base.version||1)+" · "+((base.history||[]).length)+" version"+(((base.history||[]).length)>1?'s':'')+" · leads record the version they were qualified under")),
           RCE(TiChevronDown,{size:15,color:"#9c9b96"})),
-        showHistory?RCE("div",{style:{borderTop:'1px solid #f0eeea'}},(base.history||[]).map((h,i)=>RCE("div",{key:i,style:{display:'flex',alignItems:'flex-start',gap:10,padding:'10px 14px',borderBottom:i<(base.history||[]).length-1?'1px solid #f5f3ee':'none'}},
-          RCE("span",{style:{fontSize:10.5,fontWeight:700,color:i===0?'#16a34a':'#737373',background:i===0?'#dcfce7':'#f1f0ec',borderRadius:999,padding:'2px 8px',flexShrink:0,marginTop:1}},"v"+h.version),
-          RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:12.5,color:'#1f1f1d',fontWeight:500}},h.summary),RCE("div",{style:{fontSize:11,color:'#9c9b96',marginTop:1}},h.at+(h.by?' · '+h.by:'')))))):null),
+        showHistory?RCE("div",{style:{borderTop:'1px solid #f0eeea'}},(base.history||[]).map((h,i)=>RCE("div",{key:i,style:{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',borderBottom:i<(base.history||[]).length-1?'1px solid #f5f3ee':'none'}},
+          RCE("span",{style:{fontSize:10.5,fontWeight:700,color:i===0?'#16a34a':'#737373',background:i===0?'#dcfce7':'#f1f0ec',borderRadius:999,padding:'2px 8px',flexShrink:0,alignSelf:'flex-start',marginTop:1}},"v"+h.version),
+          RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:12.5,color:'#1f1f1d',fontWeight:500}},h.summary),RCE("div",{style:{fontSize:11,color:'#9c9b96',marginTop:1}},h.at+(h.by?' · '+h.by:''))),
+          h.snapshot?RCE("button",{onClick:()=>setViewVer(h),className:"hover-subtle",style:{display:'inline-flex',alignItems:'center',gap:5,height:28,padding:'0 11px',borderRadius:7,border:'1px solid #e2ddd2',background:'#fff',fontSize:11.5,fontWeight:600,color:'#3f3f46',cursor:'pointer',flexShrink:0}},RCE("svg",{width:13,height:13,viewBox:"0 0 24 24",fill:"none",stroke:"#737373",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},RCE("path",{d:"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"}),RCE("circle",{cx:12,cy:12,r:3})),"View version"):null))):null),
       isNew?null:RCE("div",{style:{marginTop:16}},RCE("button",{onClick:()=>{LeadPlaybookStore.remove(id);setActiveId('modules/Leads/playbook');},style:{fontSize:12.5,fontWeight:600,color:'#dc2626',background:'none',border:'none',cursor:'pointer',padding:0}},"Delete playbook"))
-    )));
+    )),
+    viewVer&&viewVer.snapshot?RCE("div",{onClick:()=>setViewVer(null),style:{position:'fixed',inset:0,zIndex:4000,background:'rgba(8,6,5,0.4)',display:'flex',alignItems:'center',justifyContent:'center',padding:20,fontFamily:"'Inter',ui-sans-serif,system-ui"}},
+      RCE("div",{onClick:e=>e.stopPropagation(),style:{width:'min(560px,96vw)',maxHeight:'88vh',background:'#fff',borderRadius:14,boxShadow:'0 24px 64px rgba(0,0,0,.3)',display:'flex',flexDirection:'column',overflow:'hidden'}},
+        RCE("div",{style:{display:'flex',alignItems:'center',gap:10,padding:'14px 18px',borderBottom:'1px solid #f0eeea'}},
+          RCE("span",{style:{fontSize:11,fontWeight:700,color:viewVer.version===(base.version||1)?'#16a34a':'#737373',background:viewVer.version===(base.version||1)?'#dcfce7':'#f1f0ec',borderRadius:999,padding:'3px 9px',flexShrink:0}},"v"+viewVer.version),
+          RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:14,fontWeight:700,color:'#1f1f1d',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},viewVer.snapshot.name||'Untitled playbook'),RCE("div",{style:{fontSize:11.5,color:'#9c9b96'}},"Read-only · "+viewVer.at+(viewVer.by?' · '+viewVer.by:'')+(viewVer.version===(base.version||1)?' · current version':''))),
+          RCE("button",{onClick:()=>setViewVer(null),className:"hover-subtle",style:{border:'none',background:'none',cursor:'pointer',padding:4,borderRadius:6}},RCE(TiX,{size:18,color:"#737373"}))),
+        RCE("div",{style:{flex:1,overflowY:'auto',padding:18}},
+          viewVer.snapshot.instructions?RCE("div",{style:{marginBottom:16}},RCE("div",{style:{fontSize:11,fontWeight:700,letterSpacing:'.04em',color:'#9c9b96',marginBottom:5}},"INSTRUCTIONS FOR NOVA"),RCE("div",{style:{fontSize:12.5,color:'#3f3f46',lineHeight:1.5,background:'#faf8f4',border:'1px solid #f0eeea',borderRadius:8,padding:10}},viewVer.snapshot.instructions)):null,
+          RCE("div",{style:{fontSize:11,fontWeight:700,letterSpacing:'.04em',color:'#9c9b96',marginBottom:8}},"QUESTIONS ("+((viewVer.snapshot.qs||[]).length)+")"),
+          (viewVer.snapshot.qs||[]).length===0?RCE("div",{style:{fontSize:12.5,color:'#9c9b96',padding:'8px 0'}},"No questions in this version."):
+          RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden'}},(viewVer.snapshot.qs||[]).map((x,qi)=>RCE("div",{key:qi,style:{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',borderBottom:qi<(viewVer.snapshot.qs||[]).length-1?'1px solid #f0eeea':'none'}},
+            RCE("span",{style:{width:22,height:22,borderRadius:999,background:'#f1f0ec',color:'#737373',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,alignSelf:'flex-start',marginTop:1}},qi+1),
+            RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:12.5,color:'#1f1f1d'}},x.q),(x.type==='select'&&x.options&&x.options.length)?RCE("div",{style:{fontSize:11,color:'#9c9b96',marginTop:2,lineHeight:1.4}},x.options.join(' · ')):null),
+            RCE("span",{style:{fontSize:10.5,color:'#9c9b96',flexShrink:0}},(PB_QTYPES.find(t=>t[0]===(x.type||'text'))||['','Text'])[1]),
+            RCE("span",{style:{fontSize:10,fontWeight:700,color:x.req?'#1f1f1d':'#c4c2bd',flexShrink:0}},x.req?'REQUIRED':'optional'))))))):null
+    );
 }
 /* ─── Playbook Settings ─── */
 function LeadPlaybookSettings({setActiveId}){
