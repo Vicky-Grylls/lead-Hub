@@ -31462,8 +31462,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
     </div>;
   }
-  function LeadDetailsPage({ lead, onBack, onToast, onConvert, onNav, hasPrev, hasNext, pos, total }) {
+  function LeadDetailsPage({ lead, onBack, onToast, onConvert, onNav, hasPrev, hasNext, pos, total, onQualify }) {
     const [tab, setTab] = useState('details');
+    const [qpbId, setQpbId] = useState('shield');
+    const [qpb, setQpb] = useState({ ...PB_BLANK });
+    const [qorigin, setQorigin] = useState({});
+    const [quMeta, setQuMeta] = useState(lead.qualifiedUnder || null);
+    useEffect(() => { if (!lead) return; const pid = autoPlaybookForLead(lead); const d = deriveLeadAnswers(lead, pid); setQpbId(pid); setQpb({ ...PB_BLANK, ...d.values }); setQorigin(d.origin); setQuMeta(lead.qualifiedUnder || null); }, [lead && lead.id]);
+    const pickPlaybook = pid => { const d = deriveLeadAnswers(lead, pid); setQpbId(pid); setQpb({ ...PB_BLANK, ...d.values }); setQorigin(d.origin); };
+    const qualifyMeta = () => ({ playbookId: qpbId, playbookName: getPlaybook(qpbId).name, version: pbVersion(qpbId), answers: { ...qpb }, at: 'Just now' });
     const [notes, setNotes] = useState([]);
     const [noteText, setNoteText] = useState('');
     const [msg, setMsg] = useState('');
@@ -31493,7 +31500,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const phone = '469-555-0172';
     const toast = m => onToast && onToast(m);
     // Match the side sheet's tab set exactly.
-    const PTABS = [['details', 'Overview'], ['communication', 'Communication'], ['activity', 'Activity'], ['notes', 'Notes']];
+    const PTABS = [['details', 'Overview'], ['qualify', 'Qualification'], ['communication', 'Communication'], ['activity', 'Activity'], ['notes', 'Notes']];
     const MTABS = [];
     const moreActive = MTABS.some(([k]) => k === tab);
     const moreLabel = moreActive ? MTABS.find(([k]) => k === tab)[1] : '+' + MTABS.length + ' More';
@@ -31615,6 +31622,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             <Card style={{ padding: 16, marginBottom: 14 }}><div style={{ display: 'flex', alignItems: 'center', gap: 11 }}><div style={{ width: 34, height: 34, borderRadius: 9, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="megaphone" size={16} color={LH.ink} /></div><div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>{campaign}</div><div style={{ fontSize: 12, color: LH.sub }}>Step 3 of 6 · SMS · next touch in 2 days</div></div><Pill label="Active" tone="Qualified" /></div></Card>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>{[['Sent', '3'], ['Opened', '2'], ['Replied', '1']].map(([l, v]) => <Card key={l} style={{ padding: 13 }}><div style={{ fontSize: 20, fontWeight: 700, color: LH.ink }}>{v}</div><div style={{ fontSize: 12, color: LH.muted }}>{l}</div></Card>)}</div>
           </div>}
+          {tab === 'qualify' && (() => { const already = lead.col === 'Qualified' || lead.col === 'Converted' || !!quMeta; const canQ = getPlaybook(qpbId).outcome(qpb).state === 'qualified'; return <Card style={{ padding: 18, maxWidth: 680 }}>
+            {quMeta && <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14, padding: '10px 12px', borderRadius: 10, background: LH.greenBg, border: '1px solid ' + LH.greenBd }}><Ic name="shield-check" size={15} color={LH.green} style={{ flexShrink: 0 }} /><div style={{ fontSize: 11.5, color: LH.body, lineHeight: 1.4 }}>Qualified under <b style={{ color: LH.ink }}>{quMeta.playbookName}</b> <span style={{ fontSize: 10, fontWeight: 700, color: LH.green, background: '#fff', borderRadius: 999, padding: '1px 6px' }}>v{quMeta.version}</span> · {quMeta.at}</div></div>}
+            <QualifyPlaybook pbId={qpbId} setPbId={setQpbId} pb={qpb} setPb={setQpb} origin={qorigin} setOrigin={setQorigin} lead={lead} onPickPlaybook={pickPlaybook} />
+            {!already && <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid ' + LH.borderSoft }}><Btn kind="primary" icon="check" onClick={() => { if (canQ) { const meta = qualifyMeta(); setQuMeta(meta); onQualify && onQualify(lead.id, meta); onToast && onToast(lead.name + ' qualified'); } else { onToast && onToast('Answer the required questions to qualify'); } }} style={{ width: '100%', justifyContent: 'center', opacity: canQ ? 1 : 0.5 }}>Mark as Qualified</Btn></div>}
+          </Card>; })()}
           {tab === 'activity' && <Card style={{ padding: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
               <Ic name="filter" size={15} color={LH.sub} />
@@ -31832,7 +31844,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     useEffect(() => { const d = window.__lhOpenLead; if (d && d.name) { window.__lhOpenLead = null; const lead = addLead({ name: d.name, phone: d.phone, email: d.email, src: d.src || 'Phone', note: d.service || d.note || '', stage: d.stage || 'New', score: d.score }); setPageLead(null); onFull && onFull(false); setSelId(lead.id); } }, []);
     const pageIdx = pageLead ? filtered.findIndex(l => l.id === pageLead.id) : -1;
     const navLead = dir => { const ni = pageIdx + dir; if (pageIdx >= 0 && ni >= 0 && ni < filtered.length) setPageLead(filtered[ni]); };
-    if (pageLead) return <LeadDetailsPage key={pageLead.id} lead={pageLead} onBack={closePage} onToast={onToast} onConvert={convertLeadTo} onNav={navLead} hasPrev={pageIdx > 0} hasNext={pageIdx >= 0 && pageIdx < filtered.length - 1} pos={pageIdx + 1} total={filtered.length} />;
+    if (pageLead) return <LeadDetailsPage key={pageLead.id} lead={pageLead} onBack={closePage} onToast={onToast} onConvert={convertLeadTo} onNav={navLead} hasPrev={pageIdx > 0} hasNext={pageIdx >= 0 && pageIdx < filtered.length - 1} pos={pageIdx + 1} total={filtered.length} onQualify={(lid, meta) => completeQualify(lid, meta)} />;
     return <div>
       {/* Row 1 — title, quick views, date range + primary CTAs */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
