@@ -29357,6 +29357,29 @@ function LeadPlaybookDetail({setActiveId,id}){
   const [qs,setQs]=useState(base.qs.map(q=>({...q})));
   const [dragI,setDragI]=useState(null);
   const [overI,setOverI]=useState(null);
+  const pbFileRef=useRef(null);
+  const downloadTemplate=()=>{
+    const src=qs.length?qs:[{q:'Is this for a home or a commercial property?',req:true,type:'yesno'},{q:'What is going on with the roof — leak, storm damage, or age?',req:true,type:'text'},{q:'How soon are you looking to get this done?',req:true,type:'text'},{q:'Have you had any other companies out to quote it?',req:false,type:'yesno'},{q:'What day and time works for a free inspection?',req:true,type:'text'}];
+    const rows=[['Order','Question','Required','Type','Options']].concat(src.map((x,i)=>[String(i+1),x.q,x.req?'Yes':'No',x.type||'text',(x.options||[]).join('; ')]));
+    rows.push(['','Add your own questions below…','','','']);
+    const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=((name||'qualification-playbook').trim().replace(/\s+/g,'-').toLowerCase()||'qualification-playbook')+'-template.csv';document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+  };
+  const splitCSV=line=>{const out=[];let cur='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(q){if(ch==='"'){if(line[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}else{if(ch==='"')q=true;else if(ch===','){out.push(cur);cur='';}else cur+=ch;}}out.push(cur);return out.map(s=>s.trim());};
+  const parsePlaybook=text=>{
+    const lines=text.split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return [];
+    const first=splitCSV(lines[0]).map(s=>s.toLowerCase());const hasHeader=first.indexOf('question')>-1||first.indexOf('order')>-1;
+    const body=hasHeader?lines.slice(1):lines;const qi=first.indexOf('question'),ri=first.indexOf('required'),ti=first.indexOf('type'),oi=first.indexOf('options');
+    const out=[];
+    body.forEach(line=>{const cells=splitCSV(line);let q,req=false,type='text',options;
+      if(hasHeader){q=(cells[qi]||'').trim();req=/^(y|yes|true|required|1)/i.test((cells[ri]||'').trim());type=(cells[ti]||'text').trim()||'text';const ov=(cells[oi]||'').trim();if(ov)options=ov.split(/[;|]/).map(s=>s.trim()).filter(Boolean);}
+      else{q=(cells.length>1?cells[1]:cells[0]).trim();}
+      if(q&&!/^add your own/i.test(q)){const o={q,req,type};if(options&&options.length){o.type='select';o.options=options;}out.push(o);}});
+    return out;
+  };
+  const onUploadPlaybook=e=>{const f=e.target.files&&e.target.files[0];if(f&&typeof FileReader!=='undefined'){const r=new FileReader();r.onload=()=>{try{const parsed=parsePlaybook(String(r.result));if(parsed.length)setQs(parsed);}catch(err){}};r.readAsText(f);}if(e.target)e.target.value='';};
   const sel=(value,onChange,opts,width)=>RCE("div",{style:{position:'relative',width:width||'100%',display:'inline-block'}},
     RCE("select",{value:value,onChange:e=>onChange(e.target.value),style:{...leadInput,width:'100%',paddingRight:30,cursor:'pointer',appearance:'none',WebkitAppearance:'none',MozAppearance:'none',textOverflow:'ellipsis'}},opts.map(o=>{const v=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return RCE("option",{key:v,value:v},l);})),
     RCE("span",{style:{position:'absolute',right:11,top:'50%',transform:'translateY(-50%)',pointerEvents:'none',display:'flex'}},RCE(TiChevronDown,{size:14,color:"#9c9b96"})));
@@ -29379,9 +29402,14 @@ function LeadPlaybookDetail({setActiveId,id}){
           RCE("div",{style:{flex:1}},RCE("label",{style:lbl},"Qualification tone"),sel(tone,setTone,PB_TONES)),
           RCE("div",{style:{flex:1}},RCE("label",{style:lbl},"Handoff rule"),sel(handoff,setHandoff,PB_HANDOFFS))),
         RCE("div",null,RCE("label",{style:lbl},"Instructions for Nova"),RCE("textarea",{value:instructions,onChange:e=>setInstructions(e.target.value),placeholder:'How Nova should run this playbook…',style:{...leadInput,width:'100%',height:88,padding:10,resize:'vertical',lineHeight:1.5}}))),
-      RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'0 0 10px'}},
+      RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'0 0 4px',gap:10,flexWrap:'wrap'}},
         RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:0}},"Questions ("+qs.length+")"),
-        RCE("button",{onClick:()=>addQ(),className:"hover-dark",style:{display:'inline-flex',alignItems:'center',gap:5,height:30,padding:'0 14px',borderRadius:8,border:'none',background:'#1f1f1d',fontSize:12.5,fontWeight:600,color:'#fff',cursor:'pointer'}},"+ Add question")),
+        RCE("div",{style:{display:'flex',alignItems:'center',gap:8}},
+          RCE("button",{onClick:downloadTemplate,className:"hover-subtle",style:{display:'inline-flex',alignItems:'center',gap:6,height:30,padding:'0 11px',borderRadius:8,border:'1px solid #e2ddd2',background:'#fff',fontSize:12.5,fontWeight:600,color:'#3f3f46',cursor:'pointer'}},RCE("svg",{width:14,height:14,viewBox:"0 0 24 24",fill:"none",stroke:"#737373",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},RCE("path",{d:"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"}),RCE("polyline",{points:"7 10 12 15 17 10"}),RCE("line",{x1:12,y1:15,x2:12,y2:3})),"Download template"),
+          RCE("button",{onClick:()=>pbFileRef.current&&pbFileRef.current.click(),className:"hover-subtle",style:{display:'inline-flex',alignItems:'center',gap:6,height:30,padding:'0 11px',borderRadius:8,border:'1px solid #e2ddd2',background:'#fff',fontSize:12.5,fontWeight:600,color:'#3f3f46',cursor:'pointer'}},RCE("svg",{width:14,height:14,viewBox:"0 0 24 24",fill:"none",stroke:"#737373",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},RCE("path",{d:"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"}),RCE("polyline",{points:"17 8 12 3 7 8"}),RCE("line",{x1:12,y1:3,x2:12,y2:15})),"Upload playbook"),
+          RCE("input",{ref:pbFileRef,type:"file",accept:".csv,.txt,.doc,.docx,.pdf",style:{display:'none'},onChange:onUploadPlaybook}),
+          RCE("button",{onClick:()=>addQ(),className:"hover-dark",style:{display:'inline-flex',alignItems:'center',gap:5,height:30,padding:'0 14px',borderRadius:8,border:'none',background:'#1f1f1d',fontSize:12.5,fontWeight:600,color:'#fff',cursor:'pointer'}},"+ Add question"))),
+      RCE("div",{style:{fontSize:11.5,color:'#9c9b96',margin:'0 0 10px'}},"Upload a decision-flow doc (.csv, .txt) to replace the questions, or edit them below."),
       RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden',background:'#fff'}},
         qs.length===0?RCE("div",{style:{padding:'22px 16px',textAlign:'center',fontSize:12.5,color:'#9c9b96'}},"No questions yet — add one below or start from a template."):
         qs.map((x,i)=>RCE("div",{key:i,onDragOver:e=>{e.preventDefault();if(overI!==i)setOverI(i);},onDrop:e=>{e.preventDefault();reorder(dragI,i);setDragI(null);setOverI(null);},style:{padding:'12px 16px',borderBottom:i<qs.length-1?'1px solid #f0eeea':'none',background:dragI!==null&&overI===i&&dragI!==i?'#faf8f4':'transparent',opacity:dragI===i?0.4:1,transition:'background 120ms'}},
