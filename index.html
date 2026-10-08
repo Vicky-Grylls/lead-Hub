@@ -29363,8 +29363,8 @@ function LeadPlaybookDetail({setActiveId,id}){
   // Baseline of the last-saved content — used to enable Save only when there are unsaved changes.
   const [savedSnap,setSavedSnap]=useState(()=>JSON.stringify({name:base.name,agent:base.agent,tone:base.tone,handoff:base.handoff,instructions:base.instructions,qs:base.qs}));
   // Live version + history (base is captured at mount; refresh these after each save so the panel reflects the new version).
-  const [verState,setVerState]=useState(verState||1);
-  const [histState,setHistState]=useState(histState||[]);
+  const [verState,setVerState]=useState(base.version||1);
+  const [histState,setHistState]=useState(base.history||[]);
   const [toast,setToast]=useState('');
   const toastTimer=useRef(null);
   const showToast=m=>{setToast(m);if(toastTimer.current)clearTimeout(toastTimer.current);toastTimer.current=setTimeout(()=>setToast(''),2400);};
