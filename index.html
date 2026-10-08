@@ -29366,6 +29366,8 @@ function LeadPlaybookDetail({setActiveId,id}){
   const [aiBusy,setAiBusy]=useState(false);
   const [showHistory,setShowHistory]=useState(false);
   const [viewVer,setViewVer]=useState(null);
+  // Load a past version's snapshot back into the editor; the user then saves it as a new version.
+  const restoreVersion=h=>{const s=h&&h.snapshot;if(!s)return;setName(s.name||'');setInstructions(s.instructions||'');if(s.agent)setAgent(s.agent);if(s.tone)setTone(s.tone);if(s.handoff)setHandoff(s.handoff);setQs((s.qs||[]).map(q=>({...q})));setViewVer(null);};
   // Draft a full playbook from a short description of the contractor's trade, source mix and closed jobs.
   const draftFromAI=text=>{
     const t=(text||'').toLowerCase();
@@ -29473,11 +29475,11 @@ function LeadPlaybookDetail({setActiveId,id}){
           h.snapshot?RCE("button",{onClick:()=>setViewVer(h),className:"hover-subtle",style:{display:'inline-flex',alignItems:'center',gap:5,height:28,padding:'0 11px',borderRadius:7,border:'1px solid #e2ddd2',background:'#fff',fontSize:11.5,fontWeight:600,color:'#3f3f46',cursor:'pointer',flexShrink:0}},RCE("svg",{width:13,height:13,viewBox:"0 0 24 24",fill:"none",stroke:"#737373",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},RCE("path",{d:"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"}),RCE("circle",{cx:12,cy:12,r:3})),"View version"):null))):null),
       isNew?null:RCE("div",{style:{marginTop:16}},RCE("button",{onClick:()=>{LeadPlaybookStore.remove(id);setActiveId('modules/Leads/playbook');},style:{fontSize:12.5,fontWeight:600,color:'#dc2626',background:'none',border:'none',cursor:'pointer',padding:0}},"Delete playbook"))
     )),
-    viewVer&&viewVer.snapshot?RCE("div",{onClick:()=>setViewVer(null),style:{position:'fixed',inset:0,zIndex:4000,background:'rgba(8,6,5,0.4)',display:'flex',alignItems:'center',justifyContent:'center',padding:20,fontFamily:"'Inter',ui-sans-serif,system-ui"}},
-      RCE("div",{onClick:e=>e.stopPropagation(),style:{width:'min(560px,96vw)',maxHeight:'88vh',background:'#fff',borderRadius:14,boxShadow:'0 24px 64px rgba(0,0,0,.3)',display:'flex',flexDirection:'column',overflow:'hidden'}},
-        RCE("div",{style:{display:'flex',alignItems:'center',gap:10,padding:'14px 18px',borderBottom:'1px solid #f0eeea'}},
-          RCE("span",{style:{fontSize:11,fontWeight:700,color:viewVer.version===(base.version||1)?'#16a34a':'#737373',background:viewVer.version===(base.version||1)?'#dcfce7':'#f1f0ec',borderRadius:999,padding:'3px 9px',flexShrink:0}},"v"+viewVer.version),
-          RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:14,fontWeight:700,color:'#1f1f1d',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},viewVer.snapshot.name||'Untitled playbook'),RCE("div",{style:{fontSize:11.5,color:'#9c9b96'}},"Read-only · "+viewVer.at+(viewVer.by?' · '+viewVer.by:'')+(viewVer.version===(base.version||1)?' · current version':''))),
+    viewVer&&viewVer.snapshot?(()=>{const isCurrent=viewVer.version===(base.version||1);return RCE("div",{onClick:()=>setViewVer(null),style:{position:'fixed',inset:0,zIndex:4000,background:'rgba(8,6,5,0.4)',display:'flex',justifyContent:'flex-end',fontFamily:"'Inter',ui-sans-serif,system-ui"}},
+      RCE("div",{onClick:e=>e.stopPropagation(),style:{width:'min(480px,96vw)',height:'100%',background:'#fff',boxShadow:'-8px 0 28px rgba(0,0,0,.18)',display:'flex',flexDirection:'column',overflow:'hidden'}},
+        RCE("div",{style:{display:'flex',alignItems:'center',gap:10,padding:'14px 18px',borderBottom:'1px solid #f0eeea',flexShrink:0}},
+          RCE("span",{style:{fontSize:11,fontWeight:700,color:isCurrent?'#16a34a':'#737373',background:isCurrent?'#dcfce7':'#f1f0ec',borderRadius:999,padding:'3px 9px',flexShrink:0}},"v"+viewVer.version),
+          RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:14,fontWeight:700,color:'#1f1f1d',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},viewVer.snapshot.name||'Untitled playbook'),RCE("div",{style:{fontSize:11.5,color:'#9c9b96'}},"Read-only · "+viewVer.at+(viewVer.by?' · '+viewVer.by:'')+(isCurrent?' · current version':''))),
           RCE("button",{onClick:()=>setViewVer(null),className:"hover-subtle",style:{border:'none',background:'none',cursor:'pointer',padding:4,borderRadius:6}},RCE(TiX,{size:18,color:"#737373"}))),
         RCE("div",{style:{flex:1,overflowY:'auto',padding:18}},
           viewVer.snapshot.instructions?RCE("div",{style:{marginBottom:16}},RCE("div",{style:{fontSize:11,fontWeight:700,letterSpacing:'.04em',color:'#9c9b96',marginBottom:5}},"INSTRUCTIONS FOR NOVA"),RCE("div",{style:{fontSize:12.5,color:'#3f3f46',lineHeight:1.5,background:'#faf8f4',border:'1px solid #f0eeea',borderRadius:8,padding:10}},viewVer.snapshot.instructions)):null,
@@ -29487,8 +29489,16 @@ function LeadPlaybookDetail({setActiveId,id}){
             RCE("span",{style:{width:22,height:22,borderRadius:999,background:'#f1f0ec',color:'#737373',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,alignSelf:'flex-start',marginTop:1}},qi+1),
             RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:12.5,color:'#1f1f1d'}},x.q),(x.type==='select'&&x.options&&x.options.length)?RCE("div",{style:{fontSize:11,color:'#9c9b96',marginTop:2,lineHeight:1.4}},x.options.join(' · ')):null),
             RCE("span",{style:{fontSize:10.5,color:'#9c9b96',flexShrink:0}},(PB_QTYPES.find(t=>t[0]===(x.type||'text'))||['','Text'])[1]),
-            RCE("span",{style:{fontSize:10,fontWeight:700,color:x.req?'#1f1f1d':'#c4c2bd',flexShrink:0}},x.req?'REQUIRED':'optional'))))))):null
-    );
+            RCE("span",{style:{fontSize:10,fontWeight:700,color:x.req?'#1f1f1d':'#c4c2bd',flexShrink:0}},x.req?'REQUIRED':'optional'))))),
+        RCE("div",{style:{flexShrink:0,borderTop:'1px solid #f0eeea',padding:'12px 16px',background:'#fff'}},
+          isCurrent
+            ?RCE("div",{style:{display:'flex',alignItems:'center',gap:7,fontSize:12,color:'#9c9b96',justifyContent:'center'}},RCE(TiCheck,{size:14,color:"#16a34a"}),"This is the current version")
+            :RCE(React.Fragment,null,
+              RCE("div",{style:{fontSize:11,color:'#9c9b96',marginBottom:8,lineHeight:1.45}},"Restoring loads v"+viewVer.version+" into the editor. Save Changes to publish it as a new version."),
+              RCE("div",{style:{display:'flex',gap:8}},
+                RCE("button",{onClick:()=>setViewVer(null),style:{height:34,padding:'0 14px',borderRadius:8,border:'1px solid #d8d6cf',background:'#fff',color:'#262626',fontSize:12.5,fontWeight:600,cursor:'pointer'}},"Close"),
+                RCE("button",{onClick:()=>restoreVersion(viewVer),className:"hover-dark",style:{flex:1,display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,height:34,borderRadius:8,border:'none',background:'#1f1f1d',color:'#fff',fontSize:12.5,fontWeight:600,cursor:'pointer'}},RCE(TiHistory,{size:14,color:"#fff"}),"Restore this version")))))
+    );})():null);
 }
 /* ─── Playbook Settings ─── */
 function LeadPlaybookSettings({setActiveId}){
