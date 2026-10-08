@@ -34174,10 +34174,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>}
       </div>
       {prefilled > 0 && <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 11, color: LH.sub }}><Ic name="sparkles" size={12} color={LH.primary} /><span><b style={{ color: LH.ink }}>{prefilled}</b> answer{prefilled > 1 ? 's' : ''} pre-filled from the lead — correct any that are wrong.</span></div>}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '9px 11px', borderRadius: 9, background: binC.bg, marginBottom: 12 }}>
-        <Ic name={binC.ic} size={15} color={binC.fg} style={{ position: 'relative', top: 1, flexShrink: 0 }} />
-        <div style={{ minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: binC.fg }}>{bin.label}</span></div><div style={{ fontSize: 11.5, color: LH.sub, marginTop: 1, lineHeight: 1.45 }}>{oc.detail}</div></div>
-      </div>
+      <div style={{ marginBottom: 12 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 11px', borderRadius: 999, background: binC.bg, color: binC.fg, fontSize: 12, fontWeight: 700 }}><Ic name={binC.ic} size={13} color={binC.fg} />{bin.label}</span></div>
       {P.questions.map(qq => <div key={qq.k} style={{ marginBottom: 10 }}>
         <label style={{ ...lbl, display: 'flex', gap: 5 }}><span style={{ color: LH.muted, fontWeight: 700 }}>{qq.n}</span>{qq.label}</label>
         <Dropdown value={pb[qq.k] || ''} placeholder="Select…" height={dense ? 32 : 36} options={qq.opts.map(o => ({ value: o, label: o }))} onChange={v => setQ(qq.k, v)} />
