@@ -29299,8 +29299,22 @@ const PB_SUGGEST=[
   {q:'What is the service address?',req:true,type:'text'},
   {q:'What is your target timeframe?',req:true,type:'select',options:['ASAP / emergency','Within 2 weeks','1–3 months','Just researching']}
 ];
+// Lead fields a playbook's auto-selection rules can match on.
+const PB_RULE_FIELDS=[
+  {v:'source',l:'Lead source',opts:['Angi','Thumbtack','Google LSA','Meta Ads','Website Booking','SalesRabbit','Manual']},
+  {v:'damage',l:'Damage type',opts:['Storm','Hail','Leak','Wear / age','Other']},
+  {v:'claim',l:'Insurance claim',opts:['No claim','Considering','Claim filed','Adjuster scheduled']},
+  {v:'property',l:'Property type',opts:['Residential','Commercial']},
+  {v:'intent',l:'Intent',opts:['Emergency','Estimate','Researching']},
+  {v:'service',l:'Service interest',type:'text'},
+  {v:'score',l:'Lead score',type:'number'}
+];
+const PB_RULE_OPS=[['is','is'],['not','is not'],['any','is any of'],['contains','contains']];
+const PB_RULE_NUMOPS=[['gte','is ≥'],['lte','is ≤'],['is','equals']];
+const pbRuleField=v=>PB_RULE_FIELDS.find(f=>f.v===v)||PB_RULE_FIELDS[0];
+const pbRuleSummary=p=>(p.isFallback||!(p.rules&&p.rules.length))?'Fallback':((p.ruleJoin==='all'?'All of ':'Any of ')+p.rules.length+' condition'+(p.rules.length>1?'s':''));
 const PB_SEED=[
-  {id:'lead-qual',name:'Lead Qualification',tag:'Default · inbound intake',agent:'csr',outcome:'qualified / not_qualified',tone:'Friendly and concise',handoff:'Route low-confidence replies to CSR',
+  {id:'lead-qual',name:'Lead Qualification',tag:'Default · inbound intake',agent:'csr',outcome:'qualified / not_qualified',tone:'Friendly and concise',handoff:'Route low-confidence replies to CSR',isFallback:true,ruleJoin:'any',rules:[],
     instructions:'Introduce yourself as Nova from the company. Confirm you’re speaking with the homeowner, capture the roof problem and urgency, flag any insurance claim, and offer the earliest free inspection slot. Keep it warm and brief.',qs:[
     {q:'Are you the homeowner or the decision-maker?',req:true,type:'yesno'},
     {q:'What roof issue are you experiencing?',req:true,type:'select',options:['Leak','Storm / hail damage','Missing shingles','Sagging','Age / wear','Other']},
@@ -29310,7 +29324,7 @@ const PB_SEED=[
     {q:'What is your target timeframe to get it fixed?',req:true,type:'select',options:['ASAP / emergency','Within 2 weeks','1–3 months','Just researching']},
     {q:'Best callback number and time?',req:false,type:'text'}
   ]},
-  {id:'storm',name:'Storm Response',tag:'Damage triage',agent:'csr',outcome:'qualified / not_qualified',tone:'Warm and consultative',handoff:'Hand off after 3 attempts',
+  {id:'storm',name:'Storm Response',tag:'Damage triage',agent:'csr',outcome:'qualified / not_qualified',tone:'Warm and consultative',handoff:'Hand off after 3 attempts',ruleJoin:'any',rules:[{id:'r1',field:'damage',op:'any',value:['Storm','Hail']}],
     instructions:'Lead with empathy about the storm. Confirm the property is safe and weather-tight, capture damage details and photos, prioritise emergency tarping, and book an inspection.',qs:[
     {q:'Is there confirmed storm or hail damage?',req:true,type:'yesno'},
     {q:'What date did the storm hit?',req:true,type:'date'},
@@ -29319,7 +29333,7 @@ const PB_SEED=[
     {q:'What is the roof material?',req:false,type:'select',options:['Asphalt shingle','Metal','Tile','Wood shake','Flat / TPO','Slate']},
     {q:'Preferred inspection window?',req:true,type:'select',options:['Morning','Afternoon','Evening','Weekend']}
   ]},
-  {id:'insurance',name:'Insurance Claim',tag:'Claim intake',agent:'qual',outcome:'qualified / not_qualified',tone:'Formal and professional',handoff:'Always confirm with a human first',
+  {id:'insurance',name:'Insurance Claim',tag:'Claim intake',agent:'qual',outcome:'qualified / not_qualified',tone:'Formal and professional',handoff:'Always confirm with a human first',ruleJoin:'any',rules:[{id:'r1',field:'claim',op:'any',value:['Considering','Claim filed','Adjuster scheduled']}],
     instructions:'Determine whether this is an insurance claim and whether it meets coverage and deductible criteria before routing. Capture carrier, claim number and date of loss precisely.',qs:[
     {q:'Insurance carrier and claim number?',req:true,type:'text'},
     {q:'Has an adjuster been assigned?',req:true,type:'yesno'},
@@ -29327,7 +29341,7 @@ const PB_SEED=[
     {q:'Scope of the claim?',req:false,type:'select',options:['Roof only','Roof + gutters','Full exterior']},
     {q:'Deductible amount?',req:false,type:'number'}
   ]},
-  {id:'estimate',name:'Estimate Follow-up',tag:'Rehash / nurture',agent:'demand',outcome:'qualified / not_qualified',tone:'Friendly and concise',handoff:'Route low-confidence replies to CSR',
+  {id:'estimate',name:'Estimate Follow-up',tag:'Rehash / nurture',agent:'demand',outcome:'qualified / not_qualified',tone:'Friendly and concise',handoff:'Route low-confidence replies to CSR',ruleJoin:'all',rules:[{id:'r1',field:'intent',op:'is',value:'Estimate'}],
     instructions:'Re-open the conversation with a helpful, no-pressure check-in. Reference the estimate we sent, answer scope or pricing questions, and offer to get them on the schedule.',qs:[
     {q:'Did you receive the estimate we sent?',req:true,type:'yesno'},
     {q:'Any questions on scope or pricing?',req:false,type:'text'},
@@ -29361,10 +29375,17 @@ function LeadPlaybookDetail({setActiveId,id}){
   const [dragI,setDragI]=useState(null);
   const [overI,setOverI]=useState(null);
   // Baseline of the last-saved content — used to enable Save only when there are unsaved changes.
-  const [savedSnap,setSavedSnap]=useState(()=>JSON.stringify({name:base.name,agent:base.agent,tone:base.tone,handoff:base.handoff,instructions:base.instructions,qs:base.qs}));
+  const [savedSnap,setSavedSnap]=useState(()=>JSON.stringify({name:base.name,agent:base.agent,tone:base.tone,handoff:base.handoff,instructions:base.instructions,qs:base.qs,rules:base.rules||[],ruleJoin:base.ruleJoin||'any',isFallback:!!base.isFallback}));
   // Live version + history (base is captured at mount; refresh these after each save so the panel reflects the new version).
   const [verState,setVerState]=useState(base.version||1);
   const [histState,setHistState]=useState(base.history||[]);
+  // Per-playbook auto-selection rules — conditions on lead fields that decide when this playbook is picked.
+  const [rules,setRules]=useState((base.rules||[]).map(r=>({...r})));
+  const [ruleJoin,setRuleJoin]=useState(base.ruleJoin||'any');
+  const [isFallback,setIsFallback]=useState(!!base.isFallback);
+  const addRule=()=>setRules(a=>[...a,{id:'r'+Date.now().toString(36),field:'source',op:'is',value:''}]);
+  const setRule=(i,patch)=>setRules(a=>a.map((r,j)=>j===i?{...r,...patch}:r));
+  const delRule=i=>setRules(a=>a.filter((_,j)=>j!==i));
   const [toast,setToast]=useState('');
   const toastTimer=useRef(null);
   const showToast=m=>{setToast(m);if(toastTimer.current)clearTimeout(toastTimer.current);toastTimer.current=setTimeout(()=>setToast(''),2400);};
@@ -29424,8 +29445,8 @@ function LeadPlaybookDetail({setActiveId,id}){
   const setQ=(i,patch)=>setQs(a=>a.map((x,j)=>j===i?{...x,...patch}:x));
   const reorder=(from,to)=>setQs(a=>{if(from==null||to==null||from===to)return a;const n=[...a];const m=n.splice(from,1)[0];n.splice(to,0,m);return n;});
   const addQ=(seed)=>setQs(a=>[...a,seed?{...seed}:{q:'New question',req:false,type:'text'}]);
-  const dirty=JSON.stringify({name,agent,tone,handoff,instructions,qs})!==savedSnap;
-  const save=()=>{ if(!name.trim())return; const data={name:name.trim(),agent,tone,handoff,instructions,qs}; if(isNew){const p=LeadPlaybookStore.create(data);setActiveId('modules/Leads/playbook/'+p.id);} else {LeadPlaybookStore.update(id,data);const fr=LeadPlaybookStore.get(id);if(fr){setVerState(fr.version);setHistState(fr.history);}setSavedSnap(JSON.stringify({name,agent,tone,handoff,instructions,qs}));showToast('Changes saved');} };
+  const dirty=JSON.stringify({name,agent,tone,handoff,instructions,qs,rules,ruleJoin,isFallback})!==savedSnap;
+  const save=()=>{ if(!name.trim())return; const data={name:name.trim(),agent,tone,handoff,instructions,qs,rules:isFallback?[]:rules,ruleJoin,isFallback}; if(isNew){const p=LeadPlaybookStore.create(data);setActiveId('modules/Leads/playbook/'+p.id);} else {LeadPlaybookStore.update(id,data);const fr=LeadPlaybookStore.get(id);if(fr){setVerState(fr.version);setHistState(fr.history);}setSavedSnap(JSON.stringify({name,agent,tone,handoff,instructions,qs,rules:isFallback?[]:rules,ruleJoin,isFallback}));showToast('Changes saved');} };
   const lbl={fontSize:12,fontWeight:600,color:'#1f1f1d',display:'block',marginBottom:5};
   const agentOpts=LEAD_AGENTS_FULL.map(a=>[a.id,a.name.replace('Nova — ','')]);
   return RCE(React.Fragment,null,
@@ -29450,6 +29471,40 @@ function LeadPlaybookDetail({setActiveId,id}){
           RCE("div",{style:{flex:1}},RCE("label",{style:lbl},"Qualification tone"),sel(tone,setTone,PB_TONES)),
           RCE("div",{style:{flex:1}},RCE("label",{style:lbl},"Handoff rule"),sel(handoff,setHandoff,PB_HANDOFFS))),
         RCE("div",null,RCE("label",{style:lbl},"Instructions for Nova"),RCE("textarea",{value:instructions,onChange:e=>setInstructions(e.target.value),placeholder:'How Nova should run this playbook…',style:{...leadInput,width:'100%',height:88,padding:10,resize:'vertical',lineHeight:1.5}}))),
+      RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,background:'#fff',padding:16,marginBottom:18}},
+        RCE("div",{style:{display:'flex',alignItems:'flex-start',gap:8,marginBottom:12}},
+          RCE("div",{style:{flex:1,minWidth:0}},
+            RCE("div",{style:{fontSize:13.5,fontWeight:700,color:'#1f1f1d'}},"Auto-selection"),
+            RCE("div",{style:{fontSize:11.5,color:'#9c9b96',marginTop:2,lineHeight:1.45}},"When should Nova pick this playbook for a lead? Playbooks are evaluated top-to-bottom — the first whose rules match wins.")),
+          RCE("div",{style:{display:'flex',alignItems:'center',gap:8,flexShrink:0}},
+            RCE("span",{style:{fontSize:11.5,fontWeight:600,color:isFallback?'#1f1f1d':'#9c9b96'}},"Fallback"),
+            RCE(LeadToggle,{on:isFallback,onToggle:()=>setIsFallback(v=>!v)}))),
+        isFallback
+          ? RCE("div",{style:{display:'flex',gap:9,alignItems:'flex-start',border:'1px solid #e8e7e2',borderRadius:9,background:'#faf8f4',padding:'11px 13px'}},RCE(TiClipboardText,{size:15,color:"#7c3aed"}),RCE("div",{style:{fontSize:12,color:'#5b5b57',lineHeight:1.5}},"This is the ",RCE("b",null,"fallback playbook"),". Nova runs it only when no other playbook's rules match the lead."))
+          : RCE(React.Fragment,null,
+              RCE("div",{style:{display:'flex',alignItems:'center',gap:8,marginBottom:10,flexWrap:'wrap'}},
+                RCE("span",{style:{fontSize:12,color:'#5b5b57'}},"Match"),
+                RCE("div",{style:{display:'inline-flex',border:'1px solid #e2ddd2',borderRadius:8,overflow:'hidden'}},[['all','ALL'],['any','ANY']].map(([k,l])=>RCE("button",{key:k,onClick:()=>setRuleJoin(k),style:{padding:'5px 13px',fontSize:11.5,fontWeight:700,border:'none',cursor:'pointer',background:ruleJoin===k?'#1f1f1d':'#fff',color:ruleJoin===k?'#fff':'#5b5b57'}},l))),
+                RCE("span",{style:{fontSize:12,color:'#5b5b57'}},"of these conditions")),
+              rules.length===0
+                ? RCE("div",{style:{fontSize:12,color:'#9c9b96',padding:'6px 0 12px'}},"No conditions yet — add one below.")
+                : RCE("div",{style:{display:'flex',flexDirection:'column',gap:8,marginBottom:10}},rules.map((r,i)=>{
+                    const f=pbRuleField(r.field);const isNum=f.type==='number';
+                    return RCE("div",{key:r.id||i,style:{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}},
+                      RCE("span",{style:{fontSize:11,color:'#9c9b96',width:28,flexShrink:0}},i===0?'If':(ruleJoin==='all'?'and':'or')),
+                      RCE("div",{style:{width:150}},sel(r.field,v=>{const nf=pbRuleField(v);setRule(i,{field:v,op:nf.type==='number'?'gte':'is',value:''});},PB_RULE_FIELDS.map(ff=>[ff.v,ff.l]))),
+                      RCE("div",{style:{width:118}},sel(r.op,v=>setRule(i,{op:v,value:v==='any'?(Array.isArray(r.value)?r.value:[]):(Array.isArray(r.value)?'':r.value)}),(isNum?PB_RULE_NUMOPS:PB_RULE_OPS))),
+                      RCE("div",{style:{flex:1,minWidth:150}},
+                        isNum
+                          ? RCE("input",{type:'number',value:r.value||'',onChange:e=>setRule(i,{value:e.target.value}),placeholder:'e.g. 70',style:{...leadInput,width:'100%'}})
+                          : r.op==='any'
+                            ? RCE("div",{style:{display:'flex',flexWrap:'wrap',gap:6}},(f.opts||[]).map(o=>{const arr=Array.isArray(r.value)?r.value:[];const on=arr.indexOf(o)>-1;return RCE("button",{key:o,onClick:()=>setRule(i,{value:on?arr.filter(x=>x!==o):arr.concat(o)}),style:{height:28,padding:'0 10px',borderRadius:999,border:'1px solid '+(on?'#1f1f1d':'#e2ddd2'),background:on?'#1f1f1d':'#fff',color:on?'#fff':'#5b5b57',fontSize:11.5,fontWeight:600,cursor:'pointer'}},o);}))
+                            : (f.opts
+                                ? sel(r.value||'',v=>setRule(i,{value:v}),[['','Select…']].concat(f.opts.map(o=>[o,o])))
+                                : RCE("input",{value:r.value||'',onChange:e=>setRule(i,{value:e.target.value}),placeholder:'Enter a value',style:{...leadInput,width:'100%'}}))),
+                      RCE("button",{onClick:()=>delRule(i),title:'Remove',className:"hover-subtle",style:leadIconBtn},RCE(TiTrash2,{size:15,color:"#b4b2ad"})));
+                  })),
+              RCE("button",{onClick:addRule,style:{display:'inline-flex',alignItems:'center',gap:6,height:30,padding:'0 12px',borderRadius:8,border:'1px solid #e2ddd2',background:'#fff',fontSize:12.5,fontWeight:600,color:'#3f3f46',cursor:'pointer'}},"+ Add condition"))),
       RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'0 0 4px',gap:10,flexWrap:'wrap'}},
         RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:0}},"Questions ("+qs.length+")"),
         RCE("div",{style:{display:'flex',alignItems:'center',gap:8}},
@@ -29533,6 +29588,7 @@ function LeadPlaybookSettings({setActiveId}){
         playbooks.map((p,i)=>RCE("div",{key:p.id,onClick:()=>setActiveId('modules/Leads/playbook/'+p.id),style:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:i<playbooks.length-1?'1px solid #f0eeea':'none',cursor:'pointer'},onMouseEnter:e=>e.currentTarget.style.background='#faf8f4',onMouseLeave:e=>e.currentTarget.style.background='#fff'},
           RCE("div",{style:{width:32,height:32,borderRadius:8,background:'#efe7fb',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},RCE(TiClipboardText,{size:16,color:"#7c3aed"})),
           RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:13,fontWeight:600,color:'#1f1f1d'}},p.name),RCE("div",{style:{fontSize:11.5,color:'#9c9b96'}},p.tag+' · '+p.qs.length+' questions')),
+          RCE("span",{style:{fontSize:10.5,fontWeight:600,color:(p.isFallback||!(p.rules&&p.rules.length))?'#9c9b96':'#7c3aed',background:(p.isFallback||!(p.rules&&p.rules.length))?'#f1f0ec':'#efe7fb',borderRadius:999,padding:'3px 9px',flexShrink:0,whiteSpace:'nowrap'}},pbRuleSummary(p)),
           RCE("span",{style:{fontSize:18,color:'#c4c2bd',flexShrink:0,lineHeight:1}},"›"))))
     )));
 }
