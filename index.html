@@ -29500,7 +29500,7 @@ function LeadPlaybookDetail({setActiveId,id}){
                           : r.op==='any'
                             ? RCE("div",{style:{display:'flex',flexWrap:'wrap',gap:6}},(f.opts||[]).map(o=>{const arr=Array.isArray(r.value)?r.value:[];const on=arr.indexOf(o)>-1;return RCE("button",{key:o,onClick:()=>setRule(i,{value:on?arr.filter(x=>x!==o):arr.concat(o)}),style:{height:28,padding:'0 10px',borderRadius:999,border:'1px solid '+(on?'#1f1f1d':'#e2ddd2'),background:on?'#1f1f1d':'#fff',color:on?'#fff':'#5b5b57',fontSize:11.5,fontWeight:600,cursor:'pointer'}},o);}))
                             : (f.opts
-                                ? sel(r.value||'',v=>setRule(i,{value:v}),[['','Select…']].concat(f.opts.map(o=>[o,o])))
+                                ? RCE("div",{style:{display:'flex',flexWrap:'wrap',gap:6}},f.opts.map(o=>{const on=r.value===o;return RCE("button",{key:o,onClick:()=>setRule(i,{value:on?'':o}),style:{height:28,padding:'0 10px',borderRadius:999,border:'1px solid '+(on?'#1f1f1d':'#e2ddd2'),background:on?'#1f1f1d':'#fff',color:on?'#fff':'#5b5b57',fontSize:11.5,fontWeight:600,cursor:'pointer'}},o);}))
                                 : RCE("input",{value:r.value||'',onChange:e=>setRule(i,{value:e.target.value}),placeholder:'Enter a value',style:{...leadInput,width:'100%'}}))),
                       RCE("button",{onClick:()=>delRule(i),title:'Remove',className:"hover-subtle",style:leadIconBtn},RCE(TiTrash2,{size:15,color:"#b4b2ad"})));
                   })),
