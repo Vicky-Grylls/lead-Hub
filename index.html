@@ -28823,16 +28823,17 @@ function LeadToggle({on,onToggle}){return RCE("span",{onClick:onToggle,style:{di
 function LeadCheck({on,onToggle}){return RCE("button",{onClick:onToggle,style:{width:18,height:18,borderRadius:5,border:on?'none':'1.5px solid #c5c4bf',background:on?'#1f1f1d':'#fff',cursor:'pointer',display:'inline-flex',alignItems:'center',justifyContent:'center',padding:0,flexShrink:0}},on&&RCE(TiCheck,{size:12,color:"#fff"}));}
 function leadRowToggle(label,sub,on,onToggle,noBottom){return RCE(SettingsFormRow,{label:label,sub:sub,noBottom:noBottom},RCE("div",{style:{display:'flex',alignItems:'center',gap:10}},RCE(LeadToggle,{on:on,onToggle:onToggle}),RCE("span",{style:{fontSize:12,color:'#262626',fontWeight:500}},on?'Enabled':'Disabled')));}
 
-function LeadPageHeader({setActiveId,Icon,title,sub,onSave,action,saveDisabled,saveLabel}){
+function LeadPageHeader({setActiveId,Icon,title,sub,onSave,action,saveDisabled,saveLabel,backTo,backTitle}){
+  const back=backTo||'modules/Leads';
   return RCE("div",{style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 20px',borderBottom:'1px solid #e8e7e2',flexShrink:0,minHeight:44,background:'#fff'}},
     RCE("div",{style:{display:'flex',alignItems:'center',gap:10}},
-      RCE("button",{onClick:()=>setActiveId('modules/Leads'),className:"hover-subtle",title:"Back to Lead Settings",style:leadIconBtn},RCE(TiChevronLeft,{size:15,color:"#737373"})),
+      RCE("button",{onClick:()=>setActiveId(back),className:"hover-subtle",title:backTitle||"Back to Lead Settings",style:leadIconBtn},RCE(TiChevronLeft,{size:15,color:"#737373"})),
       RCE(Icon,{size:18,color:"#737373"}),
       RCE("div",null,
         RCE("h1",{style:{fontSize:14,fontWeight:700,lineHeight:1.1,color:'#1f1f1d',marginBottom:2,letterSpacing:'-0.005em'}},title),
         RCE("p",{style:{fontSize:11.5,color:'#9c9b96',fontWeight:400}},sub))),
     action||(onSave?RCE("div",{style:{display:'flex',gap:8}},
-      RCE("button",{onClick:()=>setActiveId('modules/Leads'),className:"hover-lift",style:leadBtnGhost},"Cancel"),
+      RCE("button",{onClick:()=>setActiveId(back),className:"hover-lift",style:leadBtnGhost},"Cancel"),
       RCE("button",{onClick:saveDisabled?undefined:onSave,disabled:!!saveDisabled,className:saveDisabled?"":"hover-dark",style:{...leadBtnPrimary,opacity:saveDisabled?0.45:1,cursor:saveDisabled?'default':'pointer'}},saveLabel||"Save Changes")):null));
 }
 function leadScroll(children,maxW){return RCE("div",{className:"settings-scroll",style:{flex:1,overflowY:'auto',background:'#fff'}},RCE("div",{style:{padding:'20px 32px 48px',maxWidth:maxW||920}},children));}
@@ -29398,6 +29399,7 @@ function LeadPlaybookDetail({setActiveId,id}){
   const [showHistory,setShowHistory]=useState(false);
   const [viewVer,setViewVer]=useState(null);
   const [rowMenuVer,setRowMenuVer]=useState(null); // history row whose kebab menu is open
+  const [menuAnchor,setMenuAnchor]=useState(null); // fixed-position anchor for the portaled kebab menu
   const [namingVer,setNamingVer]=useState(null);   // version being renamed inline
   const [nameInput,setNameInput]=useState('');
   // Load a past version's snapshot back into the editor; the user then saves it as a new version.
@@ -29458,7 +29460,7 @@ function LeadPlaybookDetail({setActiveId,id}){
   const lbl={fontSize:12,fontWeight:600,color:'#1f1f1d',display:'block',marginBottom:5};
   const agentOpts=LEAD_AGENTS_FULL.map(a=>[a.id,a.name.replace('Nova — ','')]);
   return RCE(React.Fragment,null,
-    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiClipboardText,title:isNew?'New playbook':(name||'Playbook'),sub:(isNew?'Create a qualification playbook':base.tag)+' · '+qs.length+' questions'+(isNew?'':' · v'+(verState||1)),onSave:save,saveLabel:isNew?'Create playbook':'Save Changes',saveDisabled:isNew?!name.trim():!dirty}),
+    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiClipboardText,backTo:'modules/Leads/playbook',backTitle:'Back to Playbooks',title:isNew?'New playbook':(name||'Playbook'),sub:(isNew?'Create a qualification playbook':base.tag)+' · '+qs.length+' questions'+(isNew?'':' · v'+(verState||1)),onSave:save,saveLabel:isNew?'Create playbook':'Save Changes',saveDisabled:isNew?!name.trim():!dirty}),
     leadScroll(RCE(React.Fragment,null,
       isNew?RCE("div",{style:{marginBottom:16}},
         RCE("div",{style:{border:'1px solid #d9d2ef',borderRadius:12,background:'linear-gradient(180deg,#faf8ff,#fff)',padding:16,marginBottom:16}},
@@ -29508,7 +29510,7 @@ function LeadPlaybookDetail({setActiveId,id}){
                           : r.op==='any'
                             ? RCE("div",{style:{display:'flex',flexWrap:'wrap',gap:6}},(f.opts||[]).map(o=>{const arr=Array.isArray(r.value)?r.value:[];const on=arr.indexOf(o)>-1;return RCE("button",{key:o,onClick:()=>setRule(i,{value:on?arr.filter(x=>x!==o):arr.concat(o)}),style:{height:28,padding:'0 10px',borderRadius:999,border:'1px solid '+(on?'#1f1f1d':'#e2ddd2'),background:on?'#1f1f1d':'#fff',color:on?'#fff':'#5b5b57',fontSize:11.5,fontWeight:600,cursor:'pointer'}},o);}))
                             : (f.opts
-                                ? RCE("div",{style:{display:'flex',flexWrap:'wrap',gap:6}},f.opts.map(o=>{const on=r.value===o;return RCE("button",{key:o,onClick:()=>setRule(i,{value:on?'':o}),style:{height:28,padding:'0 10px',borderRadius:999,border:'1px solid '+(on?'#1f1f1d':'#e2ddd2'),background:on?'#1f1f1d':'#fff',color:on?'#fff':'#5b5b57',fontSize:11.5,fontWeight:600,cursor:'pointer'}},o);}))
+                                ? sel(r.value||'',v=>setRule(i,{value:v}),[['','Select…']].concat(f.opts.map(o=>[o,o])),220)
                                 : RCE("input",{value:r.value||'',onChange:e=>setRule(i,{value:e.target.value}),placeholder:'Enter a value',style:{...leadInput,width:'100%'}}))),
                       RCE("button",{onClick:()=>delRule(i),title:'Remove',className:"hover-subtle",style:leadIconBtn},RCE(TiTrash2,{size:15,color:"#b4b2ad"})));
                   })),
@@ -29550,8 +29552,10 @@ function LeadPlaybookDetail({setActiveId,id}){
                     h.version===(verState||1)?RCE("span",{style:{display:'inline-flex',alignItems:'center',gap:4,fontSize:9.5,fontWeight:700,letterSpacing:'.04em',color:'#16a34a',background:'#dcfce7',borderRadius:999,padding:'1px 7px',flexShrink:0}},RCE("span",{style:{width:5,height:5,borderRadius:999,background:'#16a34a'}}),"LIVE"):null),
                   RCE("div",{style:{fontSize:11,color:'#9c9b96',marginTop:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},(h.label?h.at+' · ':'')+h.summary+(h.by?' · '+h.by:''))),
                 RCE("div",{style:{position:'relative',flexShrink:0}},
-                  RCE("button",{onClick:()=>setRowMenuVer(v=>v===h.version?null:h.version),title:'More',className:"hover-subtle",style:leadIconBtn},RCE("svg",{width:16,height:16,viewBox:"0 0 24 24",fill:"#737373"},RCE("circle",{cx:12,cy:5,r:1.6}),RCE("circle",{cx:12,cy:12,r:1.6}),RCE("circle",{cx:12,cy:19,r:1.6}))),
-                  rowMenuVer===h.version?RCE("div",{onMouseLeave:()=>setRowMenuVer(null),style:{position:'absolute',bottom:30,right:0,zIndex:60,background:'#fff',border:'1px solid #e8e7e2',borderRadius:9,boxShadow:'0 12px 32px rgba(0,0,0,.14)',padding:5,width:190}},[['Name this version',()=>startNameVer(h)],['Restore this version',()=>{setRowMenuVer(null);restoreVersion(h);}],['Duplicate',()=>duplicateVer(h)]].map(([l,fn])=>RCE("div",{key:l,onClick:fn,style:{padding:'8px 10px',borderRadius:7,fontSize:12.5,color:'#262626',cursor:'pointer'},onMouseEnter:e=>e.currentTarget.style.background='#f6f4ef',onMouseLeave:e=>e.currentTarget.style.background='transparent'},l))):null))))):null),
+                  RCE("button",{onClick:e=>{if(rowMenuVer===h.version){setRowMenuVer(null);return;}const r=e.currentTarget.getBoundingClientRect();setMenuAnchor({top:r.bottom+4,right:Math.max(8,window.innerWidth-r.right)});setRowMenuVer(h.version);},title:'More',className:"hover-subtle",style:leadIconBtn},RCE("svg",{width:16,height:16,viewBox:"0 0 24 24",fill:"#737373"},RCE("circle",{cx:12,cy:5,r:1.6}),RCE("circle",{cx:12,cy:12,r:1.6}),RCE("circle",{cx:12,cy:19,r:1.6}))),
+                  rowMenuVer===h.version&&menuAnchor?ReactDOM.createPortal(RCE("div",null,
+                    RCE("div",{onClick:()=>setRowMenuVer(null),style:{position:'fixed',inset:0,zIndex:4300}}),
+                    RCE("div",{style:{position:'fixed',top:menuAnchor.top,right:menuAnchor.right,zIndex:4301,background:'#fff',border:'1px solid #e8e7e2',borderRadius:9,boxShadow:'0 12px 32px rgba(0,0,0,.16)',padding:5,width:190,fontFamily:"'Inter',ui-sans-serif,system-ui"}},[['Name this version',()=>startNameVer(h)],['Restore this version',()=>{setRowMenuVer(null);restoreVersion(h);}],['Duplicate',()=>duplicateVer(h)]].map(([l,fn])=>RCE("div",{key:l,onClick:fn,style:{padding:'8px 10px',borderRadius:7,fontSize:12.5,color:'#262626',cursor:'pointer'},onMouseEnter:e=>e.currentTarget.style.background='#f6f4ef',onMouseLeave:e=>e.currentTarget.style.background='transparent'},l)))),document.body):null))))):null),
       isNew?null:RCE("div",{style:{marginTop:16}},RCE("button",{onClick:()=>{LeadPlaybookStore.remove(id);setActiveId('modules/Leads/playbook');},style:{fontSize:12.5,fontWeight:600,color:'#dc2626',background:'none',border:'none',cursor:'pointer',padding:0}},"Delete playbook"))
     )),
     viewVer&&viewVer.snapshot?(()=>{const isCurrent=viewVer.version===(verState||1);return RCE("div",{onClick:()=>setViewVer(null),style:{position:'fixed',inset:0,zIndex:4000,background:'rgba(8,6,5,0.4)',display:'flex',justifyContent:'flex-end',fontFamily:"'Inter',ui-sans-serif,system-ui"}},
