@@ -29615,9 +29615,7 @@ function LeadPlaybookSettings({setActiveId}){
       RCE("div",{style:{display:'flex',gap:10,alignItems:'flex-start',border:'1px solid #d9d2ef',borderRadius:10,background:'linear-gradient(180deg,#faf8ff,#fff)',padding:'12px 14px',marginBottom:18}},
         RCE(TiClipboardText,{size:16,color:"#7c3aed"}),
         RCE("div",{style:{fontSize:12,color:'#5b5b57',lineHeight:1.5}},"Nova picks the playbook from the lead itself — a hail lead from Angi gets ",RCE("b",null,"Storm Response")," automatically; a gutter estimate gets ",RCE("b",null,"Retail / Estimate"),". The CSR can override per lead. Set a fallback below for leads with no clear signal.")),
-      RCE("div",{style:{borderTop:'1px solid #e8e7e2'}},
-        RCE(SettingsFormRow,{label:'Fallback playbook',sub:'Used only when the lead has no signal to auto-select from.'},RCE("div",{style:{position:'relative',width:300,maxWidth:300}},RCE("select",{value:def,onChange:e=>setDef(e.target.value),style:{...leadSelectStyle,width:'100%',paddingRight:30,appearance:'none',WebkitAppearance:'none',MozAppearance:'none',cursor:'pointer'}},playbooks.map(p=>RCE("option",{key:p.id||p.name,value:p.name},p.name))),RCE("span",{style:{position:'absolute',right:11,top:'50%',transform:'translateY(-50%)',pointerEvents:'none',display:'flex'}},RCE(TiChevronDown,{size:14,color:"#9c9b96"}))))),
-      RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'26px 0 10px'}},
+      RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'0 0 10px'}},
         RCE("h2",{style:{fontSize:15,fontWeight:700,color:'#1f1f1d',margin:0}},"Playbooks"),
         RCE("button",{onClick:()=>setActiveId('modules/Leads/playbook/new'),style:{display:'inline-flex',alignItems:'center',gap:6,height:32,padding:'0 13px',borderRadius:8,border:'none',background:'#1f1f1d',color:'#fff',fontSize:12.5,fontWeight:600,cursor:'pointer'}},"+ New playbook")),
       RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden',background:'#fff'}},
@@ -29625,7 +29623,9 @@ function LeadPlaybookSettings({setActiveId}){
           RCE("div",{style:{width:32,height:32,borderRadius:8,background:'#efe7fb',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},RCE(TiClipboardText,{size:16,color:"#7c3aed"})),
           RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:13,fontWeight:600,color:'#1f1f1d'}},p.name),RCE("div",{style:{fontSize:11.5,color:'#9c9b96'}},p.tag+' · '+p.qs.length+' questions')),
           RCE("span",{style:{fontSize:10.5,fontWeight:600,color:(p.isFallback||!(p.rules&&p.rules.length))?'#9c9b96':'#7c3aed',background:(p.isFallback||!(p.rules&&p.rules.length))?'#f1f0ec':'#efe7fb',borderRadius:999,padding:'3px 9px',flexShrink:0,whiteSpace:'nowrap'}},pbRuleSummary(p)),
-          RCE("span",{style:{fontSize:18,color:'#c4c2bd',flexShrink:0,lineHeight:1}},"›"))))
+          RCE("span",{style:{fontSize:18,color:'#c4c2bd',flexShrink:0,lineHeight:1}},"›")))),
+      RCE("div",{style:{borderTop:'1px solid #e8e7e2',marginTop:26}},
+        RCE(SettingsFormRow,{label:'Fallback playbook',sub:'Used only when the lead has no signal to auto-select from.',noBottom:true},RCE("div",{style:{position:'relative',width:300,maxWidth:300}},RCE("select",{value:def,onChange:e=>setDef(e.target.value),style:{...leadSelectStyle,width:'100%',paddingRight:30,appearance:'none',WebkitAppearance:'none',MozAppearance:'none',cursor:'pointer'}},playbooks.map(p=>RCE("option",{key:p.id||p.name,value:p.name},p.name))),RCE("span",{style:{position:'absolute',right:11,top:'50%',transform:'translateY(-50%)',pointerEvents:'none',display:'flex'}},RCE(TiChevronDown,{size:14,color:"#9c9b96"})))))
     )));
 }
 /* ─── AI Agents Settings ─── */
