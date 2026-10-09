@@ -29485,8 +29485,8 @@ function LeadPlaybookDetail({setActiveId,id}){
       RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,background:'#fff',padding:16,marginBottom:18}},
         RCE("div",{style:{display:'flex',alignItems:'flex-start',gap:8,marginBottom:12}},
           RCE("div",{style:{flex:1,minWidth:0}},
-            RCE("div",{style:{fontSize:13.5,fontWeight:700,color:'#1f1f1d'}},"Auto-selection"),
-            RCE("div",{style:{fontSize:11.5,color:'#9c9b96',marginTop:2,lineHeight:1.45}},"When should Nova pick this playbook for a lead? Playbooks are evaluated top-to-bottom — the first whose rules match wins.")),
+            RCE("div",{style:{fontSize:13.5,fontWeight:700,color:'#1f1f1d'}},"Trigger"),
+            RCE("div",{style:{fontSize:11.5,color:'#9c9b96',marginTop:2,lineHeight:1.45}},"This playbook is auto-picked for a lead when these conditions match. Playbooks are evaluated top-to-bottom — the first match wins.")),
           RCE("div",{style:{display:'flex',alignItems:'center',gap:8,flexShrink:0}},
             RCE("span",{style:{fontSize:11.5,fontWeight:600,color:isFallback?'#1f1f1d':'#9c9b96'}},"Fallback"),
             RCE(LeadToggle,{on:isFallback,onToggle:()=>setIsFallback(v=>!v)}))),
@@ -29570,7 +29570,7 @@ function LeadPlaybookDetail({setActiveId,id}){
         RCE("div",{style:{flex:1,overflowY:'auto',padding:18}},
           (()=>{const s=viewVer.snapshot;const ag=(LEAD_AGENTS_FULL.find(a=>a.id===s.agent)||{}).name;const agL=ag?ag.replace('Nova — ',''):(s.agent||'—');const rows=[['Runs on agent',agL],['Qualification tone',s.tone||'—'],['Handoff rule',s.handoff||'—']];return RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:8,overflow:'hidden',marginBottom:16}},rows.map(([k,v],i)=>RCE("div",{key:k,style:{display:'flex',alignItems:'center',gap:12,padding:'9px 12px',borderBottom:i<rows.length-1?'1px solid #f5f3ee':'none'}},RCE("span",{style:{fontSize:11.5,color:'#9c9b96',width:120,flexShrink:0}},k),RCE("span",{style:{fontSize:12.5,color:'#1f1f1d',fontWeight:600}},v))));})(),
           (()=>{const s=viewVer.snapshot;const opLabel=o=>((PB_RULE_OPS.concat(PB_RULE_NUMOPS)).find(x=>x[0]===o)||[o,o])[1];const valLabel=r=>Array.isArray(r.value)?(r.value.join(' / ')||'—'):(String(r.value||'').trim()||'—');const rs=s.rules||[];return RCE("div",{style:{marginBottom:16}},
-            RCE("div",{style:{fontSize:11,fontWeight:700,letterSpacing:'.04em',color:'#9c9b96',marginBottom:5}},"AUTO-SELECTION"),
+            RCE("div",{style:{fontSize:11,fontWeight:700,letterSpacing:'.04em',color:'#9c9b96',marginBottom:5}},"TRIGGER"),
             s.isFallback
               ? RCE("div",{style:{fontSize:12.5,color:'#3f3f46',lineHeight:1.5,background:'#faf8f4',border:'1px solid #f0eeea',borderRadius:8,padding:10}},"Fallback — Nova runs this only when no other playbook's rules match.")
               : rs.length===0
