@@ -29386,7 +29386,7 @@ function LeadPlaybookDetail({setActiveId,id}){
   const [rules,setRules]=useState((base.rules||[]).map(r=>({...r})));
   const [ruleJoin,setRuleJoin]=useState(base.ruleJoin||'any');
   const [isFallback,setIsFallback]=useState(!!base.isFallback);
-  const addRule=()=>setRules(a=>[...a,{id:'r'+Date.now().toString(36),field:'source',op:'is',value:''}]);
+  const addRule=()=>setRules(a=>[...a,{id:'r'+Date.now().toString(36),field:'source',op:'any',value:[]}]);
   const setRule=(i,patch)=>setRules(a=>a.map((r,j)=>j===i?{...r,...patch}:r));
   const delRule=i=>setRules(a=>a.filter((_,j)=>j!==i));
   const [toast,setToast]=useState('');
@@ -29503,7 +29503,7 @@ function LeadPlaybookDetail({setActiveId,id}){
                     const f=pbRuleField(r.field);const isNum=f.type==='number';
                     return RCE("div",{key:r.id||i,style:{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}},
                       RCE("span",{style:{fontSize:11,color:'#9c9b96',width:28,flexShrink:0}},i===0?'If':(ruleJoin==='all'?'and':'or')),
-                      RCE("div",{style:{width:150}},sel(r.field,v=>{const nf=pbRuleField(v);setRule(i,{field:v,op:nf.type==='number'?'gte':'is',value:''});},PB_RULE_FIELDS.map(ff=>[ff.v,ff.l]))),
+                      RCE("div",{style:{width:150}},sel(r.field,v=>{const nf=pbRuleField(v);setRule(i,nf.type==='number'?{field:v,op:'gte',value:''}:{field:v,op:'any',value:[]});},PB_RULE_FIELDS.map(ff=>[ff.v,ff.l]))),
                       RCE("div",{style:{width:118}},sel(r.op,v=>setRule(i,{op:v,value:v==='any'?(Array.isArray(r.value)?r.value:[]):(Array.isArray(r.value)?'':r.value)}),(isNum?PB_RULE_NUMOPS:PB_RULE_OPS))),
                       RCE("div",{style:{flex:1,minWidth:150}},
                         isNum
