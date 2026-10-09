@@ -30549,10 +30549,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const kebabIcColor = a => a === 'Delete lead' ? LH.red : (a === 'Mark as lost' || a === 'Disqualify lead') ? LH.amber : LH.sub;
     const DISQ_PRESETS = ['Outside service area', 'Not the homeowner / decision-maker', 'No real project — just browsing', 'Budget too low', 'Duplicate lead', 'Bad / wrong contact info', 'Chose a competitor'];
     const submitDisqualify = () => { const r = (disqReason || '').trim(); if (!r) return; setDisqOpen(false); if (onDisqualify) onDisqualify(lead.id, r); else toast(lead.name + ' disqualified'); setDisqReason(''); };
+    const statusLabel = lead.col || lead.status || 'New';
+    const statusColor = COL_DOT[statusLabel] || LH.sub;
     return <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 12 }}>
         <div style={{ width: 40, height: 40, borderRadius: 11, background: LH.tint, color: LH.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>{initials}</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink, lineHeight: 1.3, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.name}</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: LH.ink, lineHeight: 1.3, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{lead.name}</div>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 999, background: statusColor + '1a', border: '1px solid ' + statusColor + '33', color: statusColor, fontSize: 11.5, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}><span style={{ width: 6, height: 6, borderRadius: 999, background: statusColor }} />{statusLabel}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: LH.sub, marginBottom: 14 }}><Ic name="map-pin" size={13} color={LH.muted} />{address}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'nowrap' }}>
