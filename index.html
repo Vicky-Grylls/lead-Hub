@@ -29601,7 +29601,9 @@ function LeadPlaybookDetail({setActiveId,id}){
 }
 /* ─── Playbook Settings ─── */
 function LeadPlaybookSettings({setActiveId}){
-  const playbooks=usePlaybooks();
+  const all=usePlaybooks();
+  // Fallback playbooks run last, so list them at the bottom.
+  const playbooks=[...all].sort((a,b)=>(a.isFallback?1:0)-(b.isFallback?1:0));
   const [def,setDef]=useState('Lead Qualification');
   const [branch,setBranch]=useState(true);
   const [perCampaign,setPerCampaign]=useState(true);
