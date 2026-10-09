@@ -29404,7 +29404,7 @@ function LeadPlaybookDetail({setActiveId,id}){
   const [namingVer,setNamingVer]=useState(null);   // version being renamed inline
   const [nameInput,setNameInput]=useState('');
   // Load a past version's snapshot back into the editor; the user then saves it as a new version.
-  const restoreVersion=h=>{const s=h&&h.snapshot;if(!s)return;setName(s.name||'');setInstructions(s.instructions||'');if(s.agent)setAgent(s.agent);if(s.tone)setTone(s.tone);if(s.handoff)setHandoff(s.handoff);setQs((s.qs||[]).map(q=>({...q})));if(s.rules)setRules(s.rules.map(r=>({...r})));if(s.ruleJoin)setRuleJoin(s.ruleJoin);setIsFallback(!!s.isFallback);setViewVer(null);};
+  const restoreVersion=h=>{const s=h&&h.snapshot;if(!s)return;setName(s.name||'');setInstructions(s.instructions||'');if(s.agent)setAgent(s.agent);if(s.tone)setTone(s.tone);if(s.handoff)setHandoff(s.handoff);setQs((s.qs||[]).map(q=>({...q})));if(s.rules)setRules(s.rules.map(r=>({...r})));if(s.ruleJoin)setRuleJoin(s.ruleJoin);setIsFallback(!!s.isFallback);setViewVer(null);showToast('v'+h.version+' restored — Save Changes to publish');};
   const startNameVer=h=>{setRowMenuVer(null);setNamingVer(h.version);setNameInput(h.label||'');};
   const saveNameVer=()=>{if(namingVer!=null){LeadPlaybookStore.renameVersion(id,namingVer,nameInput.trim());const fr=LeadPlaybookStore.get(id);if(fr)setHistState(fr.history);}setNamingVer(null);};
   const duplicateVer=h=>{setRowMenuVer(null);const p=LeadPlaybookStore.duplicateFrom(h.snapshot,base.name);setActiveId('modules/Leads/playbook/'+p.id);};
