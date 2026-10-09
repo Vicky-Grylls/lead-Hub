@@ -29400,6 +29400,7 @@ function LeadPlaybookDetail({setActiveId,id}){
   const [viewVer,setViewVer]=useState(null);
   const [rowMenuVer,setRowMenuVer]=useState(null); // history row whose kebab menu is open
   const [menuAnchor,setMenuAnchor]=useState(null); // fixed-position anchor for the portaled kebab menu
+  const [openMulti,setOpenMulti]=useState(null); // rule id whose multi-select value dropdown is open
   const [namingVer,setNamingVer]=useState(null);   // version being renamed inline
   const [nameInput,setNameInput]=useState('');
   // Load a past version's snapshot back into the editor; the user then saves it as a new version.
@@ -29508,7 +29509,9 @@ function LeadPlaybookDetail({setActiveId,id}){
                         isNum
                           ? RCE("input",{type:'number',value:r.value||'',onChange:e=>setRule(i,{value:e.target.value}),placeholder:'e.g. 70',style:{...leadInput,width:'100%'}})
                           : r.op==='any'
-                            ? RCE("div",{style:{display:'flex',flexWrap:'wrap',gap:6}},(f.opts||[]).map(o=>{const arr=Array.isArray(r.value)?r.value:[];const on=arr.indexOf(o)>-1;return RCE("button",{key:o,onClick:()=>setRule(i,{value:on?arr.filter(x=>x!==o):arr.concat(o)}),style:{height:28,padding:'0 10px',borderRadius:999,border:'1px solid '+(on?'#1f1f1d':'#e2ddd2'),background:on?'#1f1f1d':'#fff',color:on?'#fff':'#5b5b57',fontSize:11.5,fontWeight:600,cursor:'pointer'}},o);}))
+                            ? (()=>{const rid=r.id||('i'+i);const arr=Array.isArray(r.value)?r.value:[];return RCE("div",{style:{position:'relative',width:220,maxWidth:'100%'}},
+                                RCE("div",{onClick:()=>setOpenMulti(o=>o===rid?null:rid),style:{...leadInput,width:'100%',paddingRight:30,display:'flex',alignItems:'center',justifyContent:'space-between',gap:6,cursor:'pointer'}},RCE("span",{style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:arr.length?'#262626':'#9c9b96'}},arr.length?arr.join(', '):'Select…'),RCE(TiChevronDown,{size:14,color:"#9c9b96"})),
+                                openMulti===rid?RCE("div",{onMouseLeave:()=>setOpenMulti(null),style:{position:'absolute',top:38,left:0,zIndex:50,minWidth:'100%',background:'#fff',border:'1px solid #e5e5e5',borderRadius:8,boxShadow:'0 8px 24px rgba(0,0,0,.12)',padding:5,maxHeight:220,overflowY:'auto'}},(f.opts||[]).map(o=>{const on=arr.indexOf(o)>-1;return RCE("div",{key:o,onClick:()=>setRule(i,{value:on?arr.filter(x=>x!==o):arr.concat(o)}),style:{display:'flex',alignItems:'center',gap:9,padding:'7px 9px',borderRadius:6,cursor:'pointer',fontSize:12.5,color:'#262626'},onMouseEnter:e=>e.currentTarget.style.background='#f6f4ef',onMouseLeave:e=>e.currentTarget.style.background='transparent'},RCE("span",{style:{width:16,height:16,borderRadius:4,border:'1.5px solid '+(on?'#1f1f1d':'#c5c4bf'),background:on?'#1f1f1d':'#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},on?RCE(TiCheck,{size:11,color:"#fff"}):null),o);})):null);})()
                             : (f.opts
                                 ? sel(r.value||'',v=>setRule(i,{value:v}),[['','Select…']].concat(f.opts.map(o=>[o,o])),220)
                                 : RCE("input",{value:r.value||'',onChange:e=>setRule(i,{value:e.target.value}),placeholder:'Enter a value',style:{...leadInput,width:'100%'}}))),
