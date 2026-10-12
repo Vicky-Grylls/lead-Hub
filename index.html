@@ -34340,7 +34340,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [pickOpen, setPickOpen] = useState(false);
     const P = getPlaybook(pbId);
     const qs = P.qs || [];
-    const oc = playbookOutcome(P, pb);
+    // Once the lead is actually qualified/disqualified (its stage), the chip reflects that — not the live answer-completeness.
+    const leadQ = lead && (lead.col === 'Qualified' || lead.col === 'Converted' || lead.qualifiedUnder);
+    const leadDisq = lead && lead.disqualifyReason && lead.col === 'Disqualified';
+    const oc = leadDisq ? { state: 'disqualified', tone: 'red', label: 'Disqualified' } : leadQ ? { state: 'qualified', tone: 'green', label: 'Qualified' } : playbookOutcome(P, pb);
     const bin = oc.state === 'qualified' ? { label: 'Qualified', tone: 'green' } : oc.state === 'pending' ? { label: 'Not qualified yet', tone: 'muted' } : { label: oc.label, tone: oc.state === 'disqualified' ? 'red' : 'amber' };
     const binC = bin.tone === 'green' ? { bg: LH.greenBg, fg: LH.green, ic: 'check-circle' } : bin.tone === 'red' ? { bg: '#fdecec', fg: LH.red, ic: 'x-circle' } : bin.tone === 'amber' ? { bg: LH.amberBg, fg: LH.amber, ic: 'alert-circle' } : { bg: '#f1f0ec', fg: LH.sub, ic: 'circle-dashed' };
     const setQ = (k, v) => { setPb(s => ({ ...s, [k]: v })); if (setOrigin) setOrigin(o => ({ ...o, [k]: 'manual' })); };
