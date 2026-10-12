@@ -29288,7 +29288,7 @@ function LeadCustomFields({setActiveId}){
 /* ─── Playbooks: store + list + full editor (Settings, roofing-tuned) ─── */
 const PB_TONES=['Friendly and concise','Warm and consultative','Direct and efficient','Formal and professional'];
 const PB_HANDOFFS=['Route low-confidence replies to CSR','Always confirm with a human first','Never hand off — Nova only','Hand off after 3 attempts'];
-const PB_QTYPES=[['yesno','Yes / No'],['select','Single select'],['text','Short text'],['number','Number'],['date','Date']];
+const PB_QTYPES=[['yesno','Yes / No'],['select','Single select'],['multiselect','Multi-select'],['text','Short text'],['number','Number'],['date','Date']];
 // Common roofing questions offered as one-tap adds in the editor.
 const PB_SUGGEST=[
   {q:'What roof material do you have?',req:false,type:'select',options:['Asphalt shingle','Metal','Tile','Wood shake','Flat / TPO','Slate']},
@@ -29528,12 +29528,18 @@ function LeadPlaybookDetail({setActiveId,id}){
             RCE("span",{draggable:true,onDragStart:e=>{setDragI(i);e.dataTransfer.effectAllowed='move';},onDragEnd:()=>{setDragI(null);setOverI(null);},title:'Drag to reorder',style:{cursor:'grab',color:'#c4c2bd',fontSize:15,lineHeight:1,flexShrink:0,userSelect:'none',padding:'0 1px'}},"⠿"),
             RCE("span",{style:{width:22,height:22,borderRadius:999,background:'#f1f0ec',color:'#737373',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},i+1),
             RCE("input",{value:x.q,onChange:e=>setQ(i,{q:e.target.value}),style:{flex:1,fontSize:13,color:'#1f1f1d',border:'none',outline:'none',background:'transparent'}}),
-            sel(x.type||'text',v=>setQ(i,{type:v,options:v==='select'?(x.options||['Option 1','Option 2']):undefined}),PB_QTYPES,140),
+            sel(x.type||'text',v=>setQ(i,{type:v,options:(v==='select'||v==='multiselect')?((x.options&&x.options.length)?x.options:['Option 1','Option 2']):undefined}),PB_QTYPES,140),
             RCE("div",{style:{display:'flex',alignItems:'center',gap:7,flexShrink:0},title:x.req?'Required':'Optional'},
               RCE("span",{style:{fontSize:11,fontWeight:600,color:x.req?'#1f1f1d':'#9c9b96'}},"Required"),
               RCE(LeadToggle,{on:x.req,onToggle:()=>setQ(i,{req:!x.req})})),
             RCE("button",{onClick:()=>setQs(a=>a.filter((_,j)=>j!==i)),title:'Delete',className:"hover-subtle",style:leadIconBtn},RCE(TiTrash2,{size:15,color:"#b4b2ad"}))),
-          x.type==='select'?RCE("div",{style:{marginTop:8,marginLeft:32}},RCE("label",{style:{fontSize:10.5,fontWeight:600,color:'#9c9b96',display:'block',marginBottom:4}},"Options (comma-separated)"),RCE("input",{value:(x.options||[]).join(', '),onChange:e=>setQ(i,{options:e.target.value.split(',').map(s=>s.trim()).filter(Boolean)}),style:{...leadInput,width:'100%',height:30,fontSize:12}})):null))),
+          (x.type==='select'||x.type==='multiselect')?RCE("div",{style:{marginTop:8,marginLeft:32}},
+            RCE("label",{style:{fontSize:10.5,fontWeight:600,color:'#9c9b96',display:'block',marginBottom:6}},x.type==='multiselect'?'Options · lead can pick several':'Options · lead picks one'),
+            (x.options||[]).map((o,oi)=>RCE("div",{key:oi,style:{display:'flex',alignItems:'center',gap:7,marginBottom:6}},
+              RCE("span",{style:{width:14,height:14,borderRadius:x.type==='multiselect'?4:999,border:'1.5px solid #c5c4bf',flexShrink:0}}),
+              RCE("input",{value:o,onChange:e=>setQ(i,{options:(x.options||[]).map((v,j)=>j===oi?e.target.value:v)}),placeholder:'Option '+(oi+1),style:{...leadInput,height:30,fontSize:12,flex:1,maxWidth:320}}),
+              RCE("button",{onClick:()=>setQ(i,{options:(x.options||[]).filter((_,j)=>j!==oi)}),title:'Remove option',className:"hover-subtle",style:{...leadIconBtn,width:26,height:26}},RCE(TiTrash2,{size:13,color:"#b4b2ad"})))),
+            RCE("button",{onClick:()=>setQ(i,{options:[...(x.options||[]),'']}),style:{display:'inline-flex',alignItems:'center',gap:5,height:28,padding:'0 10px',borderRadius:7,border:'1px solid #e2ddd2',background:'#fff',fontSize:12,fontWeight:600,color:'#3f3f46',cursor:'pointer',marginTop:2}},"+ Add option")):null))),
       RCE("div",{style:{marginTop:14}},RCE("div",{style:{fontSize:11,fontWeight:700,letterSpacing:'.05em',color:'#9c9b96',marginBottom:8}},"QUICK-ADD ROOFING QUESTIONS"),
         RCE("div",{style:{display:'flex',gap:8,flexWrap:'wrap'}},PB_SUGGEST.map((s,k)=>RCE("button",{key:k,onClick:()=>addQ(s),style:{height:30,padding:'0 11px',borderRadius:999,border:'1px solid #e2ddd2',background:'#fff',fontSize:12,fontWeight:500,color:'#5b5b57',cursor:'pointer'}},"+ "+s.q)))),
       isNew?null:RCE("div",{style:{marginTop:20,border:'1px solid #e8e7e2',borderRadius:10,background:'#fff',overflow:'hidden'}},
@@ -29587,7 +29593,7 @@ function LeadPlaybookDetail({setActiveId,id}){
           (viewVer.snapshot.qs||[]).length===0?RCE("div",{style:{fontSize:12.5,color:'#9c9b96',padding:'8px 0'}},"No questions in this version."):
           RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:10,overflow:'hidden'}},(viewVer.snapshot.qs||[]).map((x,qi)=>RCE("div",{key:qi,style:{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',borderBottom:qi<(viewVer.snapshot.qs||[]).length-1?'1px solid #f0eeea':'none'}},
             RCE("span",{style:{width:22,height:22,borderRadius:999,background:'#f1f0ec',color:'#737373',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,alignSelf:'flex-start',marginTop:1}},qi+1),
-            RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:12.5,color:'#1f1f1d'}},x.q),(x.type==='select'&&x.options&&x.options.length)?RCE("div",{style:{fontSize:11,color:'#9c9b96',marginTop:2,lineHeight:1.4}},x.options.join(' · ')):null),
+            RCE("div",{style:{flex:1,minWidth:0}},RCE("div",{style:{fontSize:12.5,color:'#1f1f1d'}},x.q),((x.type==='select'||x.type==='multiselect')&&x.options&&x.options.length)?RCE("div",{style:{fontSize:11,color:'#9c9b96',marginTop:2,lineHeight:1.4}},x.options.join(' · ')):null),
             RCE("span",{style:{fontSize:10.5,color:'#9c9b96',flexShrink:0}},(PB_QTYPES.find(t=>t[0]===(x.type||'text'))||['','Text'])[1]),
             RCE("span",{style:{fontSize:10,fontWeight:700,color:x.req?'#1f1f1d':'#c4c2bd',flexShrink:0}},x.req?'REQUIRED':'optional'))))),
         RCE("div",{style:{flexShrink:0,borderTop:'1px solid #f0eeea',padding:'12px 16px',background:'#fff'}},
