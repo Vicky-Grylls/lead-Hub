@@ -29365,6 +29365,7 @@ const LeadPlaybookStore={
   renameVersion(id,version,label){this.items=this.items.map(p=>p.id!==id?p:{...p,history:(p.history||[]).map(h=>h.version===version?{...h,label:label}:h)});this.emit();},
   duplicateFrom(s,fallbackName){return this.create({name:((s&&s.name)||fallbackName||'Playbook')+' (copy)',instructions:(s&&s.instructions)||'',agent:(s&&s.agent)||'csr',tone:(s&&s.tone)||'Friendly and concise',handoff:(s&&s.handoff)||'Route low-confidence replies to CSR',qs:((s&&s.qs)||[]).map(q=>({...q})),rules:((s&&s.rules)||[]).map(r=>({...r})),ruleJoin:(s&&s.ruleJoin)||'any',isFallback:!!(s&&s.isFallback)});}
 };
+try{window.LeadPlaybookStore=LeadPlaybookStore;}catch(e){}
 const usePlaybooks=()=>{const [items,setItems]=useState(LeadPlaybookStore.items);useEffect(()=>LeadPlaybookStore.sub(setItems),[]);return items;};
 function LeadPlaybookDetail({setActiveId,id}){
   const isNew=id==='new';
@@ -34271,64 +34272,90 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { k: 'budget', n: 'Q6', label: 'Budget confirmed?', opts: ['Yes', 'No / unsure'] }
     ], outcome: retailOutcome }
   ];
-  const getPlaybook = id => LEAD_PLAYBOOKS.find(p => p.id === id) || LEAD_PLAYBOOKS[0];
-  const leadOutcome = (id, pb) => getPlaybook(id).outcome(pb);
-  // Current published version per playbook (bumped when the playbook is edited). Each qualified lead records the version it was qualified under.
-  const PLAYBOOK_VERSION = { shield: 7, storm: 3, retail: 4 };
-  const pbVersion = id => PLAYBOOK_VERSION[id] || 1;
-  // Auto-select a playbook from the lead's own signals (source, service interest, storm / claim cues) — not a human picking from a list.
-  const autoPlaybookForLead = lead => {
-    const t = (((lead && lead.note) || '') + ' ' + ((lead && lead.src) || '')).toLowerCase();
-    const storm = /storm|hail|wind|tornado/.test(t);
-    const claim = /insuranc|claim|adjuster|approved/.test(t);
-    if (storm || (claim && /roof|leak|shingle/.test(t))) return 'storm';
-    if (/gutter|siding|window|estimate|quote|replacement|skylight|paint|compar/.test(t)) return 'retail';
-    return 'shield';
+  // ── Live bridge to the configured playbooks (Lead Settings → Playbook). Reads the shared store so what you configure renders on the lead. ──
+  const cfgPlaybooks = () => { try { return (window.LeadPlaybookStore && window.LeadPlaybookStore.items) || []; } catch (e) { return []; } };
+  const getPlaybook = id => { const items = cfgPlaybooks(); return items.find(p => p.id === id) || items[0] || { id: '', name: 'Playbook', qs: [] }; };
+  const pbVersion = id => { const p = cfgPlaybooks().find(x => x.id === id); return (p && p.version) || 1; };
+  // Comparable lead-field values for trigger-rule evaluation.
+  const leadFieldValue = (lead, field) => {
+    const note = ((lead && lead.note) || '').toLowerCase(); const src = (lead && lead.src) || '';
+    switch (field) {
+      case 'source': return src;
+      case 'damage': return /hail/.test(note) ? 'Hail' : /storm|wind/.test(note) ? 'Storm' : /leak/.test(note) ? 'Leak' : /age|wear|old/.test(note) ? 'Wear / age' : '';
+      case 'claim': return /claim filed|approved/.test(note) ? 'Claim filed' : /adjuster/.test(note) ? 'Adjuster scheduled' : /insuranc|claim/.test(note) ? 'Considering' : 'No claim';
+      case 'property': return 'Residential';
+      case 'intent': return /asap|urgent|emergenc/.test(note) ? 'Emergency' : /compar|quote|estimate/.test(note) ? 'Estimate' : /research/.test(note) ? 'Researching' : '';
+      case 'service': return (lead && lead.note) || '';
+      case 'score': return (lead && lead.score) || 0;
+    }
+    return '';
   };
-  const autoReasonForLead = lead => {
-    const t = (((lead && lead.note) || '') + ' ' + ((lead && lead.src) || '')).toLowerCase();
-    if (/hail/.test(t)) return 'hail damage signal';
-    if (/storm|wind/.test(t)) return 'storm damage signal';
-    if (/insuranc|claim|adjuster|approved/.test(t)) return 'insurance claim signal';
-    if (/gutter|siding|window|paint/.test(t)) return 'trade in the service interest';
-    if (/compar|quote|estimate/.test(t)) return 'estimate request';
-    return 'source + service interest';
+  const ruleMatches = (r, lead) => {
+    const fv = leadFieldValue(lead, r.field); const v = r.value; const low = String(fv).toLowerCase();
+    if (r.op === 'any') return Array.isArray(v) && v.some(x => low === String(x).toLowerCase() || (r.field === 'service' && low.includes(String(x).toLowerCase())));
+    if (r.op === 'is') return low === String(v).toLowerCase();
+    if (r.op === 'not') return low !== String(v).toLowerCase();
+    if (r.op === 'contains') return low.includes(String(v).toLowerCase());
+    if (r.op === 'gte') return Number(fv) >= Number(v);
+    if (r.op === 'lte') return Number(fv) <= Number(v);
+    return false;
   };
-  // Pre-fill answers from the lead record and remember where each came from, so the CSR corrects rather than re-keys.
+  const playbookMatches = (p, lead) => { const rs = p.rules || []; if (p.isFallback || !rs.length) return false; return (p.ruleJoin === 'all') ? rs.every(r => ruleMatches(r, lead)) : rs.some(r => ruleMatches(r, lead)); };
+  // Auto-select the playbook by evaluating each one's trigger rules against the lead (top-to-bottom, first match wins; else the fallback).
+  const autoPlaybookForLead = lead => { const items = cfgPlaybooks(); const m = items.find(p => playbookMatches(p, lead)); if (m) return m.id; const fb = items.find(p => p.isFallback); if (fb) return fb.id; return items[0] && items[0].id; };
+  const autoReasonForLead = lead => { const items = cfgPlaybooks(); const p = items.find(x => playbookMatches(x, lead)); if (p) { const r = (p.rules || []).find(rr => ruleMatches(rr, lead)); if (r) { const f = ({ source: 'lead source', damage: 'damage type', claim: 'insurance claim', property: 'property type', intent: 'intent', service: 'service interest', score: 'lead score' })[r.field] || r.field; return 'matched ' + f; } } return 'no rule matched — fallback'; };
+  // Generic outcome: qualified once every required question is answered.
+  const playbookOutcome = (p, ans) => {
+    const qs = (p && p.qs) || []; const a = ans || {}; const filled = i => { const v = a['q' + i]; return v != null && (Array.isArray(v) ? v.length > 0 : String(v).trim() !== ''); };
+    const answered = qs.some((q, i) => filled(i)); const reqMissing = qs.map((q, i) => (q.req && !filled(i)) ? i : -1).filter(i => i >= 0);
+    if (!answered) return { state: 'pending', tone: 'muted', label: 'Not qualified yet', detail: 'Answer the questions below to qualify.' };
+    if (reqMissing.length) return { state: 'hold', tone: 'amber', label: 'Not qualified — ' + reqMissing.length + ' required left', detail: 'Complete the required questions to qualify.' };
+    return { state: 'qualified', tone: 'green', label: 'Qualified', detail: 'All required questions answered.' };
+  };
+  const leadOutcome = (id, ans) => playbookOutcome(getPlaybook(id), ans || {});
+  // Pre-fill answers from the lead record (best-effort keyword match per configured question) and remember provenance.
   const deriveLeadAnswers = (lead, pbId) => {
-    const values = {}, origin = {};
-    if (!lead) return { values, origin };
-    const note = (lead.note || '').toLowerCase();
-    const put = (k, v, from) => { if (v) { values[k] = v; origin[k] = from; } };
-    put('q1', 'Within service territory', 'source');
-    put('q2', 'Homeowner', 'source');
-    put('q3', 'Residential', 'assumed');
-    const proj = /gutter/.test(note) ? 'Gutters' : /siding/.test(note) ? 'Siding' : /window/.test(note) ? 'Windows' : /paint/.test(note) ? 'Painting' : /roof|shingle|leak|storm|hail|skylight|inspection|replacement/.test(note) ? 'Roofing' : '';
-    put('q4', proj, 'description');
-    const cause = /hail/.test(note) ? 'Hail Damage' : /storm|wind|leak/.test(note) ? 'Storm damage' : /age|old|wear/.test(note) ? 'General wear and age' : /inspection/.test(note) ? 'Proactive inspection' : '';
-    if (pbId === 'shield') put('q6', cause, 'description');
-    if (pbId === 'storm') put('sev', /leak|emergency/.test(note) ? 'Active leak / emergency' : 'Visible damage', 'description');
-    const hasClaim = /insuranc|claim|adjuster|approved/.test(note);
-    put('q7', /claim filed|approved/.test(note) ? 'Claim Filed' : /adjuster/.test(note) ? 'Adjuster Scheduled' : hasClaim ? 'Pre-Claim Inspection' : 'No Claim', hasClaim ? 'description' : 'assumed');
-    if (pbId === 'retail') put('timeline', /asap|urgent|emergency/.test(note) ? 'ASAP' : /compar|quote/.test(note) ? 'Just researching' : '1–3 months', 'description');
+    const values = {}, origin = {}; if (!lead) return { values, origin };
+    const p = getPlaybook(pbId); const note = (lead.note || '').toLowerCase(); const qs = p.qs || [];
+    const pick = (opts, cands) => { for (const c of cands) { const m = (opts || []).find(o => o.toLowerCase().includes(c)); if (m) return m; } return ''; };
+    qs.forEach((q, i) => {
+      const t = (q.q || '').toLowerCase(); const yn = q.type === 'yesno'; const opts = q.options || []; let val = '', from = '';
+      if (/territor|service area/.test(t)) { val = yn ? 'Yes' : pick(opts, ['within', 'yes']); from = 'source'; }
+      else if (/homeowner|decision|authorit|owner/.test(t)) { val = yn ? 'Yes' : pick(opts, ['homeowner', 'owner', 'yes']); from = 'source'; }
+      else if (/property type/.test(t)) { val = yn ? '' : pick(opts, ['residential']); from = 'assumed'; }
+      else if (/project|trade/.test(t)) { const tr = /gutter/.test(note) ? 'gutter' : /siding/.test(note) ? 'siding' : /window/.test(note) ? 'window' : /paint/.test(note) ? 'paint' : /roof|shingle|leak|storm|hail/.test(note) ? 'roof' : ''; if (tr) { val = yn ? '' : pick(opts, [tr]); from = 'description'; } }
+      else if (/issue|damage|problem|experienc/.test(t)) { if (yn) { val = /storm|hail|leak|damage/.test(note) ? 'Yes' : ''; } else { const d = /hail/.test(note) ? 'hail' : /storm/.test(note) ? 'storm' : /leak/.test(note) ? 'leak' : /shingle/.test(note) ? 'shingle' : /age|wear/.test(note) ? 'age' : ''; val = d ? pick(opts, [d]) : ''; } from = 'description'; }
+      else if (/active leak|recent storm/.test(t) && yn) { val = /leak|storm|active/.test(note) ? 'Yes' : ''; from = 'description'; }
+      else if (/claim|insuranc|adjuster/.test(t)) { const hc = /insuranc|claim|adjuster|approved/.test(note); if (yn) { val = hc ? 'Yes' : ''; } else { val = hc ? pick(opts, ['claim', 'considering', 'adjuster', 'filed']) : pick(opts, ['no claim', 'no']); } from = hc ? 'description' : 'assumed'; }
+      else if (/timeframe|timeline|how soon|urgenc/.test(t) && !yn) { const u = /asap|urgent|emergenc/.test(note) ? 'asap' : /compar|quote|research/.test(note) ? 'research' : 'month'; val = pick(opts, [u, 'asap', '1']); from = 'description'; }
+      else if (/callback|phone|best time|contact number/.test(t) && q.type === 'text') { val = lead.phone || ''; from = 'source'; }
+      if (val) { values['q' + i] = val; origin['q' + i] = from; }
+    });
     return { values, origin };
   };
   const ORIGIN_LABEL = (o, lead) => o === 'source' ? ('from ' + ((lead && lead.src) || 'source')) : o === 'description' ? 'from description' : o === 'assumed' ? 'assumed' : o === 'manual' ? 'manual entry' : '';
-  const PB_BLANK = { q1: 'Within service territory', q2: '', q3: '', q4: '', roofType: '', sidingType: '', q6: '', q6other: '', q7: '', q8: '', sev: '', safe: '', timeline: '', budget: '', owner: '', when: '' };
+  const PB_BLANK = {};
   // Shared qualification panel: auto-selected playbook → lead-prefilled questions (with provenance) → live outcome banner.
   function QualifyPlaybook({ pbId, setPbId, pb, setPb, dense, origin, setOrigin, lead, onPickPlaybook }) {
     const [pickOpen, setPickOpen] = useState(false);
     const P = getPlaybook(pbId);
-    const oc = P.outcome(pb);
-    // Playbook outcome is binary: qualified / not_qualified. Branching happens via the answers below.
-    const bin = oc.state === 'qualified' ? { label: 'Qualified', tone: 'green' } : oc.state === 'pending' ? { label: 'Not qualified yet', tone: 'muted' } : { label: 'Not qualified', tone: oc.state === 'disqualified' ? 'red' : 'amber' };
+    const qs = P.qs || [];
+    const oc = playbookOutcome(P, pb);
+    const bin = oc.state === 'qualified' ? { label: 'Qualified', tone: 'green' } : oc.state === 'pending' ? { label: 'Not qualified yet', tone: 'muted' } : { label: oc.label, tone: oc.state === 'disqualified' ? 'red' : 'amber' };
     const binC = bin.tone === 'green' ? { bg: LH.greenBg, fg: LH.green, ic: 'check-circle' } : bin.tone === 'red' ? { bg: '#fdecec', fg: LH.red, ic: 'x-circle' } : bin.tone === 'amber' ? { bg: LH.amberBg, fg: LH.amber, ic: 'alert-circle' } : { bg: '#f1f0ec', fg: LH.sub, ic: 'circle-dashed' };
     const setQ = (k, v) => { setPb(s => ({ ...s, [k]: v })); if (setOrigin) setOrigin(o => ({ ...o, [k]: 'manual' })); };
     const lbl = { fontSize: dense ? 11 : 12, fontWeight: 600, color: LH.body, margin: '0 0 5px', display: 'block' };
     const inp = { width: '100%', height: dense ? 32 : 36, borderRadius: 7, border: '1px solid ' + LH.border, padding: '0 9px', fontSize: 12.5, color: LH.ink, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
-    // Provenance chip rendered under each pre-filled answer (manual answers show nothing until edited).
     const prov = k => { const o = origin && origin[k]; if (!o) return null; const manual = o === 'manual'; return <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 5, fontSize: 10, fontWeight: 600, color: manual ? LH.sub : LH.primary, background: manual ? '#f1f0ec' : LH.tint, borderRadius: 999, padding: '2px 7px' }}><Ic name={manual ? 'pencil' : 'sparkles'} size={10} color={manual ? LH.sub : LH.primary} />{ORIGIN_LABEL(o, lead)}</div>; };
     const prefilled = origin ? Object.keys(origin).filter(k => origin[k] && origin[k] !== 'manual').length : 0;
+    const field = (q, i) => { const k = 'q' + i; const val = pb[k];
+      if (q.type === 'yesno') return <Dropdown value={val || ''} placeholder="Select…" height={dense ? 32 : 36} options={['Yes', 'No'].map(o => ({ value: o, label: o }))} onChange={v => setQ(k, v)} />;
+      if (q.type === 'select') return <Dropdown value={val || ''} placeholder="Select…" height={dense ? 32 : 36} options={(q.options || []).map(o => ({ value: o, label: o }))} onChange={v => setQ(k, v)} />;
+      if (q.type === 'multiselect') return <Dropdown multi value={val || []} placeholder="Select…" height={dense ? 32 : 36} options={(q.options || []).map(o => ({ value: o, label: o }))} onChange={v => setQ(k, v)} />;
+      if (q.type === 'number') return <input type="number" value={val || ''} onChange={e => setQ(k, e.target.value)} placeholder="Enter a number" style={inp} />;
+      if (q.type === 'date') return <input type="date" value={val || ''} onChange={e => setQ(k, e.target.value)} style={{ ...inp, cursor: 'pointer' }} />;
+      return <input value={val || ''} onChange={e => setQ(k, e.target.value)} placeholder="Type an answer…" style={inp} />;
+    };
     return <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <div style={{ width: 26, height: 26, borderRadius: 7, background: LH.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="book-open" size={14} color={LH.primary} /></div>
@@ -34336,29 +34363,25 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.05em', color: LH.primary, background: LH.tint, borderRadius: 999, padding: '1px 6px', flexShrink: 0 }}>v{pbVersion(pbId)}</span>
           {onPickPlaybook && <div style={{ position: 'relative', flexShrink: 0, display: 'flex' }}>
             <button onClick={() => setPickOpen(o => !o)} title="Change playbook" style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: pickOpen ? LH.tint : 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => { if (!pickOpen) e.currentTarget.style.background = '#f1f0ec'; }} onMouseLeave={e => { if (!pickOpen) e.currentTarget.style.background = 'transparent'; }}><Ic name="pencil" size={12} color={LH.sub} /></button>
-            {pickOpen && <div onMouseLeave={() => setPickOpen(false)} style={{ position: 'absolute', top: 26, left: 0, zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.16)', padding: 5, width: 240 }}>{LEAD_PLAYBOOKS.map(p => <div key={p.id} onClick={() => { setPickOpen(false); (onPickPlaybook || setPbId)(p.id); }} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 10px', borderRadius: 7, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={p.id === pbId ? 'check-circle' : 'book-open'} size={14} color={p.id === pbId ? LH.primary : LH.sub} style={{ marginTop: 1, flexShrink: 0 }} /><div style={{ minWidth: 0 }}><div style={{ fontSize: 12, fontWeight: 600, color: LH.ink }}>{p.name}</div><div style={{ fontSize: 10.5, color: LH.muted, lineHeight: 1.35 }}>{p.desc}</div></div></div>)}</div>}
+            {pickOpen && <div onMouseLeave={() => setPickOpen(false)} style={{ position: 'absolute', top: 26, left: 0, zIndex: 60, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.16)', padding: 5, width: 240, maxHeight: 280, overflowY: 'auto' }}>{cfgPlaybooks().map(p => <div key={p.id} onClick={() => { setPickOpen(false); (onPickPlaybook || setPbId)(p.id); }} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 10px', borderRadius: 7, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={p.id === pbId ? 'check-circle' : 'book-open'} size={14} color={p.id === pbId ? LH.primary : LH.sub} style={{ marginTop: 1, flexShrink: 0 }} /><div style={{ minWidth: 0 }}><div style={{ fontSize: 12, fontWeight: 600, color: LH.ink }}>{p.name}{p.isFallback ? ' · Fallback' : ''}</div><div style={{ fontSize: 10.5, color: LH.muted, lineHeight: 1.35 }}>{p.tag || ((p.qs || []).length + ' questions')}</div></div></div>)}</div>}
           </div>}
         </div><div style={{ fontSize: 11, color: LH.muted }}>{lead ? ('Auto-selected · ' + autoReasonForLead(lead)) : 'Qualification playbook'}</div></div>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 11px', borderRadius: 999, background: binC.bg, color: binC.fg, fontSize: 12, fontWeight: 700, flexShrink: 0 }}><Ic name={binC.ic} size={13} color={binC.fg} />{bin.label}</span>
       </div>
       {prefilled > 0 && <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 11, color: LH.sub }}><Ic name="sparkles" size={12} color={LH.primary} style={{ flexShrink: 0 }} /><span><b style={{ color: LH.ink }}>{prefilled}</b> answer{prefilled > 1 ? 's' : ''} pre-filled — correct any that are wrong.</span></div>}
-      {P.questions.map(qq => <div key={qq.k} style={{ marginBottom: 10 }}>
-        <label style={{ ...lbl, display: 'flex', gap: 5 }}><span style={{ color: LH.muted, fontWeight: 700 }}>{qq.n}</span>{qq.label}</label>
-        <Dropdown value={pb[qq.k] || ''} placeholder="Select…" height={dense ? 32 : 36} options={qq.opts.map(o => ({ value: o, label: o }))} onChange={v => setQ(qq.k, v)} />
-        {prov(qq.k)}
-        {qq.k === 'q2' && pb.q2 === 'Tenant' && <div style={{ marginTop: 8 }}><label style={lbl}>Owner name</label><input value={pb.owner || ''} onChange={e => setQ('owner', e.target.value)} placeholder="Homeowner name" style={inp} /></div>}
-        {pbId === 'shield' && qq.k === 'q4' && pb.q4 === 'Roofing' && <div style={{ marginTop: 8 }}><label style={lbl}>Roof type</label><Dropdown value={pb.roofType || ''} placeholder="Select…" height={dense ? 32 : 36} options={['Asphalt', 'Metal', 'Shingle', 'TPO', 'EPDM', 'PVC'].map(o => ({ value: o, label: o }))} onChange={v => setQ('roofType', v)} /></div>}
-        {pbId === 'shield' && qq.k === 'q4' && pb.q4 === 'Siding' && <div style={{ marginTop: 8 }}><label style={lbl}>Siding type</label><Dropdown value={pb.sidingType || ''} placeholder="Select…" height={dense ? 32 : 36} options={['James Hardie', 'LP SmartSide', 'Vinyl'].map(o => ({ value: o, label: o }))} onChange={v => setQ('sidingType', v)} /></div>}
-        {pbId === 'shield' && qq.k === 'q6' && pb.q6 === 'Other' && <div style={{ marginTop: 8 }}><label style={lbl}>Cause of damage</label><input value={pb.q6other || ''} onChange={e => setQ('q6other', e.target.value)} placeholder="Describe the cause" style={inp} /></div>}
-        {pbId === 'shield' && qq.k === 'q8' && pb.q8 && <div style={{ marginTop: 8 }}><label style={lbl}>Preferred date &amp; time</label><input type="datetime-local" value={pb.when || ''} onChange={e => setQ('when', e.target.value)} style={{ ...inp, cursor: 'pointer' }} /></div>}
+      {qs.length === 0 && <div style={{ fontSize: 12, color: LH.muted, padding: '8px 0' }}>This playbook has no questions yet. Add some in Lead Settings → Playbook.</div>}
+      {qs.map((q, i) => <div key={i} style={{ marginBottom: 10 }}>
+        <label style={{ ...lbl, display: 'flex', gap: 5 }}><span style={{ color: LH.muted, fontWeight: 700 }}>Q{i + 1}</span>{q.q}{q.req && <span style={{ color: LH.red }}>*</span>}</label>
+        {field(q, i)}
+        {prov('q' + i)}
       </div>)}
     </div>;
   }
   function NewLeadForm({ sources, assignees, onClose, onToast, onCreate, prefill }) {
     const pf = prefill || {};
     const [f, setF] = useState({ name: pf.name || '', email: pf.email || '', phone: pf.phone || '', src: pf.src || (sources && sources[0]) || 'Manual', assignee: (assignees && assignees[0]) || '', note: '', stage: 'New', notes: '', address: '', value: '', custom: {} });
-    const [pb, setPb] = useState({ q1: 'Within service territory', q2: '', q3: '', q4: '', roofType: '', sidingType: '', q6: '', q6other: '', q7: '', q8: '', owner: '', when: '' });
-    const [pbId, setPbId] = useState('shield');
+    const [pb, setPb] = useState({});
+    const [pbId, setPbId] = useState(() => { const items = cfgPlaybooks(); const fb = items.find(p => p.isFallback); return (fb || items[0] || {}).id || ''; });
     const [shown, setShown] = useState(false);
     const [mapOpen, setMapOpen] = useState(false);
     const [pbOpen, setPbOpen] = useState(false);
@@ -35230,8 +35253,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [toast, setToast] = useState(null);
     const CALL_NO = '(+1) 206 234 2124';
     const [lf, setLf] = useState({ name: '', phone: CALL_NO, email: '', service: '' });
-    const [pb, setPb] = useState({ q1: 'Within service territory', q2: '', q3: '', q4: '', roofType: '', sidingType: '', q6: '', q6other: '', q7: '', q8: '', owner: '', when: '' });
-    const [pbId, setPbId] = useState('shield');
+    const [pb, setPb] = useState({});
+    const [pbId, setPbId] = useState('');
+    const [callNote, setCallNote] = useState(''); // accumulates signals revealed on the call; drives auto-select + prefill
+    useEffect(() => { const ld = { note: callNote, src: 'Phone', phone: lf.phone }; const pid = autoPlaybookForLead(ld); if (pid) setPbId(pid); const d = deriveLeadAnswers(ld, pid); setPb(d.values); }, [callNote]);
     const [autofill, setAutofill] = useState('idle'); // idle | live | done — Nova fills the playbook from the call
     const [tx, setTx] = useState([]); // live transcript lines { who, text }
     const txRef = useRef(null);
@@ -35245,12 +35270,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         { who: 'Nova', text: 'Thanks for calling Shield Roofing — may I take your name?' },
         { who: 'Caller', text: "Hi, this is Marcus Reed.", apply: () => setLf(s => ({ ...s, name: 'Marcus Reed', email: s.email || 'marcus.reed@gmail.com' })) },
         { who: 'Nova', text: "Are you the homeowner, and is this a residential property?" },
-        { who: 'Caller', text: 'Yes, I own the house.', apply: () => setPb(p => ({ ...p, q2: 'Homeowner', q3: 'Residential' })) },
+        { who: 'Caller', text: 'Yes, I own the house.', apply: () => setCallNote(n => (n + ' homeowner residential').trim()) },
         { who: 'Nova', text: 'What can we help you with today?' },
-        { who: 'Caller', text: 'My roof — some shingles came off in the last storm.', apply: () => { setPb(p => ({ ...p, q4: 'Roofing', q6: 'Storm damage' })); setLf(s => ({ ...s, service: s.service || 'Roof inspection' })); } },
+        { who: 'Caller', text: 'My roof — some shingles came off in the last storm.', apply: () => { setCallNote(n => (n + ' roof shingles storm damage').trim()); setLf(s => ({ ...s, service: s.service || 'Roof inspection' })); } },
         { who: 'Nova', text: 'Have you filed an insurance claim?' },
-        { who: 'Caller', text: "Yes, the claim's already filed.", apply: () => setPb(p => ({ ...p, q7: 'Claim Filed' })) },
-        { who: 'Nova', text: "Great — I'll book you a free inspection.", apply: () => setPb(p => ({ ...p, q8: 'Inspection' })) }
+        { who: 'Caller', text: "Yes, the claim's already filed.", apply: () => setCallNote(n => (n + ' insurance claim filed').trim()) },
+        { who: 'Nova', text: "Great — I'll book you a free inspection.", apply: () => setCallNote(n => (n + ' inspection').trim()) }
       ];
       let i = 0; const timers = [];
       const run = () => { if (i >= steps.length) { setAutofill('done'); return; } const st = steps[i++]; setTx(t => [...t, { who: st.who, text: st.text }]); if (st.apply) st.apply(); timers.push(setTimeout(run, 1500)); };
