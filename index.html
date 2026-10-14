@@ -30766,7 +30766,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { k: 'W', n: 'Website Booking', s: '24 leads this month · 8 this week', st: 'Live', hook: 'hooks.zuper.com/lead/website/hill-roofing', last: '3h ago' },
       { k: 'I', n: 'Instant Estimator', s: 'First-run lead gen estimator, shown contextually.', st: 'Not connected' }
     ] },
+    { g: 'Lead Routing', items: [
+      { k: 'AP', n: 'ActiveProspect', s: 'LeadConduit routing — leads from flows like Blue Fire or Homebuddy.', st: 'Not connected' }
+    ] },
     { g: 'Custom', items: [
+      { k: 'E', n: 'Email to Lead', s: 'Turn lead emails from Houzz, Yelp, your website into leads.', st: 'Not connected' },
       { k: 'C', n: 'Custom webhook', s: 'Bring in any source with a mapped webhook payload.', st: 'Not connected' }
     ] }
   ];
@@ -34733,6 +34737,232 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
     </ChOverlay>;
   }
+  // ── Shared channel pieces (stepper, webhook box) reused by Thumbtack / Custom webhook / ActiveProspect / Email to Lead ──
+  function ChStepper({ steps, current }) {
+    return <div style={{ display: 'flex', alignItems: 'center', marginBottom: 18 }}>
+      {steps.map((s, i) => { const n = i + 1; const done = current > n; const active = current === n; const last = i === steps.length - 1;
+        return <React.Fragment key={s}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
+            <span style={{ width: 24, height: 24, borderRadius: 999, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, background: done ? LH.green : active ? LH.ink : '#fff', color: done || active ? '#fff' : LH.muted, border: done || active ? 'none' : '1.5px solid ' + LH.border }}>{done ? <Ic name="check" size={13} color="#fff" /> : n}</span>
+            <span style={{ fontSize: 11.5, fontWeight: active ? 700 : 600, color: active ? LH.ink : done ? LH.body : LH.muted, whiteSpace: 'nowrap' }}>{s}</span>
+          </div>
+          {!last && <div style={{ flex: 1, height: 2, borderRadius: 2, margin: '0 9px', background: done ? LH.green : LH.border, minWidth: 14 }} />}
+        </React.Fragment>; })}
+    </div>;
+  }
+  function ChWebhookBox({ url, onToast }) {
+    return <div><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}><span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: LH.muted }}>YOUR WEBHOOK URL</span><span style={{ fontSize: 10.5, color: LH.muted }}>Method: POST</span></div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}><div style={{ flex: 1, minWidth: 0, fontSize: 11.5, color: LH.body, background: LH.bg, border: '1px solid ' + LH.border, borderRadius: 8, padding: '9px 11px', fontFamily: 'ui-monospace,monospace', wordBreak: 'break-all', lineHeight: 1.4 }}>{url}</div><button onClick={() => onToast('Webhook URL copied')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer', flexShrink: 0 }}><Ic name="copy" size={13} color={LH.sub} />Copy</button></div></div>;
+  }
+
+  // ── Thumbtack: self-serve webhook (copy URL → add in Thumbtack → Activate). No email, no test-lead wait. ──
+  const THUMBTACK_WEBHOOK = 'https://development.zuperpro.com/api/v1/webhooks/leads/9b41e2c0-55d1-4e2a-9f7b-2a1c6e8d3f04/THUMBTACK?token=3b9f0c7a2e1d8f4b6c0a9e5d7f2b1c8a4e6d0f3b9c2a7e1d5f8b4c0a6e9d2f7b';
+  function ThumbtackConnectModal({ onClose, onActivate, onToast }) {
+    const [step, setStep] = useState(1);
+    const steps = ['Copy URL', 'Add in Thumbtack'];
+    const TT_STEPS = ['Sign in to Thumbtack, click your profile icon at the top right, then click Integrations.', 'Scroll to “Don’t see an app you use?” and click Manage webhooks.', 'Click Create webhook.', 'In “Send information to this endpoint URL”, paste your webhook URL.', 'Leave Authorization type set to None.', 'In “Select a profile to source information from”, choose your business.', 'Under “Select the information you want to receive”, tick Lead details only.', 'Check that Status is Enabled, then click Create webhook.'];
+    if (step === 1) return <ChOverlay title="Connect Thumbtack Leads" sub="Step 1 of 2" width={560} onClose={onClose}
+      foot={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" onClick={() => setStep(2)}>Continue</Btn></>}>
+      <ChStepper steps={steps} current={1} />
+      <div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.5, marginBottom: 12 }}>This is your Thumbtack webhook URL. Copy it now; you’ll paste it into Thumbtack in the next step.</div>
+      <ChWebhookBox url={THUMBTACK_WEBHOOK} onToast={onToast} />
+      <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 8 }}>Use this same URL for every Thumbtack business you add. You can find it again in the Thumbtack Leads panel.</div>
+    </ChOverlay>;
+    return <ChOverlay title="Connect Thumbtack Leads" sub="Step 2 of 2" width={580} onClose={onClose}
+      foot={<><Btn onClick={() => setStep(1)}>Back</Btn><Btn kind="primary" icon="check" onClick={() => { onActivate(); onClose(); }}>Activate</Btn></>}>
+      <ChStepper steps={steps} current={2} />
+      <ChWebhookBox url={THUMBTACK_WEBHOOK} onToast={onToast} />
+      <div style={{ fontSize: 12.5, color: LH.body, margin: '14px 0 8px', fontWeight: 600 }}>Follow these steps in your Thumbtack account, then come back and click Activate.</div>
+      <ol style={{ margin: 0, paddingLeft: 20 }}>{TT_STEPS.map((s, i) => <li key={i} style={{ fontSize: 12, color: LH.body, lineHeight: 1.5, marginBottom: 6 }}>{s}</li>)}</ol>
+      <div style={{ fontSize: 11.5, color: LH.muted, margin: '8px 0 12px' }}>Have more than one Thumbtack business? Repeat steps 3 to 8 for each, using the same URL.</div>
+      <button onClick={() => { try { window.open('https://www.thumbtack.com/pro/webhooks/list', '_blank'); } catch (e) {} }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 13px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12.5, fontWeight: 600, color: LH.body, cursor: 'pointer' }}><Ic name="external-link" size={14} color={LH.sub} />Open Thumbtack</button>
+    </ChOverlay>;
+  }
+  function ThumbtackChannelCard({ onToast, onNavigate }) {
+    const [status, setStatus] = useState('none'); const [modal, setModal] = useState(null);
+    const [leads, setLeads] = useState([]); const [log, setLog] = useState([]);
+    const stamp = () => new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    const addLog = (event, result, ok) => setLog(l => [{ at: new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ', ' + stamp(), event, result, ok }, ...l]);
+    const activate = () => { setStatus('connected'); addLog('Webhook URL created', 'Created when Connect was clicked', true); addLog('Integration activated', 'Activated by rose@example.com', true); onToast('Thumbtack Leads activated'); };
+    const simLead = () => { const names = [['Jane Doe', 'Rose’s Roofing'], ['Marcus Lee', 'Rose’s Gutters'], ['Priya Diaz', 'Rose’s Roofing']]; const p = names[leads.length % names.length]; setLeads(l => [{ name: p[0], biz: p[1], at: stamp() }, ...l]); addLog('Lead received: ' + p[0], 'Lead created', true); onToast('New Thumbtack lead received'); };
+    return <Card style={{ padding: 15 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 9, background: status === 'none' ? '#f1f0ec' : LH.tint, color: status === 'none' ? LH.sub : LH.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>T</div>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}><span style={{ fontSize: 14, fontWeight: 600, color: LH.ink }}>Thumbtack Leads</span><StatusBadge label={status === 'none' ? 'Not connected' : status === 'inactive' ? 'Inactive' : 'Connected'} /></div><div style={{ fontSize: 12, color: LH.sub, marginTop: 3 }}>{status === 'inactive' ? 'The webhook is deactivated. Zuper skips new Thumbtack leads.' : 'Lead source · New Thumbtack leads show up in Zuper automatically.'}</div></div>
+      </div>
+      {status === 'none' && <div style={{ marginTop: 12 }}><Btn kind="primary" icon="external-link" style={{ height: 30, fontSize: 12 }} onClick={() => setModal('connect')}>Connect</Btn></div>}
+      {(status === 'connected' || status === 'inactive') && <div style={{ marginTop: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px', borderRadius: 9, background: LH.bg, border: '1px solid ' + LH.borderSoft, marginBottom: 10 }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>Integration: {status === 'connected' ? 'On' : 'Off'}</span><div style={{ marginLeft: 'auto' }}><Toggle on={status === 'connected'} onChange={() => { const nx = status === 'connected' ? 'inactive' : 'connected'; setStatus(nx); onToast('Thumbtack Leads ' + (nx === 'connected' ? 'activated' : 'deactivated')); }} /></div></div>
+        <div style={{ marginBottom: 10 }}><ChWebhookBox url={THUMBTACK_WEBHOOK} onToast={onToast} /></div>
+        {leads.length > 0 && <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}><div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: LH.muted, padding: '9px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>RECENT THUMBTACK LEADS</div>{leads.map((l, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderBottom: i < leads.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, flex: 1 }}>{l.name}</span><span style={{ fontSize: 11.5, color: LH.sub }}>{l.biz}</span><span style={{ fontSize: 11, color: LH.muted }}>{l.at}</span></div>)}</div>}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}><Btn kind="ghost" style={{ height: 30, fontSize: 12 }} onClick={() => setModal('log')}>Activity log</Btn><Btn kind="ghost" style={{ height: 30, fontSize: 12 }} onClick={() => onNavigate('lead-pipeline')}>View leads</Btn>{status === 'connected' && <Btn style={{ height: 30, fontSize: 12 }} icon="zap" onClick={simLead}>Simulate lead</Btn>}</div>
+      </div>}
+      {modal === 'connect' && <ThumbtackConnectModal onClose={() => setModal(null)} onActivate={activate} onToast={onToast} />}
+      {modal === 'log' && <AngiActivityLog log={log} onClose={() => setModal(null)} />}
+    </Card>;
+  }
+
+  // ── Create-source channels (Custom webhook, ActiveProspect, Email to Lead): one card that spawns connected sources ──
+  function ChSourceRow({ s, kind, onToast, onToggle, onLog, onRemove }) {
+    const [open, setOpen] = useState(false);
+    return <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, marginBottom: 8, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', cursor: 'pointer' }} onClick={() => setOpen(o => !o)}>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{s.name}</div><div style={{ fontSize: 11, color: LH.muted }}>{s.sub}</div></div>
+        <StatusBadge label={s.status === 'inactive' ? 'Inactive' : 'Connected'} />
+        <Ic name={open ? 'chevron-up' : 'chevron-down'} size={15} color={LH.muted} />
+      </div>
+      {open && <div style={{ borderTop: '1px solid ' + LH.borderSoft, padding: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}><span style={{ fontSize: 12, color: LH.ink, fontWeight: 600 }}>Integration: {s.status === 'inactive' ? 'Off' : 'On'}</span><div style={{ marginLeft: 'auto' }}><Toggle on={s.status !== 'inactive'} onChange={onToggle} /></div></div>
+        {s.url && <div style={{ marginBottom: 10 }}><ChWebhookBox url={s.url} onToast={onToast} /></div>}
+        {s.meta && <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 9, padding: '4px 12px', marginBottom: 10 }}>{s.meta.map(([k, v]) => lockedRow(k, v))}</div>}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{s.url && <Btn style={{ height: 28, fontSize: 11.5 }} icon="copy" onClick={() => onToast('Webhook URL copied')}>Copy URL</Btn>}<Btn kind="ghost" style={{ height: 28, fontSize: 11.5 }} onClick={onLog}>Activity log</Btn>{kind === 'custom' && <Btn kind="ghost" style={{ height: 28, fontSize: 11.5 }} onClick={() => { onToast(s.name + ' — URL reset; old URL stops working'); }}>Reset URL</Btn>}<Btn kind="ghost" style={{ height: 28, fontSize: 11.5 }} onClick={onRemove}>Delete</Btn></div>
+      </div>}
+    </div>;
+  }
+
+  // Custom webhook — Create new → name → URL + instructions + optional test preview → Activate.
+  function CustomWebhookModal({ onClose, onCreate, onToast }) {
+    const [step, setStep] = useState(1); const [name, setName] = useState(''); const [tested, setTested] = useState(false);
+    const url = 'https://development.zuperpro.com/api/v1/webhooks/leads/9b41e2c0-55d1-4e2a/CUSTOM/' + (slugify(name || 'source') || 'source') + '?token=••••••••';
+    const inp = { width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none', boxSizing: 'border-box' };
+    if (step === 1) return <ChOverlay title="Create custom webhook" sub="Step 1 of 2" width={540} onClose={onClose}
+      foot={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" onClick={() => name.trim() && setStep(2)} style={{ opacity: name.trim() ? 1 : 0.5 }}>Create webhook URL</Btn></>}>
+      <ChStepper steps={['Name source', 'Connect & activate']} current={1} />
+      <label style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, display: 'block', marginBottom: 4 }}>Source name <span style={{ color: LH.red }}>*</span></label>
+      <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Website form" style={inp} />
+      <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 4 }}>Shown as the lead source on every lead from this webhook. You can change it later.</div>
+    </ChOverlay>;
+    return <ChOverlay title="Create custom webhook" sub="Step 2 of 2" width={560} onClose={onClose}
+      foot={<><Btn onClick={() => setStep(1)}>Back</Btn><Btn kind="primary" icon="check" onClick={() => { onCreate(name.trim(), url); onClose(); }}>Activate</Btn></>}>
+      <ChStepper steps={['Name source', 'Connect & activate']} current={2} />
+      <ChWebhookBox url={url} onToast={onToast} />
+      <ol style={{ margin: '12px 0', paddingLeft: 20 }}>{['In the other platform, open its webhook or integration settings.', 'Paste your webhook URL as the address to send leads to.', 'If it asks: method POST, format JSON, no authentication.', 'Save it, then click Activate below.'].map((s, i) => <li key={i} style={{ fontSize: 12, color: LH.body, lineHeight: 1.5, marginBottom: 5 }}>{s}</li>)}</ol>
+      <div style={{ display: 'flex', gap: 9, alignItems: 'flex-start', padding: '9px 11px', borderRadius: 9, background: LH.bg, border: '1px solid ' + LH.borderSoft, marginBottom: 12 }}><Ic name="sparkles" size={14} color={LH.primary} style={{ flexShrink: 0, marginTop: 1 }} /><div style={{ fontSize: 11.5, color: LH.sub, lineHeight: 1.45 }}>No field setup needed. Zuper’s AI reads each lead and fills in the lead for you. Anything that doesn’t fit a lead field is kept with the lead.</div></div>
+      <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 12 }}><div style={{ fontSize: 12, fontWeight: 600, color: LH.ink, marginBottom: 6 }}>Test it (optional)</div>
+        {!tested ? <Btn icon="send" style={{ height: 30, fontSize: 12 }} onClick={() => setTested(true)}>Send a test lead</Btn>
+          : <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: 12 }}><div style={{ fontSize: 11.5, color: LH.green, fontWeight: 600, marginBottom: 8 }}>✓ Test lead received — here’s how Zuper read it. It isn’t added as a lead.</div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: LH.muted, marginBottom: 4 }}>GOES INTO THE LEAD FIELDS</div><div style={{ marginBottom: 10 }}>{[['Name', 'Priya Shah'], ['Phone', '(415) 555-0132'], ['Email', 'priya.shah@example.com'], ['Address', '1180 Maple Ave, Plano, TX']].map(([k, v]) => lockedRow(k, v))}</div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: LH.muted, marginBottom: 4 }}>KEPT AS MORE FROM {(name || 'SOURCE').toUpperCase()}</div><div>{[['Roof age', '15 years'], ['Service', 'Roof inspection'], ['Utm source', 'google']].map(([k, v]) => lockedRow(k, v))}</div>
+          </div>}
+      </div>
+    </ChOverlay>;
+  }
+  function CustomWebhookGroup({ onToast, onNavigate }) {
+    const [sources, setSources] = useState([]); const [modal, setModal] = useState(null); const [log, setLog] = useState([]);
+    const addLog = (event, result, ok) => setLog(l => [{ at: new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ', ' + new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }), event, result, ok }, ...l]);
+    const create = (name, url) => { setSources(s => [...s, { id: Date.now(), name, sub: 'Custom webhook · New leads show up automatically', status: 'connected', url }]); addLog('Webhook URL created', 'Source created: ' + name, true); addLog('Integration activated', 'Activated by rose@example.com', true); onToast(name + ' activated'); };
+    const toggle = id => setSources(ss => ss.map(s => s.id === id ? { ...s, status: s.status === 'inactive' ? 'connected' : 'inactive' } : s));
+    return <Card style={{ padding: 15 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11, marginBottom: sources.length ? 12 : 0 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 9, background: '#f1f0ec', color: LH.sub, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>C</div>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 14, fontWeight: 600, color: LH.ink }}>Custom webhook</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 3 }}>Lead source · Send leads from any other platform that supports webhooks.</div></div>
+      </div>
+      {sources.map(s => <ChSourceRow key={s.id} s={s} kind="custom" onToast={onToast} onToggle={() => toggle(s.id)} onLog={() => setModal('log')} onRemove={() => { setSources(ss => ss.filter(x => x.id !== s.id)); onToast(s.name + ' deleted'); }} />)}
+      <div style={{ display: 'flex', gap: 6, marginTop: 4 }}><Btn kind="primary" icon="plus" style={{ height: 30, fontSize: 12 }} onClick={() => setModal('create')}>Create new</Btn>{sources.length > 0 && <Btn kind="ghost" style={{ height: 30, fontSize: 12 }} onClick={() => setModal('log')}>Activity log</Btn>}</div>
+      {modal === 'create' && <CustomWebhookModal onClose={() => setModal(null)} onCreate={create} onToast={onToast} />}
+      {modal === 'log' && <AngiActivityLog log={log} onClose={() => setModal(null)} />}
+    </Card>;
+  }
+
+  // ActiveProspect — LeadConduit routing. Connect → vendor name → URL + suggested JSON names + wait → preview → Activate.
+  function ActiveProspectModal({ onClose, onCreate, onToast }) {
+    const [step, setStep] = useState(1); const [vendor, setVendor] = useState(''); const [waited, setWaited] = useState(false);
+    const url = 'https://development.zuperpro.com/api/v1/webhooks/leads/9b41e2c0-55d1-4e2a/ACTIVEPROSPECT/' + (slugify(vendor || 'flow') || 'flow') + '?token=••••••••';
+    const inp = { width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none', boxSizing: 'border-box' };
+    const MAP = [['First Name *', 'first_name'], ['Last Name', 'last_name'], ['Email', 'email'], ['Phone 1', 'phone'], ['Address 1', 'address'], ['City', 'city'], ['State', 'state'], ['Postal Code', 'postal_code'], ['Comments', 'description'], ['Lead ID', 'leadconduit_id']];
+    const steps = ['Name vendor', 'LeadConduit', 'Review & activate'];
+    if (step === 1) return <ChOverlay title="Connect an ActiveProspect flow" sub="Step 1 of 3" width={540} onClose={onClose}
+      foot={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" onClick={() => vendor.trim() && setStep(2)} style={{ opacity: vendor.trim() ? 1 : 0.5 }}>Create webhook URL</Btn></>}>
+      <ChStepper steps={steps} current={1} />
+      <div style={{ fontSize: 12.5, color: LH.body, marginBottom: 10 }}>Which lead vendor sends leads into this LeadConduit flow?</div>
+      <label style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, display: 'block', marginBottom: 4 }}>Vendor name <span style={{ color: LH.red }}>*</span></label>
+      <input value={vendor} onChange={e => setVendor(e.target.value)} placeholder="e.g. Blue Fire" style={inp} />
+      <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 4 }}>Leads from this flow get the lead source <b style={{ color: LH.body }}>{(vendor.trim() || 'Blue Fire')} (ActiveProspect)</b>. Type only the vendor’s name — Zuper adds “(ActiveProspect)”.</div>
+    </ChOverlay>;
+    if (step === 2) return <ChOverlay title="Connect an ActiveProspect flow" sub="Step 2 of 3" width={580} onClose={onClose}
+      foot={<><Btn onClick={() => setStep(1)}>Back</Btn><Btn kind="primary" onClick={() => setStep(3)}>Continue</Btn></>}>
+      <ChStepper steps={steps} current={2} />
+      <ChWebhookBox url={url} onToast={onToast} />
+      <div style={{ fontSize: 12, fontWeight: 600, color: LH.ink, margin: '14px 0 4px' }}>Suggested names for LeadConduit</div>
+      <div style={{ fontSize: 11, color: LH.muted, marginBottom: 8, lineHeight: 1.45 }}>Any names work — Zuper’s AI reads them. Send every field you have; anything that doesn’t fit a lead field is kept for your team.</div>
+      <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 9, overflow: 'hidden' }}><div style={{ display: 'flex', fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: LH.muted, padding: '7px 11px', borderBottom: '1px solid ' + LH.borderSoft, background: LH.bg }}><span style={{ flex: 1 }}>LEADCONDUIT FIELD</span><span style={{ flex: 1 }}>JSON PROPERTY</span></div>{MAP.map(([f, j], i) => <div key={j} style={{ display: 'flex', padding: '6px 11px', borderBottom: i < MAP.length - 1 ? '1px solid ' + LH.borderSoft : 'none', fontSize: 11.5 }}><span style={{ flex: 1, color: LH.body }}>{f}</span><span style={{ flex: 1, color: LH.ink, fontFamily: 'ui-monospace,monospace' }}>{j}</span></div>)}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 12, padding: '9px 11px', borderRadius: 9, background: waited ? LH.greenBg : LH.amberBg, border: '1px solid ' + (waited ? LH.greenBd : LH.amberBd) }}><Ic name={waited ? 'check-circle' : 'loader'} size={15} color={waited ? LH.green : LH.amber} /><span style={{ flex: 1, fontSize: 11.5, color: LH.body }}>{waited ? 'Test lead received from LeadConduit.' : 'Waiting for a test lead from LeadConduit… Save the flow, then click Test Flow.'}</span>{!waited && <button onClick={() => setWaited(true)} style={{ fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Simulate</button>}</div>
+    </ChOverlay>;
+    return <ChOverlay title="Connect an ActiveProspect flow" sub="Step 3 of 3" width={560} onClose={onClose}
+      foot={<><Btn onClick={() => setStep(2)}>Back</Btn><Btn kind="primary" icon="check" onClick={() => { onCreate(vendor.trim(), url); onClose(); }}>Activate</Btn></>}>
+      <ChStepper steps={steps} current={3} />
+      <div style={{ fontSize: 11.5, color: LH.green, fontWeight: 600, marginBottom: 8 }}>✓ Test lead received — here’s how Zuper read it. It isn’t added as a lead.</div>
+      <div style={{ fontSize: 10.5, fontWeight: 700, color: LH.muted, marginBottom: 4 }}>GOES INTO THE LEAD FIELDS</div><div style={{ marginBottom: 10 }}>{[['Name', 'Maria Gomez'], ['Mobile', '(281) 555-0176'], ['Email', 'maria.gomez@example.com'], ['Summary', 'Roof leak after storm']].map(([k, v]) => lockedRow(k, v))}</div>
+      <div style={{ fontSize: 10.5, fontWeight: 700, color: LH.muted, marginBottom: 4 }}>KEPT AS MORE FROM {(vendor.trim() || 'VENDOR').toUpperCase()} (ACTIVEPROSPECT)</div><div>{[['Address', '22 Lakeview Dr'], ['City', 'Conroe'], ['State', 'TX'], ['Roof type', 'Asphalt shingle']].map(([k, v]) => lockedRow(k, v))}</div>
+    </ChOverlay>;
+  }
+  function ActiveProspectCard({ onToast, onNavigate }) {
+    const [flows, setFlows] = useState([]); const [modal, setModal] = useState(null); const [log, setLog] = useState([]);
+    const addLog = (event, result, ok) => setLog(l => [{ at: new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ', ' + new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }), event, result, ok }, ...l]);
+    const create = (vendor, url) => { setFlows(f => [...f, { id: Date.now(), name: vendor, sub: 'Lead source · ' + vendor + ' (ActiveProspect)', status: 'connected', url, last: 'Just now' }]); addLog(vendor + ' · Webhook URL created', 'Flow added: ' + vendor, true); addLog(vendor + ' · Integration activated', 'Activated by rose@example.com', true); onToast(vendor + ' activated'); };
+    const toggle = id => setFlows(fs => fs.map(f => f.id === id ? { ...f, status: f.status === 'inactive' ? 'connected' : 'inactive' } : f));
+    const connected = flows.length > 0;
+    return <Card style={{ padding: 15 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11, marginBottom: connected ? 12 : 0 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 9, background: connected ? LH.tint : '#f1f0ec', color: connected ? LH.primary : LH.sub, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>AP</div>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}><span style={{ fontSize: 14, fontWeight: 600, color: LH.ink }}>ActiveProspect</span>{connected ? <StatusBadge label="Connected" /> : <StatusBadge label="Not connected" />}</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 3 }}>Lead routing · LeadConduit — get leads from your flows, like Blue Fire or Homebuddy.</div></div>
+      </div>
+      {connected && <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}><div style={{ display: 'flex', fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: LH.muted, padding: '8px 12px', borderBottom: '1px solid ' + LH.borderSoft, background: LH.bg }}><span style={{ flex: 1 }}>VENDOR</span><span style={{ width: 90 }}>STATUS</span><span style={{ width: 70, textAlign: 'right' }}>LAST LEAD</span></div>{flows.map((f, i) => <div key={f.id} style={{ borderBottom: i < flows.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><div style={{ display: 'flex', alignItems: 'center', padding: '9px 12px' }}><span style={{ flex: 1, fontSize: 12.5, fontWeight: 600, color: LH.ink }}>{f.name}</span><span style={{ width: 90 }}><StatusBadge label={f.status === 'inactive' ? 'Inactive' : 'Connected'} /></span><span style={{ width: 70, textAlign: 'right', fontSize: 11, color: LH.muted }}>{f.last}</span></div><div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px 9px', marginLeft: 0 }}><Toggle on={f.status !== 'inactive'} onChange={() => toggle(f.id)} /><Btn kind="ghost" style={{ height: 26, fontSize: 11 }} icon="copy" onClick={() => onToast('Webhook URL copied')}>Copy URL</Btn><Btn kind="ghost" style={{ height: 26, fontSize: 11 }} onClick={() => { setFlows(fs => fs.filter(x => x.id !== f.id)); onToast(f.name + ' removed'); }}>Remove</Btn></div></div>)}</div>}
+      <div style={{ display: 'flex', gap: 6 }}><Btn kind="primary" icon={connected ? 'plus' : 'external-link'} style={{ height: 30, fontSize: 12 }} onClick={() => setModal('connect')}>{connected ? 'Add flow' : 'Connect'}</Btn>{connected && <Btn kind="ghost" style={{ height: 30, fontSize: 12 }} onClick={() => setModal('log')}>Activity log</Btn>}</div>
+      {modal === 'connect' && <ActiveProspectModal onClose={() => setModal(null)} onCreate={create} onToast={onToast} />}
+      {modal === 'log' && <AngiActivityLog log={log} onClose={() => setModal(null)} />}
+    </Card>;
+  }
+
+  // Email to Lead — choose inbox → name + rule → preview + hints → Activate.
+  function EmailToLeadModal({ onClose, onCreate, onToast }) {
+    const [step, setStep] = useState(1); const [inbox, setInbox] = useState('leads@hillroofing.com'); const [name, setName] = useState(''); const [domain, setDomain] = useState(''); const [subj, setSubj] = useState('');
+    const INBOXES = ['leads@hillroofing.com', 'rose@hillroofing.com'];
+    const inp = { width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none', boxSizing: 'border-box' };
+    const lbl = { fontSize: 12.5, fontWeight: 600, color: LH.ink, display: 'block', marginBottom: 4 };
+    const steps = ['Inbox', 'Source & rule', 'Preview'];
+    if (step === 1) return <ChOverlay title="Create email source" sub="Step 1 of 3" width={540} onClose={onClose}
+      foot={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" onClick={() => setStep(2)}>Continue</Btn></>}>
+      <ChStepper steps={steps} current={1} />
+      <div style={{ fontSize: 12.5, color: LH.body, marginBottom: 12 }}>Choose the inbox where your lead emails arrive. These mailboxes are already connected to Zuper for you.</div>
+      {INBOXES.map(m => <div key={m} onClick={() => setInbox(m)} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: 12, borderRadius: 10, border: '1px solid ' + (inbox === m ? LH.ink : LH.border), background: inbox === m ? LH.tint : '#fff', cursor: 'pointer', marginBottom: 8 }}><div style={{ width: 28, height: 28, borderRadius: 7, background: '#f1f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: LH.sub }}>G</div><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{m}</div><div style={{ fontSize: 11, color: LH.muted }}>Google · Connected</div></div>{inbox === m && <Ic name="check" size={15} color={LH.ink} />}</div>)}
+      <button onClick={() => onToast('Connect another inbox (Google / Microsoft)')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 4, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: LH.primary, padding: 0 }}><Ic name="plus" size={14} color={LH.primary} />Connect another inbox</button>
+      <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 10 }}>Zuper only opens emails that match your rules. Everything else in this inbox is left alone.</div>
+    </ChOverlay>;
+    if (step === 2) { const ok = name.trim() && domain.trim() && subj.trim(); return <ChOverlay title="Create email source" sub="Step 2 of 3" width={540} onClose={onClose}
+      foot={<><Btn onClick={() => setStep(1)}>Back</Btn><Btn kind="primary" onClick={() => ok && setStep(3)} style={{ opacity: ok ? 1 : 0.5 }}>Continue</Btn></>}>
+      <ChStepper steps={steps} current={2} />
+      <div style={{ marginBottom: 14 }}><label style={lbl}>Source name <span style={{ color: LH.red }}>*</span></label><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Houzz or Marketing Leads" style={inp} /><div style={{ fontSize: 11.5, color: LH.muted, marginTop: 4 }}>Leads show it as their lead source, exactly as typed.</div></div>
+      <label style={lbl}>Match emails where <span style={{ color: LH.red }}>*</span></label>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}><span style={{ fontSize: 12, color: LH.sub, width: 110, flexShrink: 0 }}>Sender domain is</span><input value={domain} onChange={e => setDomain(e.target.value)} placeholder="houzz.com" style={inp} /></div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><span style={{ fontSize: 12, color: LH.sub, width: 110, flexShrink: 0 }}>Subject contains</span><input value={subj} onChange={e => setSubj(e.target.value)} placeholder="New lead" style={inp} /></div>
+      <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 8 }}>A sender and a subject are both required. The subject keeps invoices and account emails out.</div>
+    </ChOverlay>; }
+    return <ChOverlay title="Create email source" sub="Step 3 of 3" width={560} onClose={onClose}
+      foot={<><Btn onClick={() => setStep(2)}>Back</Btn><Btn kind="primary" icon="check" onClick={() => { onCreate(name.trim(), inbox, domain.trim(), subj.trim()); onClose(); }}>Activate</Btn></>}>
+      <ChStepper steps={steps} current={3} />
+      <div style={{ fontSize: 11.5, color: LH.green, fontWeight: 600, marginBottom: 8 }}>✓ Here’s how Zuper read your most recent {(name || 'matching')} email. It isn’t added as a lead.</div>
+      <div style={{ fontSize: 10.5, fontWeight: 700, color: LH.muted, marginBottom: 4 }}>GOES INTO THE LEAD FIELDS</div><div style={{ marginBottom: 10 }}>{[['Name', 'Kevin Wu'], ['Phone', '(214) 555-0119'], ['Email', 'kevin.wu@example.com'], ['Address', 'Allen, TX 75002']].map(([k, v]) => lockedRow(k, v))}</div>
+      <div style={{ fontSize: 10.5, fontWeight: 700, color: LH.muted, marginBottom: 4 }}>KEPT AS MORE FROM {(name || 'SOURCE').toUpperCase()}</div><div style={{ marginBottom: 12 }}>{[['Project', 'Roof repair'], ['Budget', 'Under $5,000'], ['Timeline', 'As soon as possible']].map(([k, v]) => lockedRow(k, v))}</div>
+      <label style={lbl}>Hints for Zuper’s AI (optional)</label><textarea placeholder="Tell Zuper where to find details it misses, e.g. “the phone number comes after Call:”" style={{ width: '100%', height: 56, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 12.5, color: LH.ink, outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+    </ChOverlay>;
+  }
+  function EmailToLeadCard({ onToast, onNavigate }) {
+    const [sources, setSources] = useState([]); const [modal, setModal] = useState(null); const [log, setLog] = useState([]); const [inbox] = useState('leads@hillroofing.com');
+    const addLog = (event, result, ok) => setLog(l => [{ at: new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ', ' + new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }), event, result, ok }, ...l]);
+    const create = (name, inb, domain, subj) => { setSources(s => [...s, { id: Date.now(), name, sub: 'Watching ' + inb + ' for emails from ' + domain + ' with “' + subj + '” in the subject', status: 'connected', meta: [['Inbox', inb], ['Rule', 'Sender domain is ' + domain + ', subject contains ' + subj]] }]); addLog(name + ' · Source created', 'Rule: sender domain is ' + domain + ', subject contains ' + subj, true); addLog(name + ' · Source activated', 'Activated by rose@example.com', true); onToast(name + ' activated'); };
+    const toggle = id => setSources(ss => ss.map(s => s.id === id ? { ...s, status: s.status === 'inactive' ? 'connected' : 'inactive' } : s));
+    return <Card style={{ padding: 15 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11, marginBottom: 12 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 9, background: sources.length ? LH.tint : '#f1f0ec', color: sources.length ? LH.primary : LH.sub, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="mail" size={17} color={sources.length ? LH.primary : LH.sub} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 14, fontWeight: 600, color: LH.ink }}>Email to Lead</div><div style={{ fontSize: 12, color: LH.sub, marginTop: 3 }}>Lead source · Turn lead emails from Houzz, Yelp, your website into leads.</div>{sources.length > 0 && <div style={{ fontSize: 11, color: LH.muted, marginTop: 4 }}>Lead inbox: <b style={{ color: LH.body }}>{inbox}</b> · Connected</div>}</div>
+      </div>
+      {sources.map(s => <ChSourceRow key={s.id} s={s} kind="email" onToast={onToast} onToggle={() => toggle(s.id)} onLog={() => setModal('log')} onRemove={() => { setSources(ss => ss.filter(x => x.id !== s.id)); onToast(s.name + ' deleted'); }} />)}
+      <div style={{ display: 'flex', gap: 6, marginTop: 4 }}><Btn kind="primary" icon="plus" style={{ height: 30, fontSize: 12 }} onClick={() => setModal('create')}>Create new</Btn>{sources.length > 0 && <Btn kind="ghost" style={{ height: 30, fontSize: 12 }} onClick={() => setModal('log')}>Activity log</Btn>}</div>
+      {modal === 'create' && <EmailToLeadModal onClose={() => setModal(null)} onCreate={create} onToast={onToast} />}
+      {modal === 'log' && <AngiActivityLog log={log} onClose={() => setModal(null)} />}
+    </Card>;
+  }
   function ChannelsSection({ onToast, onNavigate }) {
     const [srcs, setSrcs] = useState(CHANNELS);
     const [modal, setModal] = useState(null);
@@ -34743,7 +34973,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {srcs.map(grp => <div key={grp.g} style={{ marginBottom: 22 }}>
         <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 10 }}>{grp.g.toUpperCase()}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 12 }}>
-          {grp.items.map(it => it.n === 'Angi' ? <AngiChannelCard key={it.n} onToast={onToast} onNavigate={onNavigate} /> : <Card key={it.n} style={{ padding: 15 }}>
+          {grp.items.map(it => it.n === 'Angi' ? <AngiChannelCard key={it.n} onToast={onToast} onNavigate={onNavigate} />
+            : it.n === 'Thumbtack' ? <ThumbtackChannelCard key={it.n} onToast={onToast} onNavigate={onNavigate} />
+            : it.n === 'Custom webhook' ? <CustomWebhookGroup key={it.n} onToast={onToast} onNavigate={onNavigate} />
+            : it.n === 'ActiveProspect' ? <ActiveProspectCard key={it.n} onToast={onToast} onNavigate={onNavigate} />
+            : it.n === 'Email to Lead' ? <EmailToLeadCard key={it.n} onToast={onToast} onNavigate={onNavigate} />
+            : <Card key={it.n} style={{ padding: 15 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
               <div style={{ width: 36, height: 36, borderRadius: 9, background: it.st === 'Not connected' ? '#f1f0ec' : LH.tint, color: it.st === 'Not connected' ? LH.sub : LH.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>{it.k}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
