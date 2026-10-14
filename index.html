@@ -30091,7 +30091,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         const srcExtras = (srcSchema && srcSchema.custom) ? srcSchema.custom.map(([, v]) => v) : [];
         const blob = ['Home value $' + homeVal.toLocaleString() + ' (est.)', propType].concat(srcExtras).join(', ') + '.';
         return <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 12, paddingTop: 10 }}>
-          {secHead('More details from lead source', md, () => setMd(p => !p))}
+          {secHead('More Details', md, () => setMd(p => !p))}
           {md && <div style={{ marginTop: 6, fontSize: 12, color: LH.body, lineHeight: 1.55 }}>{blob}</div>}
         </div>;
       })()}
@@ -30880,13 +30880,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       else onFlash && onFlash('Composing email to ' + f.n + '…');
     };
     return <div className="bg-white border border-border rounded-lg overflow-hidden shadow-2xs flex flex-col">
-      {zCardHead('calendar-clock', 'Follow-ups', items.length)}
-      {items.length === 0 && <div className="text-center text-md text-gray-400" style={{ padding: '26px 16px' }}>All follow-ups cleared 🎉</div>}
+      {zCardHead('calendar-clock', 'Tasks', items.length)}
+      {items.length === 0 && <div className="text-center text-md text-gray-400" style={{ padding: '26px 16px' }}>All tasks cleared 🎉</div>}
       {items.map((f, i) => { const ch = FU_CHANNEL[f.channel] || FU_CHANNEL.call; return <div key={f.id} className="flex items-center gap-3 px-4 h-14 hover:bg-gray-50" style={{ borderBottom: i < items.length - 1 ? '1px solid #f0eeea' : 'none' }}>
         <span className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: ch.bg }}><Ic name={ch.ic} size={15} color={ch.fg} /></span>
         <div className="flex-1 min-w-0"><div className="text-sm font-medium text-gray-700 truncate">{f.n}</div><div className={'text-xs truncate ' + (f.overdue ? 'text-red-600' : 'text-gray-500')}>{f.task} · {f.due}</div></div>
         <button onClick={() => act(f)} title={ch.label} className="inline-flex items-center gap-1 text-md text-gray-600 border border-border rounded-lg px-2 py-1 hover:bg-gray-50 cursor-pointer"><Ic name={ch.ic} size={13} color="#475569" />{ch.label}</button>
-        <button onClick={() => { LeadFollowups.complete(f.id); onFlash && onFlash('Follow-up with ' + f.n + ' marked done'); }} title="Mark done" className="flex items-center justify-center w-7 h-7 rounded-lg border border-border bg-white hover:bg-gray-50 cursor-pointer flex-shrink-0"><Ic name="check" size={15} color="#64748B" /></button>
+        <button onClick={() => { LeadFollowups.complete(f.id); onFlash && onFlash('Task for ' + f.n + ' marked done'); }} title="Mark done" className="flex items-center justify-center w-7 h-7 rounded-lg border border-border bg-white hover:bg-gray-50 cursor-pointer flex-shrink-0"><Ic name="check" size={15} color="#64748B" /></button>
       </div>; })}
       <div style={{ flex: 1 }} />
     </div>;
@@ -30926,15 +30926,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {/* Header */}
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', borderBottom: '1px solid ' + LH.borderSoft }}>
           <button onClick={close} title="Back" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="arrow-left" size={17} color={LH.ink} /></button>
-          <span style={{ fontSize: 14.5, fontWeight: 700, color: LH.ink, flex: 1 }}>Create Follow-up</span>
+          <span style={{ fontSize: 14.5, fontWeight: 700, color: LH.ink, flex: 1 }}>Create Task</span>
           <button onClick={close} title="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="x" size={17} color={LH.sub} /></button>
         </div>
         {/* Body */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {row('type', 'Follow-up Title', <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Add a title" style={vInp} />, true)}
-          {row('type', 'Follow-up Description', <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Add description" style={vInp} />)}
+          {row('type', 'Task Title', <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Add a title" style={vInp} />, true)}
+          {row('type', 'Task Description', <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Add description" style={vInp} />)}
           {row('user', 'Assignee', <select value={assignee} onChange={e => setAssignee(e.target.value)} style={{ ...selCss, ...(assignee ? {} : ph) }}><option value="">Add assignee</option>{ASSIGNEES.map(a => <option key={a}>{a}</option>)}</select>)}
-          {row('check-square', 'Follow-up Type', <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Ic name={(FU_CHANNEL[channel] || FU_CHANNEL.call).ic} size={13} color={(FU_CHANNEL[channel] || FU_CHANNEL.call).fg} /><select value={channel} onChange={e => setChannel(e.target.value)} style={selCss}>{Object.keys(FU_CHANNEL).map(k => <option key={k} value={k}>{FU_CHANNEL[k].label}</option>)}</select></div>)}
+          {row('check-square', 'Task Type', <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Ic name={(FU_CHANNEL[channel] || FU_CHANNEL.call).ic} size={13} color={(FU_CHANNEL[channel] || FU_CHANNEL.call).fg} /><select value={channel} onChange={e => setChannel(e.target.value)} style={selCss}>{Object.keys(FU_CHANNEL).map(k => <option key={k} value={k}>{FU_CHANNEL[k].label}</option>)}</select></div>)}
           {row('calendar', 'Due Date', <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><select value={dueDate ? '__custom' : due} onChange={e => { const v = e.target.value; if (v === '__custom') { setDue(''); } else { setDue(v); setDueDate(''); } }} style={selCss}>{DUES.map(d => <option key={d} value={d}>{d}</option>)}<option value="__custom">Custom date…</option></select>{(dueDate || !due) && <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={{ border: '1px solid ' + LH.border, borderRadius: 7, padding: '5px 9px', fontSize: 12, color: LH.ink, fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }} />}</div>)}
           {row('link', 'Association', <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 10px', borderRadius: 999, background: LH.tint, fontSize: 11.5, fontWeight: 600, color: LH.primary }}><Ic name="user" size={12} color={LH.primary} />Lead · {prefillName}</div>)}
         </div>
@@ -31830,12 +31830,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </>; })()}
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="activity" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Activity</span><Ic name="chevron-right" size={14} color={LH.muted} /></div>
           <Card style={{ padding: 14, marginBottom: 22 }}>{timelineBody}</Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="calendar-clock" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Follow-ups</span><span style={{ fontSize: 11, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 8px' }}>{leadFups.length}</span><div style={{ flex: 1 }} /><button onClick={() => toast('New follow-up')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="plus" size={14} color={LH.primary} />Add follow-up</button></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="calendar-clock" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Tasks</span><span style={{ fontSize: 11, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 8px' }}>{leadFups.length}</span><div style={{ flex: 1 }} /><button onClick={() => toast('New task')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="plus" size={14} color={LH.primary} />Add task</button></div>
           <Card style={{ padding: 0, overflow: 'hidden' }}>{leadFups.map((f, i) => { const ch = FU_CHANNEL[f.channel] || FU_CHANNEL.call; return <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < leadFups.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
             <span style={{ width: 30, height: 30, borderRadius: 8, background: ch.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={ch.ic} size={15} color={ch.fg} /></span>
             <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{f.task}</div><div style={{ fontSize: 12, color: LH.muted }}>{f.due}</div></div>
             <button onClick={() => toast(ch.label + ' ' + lead.name.split(' ')[0])} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', color: LH.body, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><Ic name={ch.ic} size={13} color={LH.sub} />{ch.label}</button>
-            <button onClick={() => toast('Follow-up marked done')} title="Mark done" style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}><Ic name="check" size={15} color={LH.sub} /></button>
+            <button onClick={() => toast('Task marked done')} title="Mark done" style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}><Ic name="check" size={15} color={LH.sub} /></button>
           </div>; })}</Card>
           </>}
           </div>
