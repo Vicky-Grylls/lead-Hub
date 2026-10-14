@@ -34585,6 +34585,110 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, paddingTop: 14, borderTop: '1px solid ' + LH.borderSoft }}><Toggle on={dedup} onChange={setDedup} /><span style={{ fontSize: 13, color: LH.body }}>De-duplicate against existing leads by email + phone</span></div>
     </ChOverlay>;
   }
+  // ── Angi Leads integration flow (matches the channels/angi spec: SP ID → email to Angi → waiting for test lead → connected) ──
+  const ANGI_WEBHOOK = 'https://development.zuperpro.com/api/v1/webhooks/leads/6c287db0-ff7c-11e7-b3a8-29b417a4f3fa/ANGI?token=eafc2cbaf18df9edf53cc7d687a5b0b0022abab5baa499a0803afb163129f8d8';
+  const angiSetupMsg = biz => 'Hello Angi CRM Integrations Team,\n\nPlease connect Angi lead delivery to Zuper for the account below. Once the setup is complete, please send a test lead if possible and reply to confirm.\n\nThank you,\nZuper Integrations Team, on behalf of ' + (biz || 'our account');
+  const angiFollowMsg = biz => 'Hello Angi CRM Integrations Team,\n\nFollowing up on our request to connect Angi lead delivery to Zuper. We have not received a lead at the webhook yet. Could you share the status, or let us know if you need anything else from us?\n\nThank you,\nZuper Integrations Team, on behalf of ' + (biz || 'our account');
+  function StatusBadge({ label }) { const m = label === 'Connected' ? { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd } : label === 'Waiting for test lead' ? { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd } : label === 'Inactive' ? { bg: '#f1f0ec', fg: LH.sub, bd: LH.border } : { bg: '#f1f0ec', fg: LH.sub, bd: LH.border }; return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 9px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: m.bg, color: m.fg, border: '1px solid ' + m.bd, whiteSpace: 'nowrap' }}>{label === 'Connected' && <span style={{ width: 6, height: 6, borderRadius: 999, background: LH.green }} />}{label}</span>; }
+  const lockedRow = (k, v, mono) => <div style={{ display: 'flex', gap: 10, padding: '7px 0', borderBottom: '1px solid ' + LH.borderSoft, alignItems: 'baseline' }}><span style={{ fontSize: 11.5, color: LH.muted, width: 110, flexShrink: 0 }}>{k}</span><span style={{ flex: 1, minWidth: 0, fontSize: 12, color: LH.ink, fontWeight: 600, fontFamily: mono ? 'ui-monospace,monospace' : 'inherit', wordBreak: 'break-all' }}>{v}</span></div>;
+  function AngiEmailModal({ mode, form, onClose, onSend, onToast }) {
+    const [msg, setMsg] = useState((mode === 'followup' ? angiFollowMsg : angiSetupMsg)(form.biz));
+    const subject = (mode === 'followup' ? 'Re: ' : '') + 'CRM integration request – Zuper – SP ID ' + form.spid;
+    const fld = { fontSize: 11.5, color: LH.muted, width: 70, flexShrink: 0 };
+    return <ChOverlay title={mode === 'followup' ? 'Follow up with Angi' : 'Review request to Angi'} sub={mode === 'followup' ? "Zuper sends this as a reply to the first email, so Angi sees the whole thread." : "Zuper sends this email to Angi for you, and you're copied. Angi can take 2–3 business days."} width={600} onClose={onClose}
+      foot={<><Btn onClick={onClose}>{mode === 'followup' ? 'Cancel' : 'Back'}</Btn><Btn kind="primary" icon="send" onClick={() => { onSend(); onClose(); }}>{mode === 'followup' ? 'Send follow-up' : 'Send to Angi'}</Btn></>}>
+      <div style={{ border: '1px solid ' + LH.border, borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
+        {[['From', 'Zuper Integrations <integrations@zuper.co>'], ['To', 'crmintegrations@angi.com'], ['Cc', form.email], ['Subject', subject]].map(([k, v]) => <div key={k} style={{ display: 'flex', gap: 10, padding: '8px 12px', borderBottom: '1px solid ' + LH.borderSoft, alignItems: 'center' }}><span style={fld}>{k}</span><span style={{ fontSize: 12.5, color: LH.body }}>{v}</span></div>)}
+        <div style={{ padding: '10px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}><span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: LH.muted }}>MESSAGE · only this can be edited</span><button onClick={() => setMsg((mode === 'followup' ? angiFollowMsg : angiSetupMsg)(form.biz))} style={{ fontSize: 11, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Reset message</button></div>
+          <textarea value={msg} onChange={e => setMsg(e.target.value)} style={{ width: '100%', height: 128, borderRadius: 8, border: '1px solid ' + LH.border, padding: 10, fontSize: 12.5, color: LH.ink, outline: 'none', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5, boxSizing: 'border-box' }} />
+        </div>
+      </div>
+      <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: LH.muted, marginBottom: 6 }}>ADDED AUTOMATICALLY · LOCKED</div>
+      <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: '4px 12px', background: LH.bg }}>
+        {lockedRow('Angi SP ID', form.spid)}{lockedRow('Business name', form.biz)}{mode !== 'followup' && lockedRow('Email to connect', form.email)}{lockedRow('Webhook URL', ANGI_WEBHOOK, true)}{lockedRow('Method', 'POST')}{mode !== 'followup' && lockedRow('CRM', 'Zuper (JSON)')}{mode !== 'followup' && lockedRow('Authentication', 'No key')}
+      </div>
+    </ChOverlay>;
+  }
+  function AngiConnectModal({ onClose, onSent }) {
+    const [step, setStep] = useState(1);
+    const [spid, setSpid] = useState('');
+    const [biz, setBiz] = useState('');
+    const [email, setEmail] = useState('');
+    const valid1 = spid.trim() && biz.trim() && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
+    const inp = { width: '100%', height: 36, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 11px', fontSize: 13, color: LH.ink, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
+    const lbl = { fontSize: 12.5, fontWeight: 600, color: LH.ink, display: 'block', marginBottom: 4 };
+    const hint = { fontSize: 11.5, color: LH.muted, marginTop: 4, lineHeight: 1.45 };
+    if (step === 1) return <ChOverlay title="Connect Angi Leads" sub="Step 1 of 2" width={560} onClose={onClose}
+      foot={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" onClick={() => valid1 && setStep(2)} style={{ opacity: valid1 ? 1 : 0.5 }}>Continue</Btn></>}>
+      <div style={{ marginBottom: 14 }}><label style={lbl}>Angi SP ID <span style={{ color: LH.red }}>*</span></label><input value={spid} onChange={e => setSpid(e.target.value.replace(/[^0-9]/g, ''))} inputMode="numeric" placeholder="e.g. 93817598" style={inp} /><div style={hint}>The number after “ID:” in your Angi account menu.</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8, padding: '9px 11px', borderRadius: 9, background: LH.bg, border: '1px solid ' + LH.borderSoft }}><Ic name="help-circle" size={15} color={LH.sub} style={{ flexShrink: 0 }} /><div style={{ flex: 1, fontSize: 11.5, color: LH.sub, lineHeight: 1.45 }}><b style={{ color: LH.ink }}>Where do I find my SP ID?</b> Sign in to Angi, click your business name at the top right. Your SP ID is the number after “ID:”.</div><button onClick={() => { try { window.open('https://office.angi.com', '_blank'); } catch (e) {} }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 30, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer', flexShrink: 0 }}><Ic name="external-link" size={13} color={LH.sub} />Open Angi</button></div>
+      </div>
+      <div style={{ marginBottom: 14 }}><label style={lbl}>Business name <span style={{ color: LH.red }}>*</span></label><input value={biz} onChange={e => setBiz(e.target.value)} placeholder="Exactly as shown in Angi" style={inp} /><div style={hint}>Exactly as shown in Angi under My business › Business details.</div></div>
+      <div><label style={lbl}>Email to connect <span style={{ color: LH.red }}>*</span></label><input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@business.com" style={inp} /><div style={hint}>Use the email you sign in to Angi with. You're also copied on the request.</div></div>
+    </ChOverlay>;
+    return <AngiEmailModal mode="setup" form={{ spid, biz, email }} onClose={() => setStep(1)} onSend={() => onSent({ spid, biz, email })} />;
+  }
+  function AngiChannelCard({ onToast, onNavigate }) {
+    const [status, setStatus] = useState('none'); // none | waiting | connected | inactive
+    const [form, setForm] = useState({ spid: '', biz: '', email: '' });
+    const [modal, setModal] = useState(null); // connect | followup | log
+    const [leads, setLeads] = useState([]);
+    const [log, setLog] = useState([]);
+    const stamp = () => { const d = new Date(); return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); };
+    const addLog = (event, result, ok) => setLog(l => [{ at: stamp(), event, result, ok }, ...l]);
+    const sendSetup = f => { setForm(f); setStatus('waiting'); addLog('Setup email sent', 'Sent to crmintegrations@angi.com', true); setModal(null); onToast('Request sent to Angi — waiting for a test lead'); };
+    const sendFollowup = () => { addLog('Follow-up email sent', 'Sent to crmintegrations@angi.com', true); onToast('Follow-up sent to Angi'); };
+    const testLead = () => { setStatus('connected'); setLeads(l => [{ name: 'Angi Test Lead', svc: 'Test request', at: new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) }, ...l]); addLog('Test lead received', 'Lead created', true); onToast('Angi Leads connected — test lead arrived'); };
+    const resetUrl = () => { addLog('Webhook URL reset', 'Old URL disabled', true); onToast('Webhook URL reset — the old URL stops working'); };
+    const prog = [['Request sent to Angi', status !== 'none'], ['Angi connects your account', status === 'connected'], ['First lead received', status === 'connected']];
+    return <Card style={{ padding: 15 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 9, background: status === 'none' ? '#f1f0ec' : LH.tint, color: status === 'none' ? LH.sub : LH.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>A</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}><span style={{ fontSize: 14, fontWeight: 600, color: LH.ink }}>Angi Leads</span><StatusBadge label={status === 'none' ? 'Not connected' : status === 'waiting' ? 'Waiting for test lead' : status === 'inactive' ? 'Inactive' : 'Connected'} /></div>
+          <div style={{ fontSize: 12, color: LH.sub, marginTop: 3 }}>{status === 'none' ? 'Lead source · New Angi leads show up in Zuper automatically.' : status === 'waiting' ? "Angi's team is connecting your account — often the same day, up to 2–3 business days." : status === 'inactive' ? 'The webhook is deactivated. Zuper creates no Angi leads.' : "Angi's test lead arrived. New Angi leads are created automatically."}</div>
+        </div>
+      </div>
+
+      {status === 'none' && <div style={{ marginTop: 12 }}><Btn kind="primary" icon="external-link" style={{ height: 30, fontSize: 12 }} onClick={() => setModal('connect')}>Connect</Btn></div>}
+
+      {status === 'waiting' && <div style={{ marginTop: 12 }}>
+        <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: 12, marginBottom: 10 }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: LH.muted, marginBottom: 8 }}>SETUP PROGRESS</div>
+          {prog.map(([t, done], i) => <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 0' }}><Ic name={done ? 'check-circle' : 'circle'} size={15} color={done ? LH.green : LH.muted} /><span style={{ fontSize: 12, color: done ? LH.ink : LH.sub, fontWeight: done ? 600 : 400 }}>{t}</span>{i === 1 && <span style={{ fontSize: 10.5, color: LH.muted, marginLeft: 'auto' }}>Done by Angi's team</span>}</div>)}
+        </div>
+        <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: '4px 12px', marginBottom: 10 }}>{lockedRow('Angi SP ID', form.spid)}{lockedRow('Business name', form.biz)}{lockedRow('Webhook URL', ANGI_WEBHOOK, true)}<div style={{ display: 'flex', gap: 6, padding: '8px 0' }}><Btn style={{ height: 28, fontSize: 11.5 }} icon="copy" onClick={() => onToast('Webhook URL copied')}>Copy</Btn><Btn kind="ghost" style={{ height: 28, fontSize: 11.5 }} onClick={resetUrl}>Reset URL</Btn></div></div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}><Btn kind="ghost" style={{ height: 30, fontSize: 12 }} icon="mail" onClick={() => setModal('followup')}>Send follow-up</Btn><Btn kind="ghost" style={{ height: 30, fontSize: 12 }} onClick={() => setModal('log')}>Activity log</Btn><Btn style={{ height: 30, fontSize: 12 }} icon="zap" onClick={testLead}>Simulate test lead</Btn></div>
+      </div>}
+
+      {(status === 'connected' || status === 'inactive') && <div style={{ marginTop: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px', borderRadius: 9, background: LH.bg, border: '1px solid ' + LH.borderSoft, marginBottom: 10 }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>Integration: {status === 'connected' ? 'On' : 'Off'}</span><div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 11.5, color: LH.sub }}>{status === 'connected' ? 'Turning off deactivates the webhook.' : 'Turn on to resume leads.'}</span><Toggle on={status === 'connected'} onChange={() => { const next = status === 'connected' ? 'inactive' : 'connected'; setStatus(next); onToast('Angi Leads ' + (next === 'connected' ? 'activated' : 'deactivated')); }} /></div></div>
+        {status === 'connected' && leads.length > 0 && <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: LH.muted, padding: '9px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>RECENT ANGI LEADS</div>
+          {leads.map((l, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderBottom: i < leads.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}><span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, flex: 1 }}>{l.name}</span><span style={{ fontSize: 11.5, color: LH.sub }}>{l.svc}</span><span style={{ fontSize: 11, color: LH.muted }}>{l.at}</span></div>)}
+        </div>}
+        <div style={{ display: 'flex', gap: 6 }}><Btn kind="ghost" style={{ height: 30, fontSize: 12 }} onClick={() => setModal('log')}>Activity log</Btn><Btn kind="ghost" style={{ height: 30, fontSize: 12 }} onClick={() => onNavigate('lead-pipeline')}>View leads</Btn></div>
+      </div>}
+
+      {modal === 'connect' && <AngiConnectModal onClose={() => setModal(null)} onSent={sendSetup} />}
+      {modal === 'followup' && <AngiEmailModal mode="followup" form={form} onClose={() => setModal(null)} onSend={sendFollowup} onToast={onToast} />}
+      {modal === 'log' && <AngiActivityLog log={log} onClose={() => setModal(null)} />}
+    </Card>;
+  }
+  function AngiActivityLog({ log, onClose }) {
+    const [sel, setSel] = useState(null);
+    const rows = log.length ? log : [{ at: '—', event: 'No activity yet', result: 'Events will appear here', ok: true }];
+    return <ChOverlay title="Activity log" sub="Requests from Angi and emails to Angi. Kept for 30 days." width={620} onClose={onClose} foot={<Btn onClick={onClose}>Close</Btn>}>
+      <div style={{ border: '1px solid ' + LH.border, borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', gap: 10, padding: '9px 12px', borderBottom: '1px solid ' + LH.borderSoft, background: LH.bg, fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: LH.muted }}><span style={{ width: 150 }}>TIME</span><span style={{ flex: 1 }}>EVENT</span><span style={{ width: 80, textAlign: 'right' }}>RESULT</span></div>
+        {rows.map((r, i) => <div key={i} onClick={() => log.length && setSel(sel === i ? null : i)} style={{ padding: '10px 12px', borderBottom: i < rows.length - 1 ? '1px solid ' + LH.borderSoft : 'none', cursor: log.length ? 'pointer' : 'default' }} onMouseEnter={e => { if (log.length) e.currentTarget.style.background = '#f6f4ef'; }} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ width: 150, fontSize: 11.5, color: LH.sub }}>{r.at}</span><span style={{ flex: 1, fontSize: 12.5, color: LH.ink, fontWeight: 600 }}>{r.event}</span><span style={{ width: 80, textAlign: 'right' }}><span style={{ fontSize: 10.5, fontWeight: 700, color: r.ok ? LH.green : LH.red, background: r.ok ? LH.greenBg : '#fdecec', borderRadius: 999, padding: '2px 8px' }}>{r.ok ? 'Success' : 'Failed'}</span></span></div>
+          {sel === i && <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed ' + LH.borderSoft, fontSize: 12, color: LH.body, lineHeight: 1.5 }}>{r.result}</div>}
+        </div>)}
+      </div>
+    </ChOverlay>;
+  }
   function ChannelsSection({ onToast, onNavigate }) {
     const [srcs, setSrcs] = useState(CHANNELS);
     const [modal, setModal] = useState(null);
@@ -34595,7 +34699,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {srcs.map(grp => <div key={grp.g} style={{ marginBottom: 22 }}>
         <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 10 }}>{grp.g.toUpperCase()}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 12 }}>
-          {grp.items.map(it => <Card key={it.n} style={{ padding: 15 }}>
+          {grp.items.map(it => it.n === 'Angi' ? <AngiChannelCard key={it.n} onToast={onToast} onNavigate={onNavigate} /> : <Card key={it.n} style={{ padding: 15 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
               <div style={{ width: 36, height: 36, borderRadius: 9, background: it.st === 'Not connected' ? '#f1f0ec' : LH.tint, color: it.st === 'Not connected' ? LH.sub : LH.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, flexShrink: 0 }}>{it.k}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
