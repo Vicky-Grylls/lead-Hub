@@ -30037,6 +30037,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   function LeadPrimaryDetails({ lead, onToast, onMove }) {
     const [pd, setPd] = useState(true);
     const [cf, setCf] = useState(true);
+    const [md, setMd] = useState(false); // "More details from lead source" — collapsed by default
     // Kanban bucket (col) is the single source of truth for status. In board mode the
     // dropdown moves the lead between buckets; elsewhere it falls back to local state.
     const boardMode = !!onMove;
@@ -30082,6 +30083,25 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {kv('Lead category', lead.score >= 70 ? 'Roof replacement' : 'Roof repair')}
         </div>}
       </div>
+      {(() => {
+        // Extra fields the source passed along that don't map to standard lead fields — kept as free text.
+        // Note: "Home value" is the actual property value, not the potential job value above.
+        const homeVal = (210 + (lead.name.length * 13 + lead.score * 7) % 440) * 1000;
+        const srcExtras = (srcSchema && srcSchema.custom) ? srcSchema.custom : [];
+        const extras = [
+          ['Home value', '$' + homeVal.toLocaleString() + ' (est.)'],
+          ['Property type', lead.score % 3 === 0 ? 'Townhouse' : 'Single-family home'],
+          ['Year built', String(1975 + (lead.name.length * 3 + lead.score) % 45)],
+          ['Ownership', 'Owner-occupied']
+        ].concat(srcExtras);
+        return <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 12, paddingTop: 10 }}>
+          {secHead('More details from lead source', md, () => setMd(p => !p))}
+          {md && <div style={{ marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: LH.muted, lineHeight: 1.45, marginBottom: 6 }}>Extra fields {lead.src} sent with this lead. Kept as free text — not mapped to standard lead fields.</div>
+            {extras.map(([k, v]) => kv(k, v))}
+          </div>}
+        </div>;
+      })()}
     </div>;
   }
   // Shared lead header — avatar, name, address, CTA row. Used at the top of both the
