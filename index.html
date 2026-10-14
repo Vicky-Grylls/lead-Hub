@@ -30084,22 +30084,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>}
       </div>
       {(() => {
-        // Extra fields the source passed along that don't map to standard lead fields — kept as free text.
-        // Note: "Home value" is the actual property value, not the potential job value above.
+        // Extra info the source passed along, received as a free-text blob (comma-separated / paragraph) —
+        // not parsed into individual fields. "Home value" is the actual property value, not the potential job value above.
         const homeVal = (210 + (lead.name.length * 13 + lead.score * 7) % 440) * 1000;
-        const srcExtras = (srcSchema && srcSchema.custom) ? srcSchema.custom : [];
-        const extras = [
-          ['Home value', '$' + homeVal.toLocaleString() + ' (est.)'],
-          ['Property type', lead.score % 3 === 0 ? 'Townhouse' : 'Single-family home'],
-          ['Year built', String(1975 + (lead.name.length * 3 + lead.score) % 45)],
-          ['Ownership', 'Owner-occupied']
-        ].concat(srcExtras);
+        const propType = lead.score % 3 === 0 ? 'townhouse' : 'single-family home';
+        const srcExtras = (srcSchema && srcSchema.custom) ? srcSchema.custom.map(([, v]) => v) : [];
+        const blob = ['Home value $' + homeVal.toLocaleString() + ' (est.)', propType].concat(srcExtras).join(', ') + '.';
         return <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 12, paddingTop: 10 }}>
           {secHead('More details from lead source', md, () => setMd(p => !p))}
-          {md && <div style={{ marginTop: 4 }}>
-            <div style={{ fontSize: 11, color: LH.muted, lineHeight: 1.45, marginBottom: 6 }}>Extra fields {lead.src} sent with this lead. Kept as free text — not mapped to standard lead fields.</div>
-            {extras.map(([k, v]) => kv(k, v))}
-          </div>}
+          {md && <div style={{ marginTop: 6, fontSize: 12, color: LH.body, lineHeight: 1.55 }}>{blob}</div>}
         </div>;
       })()}
     </div>;
