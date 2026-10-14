@@ -34597,6 +34597,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const fld = { fontSize: 11.5, color: LH.muted, width: 70, flexShrink: 0 };
     return <ChOverlay title={mode === 'followup' ? 'Follow up with Angi' : 'Review request to Angi'} sub={mode === 'followup' ? "Zuper sends this as a reply to the first email, so Angi sees the whole thread." : "Zuper sends this email to Angi for you, and you're copied. Angi can take 2–3 business days."} width={600} onClose={onClose}
       foot={<><Btn onClick={onClose}>{mode === 'followup' ? 'Cancel' : 'Back'}</Btn><Btn kind="primary" icon="send" onClick={() => { onSend(); onClose(); }}>{mode === 'followup' ? 'Send follow-up' : 'Send to Angi'}</Btn></>}>
+      {mode !== 'followup' && <AngiStepper current={2} />}
       <div style={{ border: '1px solid ' + LH.border, borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
         {[['From', 'Zuper Integrations <integrations@zuper.co>'], ['To', 'crmintegrations@angi.com'], ['Cc', form.email], ['Subject', subject]].map(([k, v]) => <div key={k} style={{ display: 'flex', gap: 10, padding: '8px 12px', borderBottom: '1px solid ' + LH.borderSoft, alignItems: 'center' }}><span style={fld}>{k}</span><span style={{ fontSize: 12.5, color: LH.body }}>{v}</span></div>)}
         <div style={{ padding: '10px 12px' }}>
@@ -34610,6 +34611,19 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
     </ChOverlay>;
   }
+  function AngiStepper({ current }) {
+    const steps = ['Business details', 'Review & send'];
+    return <div style={{ display: 'flex', alignItems: 'center', marginBottom: 18 }}>
+      {steps.map((s, i) => { const n = i + 1; const done = current > n; const active = current === n; const last = i === steps.length - 1;
+        return <React.Fragment key={s}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <span style={{ width: 24, height: 24, borderRadius: 999, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, background: done ? LH.green : active ? LH.ink : '#fff', color: done || active ? '#fff' : LH.muted, border: done || active ? 'none' : '1.5px solid ' + LH.border }}>{done ? <Ic name="check" size={13} color="#fff" /> : n}</span>
+            <span style={{ fontSize: 12.5, fontWeight: active ? 700 : 600, color: active ? LH.ink : done ? LH.body : LH.muted, whiteSpace: 'nowrap' }}>{s}</span>
+          </div>
+          {!last && <div style={{ flex: 1, height: 2, borderRadius: 2, margin: '0 12px', background: done ? LH.green : LH.border }} />}
+        </React.Fragment>; })}
+    </div>;
+  }
   function AngiConnectModal({ onClose, onSent }) {
     const [step, setStep] = useState(1);
     const [spid, setSpid] = useState('');
@@ -34622,6 +34636,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const hint = { fontSize: 11.5, color: LH.muted, marginTop: 4, lineHeight: 1.45 };
     if (step === 1) return <ChOverlay title="Connect Angi Leads" sub="Step 1 of 2" width={560} onClose={onClose}
       foot={<><Btn onClick={onClose}>Cancel</Btn><Btn kind="primary" onClick={() => valid1 && setStep(2)} style={{ opacity: valid1 ? 1 : 0.5 }}>Continue</Btn></>}>
+      <AngiStepper current={1} />
       <div style={{ marginBottom: 14 }}><label style={lbl}>Angi SP ID <span style={{ color: LH.red }}>*</span></label><input value={spid} onChange={e => setSpid(e.target.value.replace(/[^0-9]/g, ''))} inputMode="numeric" placeholder="e.g. 93817598" style={inp} /><div style={hint}>The number after “ID:” in your Angi account menu.</div>
         <button onClick={() => setHelpOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: LH.primary, padding: 0 }}><Ic name={helpOpen ? 'chevron-down' : 'chevron-right'} size={15} color={LH.primary} />Where do I find my SP ID?</button>
         {helpOpen && <div style={{ marginTop: 8, border: '1px solid ' + LH.border, borderRadius: 11, padding: 14 }}>
