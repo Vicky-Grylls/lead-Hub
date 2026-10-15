@@ -30990,7 +30990,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const TRADES = ['Roofing', 'Siding', 'Gutters', 'Windows', 'Insulation'];
     const ASSIGNEES = ['Maria Gonzalez', 'Diane Cole', 'Marcus Lee', 'Sarah Chen', 'Tom Rivera'];
     const TPLS = ['Estimate follow-up', 'Missed-call callback', 'Storm damage inspection', 'Quote reminder'];
-    const submit = () => { onCreate({ n: prefillName, task: title.trim() || 'Follow-up', channel, due: (dueDate || due) + ' · scheduled', src: 'Phone', overdue: false }); };
+    const submit = () => { onCreate({ n: prefillName, task: title.trim() || 'Follow-up', channel, due: (dueDate || due), src: 'Phone', overdue: false }); };
     const selCss = { flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: 12.5, color: LH.ink, fontFamily: 'inherit', appearance: 'none', WebkitAppearance: 'none', cursor: 'pointer', padding: 0 };
     const ph = { color: LH.muted };
     const vInp = { width: '100%', border: 'none', outline: 'none', fontSize: 12.5, color: LH.ink, fontFamily: 'inherit', background: 'transparent' };
@@ -31845,9 +31845,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     </div>; })}</div>;
     // A couple of tasks relevant to this lead (shown on the Overview tab).
     const [leadFups, setLeadFups] = useState([
-      { task: 'Follow-up call', channel: 'call', due: 'Today · 2:00 PM' },
-      { task: 'Text quote link', channel: 'sms', due: 'Tomorrow · 9:00 AM' },
-      { task: 'Send revised estimate', channel: 'email', due: 'Jul 30 · 11:00 AM' }
+      { task: 'Follow-up call', channel: 'call', due: 'Today' },
+      { task: 'Text quote link', channel: 'sms', due: 'Tomorrow' },
+      { task: 'Send revised estimate', channel: 'email', due: 'Jul 30' }
     ]);
     const [taskOpen, setTaskOpen] = useState(false);
     const tasks = [
