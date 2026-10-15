@@ -29367,39 +29367,160 @@ const LeadPlaybookStore={
 };
 try{window.LeadPlaybookStore=LeadPlaybookStore;}catch(e){}
 const usePlaybooks=()=>{const [items,setItems]=useState(LeadPlaybookStore.items);useEffect(()=>LeadPlaybookStore.sub(setItems),[]);return items;};
-// AI-first "Create a playbook" landing (mirrors the campaign create entry). Each path creates the
-// playbook then opens the full editor for it — the editor is never shown blank upfront.
+const pbSparkle=(size,color)=>RCE("svg",{width:size||14,height:size||14,viewBox:"0 0 24 24",fill:color||"#7c3aed"},RCE("path",{d:"M12 2l1.7 5.1a3 3 0 0 0 1.9 1.9L20.7 10.7l-5.1 1.7a3 3 0 0 0-1.9 1.9L12 19.4l-1.7-5.1a3 3 0 0 0-1.9-1.9L3.3 10.7l5.1-1.7a3 3 0 0 0 1.9-1.9z"}));
+// Split AI builder: left chat to iterate, right live (editable) playbook canvas — like an AI design tool.
+function PlaybookAIBuilder({prompt,onBack,onCreate}){
+  const low=(prompt||'').toLowerCase();
+  const buildFromPrompt=()=>{
+    const storm=/storm|hail|wind|roof/.test(low), ins=/insuranc|claim|adjuster|carrier/.test(low);
+    const trade=/roof/.test(low)?'Roofing':/gutter/.test(low)?'Gutter':/solar/.test(low)?'Solar':/hvac|heating|cooling/.test(low)?'HVAC':/sid/.test(low)?'Siding':'Lead';
+    const name=storm?(trade+' — Storm & Insurance Intake'):(trade+' — Qualification');
+    const qs=[{q:'What type of work does the lead need?',t:'text',req:true},{q:'Is the property owner-occupied?',t:'yesno',req:true},{q:'What is the property address?',t:'text',req:true}];
+    if(storm){qs.push({q:'What kind of damage are you seeing?',t:'multiselect',req:true,options:['Storm','Hail','Wind','Water','Other']});qs.push({q:'When did the damage occur?',t:'date',req:false});}
+    if(ins){qs.push({q:'Is insurance involved?',t:'yesno',req:true});qs.push({q:'Insurance carrier',t:'text',req:false});}
+    qs.push({q:'Best time for a free inspection?',t:'text',req:true});
+    const rules=[];
+    if(storm)rules.push({field:'damage',op:'any',value:['Storm','Hail']});
+    if(ins)rules.push({field:'claim',op:'is',value:'yes'});
+    return {name,instructions:(prompt||'').trim(),tone:ins?'Warm and consultative':'Friendly and concise',handoff:PB_HANDOFFS[0],agent:'csr',ruleJoin:'any',isFallback:false,rules,qs};
+  };
+  const [draft,setDraft]=useState({name:'',agent:'csr',tone:PB_TONES[0],handoff:PB_HANDOFFS[0],instructions:'',ruleJoin:'any',isFallback:false,rules:[],qs:[]});
+  const [phase,setPhase]=useState('generating');
+  const [messages,setMessages]=useState([{role:'user',text:prompt}]);
+  const [input,setInput]=useState('');
+  const [thinking,setThinking]=useState(true);
+  const [flash,setFlash]=useState(-1);
+  const bodyRef=useRef(null);
+  useEffect(()=>{if(document.getElementById('pb-builder-css'))return;const s=document.createElement('style');s.id='pb-builder-css';s.textContent='@keyframes pbdots{0%,60%,100%{opacity:.25}30%{opacity:1}}@keyframes pbflash{from{background:#efe7fb}to{background:#fff}}@keyframes pbfade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}.pb-pane{animation:pbfade .32s ease both}';document.head.appendChild(s);},[]);
+  useEffect(()=>{if(bodyRef.current)bodyRef.current.scrollTop=bodyRef.current.scrollHeight;},[messages,thinking]);
+  useEffect(()=>{
+    const built=buildFromPrompt();const timers=[];
+    setMessages(m=>[...m,{role:'assistant',typing:true}]);
+    timers.push(setTimeout(()=>setDraft(d=>({...d,name:built.name,tone:built.tone,handoff:built.handoff,agent:built.agent,instructions:built.instructions})),450));
+    timers.push(setTimeout(()=>setDraft(d=>({...d,ruleJoin:built.ruleJoin,rules:built.rules})),720));
+    built.qs.forEach((q,i)=>timers.push(setTimeout(()=>setDraft(d=>({...d,qs:[...d.qs,q]})),980+i*230)));
+    timers.push(setTimeout(()=>{setThinking(false);setPhase('ready');setMessages(m=>m.filter(x=>!x.typing).concat({role:'assistant',text:'Here’s a first draft — “'+built.name+'” with '+built.qs.length+' questions'+(built.rules.length?' and an auto-select trigger':'')+'. Tell me what to change, or edit it directly on the right.'}));},980+built.qs.length*230+350));
+    return ()=>timers.forEach(clearTimeout);
+  },[]);
+  const setQ=(i,patch)=>setDraft(d=>({...d,qs:d.qs.map((q,j)=>j===i?{...q,...patch}:q)}));
+  const delQ=i=>setDraft(d=>({...d,qs:d.qs.filter((q,j)=>j!==i)}));
+  const addQ=q=>setDraft(d=>{const qs=[...d.qs,q];const ni=qs.length-1;setFlash(ni);setTimeout(()=>setFlash(-1),1300);return{...d,qs};});
+  const setRule=(i,patch)=>setDraft(d=>({...d,rules:d.rules.map((r,j)=>j===i?{...r,...patch}:r)}));
+  const delRule=i=>setDraft(d=>({...d,rules:d.rules.filter((r,j)=>j!==i)}));
+  const reply=t=>setMessages(m=>[...m,{role:'assistant',text:t}]);
+  const send=()=>{
+    const t=input.trim();if(!t||thinking)return;
+    setMessages(m=>[...m,{role:'user',text:t},{role:'assistant',typing:true}]);setInput('');setThinking(true);
+    setTimeout(()=>{
+      setMessages(m=>m.filter(x=>!x.typing));const l=t.toLowerCase();let done;
+      if(/formal/.test(l)){setDraft(d=>({...d,tone:'Formal and professional'}));done='Set the tone to Formal and professional.';}
+      else if(/friendly|concise/.test(l)){setDraft(d=>({...d,tone:'Friendly and concise'}));done='Set the tone to Friendly and concise.';}
+      else if(/warm|consultat/.test(l)){setDraft(d=>({...d,tone:'Warm and consultative'}));done='Set the tone to Warm and consultative.';}
+      else if(/budget|price|cost/.test(l)){addQ({q:'What is the project budget?',t:'select',req:false,options:['Under $5k','$5k–$15k','$15k–$30k','$30k+']});done='Added a budget question.';}
+      else if(/insuranc|claim/.test(l)){addQ({q:'Is insurance involved?',t:'yesno',req:true});done='Added an insurance question.';}
+      else if(/timeline|how soon|urgen/.test(l)){addQ({q:'How soon do you need this done?',t:'select',req:true,options:['ASAP','This month','1–3 months','Just exploring']});done='Added a timeline question.';}
+      else if(/remove last|delete last/.test(l)){setDraft(d=>({...d,qs:d.qs.slice(0,-1)}));done='Removed the last question.';}
+      else if(/rename.* to .+/.test(l)){const nm=t.replace(/.*to /i,'').trim();setDraft(d=>({...d,name:nm}));done='Renamed the playbook to “'+nm+'”.';}
+      else{addQ({q:t.charAt(0).toUpperCase()+t.slice(1).replace(/[?.]*$/,'?'),t:'text',req:false});done='Added that as a question.';}
+      reply(done+' Anything else?');setThinking(false);
+    },900);
+  };
+  const avatar=()=>RCE("span",{style:{width:26,height:26,borderRadius:8,background:'#efe7fb',display:'inline-flex',alignItems:'center',justifyContent:'center',flexShrink:0}},pbSparkle(14,"#7c3aed"));
+  const dots=()=>RCE("span",{style:{display:'inline-flex',gap:3,padding:'3px 0'}},[0,1,2].map(i=>RCE("span",{key:i,style:{width:5,height:5,borderRadius:999,background:'#9c9b96',animation:'pbdots 1s infinite',animationDelay:(i*0.15)+'s'}})));
+  const bubble=(m,i)=>m.typing
+    ? RCE("div",{key:i,style:{display:'flex',gap:8,alignItems:'flex-start'}},avatar(),RCE("div",{style:{background:'#f5f2ee',borderRadius:'12px 12px 12px 3px',padding:'10px 12px'}},dots()))
+    : m.role==='user'
+      ? RCE("div",{key:i,style:{display:'flex',justifyContent:'flex-end'}},RCE("div",{style:{maxWidth:'84%',background:'#1f1f1d',color:'#fff',borderRadius:'12px 12px 3px 12px',padding:'9px 12px',fontSize:12.5,lineHeight:1.5,whiteSpace:'pre-wrap'}},m.text))
+      : RCE("div",{key:i,style:{display:'flex',gap:8,alignItems:'flex-start'}},avatar(),RCE("div",{style:{maxWidth:'84%',background:'#f5f2ee',color:'#1f1f1d',borderRadius:'12px 12px 12px 3px',padding:'9px 12px',fontSize:12.5,lineHeight:1.5}},m.text));
+  const selStyle={...leadInput,width:'100%',maxWidth:'none',appearance:'none',WebkitAppearance:'none',MozAppearance:'none',paddingRight:26,cursor:'pointer'};
+  const fsel=(val,onCh,opts)=>RCE("div",{style:{position:'relative',width:'100%'}},RCE("select",{value:val,onChange:e=>onCh(e.target.value),style:selStyle},opts.map(o=>RCE("option",{key:o[0],value:o[0]},o[1]))),RCE("span",{style:{position:'absolute',right:9,top:'50%',transform:'translateY(-50%)',pointerEvents:'none',display:'flex'}},RCE(TiChevronDown,{size:13,color:"#9c9b96"})));
+  const sw=(on,onClick)=>RCE("button",{onClick:onClick,style:{width:34,height:20,borderRadius:999,border:'none',background:on?'#1f1f1d':'#d6d3cc',position:'relative',cursor:'pointer',flexShrink:0,transition:'background .15s'}},RCE("span",{style:{position:'absolute',top:2,left:on?16:2,width:16,height:16,borderRadius:999,background:'#fff',transition:'left .15s'}}));
+  const card=(children,style)=>RCE("div",{style:{border:'1px solid #e8e7e2',borderRadius:12,background:'#fff',padding:16,marginBottom:14,...(style||{})}},children);
+  const lblField=(label,node)=>RCE("div",{style:{flex:1,minWidth:0}},RCE("label",{style:{fontSize:11.5,fontWeight:600,color:'#1f1f1d',display:'block',marginBottom:5}},label),node);
+  const sendIcon=RCE("svg",{width:16,height:16,viewBox:"0 0 24 24",fill:"none",stroke:"#fff",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round"},RCE("path",{d:"M12 19V5M5 12l7-7 7 7"}));
+  const skelRow=i=>RCE("div",{key:i,style:{height:42,borderRadius:10,background:'#f1efeb',marginBottom:8,animation:'pbdots 1.3s infinite',animationDelay:(i*0.12)+'s'}});
+  const sendDisabled=!input.trim()||thinking;
+  const rightCanvas=()=>RCE(React.Fragment,null,
+    RCE("div",{style:{display:'flex',alignItems:'center',gap:10,marginBottom:16}},
+      RCE("div",{style:{flex:1,minWidth:0}},
+        RCE("input",{value:draft.name,onChange:e=>setDraft(d=>({...d,name:e.target.value})),placeholder:"Playbook name",style:{width:'100%',border:'none',outline:'none',fontSize:20,fontWeight:800,color:'#1f1f1d',letterSpacing:'-0.01em',background:'transparent',padding:0}}),
+        RCE("div",{style:{fontSize:12,color:'#9c9b96',marginTop:2}},"Custom · "+draft.qs.length+" questions · draft")),
+      RCE("span",{style:{display:'inline-flex',alignItems:'center',gap:5,fontSize:10,fontWeight:700,letterSpacing:'.04em',color:'#7c3aed',background:'#efe7fb',borderRadius:999,padding:'3px 9px',flexShrink:0}},thinking?pbSparkle(10,"#7c3aed"):null,thinking?"GENERATING":"DRAFT")),
+    card([
+      RCE("div",{key:'g',style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,marginBottom:12}},
+        lblField("Runs on agent",fsel(draft.agent,v=>setDraft(d=>({...d,agent:v})),LEAD_AGENTS_FULL.map(a=>[a.id,a.name.replace('Nova — ','')]))),
+        lblField("Qualification tone",fsel(draft.tone,v=>setDraft(d=>({...d,tone:v})),PB_TONES.map(s=>[s,s]))),
+        lblField("Handoff rule",fsel(draft.handoff,v=>setDraft(d=>({...d,handoff:v})),PB_HANDOFFS.map(s=>[s,s])))),
+      RCE("div",{key:'i'},RCE("label",{style:{fontSize:11.5,fontWeight:600,color:'#1f1f1d',display:'block',marginBottom:5}},"Instructions for Nova"),RCE("textarea",{value:draft.instructions,onChange:e=>setDraft(d=>({...d,instructions:e.target.value})),placeholder:"How Nova should run this playbook…",style:{...leadInput,width:'100%',height:72,padding:10,resize:'vertical',lineHeight:1.5}}))
+    ]),
+    card([
+      RCE("div",{key:'h',style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}},RCE("div",{style:{fontSize:13.5,fontWeight:700,color:'#1f1f1d'}},"Trigger"),RCE("div",{style:{display:'flex',alignItems:'center',gap:7}},RCE("span",{style:{fontSize:11.5,color:'#9c9b96'}},"Fallback"),sw(draft.isFallback,()=>setDraft(d=>({...d,isFallback:!d.isFallback}))))),
+      RCE("div",{key:'s',style:{fontSize:11.5,color:'#6b6a66',marginBottom:12,lineHeight:1.45}},"Auto-picked for a lead when these conditions match."),
+      draft.isFallback?RCE("div",{key:'f',style:{fontSize:12,color:'#6b6a66',background:'#faf8f4',border:'1px solid #f0eeea',borderRadius:8,padding:10}},"Fallback — Nova runs this only when no other playbook matches."):RCE(React.Fragment,{key:'c'},
+        RCE("div",{style:{display:'flex',alignItems:'center',gap:8,marginBottom:12}},RCE("span",{style:{fontSize:12,color:'#6b6a66'}},"Match"),RCE("div",{style:{display:'inline-flex',border:'1px solid #e2ddd2',borderRadius:7,overflow:'hidden'}},['all','any'].map(j=>RCE("button",{key:j,onClick:()=>setDraft(d=>({...d,ruleJoin:j})),style:{padding:'5px 12px',border:'none',background:draft.ruleJoin===j?'#1f1f1d':'#fff',color:draft.ruleJoin===j?'#fff':'#6b6a66',fontSize:11.5,fontWeight:700,cursor:'pointer',textTransform:'uppercase'}},j))),RCE("span",{style:{fontSize:12,color:'#6b6a66'}},"of these conditions")),
+        (draft.rules||[]).length===0?RCE("div",{style:{fontSize:12,color:'#9c9b96',marginBottom:10}},"No conditions yet — add one below."):null,
+        (draft.rules||[]).map((r,i)=>RCE("div",{key:i,style:{display:'flex',alignItems:'center',gap:8,marginBottom:8}},
+          RCE("span",{style:{fontSize:11,color:'#9c9b96',width:14}},"If"),
+          RCE("div",{style:{flex:1}},fsel(r.field,v=>setRule(i,{field:v}),PB_RULE_FIELDS.map(f=>[f.v,f.l]))),
+          RCE("div",{style:{width:110}},fsel(r.op,v=>setRule(i,{op:v}),PB_RULE_OPS)),
+          RCE("input",{value:Array.isArray(r.value)?r.value.join(', '):r.value,onChange:e=>{const v=e.target.value;setRule(i,{value:v.indexOf(',')>=0?v.split(',').map(s=>s.trim()):v});},placeholder:"value",style:{...leadInput,flex:1}}),
+          RCE("button",{onClick:()=>delRule(i),title:"Remove",style:{border:'none',background:'none',cursor:'pointer',padding:3,display:'flex'}},RCE(TiX,{size:14,color:"#9c9b96"})))),
+        RCE("button",{onClick:()=>setDraft(d=>({...d,rules:[...d.rules,{field:'source',op:'any',value:[]}]})),style:{height:30,padding:'0 12px',borderRadius:8,border:'1px solid #e2ddd2',background:'#fff',fontSize:12,fontWeight:600,color:'#3f3f46',cursor:'pointer'}},"+ Add condition"))
+    ]),
+    RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'4px 2px 12px'}},RCE("div",{style:{fontSize:15,fontWeight:800,color:'#1f1f1d'}},"Questions ("+draft.qs.length+")"),RCE("button",{onClick:()=>addQ({q:'New question',t:'text',req:false}),style:{height:32,padding:'0 13px',borderRadius:8,border:'none',background:'#1f1f1d',color:'#fff',fontSize:12.5,fontWeight:600,cursor:'pointer'}},"+ Add question")),
+    (thinking&&draft.qs.length===0)?RCE("div",null,[0,1,2].map(skelRow)):null,
+    draft.qs.map((q,i)=>RCE("div",{key:i,style:{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',border:'1px solid #ececea',borderRadius:10,marginBottom:8,background:'#fff',animation:i===flash?'pbflash 1.3s ease':undefined}},
+      RCE("span",{style:{color:'#cfccc5',display:'flex',cursor:'grab',flexShrink:0,fontSize:13,letterSpacing:'-2px'}},"⋮⋮"),
+      RCE("span",{style:{width:22,height:22,borderRadius:999,background:'#f1f0ec',color:'#6b6a66',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},i+1),
+      RCE("input",{value:q.q,onChange:e=>setQ(i,{q:e.target.value}),style:{flex:1,minWidth:0,border:'none',outline:'none',fontSize:13,color:'#1f1f1d',background:'transparent'}}),
+      RCE("div",{style:{width:122,flexShrink:0}},fsel(q.t,v=>setQ(i,{t:v}),PB_QTYPES)),
+      RCE("div",{style:{display:'flex',alignItems:'center',gap:6,flexShrink:0}},RCE("span",{style:{fontSize:11,color:'#6b6a66'}},"Required"),sw(q.req,()=>setQ(i,{req:!q.req}))),
+      RCE("button",{onClick:()=>delQ(i),title:"Delete",style:{border:'none',background:'none',cursor:'pointer',padding:3,display:'flex',flexShrink:0}},RCE(TiX,{size:15,color:"#9c9b96"})))),
+    draft.qs.length===0&&!thinking?RCE("div",{style:{padding:'24px 0',textAlign:'center',fontSize:12.5,color:'#9c9b96'}},"No questions yet — add one or ask Nova."):null,
+    RCE("div",{style:{display:'flex',justifyContent:'flex-end',gap:10,marginTop:18}},
+      RCE("button",{onClick:onBack,style:{height:36,padding:'0 16px',borderRadius:8,border:'1px solid #e2ddd2',background:'#fff',fontSize:12.5,fontWeight:600,color:'#3f3f46',cursor:'pointer'}},"Discard"),
+      RCE("button",{onClick:()=>onCreate(draft),disabled:!draft.name.trim()||thinking,style:{height:36,padding:'0 18px',borderRadius:8,border:'none',background:(!draft.name.trim()||thinking)?'#c3c2bd':'#1f1f1d',color:'#fff',fontSize:12.5,fontWeight:600,cursor:(!draft.name.trim()||thinking)?'default':'pointer'}},"Create playbook")));
+  return RCE("div",{style:{flex:1,minHeight:0,display:'flex',background:'#faf9f7'}},
+    RCE("div",{style:{width:372,flexShrink:0,borderRight:'1px solid #e8e7e2',background:'#fff',display:'flex',flexDirection:'column',minHeight:0}},
+      RCE("div",{style:{padding:'12px 16px',borderBottom:'1px solid #f0eeea',display:'flex',alignItems:'center',gap:8,flexShrink:0}},avatar(),RCE("div",null,RCE("div",{style:{fontSize:13,fontWeight:700,color:'#1f1f1d'}},"Nova"),RCE("div",{style:{fontSize:11,color:'#9c9b96'}},thinking?'Working…':'Playbook assistant'))),
+      RCE("div",{ref:bodyRef,style:{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:12,minHeight:0}},messages.map(bubble)),
+      phase==='ready'?RCE("div",{style:{display:'flex',gap:6,flexWrap:'wrap',padding:'0 16px 10px'}},['Add a budget question','Make the tone formal','Add a timeline question'].map(c=>RCE("button",{key:c,onClick:()=>setInput(c),style:{padding:'5px 10px',borderRadius:999,border:'1px solid #e2ddd2',background:'#fff',fontSize:11.5,fontWeight:500,color:'#6b6a66',cursor:'pointer',whiteSpace:'nowrap'}},c))):null,
+      RCE("div",{style:{padding:12,borderTop:'1px solid #f0eeea',flexShrink:0}},
+        RCE("div",{style:{display:'flex',gap:8,alignItems:'flex-end',border:'1px solid #e2ddd2',borderRadius:12,padding:'8px 8px 8px 12px',background:'#fff'}},
+          RCE("textarea",{value:input,onChange:e=>setInput(e.target.value),onKeyDown:e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}},placeholder:"Ask Nova to change the playbook…",rows:1,style:{flex:1,border:'none',outline:'none',resize:'none',fontSize:12.5,color:'#1f1f1d',fontFamily:'inherit',lineHeight:1.5,maxHeight:90,background:'transparent'}}),
+          RCE("button",{onClick:send,disabled:sendDisabled,style:{width:32,height:32,borderRadius:8,border:'none',background:sendDisabled?'#d6d3cc':'#1f1f1d',cursor:sendDisabled?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},sendIcon)))),
+    RCE("div",{className:"pb-pane",style:{flex:1,minWidth:0,overflowY:'auto',padding:'22px 26px 30px'}},RCE("div",{style:{maxWidth:760}},rightCanvas())));
+}
+// AI-first "Create a playbook" landing (centered, mirrors the campaign create entry).
 function LeadPlaybookCreate({setActiveId}){
-  const sparkle=(size,color)=>RCE("svg",{width:size||14,height:size||14,viewBox:"0 0 24 24",fill:color||"#7c3aed"},RCE("path",{d:"M12 2l1.7 5.1a3 3 0 0 0 1.9 1.9L20.7 10.7l-5.1 1.7a3 3 0 0 0-1.9 1.9L12 19.4l-1.7-5.1a3 3 0 0 0-1.9-1.9L3.3 10.7l5.1-1.7a3 3 0 0 0 1.9-1.9z"}));
   const [prompt,setPrompt]=useState('');
-  const [busy,setBusy]=useState(false);
+  const [stage,setStage]=useState('landing');
   const items=(LeadPlaybookStore.items||[]);
   const open=p=>setActiveId('modules/Leads/playbook/'+p.id);
-  const defaultQs=()=>[{q:'What type of work does the lead need?',t:'text',req:true},{q:'Is the property owner-occupied?',t:'yesno',req:true},{q:'What is the expected timeline?',t:'text',req:false}];
   const cloneFrom=t=>({name:t.name,agent:t.agent,tone:t.tone,handoff:t.handoff,instructions:t.instructions,qs:(t.qs||[]).map(q=>({...q})),rules:(t.rules||[]).map(r=>({...r})),ruleJoin:t.ruleJoin,isFallback:false});
   const fromScratch=()=>open(LeadPlaybookStore.create({name:'Untitled playbook',instructions:'',qs:[]}));
   const fromTemplate=tid=>{const t=LeadPlaybookStore.get(tid);open(LeadPlaybookStore.create(t?cloneFrom(t):{}));};
   const clone=srcId=>{const t=LeadPlaybookStore.get(srcId);if(!t)return;const d=cloneFrom(t);d.name=t.name+' (copy)';open(LeadPlaybookStore.create(d));};
-  const generate=()=>{if(!prompt.trim()||busy)return;setBusy(true);setTimeout(()=>{const words=prompt.trim().split(/\s+/).slice(0,5).join(' ');const nm=words.charAt(0).toUpperCase()+words.slice(1);open(LeadPlaybookStore.create({name:nm||'New playbook',instructions:prompt.trim(),qs:defaultQs()}));},650);};
   const TEMPLATES=[['storm','Storm Response','Storm-damage intake — territory, damage & insurance.'],['insurance','Insurance Claim','Claim-ready qualification with carrier & adjuster details.'],['estimate','Estimate Follow-up','Re-engage after an estimate and move to a decision.'],['lead-qual','Lead Qualification','General inbound intake — the default checklist.']];
   const sectLbl=t=>RCE("div",{style:{fontSize:11,fontWeight:700,letterSpacing:'.05em',color:'#9c9b96',margin:'26px 0 12px'}},t);
   const tplCard=([tid,title,desc])=>RCE("button",{key:tid,onClick:()=>fromTemplate(tid),className:"hover-lift",style:{textAlign:'left',border:'1px solid #e8e7e2',borderRadius:12,background:'#fff',padding:16,cursor:'pointer'}},
-    RCE("div",{style:{display:'flex',alignItems:'center',gap:10,marginBottom:6}},
-      RCE("span",{style:{width:30,height:30,borderRadius:8,background:'#efe7fb',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},RCE(TiClipboardText,{size:16,color:"#7c3aed"})),
-      RCE("span",{style:{fontSize:13.5,fontWeight:700,color:'#1f1f1d'}},title)),
+    RCE("div",{style:{fontSize:13.5,fontWeight:700,color:'#1f1f1d',marginBottom:6}},title),
     RCE("div",{style:{fontSize:12,color:'#6b6a66',lineHeight:1.45}},desc));
-  const orCard=(icon,title,desc,onClick,child)=>RCE("div",{key:title,onClick:onClick,className:onClick?"hover-lift":"",style:{border:'1px solid #e8e7e2',borderRadius:12,background:'#fff',padding:16,cursor:onClick?'pointer':'default'}},
+  const orCard=(icon,title,desc,onClick,child)=>RCE("div",{key:title,onClick:onClick,className:onClick?"hover-lift":"",style:{textAlign:'left',border:'1px solid #e8e7e2',borderRadius:12,background:'#fff',padding:16,cursor:onClick?'pointer':'default'}},
     RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}},RCE("div",{style:{fontSize:13.5,fontWeight:700,color:'#1f1f1d'}},title),RCE(icon,{size:17,color:"#9c9b96"})),
     RCE("div",{style:{fontSize:12,color:'#6b6a66',marginTop:5}},desc),child||null);
+  if(stage==='builder')return RCE(React.Fragment,null,
+    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiClipboardText,backTo:'modules/Leads/playbook',backTitle:'Back to Playbooks',title:'Create a playbook',sub:'AI builder'}),
+    RCE(PlaybookAIBuilder,{prompt:prompt,onBack:()=>setStage('landing'),onCreate:d=>open(LeadPlaybookStore.create(d))}));
   return RCE(React.Fragment,null,
     RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiClipboardText,backTo:'modules/Leads/playbook',backTitle:'Back to Playbooks',title:'Create a playbook',sub:'Qualification playbook'}),
-    leadScroll(RCE(React.Fragment,null,
-      RCE("h1",{style:{fontSize:26,fontWeight:800,color:'#1f1f1d',letterSpacing:'-0.02em',margin:'8px 0 10px'}},"Create a playbook."),
-      RCE("p",{style:{fontSize:14,color:'#6b6a66',lineHeight:1.55,maxWidth:680,marginBottom:22}},"Describe what you want to qualify in plain language — Nova drafts the questions, triggers and outcome. Or start from a template, clone an existing playbook, or a blank canvas."),
-      RCE("div",{style:{border:'1px solid #e5e2db',borderRadius:14,background:'#fff',padding:14,boxShadow:'0 1px 2px rgba(0,0,0,.04)'}},
-        RCE("textarea",{value:prompt,onChange:e=>setPrompt(e.target.value),placeholder:"e.g. Residential roofing in North Texas. Most leads from Angi and Google LSA — hail and storm damage with insurance claims. We close full roof replacements.",style:{width:'100%',height:92,border:'none',outline:'none',resize:'vertical',fontSize:13.5,color:'#1f1f1d',fontFamily:'inherit',lineHeight:1.55,background:'transparent'}}),
+    RCE("div",{className:"settings-scroll",style:{flex:1,overflowY:'auto',background:'#fff'}},RCE("div",{style:{maxWidth:720,margin:'0 auto',padding:'34px 24px 60px'}},
+      RCE("h1",{style:{fontSize:28,fontWeight:800,color:'#1f1f1d',letterSpacing:'-0.02em',margin:'0 0 12px',textAlign:'center'}},"Create a playbook."),
+      RCE("p",{style:{fontSize:14.5,color:'#6b6a66',lineHeight:1.55,margin:'0 auto 26px',textAlign:'center',maxWidth:600}},"Describe what you want to qualify in plain language — Nova drafts the questions, triggers and outcome. Or start from a template, clone an existing playbook, or a blank canvas."),
+      RCE("div",{style:{border:'1px solid #e5e2db',borderRadius:14,background:'#fff',padding:14,boxShadow:'0 1px 3px rgba(0,0,0,.05)'}},
+        RCE("textarea",{value:prompt,onChange:e=>setPrompt(e.target.value),placeholder:"e.g. Residential roofing in North Texas. Most leads from Angi and Google LSA — hail and storm damage with insurance claims. We close full roof replacements.",style:{width:'100%',height:96,border:'none',outline:'none',resize:'vertical',fontSize:13.5,color:'#1f1f1d',fontFamily:'inherit',lineHeight:1.55,background:'transparent'}}),
         RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'flex-end',marginTop:6}},
-          RCE("button",{onClick:generate,disabled:!prompt.trim()||busy,style:{display:'inline-flex',alignItems:'center',gap:7,height:38,padding:'0 18px',borderRadius:9,border:'none',background:(!prompt.trim()||busy)?'#c3c2bd':'#1f1f1d',color:'#fff',fontSize:13,fontWeight:600,cursor:(!prompt.trim()||busy)?'default':'pointer'}},sparkle(15,"#fff"),busy?"Generating…":"Generate"))),
+          RCE("button",{onClick:()=>{if(prompt.trim())setStage('builder');},disabled:!prompt.trim(),style:{display:'inline-flex',alignItems:'center',gap:7,height:38,padding:'0 18px',borderRadius:9,border:'none',background:prompt.trim()?'#1f1f1d':'#c3c2bd',color:'#fff',fontSize:13,fontWeight:600,cursor:prompt.trim()?'pointer':'default'}},pbSparkle(15,"#fff"),"Generate playbook"))),
       sectLbl("START FROM A TEMPLATE"),
       RCE("div",{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},TEMPLATES.map(tplCard)),
       sectLbl("OR"),
