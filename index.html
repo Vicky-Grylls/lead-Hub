@@ -30075,7 +30075,19 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       ['Lead Source', src], ['Status', lead.status || lead.col], ['Created At', 'Jul 20, 2026 · 1:19 PM']];
     return base.concat(sch ? sch.primary.concat(sch.custom) : []);
   }
-  // Right-rail pane: searchable raw source fields with copy + favourite (mirrors the CRM "Most Recent Opportunity" view).
+  // One source-data row — copy icons + pin reveal only on hover (pinned rows keep the pin visible).
+  function SourceFieldRow({ k, val, on, onPin, onCopy, last }) {
+    const [hov, setHov] = useState(false);
+    const copyIc = t => <button onClick={e => { e.stopPropagation(); onCopy(t); }} title="Copy" style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 2, display: 'inline-flex', opacity: hov ? 0.6 : 0, transition: 'opacity .12s' }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = hov ? 0.6 : 0}><Ic name="copy" size={12} color={LH.muted} /></button>;
+    return <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 16px', borderBottom: last ? 'none' : '1px solid ' + LH.borderSoft, background: hov ? '#faf9f6' : 'transparent', transition: 'background .12s' }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k}</span>{copyIc(k)}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}><span style={{ fontSize: 12, color: LH.sub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', wordBreak: 'break-all' }}>{val}</span>{val !== '—' && copyIc(val)}</div>
+      </div>
+      <button onClick={onPin} title={on ? 'Unpin' : 'Pin to top'} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 3, display: 'inline-flex', flexShrink: 0, opacity: on || hov ? 1 : 0, transition: 'opacity .12s' }}><Ic name={on ? 'pin-off' : 'pin'} size={15} color={on ? LH.primary : LH.muted} /></button>
+    </div>;
+  }
+  // Right-rail pane: searchable raw source data with copy + pin (mirrors the CRM "Most Recent Opportunity" view).
   function SourceFieldsPanel({ lead, onToast }) {
     const defs = leadSourceFieldDefs(lead);
     const [q, setQ] = useState('');
@@ -30086,23 +30098,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const filtered = ql.length >= 3 ? defs.filter(([k, v]) => (k + ' ' + v).toLowerCase().includes(ql)) : defs;
     const rows = filtered.map((d, i) => [d, i]).sort((a, b) => ((fav[b[0][0]] ? 1 : 0) - (fav[a[0][0]] ? 1 : 0)) || (a[1] - b[1])).map(x => x[0]);
     const favCount = Object.values(fav).filter(Boolean).length;
-    const copyIc = t => <button onClick={() => copy(t)} title="Copy" style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 2, display: 'inline-flex', opacity: 0.55 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.55}><Ic name="copy" size={12} color={LH.muted} /></button>;
     return <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink, flex: 1 }}>Source fields</span><span style={{ fontSize: 11, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '2px 8px' }}>{defs.length}</span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink, flex: 1 }}>Source data</span><span style={{ fontSize: 11, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '2px 8px' }}>{defs.length}</span></div>
         <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 2 }}>Everything {lead.src} sent for this lead</div>
         <div style={{ position: 'relative', marginTop: 10 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 10, top: 9 }} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search fields (min. 3 characters)…" style={{ width: '100%', height: 32, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px 0 30px', fontSize: 12.5, color: LH.ink, outline: 'none', boxSizing: 'border-box' }} /></div>
         {favCount > 0 && <div style={{ fontSize: 11, color: LH.muted, marginTop: 6 }}>{favCount} pinned to top</div>}
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
         {rows.length === 0 && <div style={{ padding: '30px 16px', textAlign: 'center', fontSize: 12.5, color: LH.muted }}>No fields match “{q}”.</div>}
-        {rows.map(([k, v], i) => { const on = !!fav[k]; const val = (v === '' || v == null) ? '—' : v; return <div key={k + i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 16px', borderBottom: i < rows.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }} onMouseEnter={e => e.currentTarget.style.background = '#faf9f6'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k}</span>{copyIc(k)}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}><span style={{ fontSize: 12, color: LH.sub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', wordBreak: 'break-all' }}>{val}</span>{val !== '—' && copyIc(val)}</div>
-          </div>
-          <button onClick={() => setFav(f => ({ ...f, [k]: !f[k] }))} title={on ? 'Unpin' : 'Pin to top'} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 3, display: 'inline-flex', flexShrink: 0 }}><Ic name="star" size={15} color={on ? '#e8b923' : '#cbccc9'} sw={on ? 2.4 : 2} /></button>
-        </div>; })}
+        {rows.map(([k, v], i) => <SourceFieldRow key={k + i} k={k} val={(v === '' || v == null) ? '—' : v} on={!!fav[k]} last={i === rows.length - 1} onPin={() => setFav(f => ({ ...f, [k]: !f[k] }))} onCopy={copy} />)}
       </div>
     </div>;
   }
@@ -30167,7 +30172,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {md && <div style={{ marginTop: 6, fontSize: 12, color: LH.body, lineHeight: 1.55 }}>{blob}</div>}
         </div>;
       })()}
-      {onViewSourceFields && <button onClick={onViewSourceFields} className="lh-press" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 14, padding: '7px 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.primary, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = LH.tint} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="braces" size={14} color={LH.primary} />View source fields<Ic name="arrow-right" size={13} color={LH.primary} /></button>}
+      {onViewSourceFields && <button onClick={onViewSourceFields} className="lh-press" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 14, padding: '7px 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.primary, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = LH.tint} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="braces" size={14} color={LH.primary} />View source data<Ic name="arrow-right" size={13} color={LH.primary} /></button>}
     </div>;
   }
   // Shared lead header — avatar, name, address, CTA row. Used at the top of both the
@@ -31874,7 +31879,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {/* Left column */}
         <div style={{ width: 316, flexShrink: 0, padding: '18px 18px', borderRight: '1px solid ' + LH.borderSoft, overflowY: 'auto' }}>
           <div style={{ marginBottom: 16 }}><LeadHeaderBlock lead={{ ...lead, jobId }} onToast={onToast} slim onConvert={doConvert} onMove={(id, s) => onToast && onToast(lead.name + ' → ' + s)} onDisqualify={(lid, reason) => { setLocalDisq(reason); onDisqualify && onDisqualify(lid, reason); }} /></div>
-          <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}><LeadPrimaryDetails lead={lead} onToast={onToast} onViewSourceFields={() => { setPanel('source'); toast('Showing all source fields'); }} /></div>
+          <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}><LeadPrimaryDetails lead={lead} onToast={onToast} onViewSourceFields={() => { setPanel('source'); toast('Showing all source data'); }} /></div>
         </div>
         {/* Center column */}
         <div style={{ flex: 1, minWidth: 0, borderRight: '1px solid ' + LH.borderSoft, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -32008,7 +32013,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {/* Mini sidebar */}
         <div style={{ width: 46, flexShrink: 0, borderLeft: '1px solid ' + LH.borderSoft, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {[['link', 'assoc', 'Associations'], ['braces', 'source', 'Source fields']].map(([ic, key, lbl], i) => <Fragment key={key}>
+            {[['link', 'assoc', 'Associations'], ['braces', 'source', 'Source data']].map(([ic, key, lbl], i) => <Fragment key={key}>
               <button onClick={() => setPanel(key)} title={lbl} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: panel === key ? '#f8f5f0' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '2px 0' }} onMouseEnter={e => { if (panel !== key) e.currentTarget.style.background = '#f5f2ec'; }} onMouseLeave={e => { if (panel !== key) e.currentTarget.style.background = 'transparent'; }}><Ic name={ic} size={16} color={panel === key ? '#262626' : '#a3a3a3'} /></button>
             </Fragment>)}
           </div>
