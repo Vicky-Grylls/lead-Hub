@@ -31328,25 +31328,25 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: 26 }}>
           {hov
             ? <button className="lh-press" onClick={openLead} title="Open lead" style={{ width: 26, height: 26, borderRadius: 7, border: '1px solid ' + LH.border, background: '#f6f4ef', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="external-link" size={14} color={LH.sub} /></button>
-            : <span title="Potential value" style={{ fontSize: 12, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap' }}>{value}</span>}
+            : (cfg.value ? <span title="Potential value" style={{ fontSize: 12, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap' }}>{value}</span> : null)}
         </div>
       </div>
-      {cfg.source && <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-        <Pill label={lead.src} tone="New" />
+      {(cfg.source || cfg.status) && <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+        {cfg.source && <Pill label={lead.src} tone="New" />}
         {cfg.status && <Pill label={lead.status || lead.col} />}
       </div>}
-      {(phone || email) && <div style={{ marginTop: 9, display: 'flex', flexDirection: 'column', gap: 5 }}>
-        {phone && <CardContactRow ic="phone" value={phone} title={'Call ' + lead.name} actIc="phone" actColor={LH.green} onAct={() => onAction && onAction(lead, 'call')} />}
-        {email && <CardContactRow ic="mail" value={email} title={'Email ' + lead.name} actIc="mail" actColor={LH.blue} onAct={() => onAction && onAction(lead, 'email')} />}
+      {((cfg.phone && phone) || (cfg.email && email)) && <div style={{ marginTop: 9, display: 'flex', flexDirection: 'column', gap: 5 }}>
+        {cfg.phone && phone && <CardContactRow ic="phone" value={phone} title={'Call ' + lead.name} actIc="phone" actColor={LH.green} onAct={() => onAction && onAction(lead, 'call')} />}
+        {cfg.email && email && <CardContactRow ic="mail" value={email} title={'Email ' + lead.name} actIc="mail" actColor={LH.blue} onAct={() => onAction && onAction(lead, 'email')} />}
       </div>}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 9 }}>
-        <span title="Time in this stage" style={{ fontSize: 11, color: LH.muted, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="clock" size={12} color={LH.muted} />{lead.age}</span>
-        <span title={nc + ' note' + (nc === 1 ? '' : 's')} style={{ fontSize: 11, color: nc > 0 ? LH.sub : LH.muted, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="sticky-note" size={12} color={LH.muted} />{nc}</span>
-      </div>
-      <div title={assignee ? 'Assigned to ' + assignee : 'Not assigned'} style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 9, paddingTop: 9, borderTop: '1px solid ' + LH.borderSoft }}>
+      {(cfg.age || cfg.notes) && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 9 }}>
+        {cfg.age ? <span title="Time in this stage" style={{ fontSize: 11, color: LH.muted, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="clock" size={12} color={LH.muted} />{lead.age}</span> : <span />}
+        {cfg.notes ? <span title={nc + ' note' + (nc === 1 ? '' : 's')} style={{ fontSize: 11, color: nc > 0 ? LH.sub : LH.muted, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="sticky-note" size={12} color={LH.muted} />{nc}</span> : null}
+      </div>}
+      {cfg.assignee && <div title={assignee ? 'Assigned to ' + assignee : 'Not assigned'} style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 9, paddingTop: 9, borderTop: '1px solid ' + LH.borderSoft }}>
         {assignee ? <LeadAvatar name={assignee} size={20} style={{ flexShrink: 0 }} /> : <span style={{ width: 20, height: 20, borderRadius: 999, background: '#f1f0ec', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="user" size={12} color={LH.muted} /></span>}
         <span style={{ fontSize: 11.5, fontWeight: assignee ? 600 : 500, color: assignee ? LH.body : LH.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{assignee || 'Not Assigned'}</span>
-      </div>
+      </div>}
     </div>;
   }
 
@@ -32121,7 +32121,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [viewName, setViewName] = useState('');
     const [custOpen, setCustOpen] = useState(false);
     const [custPos, setCustPos] = useState(null); // {right, top} anchor below the customize icon
-    const [cardCfg, setCardCfg] = useState({ score: true, source: true, age: true, fields: true, note: true });
+    const CARD_CFG_DEFAULT = { source: true, note: true, phone: true, email: true, value: true, assignee: true, status: false, age: true, notes: true };
+    const [cardCfg, setCardCfg] = useState({ ...CARD_CFG_DEFAULT });
     const [custAdd, setCustAdd] = useState(false); // "add attribute" dropdown open
     const [custQ, setCustQ] = useState('');        // attribute search query
     const matchKpi = l => !kpi || (kpi === 'received' ? ageHours(l.age) < 24 : kpi === 'qualified' ? l.col === 'Qualified' : kpi === 'engaged' ? l.col === 'Engaged' : kpi === 'contacted' ? l.col === 'Contacted' : kpi === 'converted' ? l.col === 'Converted' : kpi === 'disqualified' ? l.col === 'Disqualified' : true);
@@ -32332,7 +32333,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               </div></td></tr>; })()}</tbody>
           </table>
         </Card>}
-      {custOpen && (() => { const CARD_ATTRS = [['source', 'Source', 'tag'], ['status', 'Status', 'activity'], ['note', 'Service interest', 'wrench']]; const sample = filtered[0] || { id: 'sample', name: 'Jordan Blake', note: 'Roof inspection', src: 'Angi', age: '2h', score: 82, col: 'Engaged', status: 'Working', fields: 6, phone: '469-555-0172', email: 'jordan.blake@gmail.com' }; const onN = CARD_ATTRS.filter(a => cardCfg[a[0]]).length; return <div style={{ position: 'fixed', top: (custPos && custPos.top) || 120, right: 20, bottom: PB_DOCK_H + 10, width: 'min(380px,96vw)', zIndex: 3000, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 14, boxShadow: '0 20px 48px rgba(0,0,0,.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      {custOpen && (() => { const CARD_ATTRS = [['source', 'Source', 'tag'], ['note', 'Service interest', 'wrench'], ['phone', 'Phone', 'phone'], ['email', 'Email', 'mail'], ['value', 'Potential value', 'dollar-sign'], ['assignee', 'Assigned user', 'user'], ['status', 'Status', 'activity'], ['age', 'Time in stage', 'clock'], ['notes', 'Notes', 'sticky-note']]; const sample = filtered[0] || { id: 'sample', name: 'Jordan Blake', note: 'Roof inspection', src: 'Angi', age: '2h', score: 82, col: 'Engaged', status: 'Working', fields: 6, phone: '469-555-0172', email: 'jordan.blake@gmail.com' }; const onN = CARD_ATTRS.filter(a => cardCfg[a[0]]).length; return <div style={{ position: 'fixed', top: (custPos && custPos.top) || 120, right: 20, bottom: PB_DOCK_H + 10, width: 'min(380px,96vw)', zIndex: 3000, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 14, boxShadow: '0 20px 48px rgba(0,0,0,.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
           <div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Customize card</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Pick which attributes show on board cards.</div></div>
           <button onClick={() => setCustOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button>
@@ -32358,7 +32359,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
         </div>
         <div style={{ padding: '12px 20px', borderTop: '1px solid ' + LH.borderSoft, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <button onClick={() => setCardCfg({ source: true, score: true, age: true, fields: true, note: true })} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Reset to default</button>
+          <button onClick={() => setCardCfg({ ...CARD_CFG_DEFAULT })} style={{ fontSize: 12.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>Reset to default</button>
           <Btn kind="primary" onClick={() => setCustOpen(false)}>Done</Btn>
         </div>
       </div>; })()}
