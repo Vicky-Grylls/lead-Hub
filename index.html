@@ -30172,7 +30172,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {md && <div style={{ marginTop: 6, fontSize: 12, color: LH.body, lineHeight: 1.55 }}>{blob}</div>}
         </div>;
       })()}
-      {onViewSourceFields && <button onClick={onViewSourceFields} className="lh-press" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 14, padding: '7px 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.primary, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = LH.tint} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="braces" size={14} color={LH.primary} />View source data<Ic name="arrow-right" size={13} color={LH.primary} /></button>}
+      {onViewSourceFields && <button onClick={onViewSourceFields} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 14, padding: 0, border: 'none', background: 'none', fontSize: 12.5, fontWeight: 600, color: LH.primary, cursor: 'pointer' }}>View source data<Ic name="arrow-right" size={13} color={LH.primary} /></button>}
     </div>;
   }
   // Shared lead header — avatar, name, address, CTA row. Used at the top of both the
@@ -31257,6 +31257,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const nc = (hsh(lead.id + 'nn') % 5 < 2) ? 1 + (hsh(lead.id + 'n') % 4) : 0;
     const phone = lead.phone || ((hsh(lead.id + 'ph') % 10 < 8) ? '(469) 555-01' + String(10 + hsh(lead.id + 'p') % 89) : null);
     const email = lead.email || ((hsh(lead.id + 'em') % 10 < 7) ? (lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com') : null);
+    const ASSN = ['Maria Gonzalez', 'Tyson Silva', 'Michael Richardson', 'Marcus Webb', 'Sarah Chen'];
+    const assignee = (hsh(lead.id + 'as') % 10 < 7) ? ASSN[hsh(lead.id + 'asn') % ASSN.length] : null;
     const openLead = e => { e.stopPropagation(); onAction ? onAction(lead, 'open') : onClick(lead.id); };
     return <div draggable onClick={() => onClick(lead.id)}
       onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; onDragStart(lead.id); }}
@@ -31265,7 +31267,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       onMouseEnter={e => { setHov(true); if (!dragging && !selected) { e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,.10)'; e.currentTarget.style.borderColor = '#cbd5e1'; } }}
       onMouseLeave={e => { setHov(false); if (!selected) { e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,.05)'; e.currentTarget.style.borderColor = LH.border; } }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-        <LeadAvatar name={lead.name} size={26} style={{ flexShrink: 0, marginTop: 1 }} />
         <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.name}</div>{cfg.note && lead.note && <div style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{lead.note}</div>}</div>
         <button className="lh-press" onClick={openLead} title="Open lead" style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 7, border: '1px solid ' + (hov ? LH.primary : 'transparent'), background: hov ? LH.tint : 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'background 120ms, border-color 120ms' }}><Ic name="external-link" size={14} color={hov ? LH.primary : LH.muted} /></button>
       </div>
@@ -31281,6 +31282,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 9 }}>
         <span title="Time in this stage" style={{ fontSize: 11, color: LH.muted, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="clock" size={12} color={LH.muted} />{lead.age}</span>
         <span title={nc + ' note' + (nc === 1 ? '' : 's')} style={{ fontSize: 11, color: nc > 0 ? LH.sub : LH.muted, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="sticky-note" size={12} color={LH.muted} />{nc}</span>
+      </div>
+      <div title={assignee ? 'Assigned to ' + assignee : 'Not assigned'} style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 9, paddingTop: 9, borderTop: '1px solid ' + LH.borderSoft }}>
+        {assignee ? <LeadAvatar name={assignee} size={20} style={{ flexShrink: 0 }} /> : <span style={{ width: 20, height: 20, borderRadius: 999, background: '#f1f0ec', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="user" size={12} color={LH.muted} /></span>}
+        <span style={{ fontSize: 11.5, fontWeight: assignee ? 600 : 500, color: assignee ? LH.body : LH.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{assignee || 'Not Assigned'}</span>
       </div>
     </div>;
   }
