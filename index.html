@@ -29390,14 +29390,15 @@ function PlaybookAIBuilder({prompt,onBack,onCreate}){
   const buildFromPrompt=()=>{
     const storm=/storm|hail|wind|roof/.test(low), ins=/insuranc|claim|adjuster|carrier/.test(low);
     const trade=/roof/.test(low)?'Roofing':/gutter/.test(low)?'Gutter':/solar/.test(low)?'Solar':/hvac|heating|cooling/.test(low)?'HVAC':/sid/.test(low)?'Siding':'Lead';
-    const name=storm?(trade+' — Storm & Insurance Intake'):(trade+' — Qualification');
+    const first=(prompt||'').trim().split(/\s+/).slice(0,4).join(' ');const titled=first?first.charAt(0).toUpperCase()+first.slice(1):'New lead';
+    const name=storm?(trade+' — Storm & Insurance Intake'):(trade!=='Lead'?(trade+' — Qualification'):(titled+' — Qualification'));
     const qs=[{q:'What type of work does the lead need?',t:'text',req:true},{q:'Is the property owner-occupied?',t:'yesno',req:true},{q:'What is the property address?',t:'text',req:true}];
     if(storm){qs.push({q:'What kind of damage are you seeing?',t:'multiselect',req:true,options:['Storm','Hail','Wind','Water','Other']});qs.push({q:'When did the damage occur?',t:'date',req:false});}
     if(ins){qs.push({q:'Is insurance involved?',t:'yesno',req:true});qs.push({q:'Insurance carrier',t:'text',req:false});}
     qs.push({q:'Best time for a free inspection?',t:'text',req:true});
     const rules=[];
     if(storm)rules.push({field:'damage',op:'any',value:['Storm','Hail']});
-    if(ins)rules.push({field:'claim',op:'is',value:'yes'});
+    if(ins)rules.push({field:'claim',op:'any',value:['Considering','Claim filed','Adjuster scheduled']});
     return {name,instructions:(prompt||'').trim(),tone:ins?'Warm and consultative':'Friendly and concise',handoff:PB_HANDOFFS[0],agent:'csr',ruleJoin:'any',isFallback:false,rules,qs};
   };
   const [draft,setDraft]=useState({name:'',agent:'csr',tone:PB_TONES[0],handoff:PB_HANDOFFS[0],instructions:'',ruleJoin:'any',isFallback:false,rules:[],qs:[]});
