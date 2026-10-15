@@ -31129,19 +31129,62 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   /* ─────────── PIPELINE ─────────── */
   const LEAD_COLS = PIPE_COLS.map(c => ({ ...c, dot: COL_DOT[c.key] }));
 
-  function LeadKanbanCard({ lead, onClick, onDragStart, onDragEnd, dragging, selected, cfg }) {
+  // ── Production-polish shared primitives: injected CSS (shimmer, focus rings, press), Skeleton, Spinner ──
+  function LHPolishStyles() {
+    useEffect(() => {
+      if (document.getElementById('lh-polish')) return;
+      const s = document.createElement('style');
+      s.id = 'lh-polish';
+      s.textContent = '@keyframes lhShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}'
+        + '@keyframes lhSpin{to{transform:rotate(360deg)}}'
+        + '@keyframes lhFadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}'
+        + '@keyframes lhIndet{0%{transform:translateX(-120%)}100%{transform:translateX(360%)}}'
+        + '.lh-skel{background:#ececec;background-image:linear-gradient(90deg,#ececec 0px,#f6f5f3 180px,#ececec 360px);background-size:600px 100%;animation:lhShimmer 1.25s infinite linear}'
+        + '.lh-fade{animation:lhFadeUp .22s ease both}'
+        + '.lh-press{transition:transform .08s ease}.lh-press:active{transform:scale(.97)}'
+        + "button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid rgba(31,31,29,.4);outline-offset:2px;border-radius:6px}";
+      document.head.appendChild(s);
+    }, []);
+    return null;
+  }
+  function Skel({ w = '100%', h = 12, r = 7, style }) { return <div className="lh-skel" style={{ width: w, height: h, borderRadius: r, ...(style || {}) }} />; }
+  function Spinner({ size = 16, color = LH.primary, style }) {
+    return <svg width={size} height={size} viewBox="0 0 24 24" style={{ animation: 'lhSpin .7s linear infinite', ...(style || {}) }}><circle cx="12" cy="12" r="9" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeDasharray="42 56" /></svg>;
+  }
+  // Skeleton placeholders for the pipeline board + list while leads load.
+  function KanbanSkeleton() {
+    return <div style={{ display: 'flex', gap: 12, overflowX: 'hidden', paddingBottom: 8 }}>{[0, 1, 2, 3, 4].map(c => <div key={c} style={{ width: 248, flexShrink: 0, borderRadius: 12, background: '#f3f4f6', padding: '10px 10px 12px', height: 'calc(100vh - 250px)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12, padding: '2px 2px' }}><Skel w={8} h={8} r={99} /><Skel w={76} h={11} /><Skel w={18} h={14} r={99} /></div>
+      {[0, 1, 2].slice(0, 3 - (c % 2)).map(i => <div key={i} style={{ background: '#fff', borderRadius: 10, padding: '10px 11px', marginBottom: 8, boxShadow: '0 1px 2px rgba(0,0,0,.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}><Skel w={22} h={22} r={99} /><div style={{ flex: 1 }}><Skel w="70%" h={10} style={{ marginBottom: 5 }} /><Skel w="45%" h={8} /></div></div>
+        <div style={{ display: 'flex', gap: 6 }}><Skel w={54} h={16} r={99} /><Skel w={40} h={16} r={99} /></div>
+      </div>)}
+    </div>)}</div>;
+  }
+  function ListSkeleton() {
+    return <Card style={{ padding: 0, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', gap: 14, padding: '11px 16px', borderBottom: '1px solid ' + LH.border }}>{[180, 90, 110, 130, 200].map((w, i) => <Skel key={i} w={w} h={10} />)}</div>
+      {[0, 1, 2, 3, 4, 5, 6].map(i => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><Skel w={18} h={18} r={5} /><Skel w={24} h={24} r={99} /><Skel w={150} h={11} /><Skel w={80} h={18} r={99} /><Skel w={110} h={11} /><Skel w={140} h={11} /><div style={{ flex: 1 }} /><Skel w={60} h={11} /></div>)}
+    </Card>;
+  }
+  function LeadKanbanCard({ lead, onClick, onDragStart, onDragEnd, dragging, selected, cfg, onAction }) {
     cfg = cfg || { source: true, score: true, age: true, fields: true, note: true };
     const scoreColor = lead.score >= 80 ? LH.primary : lead.score >= 60 ? '#c9922e' : '#9c9b96';
     const metaRow = cfg.source || cfg.status;
     const footRow = cfg.fields || cfg.age;
+    const [hov, setHov] = useState(false);
+    const act = (kind, e) => { e.stopPropagation(); onAction && onAction(lead, kind); };
+    const qbtn = (ic, kind, color) => <button className="lh-press" onClick={e => act(kind, e)} title={kind === 'call' ? 'Call' : kind === 'sms' ? 'Text' : 'Open'} style={{ flex: 1, height: 26, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: LH.body }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name={ic} size={12} color={color} /></button>;
     return <div draggable onClick={() => onClick(lead.id)}
       onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; onDragStart(lead.id); }}
       onDragEnd={onDragEnd}
-      style={{ background: '#fff', border: '1px solid ' + (selected ? LH.primary : LH.border), borderRadius: 10, padding: '8px 10px', boxShadow: selected ? '0 0 0 3px rgba(31,31,29,0.10)' : '0 1px 2px rgba(0,0,0,.05)', cursor: 'grab', opacity: dragging ? 0.4 : 1, transition: 'opacity 150ms, box-shadow 150ms, border-color 150ms' }}
-      onMouseEnter={e => { if (!dragging && !selected) { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,.08)'; e.currentTarget.style.borderColor = '#cbd5e1'; } }}
-      onMouseLeave={e => { if (!selected) { e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,.05)'; e.currentTarget.style.borderColor = LH.border; } }}>
+      style={{ background: '#fff', border: '1px solid ' + (selected ? LH.primary : LH.border), borderRadius: 10, padding: '8px 10px', boxShadow: selected ? '0 0 0 3px rgba(31,31,29,0.10)' : '0 1px 2px rgba(0,0,0,.05)', cursor: 'grab', opacity: dragging ? 0.4 : 1, transform: dragging ? 'scale(.98) rotate(-1deg)' : 'none', transition: 'opacity 150ms, box-shadow 150ms, border-color 150ms, transform 120ms' }}
+      onMouseEnter={e => { setHov(true); if (!dragging && !selected) { e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,.10)'; e.currentTarget.style.borderColor = '#cbd5e1'; } }}
+      onMouseLeave={e => { setHov(false); if (!selected) { e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,.05)'; e.currentTarget.style.borderColor = LH.border; } }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <LeadAvatar name={lead.name} size={24} style={{ flexShrink: 0, marginTop: 1 }} />
         <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.name}</div>{cfg.note && lead.note && <div style={{ fontSize: 10.5, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.note}</div>}</div>
+        {cfg.score && <span title={'Lead score ' + lead.score} style={{ flexShrink: 0, fontSize: 10.5, fontWeight: 700, color: scoreColor, background: lead.score >= 80 ? LH.tint : '#f3f4f6', borderRadius: 999, padding: '2px 7px' }}>{lead.score}</span>}
       </div>
       {metaRow && <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
         {cfg.source && <Pill label={lead.src} tone="New" />}
@@ -31152,6 +31195,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {cfg.email && <span style={{ fontSize: 10.5, color: LH.sub, display: 'inline-flex', alignItems: 'center', gap: 5, minWidth: 0 }}><Ic name="mail" size={11} color={LH.muted} /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.email || (lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com')}</span></span>}
       </div>}
       {footRow && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>{cfg.fields ? <span style={{ fontSize: 10.5, color: LH.sub }}>{lead.fields} fields</span> : <span />}{cfg.age && <span style={{ fontSize: 10.5, color: LH.muted }}>{lead.age}</span>}</div>}
+      {hov && !dragging && <div className="lh-fade" style={{ display: 'flex', gap: 5, marginTop: 8, paddingTop: 7, borderTop: '1px solid ' + LH.borderSoft }}>{qbtn('phone', 'call', LH.green)}{qbtn('message-square', 'sms', LH.blue)}{qbtn('external-link', 'open', LH.sub)}</div>}
     </div>;
   }
 
@@ -31254,12 +31298,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   // Stages past "Converted" (index > 5) are terminal — grouped into one collapsed "Closed" lane.
   const TERMINAL_COLS = LEAD_COLS.filter(c => COL_STAGE[c.key] > 5);
   const ACTIVE_COLS = LEAD_COLS.filter(c => COL_STAGE[c.key] <= 5);
-  function LeadsKanban({ leads, onMove, onCardClick, selId, cardCfg }) {
+  function LeadsKanban({ leads, onMove, onCardClick, selId, cardCfg, onAction, onAddCol }) {
     const [dragId, setDragId] = useState(null);
     const [overCol, setOverCol] = useState(null);
     const [termOpen, setTermOpen] = useState({});
     const drop = key => { if (dragId) onMove(dragId, key); setDragId(null); setOverCol(null); };
-    const card = l => <LeadKanbanCard key={l.id} lead={l} cfg={cardCfg} selected={selId === l.id} dragging={dragId === l.id} onClick={onCardClick} onDragStart={setDragId} onDragEnd={() => { setDragId(null); setOverCol(null); }} />;
+    const card = l => <LeadKanbanCard key={l.id} lead={l} cfg={cardCfg} selected={selId === l.id} dragging={dragId === l.id} onClick={onCardClick} onAction={onAction} onDragStart={setDragId} onDragEnd={() => { setDragId(null); setOverCol(null); }} />;
     const termTotal = leads.filter(l => COL_STAGE[l.col] > 5).length;
     return <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
       {ACTIVE_COLS.map(col => {
@@ -31273,12 +31317,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           <div style={{ marginBottom: 10, padding: '0 2px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ width: 8, height: 8, borderRadius: 999, background: col.dot }} /><span style={{ fontSize: 12.5, fontWeight: 700, color: '#374151' }}>{col.key}</span><span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 17, height: 17, borderRadius: 999, fontSize: 10.5, fontWeight: 600, color: LH.sub, background: 'rgba(0,0,0,.06)', padding: '0 5px' }}>{cj.length}</span></div>
-              <button style={{ width: 20, height: 20, borderRadius: 6, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="plus" size={13} color={LH.muted} /></button>
+              <button className="lh-press" onClick={() => onAddCol && onAddCol(col.key)} title={'Add lead to ' + col.key} style={{ width: 20, height: 20, borderRadius: 6, border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,.06)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="plus" size={13} color={LH.muted} /></button>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1, minHeight: 0 }}>
             {cj.length ? cj.map(card)
-              : <div style={{ fontSize: 11.5, color: LH.muted, padding: '14px 0', textAlign: 'center' }}>Drop a lead here</div>}
+              : <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '22px 10px', margin: '4px 0', border: '1.5px dashed ' + (over ? '#94a3b8' : '#d7dbe0'), borderRadius: 10, background: over ? 'rgba(255,255,255,.5)' : 'transparent', transition: 'all 150ms' }}><Ic name="inbox" size={18} color={over ? LH.sub : '#c0c4cb'} /><span style={{ fontSize: 11, color: over ? LH.sub : LH.muted, fontWeight: 500 }}>{over ? 'Release to drop' : 'Drag leads here'}</span></div>}
           </div>
         </div>;
       })}
@@ -31633,6 +31677,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     useEffect(() => { if (!lead) return; const pid = autoPlaybookForLead(lead); const d = deriveLeadAnswers(lead, pid); setQpbId(pid); setQpb({ ...PB_BLANK, ...d.values }); setQorigin(d.origin); setQuMeta(lead.qualifiedUnder || null); setLocalDisq(lead.disqualifyReason || null); }, [lead && lead.id]);
     const pickPlaybook = pid => { const d = deriveLeadAnswers(lead, pid); setQpbId(pid); setQpb({ ...PB_BLANK, ...d.values }); setQorigin(d.origin); };
     const qualifyMeta = () => ({ playbookId: qpbId, playbookName: getPlaybook(qpbId).name, version: pbVersion(qpbId), answers: { ...qpb }, at: 'Just now' });
+    const [pageLoading, setPageLoading] = useState(true);
+    useEffect(() => { setPageLoading(true); const t = setTimeout(() => setPageLoading(false), 450); return () => clearTimeout(t); }, [lead && lead.id]);
     const [notes, setNotes] = useState([]);
     const [noteText, setNoteText] = useState('');
     const [msg, setMsg] = useState('');
@@ -31727,7 +31773,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       setTimeout(() => setChatMsgs(m => [...m, { who: 'in', name: lead.name.split(' ')[0], t: nowTime(), text: 'Thanks, got it — talk soon!' }]), 900);
     };
     const react = (i, e) => setReacts(r => ({ ...r, [i]: r[i] === e ? null : e }));
-    return <div style={{ fontFamily: "'Inter',ui-sans-serif,system-ui", margin: '-20px -26px -34px', height: 'calc(100% + 54px)', overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column' }}>
+    return <div style={{ fontFamily: "'Inter',ui-sans-serif,system-ui", margin: '-20px -26px -34px', height: 'calc(100% + 54px)', overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      <LHPolishStyles />
+      {pageLoading && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, zIndex: 60, overflow: 'hidden', background: LH.borderSoft }}><div style={{ height: '100%', width: '38%', background: LH.primary, borderRadius: 2, animation: 'lhIndet 1.05s ease-in-out infinite' }} /></div>}
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '15px 24px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}><button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: LH.sub, fontWeight: 600, padding: 0 }}>Pipeline</button><Ic name="chevron-right" size={14} color={LH.muted} /><span style={{ fontWeight: 700, color: LH.ink }}>{lead.name}</span><button onClick={() => { setFav(f => !f); toast(fav ? 'Removed from favourites' : 'Added to favourites'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="star" size={15} color={fav ? '#e8b923' : LH.muted} /></button></div>
@@ -31891,6 +31939,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
 
   function PipelineSection({ onToast, onFull, onNavigate }) {
     const [leads, setLeads] = useState(PIPE_LEADS);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => { const t = setTimeout(() => setLoading(false), 650); return () => clearTimeout(t); }, []);
     const [selId, setSelId] = useState(null);
     const [tab, setTab] = useState('details');
     const [expanded, setExpanded] = useState(false);
@@ -31997,6 +32047,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const completeQualify = (id, meta) => { setLeadField(id, { qualifiedByPlaybook: true, qualifiedUnder: meta || null, disqualifyReason: null }); setQualifyFor(null); boardMove(id, 'Qualified'); const l = leads.find(x => x.id === id); onToast && onToast((l ? l.name : 'Lead') + ' qualified' + (meta ? ' · ' + meta.playbookName + ' v' + meta.version : '')); };
     const disqualifyLead = (id, reason) => { setLeadField(id, { disqualifyReason: reason || 'No reason given', disqualifiedAt: 'Just now', qualifiedByPlaybook: false, qualifiedUnder: null }); setQualifyFor(null); boardMove(id, 'Disqualified'); setLeadStatus(id, 'Disqualified'); const l = leads.find(x => x.id === id); onToast && onToast((l ? l.name : 'Lead') + ' disqualified'); };
     const removeLead = id => setLeads(ls => ls.filter(l => l.id !== id));
+    const onCardAction = (lead, kind) => { if (kind === 'open') setSelId(lead.id); else if (kind === 'call') onToast && onToast('Calling ' + lead.name + '…'); else if (kind === 'sms') onToast && onToast('Texting ' + lead.name + '…'); };
     const setLeadStatus = (id, status) => setLeads(ls => ls.map(l => l.id === id ? { ...l, status } : l));
     const setLeadField = (id, patch) => setLeads(ls => ls.map(l => l.id === id ? { ...l, ...patch } : l));
     const [rowMenu, setRowMenu] = useState(null); // lead id whose row action menu is open
@@ -32013,6 +32064,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const navLead = dir => { const ni = pageIdx + dir; if (pageIdx >= 0 && ni >= 0 && ni < filtered.length) setPageLead(filtered[ni]); };
     if (pageLead) return <LeadDetailsPage key={pageLead.id} lead={pageLead} onBack={closePage} onToast={onToast} onConvert={convertLeadTo} onNav={navLead} hasPrev={pageIdx > 0} hasNext={pageIdx >= 0 && pageIdx < filtered.length - 1} pos={pageIdx + 1} total={filtered.length} onQualify={(lid, meta) => completeQualify(lid, meta)} onDisqualify={(lid, reason) => disqualifyLead(lid, reason)} />;
     return <div>
+      <LHPolishStyles />
       {/* Row 1 — title, quick views, date range + primary CTAs */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
@@ -32081,8 +32133,10 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <span style={{ width: 1, height: 18, background: 'rgba(255,255,255,.25)', marginLeft: 2 }} />
         <button onClick={clearSel} title="Clear selection" style={{ width: 28, height: 28, borderRadius: 7, border: 'none', background: 'rgba(255,255,255,.1)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="x" size={15} color="#fff" /></button>
       </div>; })()}
-      {view === 'kanban'
-        ? <LeadsKanban leads={filtered} onMove={requestMove} onCardClick={setSelId} selId={selId} cardCfg={cardCfg} />
+      {loading
+        ? (view === 'kanban' ? <KanbanSkeleton /> : <ListSkeleton />)
+        : view === 'kanban'
+        ? <LeadsKanban leads={filtered} onMove={requestMove} onCardClick={setSelId} selId={selId} cardCfg={cardCfg} onAction={onCardAction} onAddCol={() => setFlow('new')} />
         : <Card style={{ padding: 0, overflowX: 'auto', overflowY: 'hidden' }}>
           <table style={{ width: '100%', minWidth: 2180, borderCollapse: 'collapse' }}>
             <thead><tr>
@@ -32115,7 +32169,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                   {[['eye', 'View details', () => openPage(l)], ['x-circle', 'Mark as lost', () => { boardMove(l.id, 'Disqualified'); setLeadStatus(l.id, 'Lost'); onToast && onToast(l.name + ' marked as lost'); }], ['copy', 'Mark as duplicate', () => { setLeadStatus(l.id, 'Duplicate'); onToast && onToast(l.name + ' marked as duplicate'); }], ['trash-2', 'Delete', () => { removeLead(l.id); onToast && onToast(l.name + ' deleted'); }]].map(([ic, lbl, fn]) => <div key={lbl} onClick={() => { setRowMenu(null); fn(); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 12.5, color: lbl === 'Delete' ? LH.red : LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={ic} size={14} color={lbl === 'Delete' ? LH.red : LH.sub} />{lbl}</div>)}
                 </div>}
               </div></td>
-            </tr>; })}{!filtered.length && <tr><td colSpan={15} style={{ padding: 40, textAlign: 'center', fontSize: 13, color: LH.muted }}>No leads match the filters.</td></tr>}</tbody>
+            </tr>; })}{!filtered.length && (() => { const filtersOn = anyF || !!search.trim(); return <tr><td colSpan={15} style={{ padding: 0 }}><div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '52px 20px', textAlign: 'center' }}>
+                <div style={{ width: 52, height: 52, borderRadius: 14, background: LH.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name={filtersOn ? 'search-x' : 'inbox'} size={24} color={LH.muted} /></div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: LH.ink }}>{filtersOn ? 'No leads match your filters' : 'No leads yet'}</div>
+                <div style={{ fontSize: 12.5, color: LH.sub, maxWidth: 320, lineHeight: 1.5 }}>{filtersOn ? 'Try widening or clearing your filters to see more leads.' : 'Leads from your connected sources land here. Add one manually or connect a channel to start.'}</div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>{filtersOn ? <Btn icon="x" onClick={clearF}>Clear filters</Btn> : <><Btn kind="primary" icon="plus" onClick={() => setFlow('new')}>New lead</Btn><Btn icon="radio" onClick={() => onNavigate && onNavigate('lead-channels')}>Connect a source</Btn></>}</div>
+              </div></td></tr>; })()}</tbody>
           </table>
         </Card>}
       {custOpen && (() => { const CARD_ATTRS = [['source', 'Source', 'tag'], ['status', 'Status', 'activity'], ['score', 'Lead score', 'star'], ['age', 'Age', 'clock'], ['fields', 'Field progress', 'list-checks'], ['phone', 'Phone', 'phone'], ['email', 'Email', 'mail'], ['note', 'Service interest', 'wrench']]; const sample = filtered[0] || { id: 'sample', name: 'Jordan Blake', note: 'Roof inspection', src: 'Angi', age: '2h', score: 82, col: 'Engaged', status: 'Working', fields: 6, phone: '469-555-0172', email: 'jordan.blake@gmail.com' }; const onN = CARD_ATTRS.filter(a => cardCfg[a[0]]).length; return <div style={{ position: 'fixed', top: (custPos && custPos.top) || 120, right: 20, bottom: PB_DOCK_H + 10, width: 'min(380px,96vw)', zIndex: 3000, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 14, boxShadow: '0 20px 48px rgba(0,0,0,.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
