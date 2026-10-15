@@ -31452,7 +31452,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [dragId, setDragId] = useState(null);
     const [overCol, setOverCol] = useState(null);
     const [termOpen, setTermOpen] = useState({});
-    const COL_H = showKpi ? 'calc(100vh - 340px)' : 'calc(100vh - 242px)';
+    const COL_H = showKpi ? 'calc(100vh - 286px)' : 'calc(100vh - 188px)';
     const drop = key => { if (dragId) onMove(dragId, key); setDragId(null); setOverCol(null); };
     const card = l => <LeadKanbanCard key={l.id} lead={l} cfg={cardCfg} selected={selId === l.id} dragging={dragId === l.id} onClick={onCardClick} onAction={onAction} onDragStart={setDragId} onDragEnd={() => { setDragId(null); setOverCol(null); }} />;
     const termTotal = leads.filter(l => COL_STAGE[l.col] > 5).length;
