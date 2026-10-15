@@ -29542,7 +29542,7 @@ function LeadPlaybookCreate({setActiveId}){
     RCE("div",{style:{fontSize:12,color:'#6b6a66',marginTop:5}},desc),child||null);
   if(stage==='builder')return RCE(React.Fragment,null,
     RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiClipboardText,backTo:'modules/Leads/playbook',backTitle:'Back to Playbooks',title:'Create a playbook',sub:'AI builder'}),
-    RCE(PlaybookAIBuilder,{prompt:prompt,onBack:()=>setStage('landing'),onCreate:d=>open(LeadPlaybookStore.create(d))}));
+    RCE(PlaybookAIBuilder,{prompt:prompt,onBack:()=>setStage('landing'),onCreate:d=>{const nd={name:d.name,agent:d.agent,tone:d.tone,handoff:d.handoff,instructions:d.instructions,ruleJoin:d.ruleJoin,isFallback:!!d.isFallback,rules:(d.rules||[]).map(r=>({...r})),qs:(d.qs||[]).map(q=>({q:q.q,type:q.t||q.type||'text',req:!!q.req,options:q.options}))};const p=LeadPlaybookStore.create(nd);open(p);}}));
   return RCE(React.Fragment,null,
     RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiClipboardText,backTo:'modules/Leads/playbook',backTitle:'Back to Playbooks',title:'Create a playbook',sub:'Qualification playbook'}),
     RCE("div",{className:"settings-scroll",style:{flex:1,overflowY:'auto',background:'#fff'}},RCE("div",{style:{maxWidth:720,margin:'0 auto',padding:'34px 24px 60px'}},
