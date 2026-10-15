@@ -31830,12 +31830,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ fontSize: 11, color: LH.muted, marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 4 }}><Ic name="clock" size={11} color={LH.muted} />{a.t}</div>
       </div>
     </div>; })}</div>;
-    // A couple of follow-ups relevant to this lead (shown on the Overview tab instead of Tasks).
-    const leadFups = [
+    // A couple of tasks relevant to this lead (shown on the Overview tab).
+    const [leadFups, setLeadFups] = useState([
       { task: 'Follow-up call', channel: 'call', due: 'Today · 2:00 PM' },
       { task: 'Text quote link', channel: 'sms', due: 'Tomorrow · 9:00 AM' },
       { task: 'Send revised estimate', channel: 'email', due: 'Jul 30 · 11:00 AM' }
-    ];
+    ]);
+    const [taskOpen, setTaskOpen] = useState(false);
     const tasks = [
       { done: false, title: 'Explain infra to client', dur: '35 min', tag: 'Check for leaks', av: 'https://randomuser.me/api/portraits/men/32.jpg' },
       { done: true, title: 'Explain roofing options', dur: '35 min', tag: 'Install flashing', av: '' },
@@ -31969,7 +31970,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </>; })()}
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="activity" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Activity</span><Ic name="chevron-right" size={14} color={LH.muted} /></div>
           <Card style={{ padding: 14, marginBottom: 22 }}>{timelineBody}</Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="calendar-clock" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Tasks</span><span style={{ fontSize: 11, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 8px' }}>{leadFups.length}</span><div style={{ flex: 1 }} /><button onClick={() => toast('New task')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="plus" size={14} color={LH.primary} />Add task</button></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="calendar-clock" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Tasks</span><span style={{ fontSize: 11, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 8px' }}>{leadFups.length}</span><div style={{ flex: 1 }} /><button onClick={() => setTaskOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="plus" size={14} color={LH.primary} />Add task</button></div>
           <Card style={{ padding: 0, overflow: 'hidden' }}>{leadFups.map((f, i) => { const ch = FU_CHANNEL[f.channel] || FU_CHANNEL.call; return <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < leadFups.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
             <span style={{ width: 30, height: 30, borderRadius: 8, background: ch.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={ch.ic} size={15} color={ch.fg} /></span>
             <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{f.task}</div><div style={{ fontSize: 12, color: LH.muted }}>{f.due}</div></div>
@@ -32026,6 +32027,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>
       </div>
       {convOpen && <ConvertToJobModal lead={lead} onClose={() => setConvOpen(false)} onToast={onToast} onConverted={jid => { setJobId(jid); onConvert && onConvert(lead.id, jid); }} />}
+      {taskOpen && <CreateFollowupModal prefillName={lead.name} onClose={() => setTaskOpen(false)} onCreate={t => { setLeadFups(f => [{ task: t.task, channel: t.channel, due: t.due }, ...f]); try { LeadFollowups.add(t); } catch (e) {} setTaskOpen(false); toast('Task created'); }} />}
     </div>;
   }
 
