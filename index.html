@@ -31245,6 +31245,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {[0, 1, 2, 3, 4, 5, 6].map(i => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><Skel w={18} h={18} r={5} /><Skel w={24} h={24} r={99} /><Skel w={150} h={11} /><Skel w={80} h={18} r={99} /><Skel w={110} h={11} /><Skel w={140} h={11} /><div style={{ flex: 1 }} /><Skel w={60} h={11} /></div>)}
     </Card>;
   }
+  // Kanban card phone/email row — reveals a call/mail action button on hover.
+  function CardContactRow({ ic, value, title, actIc, actColor, onAct }) {
+    const [h, setH] = useState(false);
+    return <div onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)} style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+      <Ic name={ic} size={12} color={LH.muted} style={{ flexShrink: 0 }} />
+      <span style={{ fontSize: 11, color: LH.sub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{value}</span>
+      <button className="lh-press" onClick={e => { e.stopPropagation(); onAct(); }} title={title} style={{ flexShrink: 0, width: 20, height: 20, borderRadius: 6, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', opacity: h ? 1 : 0, transition: 'opacity .12s' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name={actIc} size={12} color={actColor} /></button>
+    </div>;
+  }
   function LeadKanbanCard({ lead, onClick, onDragStart, onDragEnd, dragging, selected, cfg, onAction }) {
     cfg = cfg || { source: true, score: true, age: true, fields: true, note: true };
     const scoreColor = lead.score >= 80 ? LH.primary : lead.score >= 60 ? '#c9922e' : '#9c9b96';
@@ -31259,6 +31268,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const email = lead.email || ((hsh(lead.id + 'em') % 10 < 7) ? (lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com') : null);
     const ASSN = ['Maria Gonzalez', 'Tyson Silva', 'Michael Richardson', 'Marcus Webb', 'Sarah Chen'];
     const assignee = (hsh(lead.id + 'as') % 10 < 7) ? ASSN[hsh(lead.id + 'asn') % ASSN.length] : null;
+    const value = '$' + (6 + (lead.score % 9)) + ',500';
     const openLead = e => { e.stopPropagation(); onAction ? onAction(lead, 'open') : onClick(lead.id); };
     return <div draggable onClick={() => onClick(lead.id)}
       onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; onDragStart(lead.id); }}
@@ -31268,16 +31278,19 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       onMouseLeave={e => { setHov(false); if (!selected) { e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,.05)'; e.currentTarget.style.borderColor = LH.border; } }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
         <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.name}</div>{cfg.note && lead.note && <div style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{lead.note}</div>}</div>
-        <button className="lh-press" onClick={openLead} title="Open lead" style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 7, border: '1px solid ' + (hov ? LH.primary : 'transparent'), background: hov ? LH.tint : 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'background 120ms, border-color 120ms' }}><Ic name="external-link" size={14} color={hov ? LH.primary : LH.muted} /></button>
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: 26 }}>
+          {hov
+            ? <button className="lh-press" onClick={openLead} title="Open lead" style={{ width: 26, height: 26, borderRadius: 7, border: '1px solid ' + LH.primary, background: LH.tint, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="external-link" size={14} color={LH.primary} /></button>
+            : <span title="Potential value" style={{ fontSize: 12, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap' }}>{value}</span>}
+        </div>
       </div>
       {cfg.source && <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
         <Pill label={lead.src} tone="New" />
         {cfg.status && <Pill label={lead.status || lead.col} />}
       </div>}
-      <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 9 }} />
-      {(phone || email) && <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {phone && <span style={{ fontSize: 11, color: LH.sub, display: 'inline-flex', alignItems: 'center', gap: 6 }}><Ic name="phone" size={12} color={LH.muted} />{phone}</span>}
-        {email && <span style={{ fontSize: 11, color: LH.sub, display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}><Ic name="mail" size={12} color={LH.muted} /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</span></span>}
+      {(phone || email) && <div style={{ marginTop: 9, display: 'flex', flexDirection: 'column', gap: 5 }}>
+        {phone && <CardContactRow ic="phone" value={phone} title={'Call ' + lead.name} actIc="phone" actColor={LH.green} onAct={() => onAction && onAction(lead, 'call')} />}
+        {email && <CardContactRow ic="mail" value={email} title={'Email ' + lead.name} actIc="mail" actColor={LH.blue} onAct={() => onAction && onAction(lead, 'email')} />}
       </div>}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 9 }}>
         <span title="Time in this stage" style={{ fontSize: 11, color: LH.muted, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="clock" size={12} color={LH.muted} />{lead.age}</span>
@@ -32141,7 +32154,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const completeQualify = (id, meta) => { setLeadField(id, { qualifiedByPlaybook: true, qualifiedUnder: meta || null, disqualifyReason: null }); setQualifyFor(null); boardMove(id, 'Qualified'); const l = leads.find(x => x.id === id); onToast && onToast((l ? l.name : 'Lead') + ' qualified' + (meta ? ' · ' + meta.playbookName + ' v' + meta.version : '')); };
     const disqualifyLead = (id, reason) => { setLeadField(id, { disqualifyReason: reason || 'No reason given', disqualifiedAt: 'Just now', qualifiedByPlaybook: false, qualifiedUnder: null }); setQualifyFor(null); boardMove(id, 'Disqualified'); setLeadStatus(id, 'Disqualified'); const l = leads.find(x => x.id === id); onToast && onToast((l ? l.name : 'Lead') + ' disqualified'); };
     const removeLead = id => setLeads(ls => ls.filter(l => l.id !== id));
-    const onCardAction = (lead, kind) => { if (kind === 'open') setSelId(lead.id); else if (kind === 'call') onToast && onToast('Calling ' + lead.name + '…'); else if (kind === 'sms') onToast && onToast('Texting ' + lead.name + '…'); };
+    const onCardAction = (lead, kind) => { if (kind === 'open') openPage(lead); else if (kind === 'call') onToast && onToast('Calling ' + lead.name + '…'); else if (kind === 'sms') onToast && onToast('Texting ' + lead.name + '…'); else if (kind === 'email') onToast && onToast('Composing email to ' + lead.name + '…'); };
     const setLeadStatus = (id, status) => setLeads(ls => ls.map(l => l.id === id ? { ...l, status } : l));
     const setLeadField = (id, patch) => setLeads(ls => ls.map(l => l.id === id ? { ...l, ...patch } : l));
     const [rowMenu, setRowMenu] = useState(null); // lead id whose row action menu is open
