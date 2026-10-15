@@ -31174,28 +31174,36 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const footRow = cfg.fields || cfg.age;
     const [hov, setHov] = useState(false);
     const act = (kind, e) => { e.stopPropagation(); onAction && onAction(lead, kind); };
-    const qbtn = (ic, kind, color) => <button className="lh-press" onClick={e => act(kind, e)} title={kind === 'call' ? 'Call' : kind === 'sms' ? 'Text' : 'Open'} style={{ flex: 1, height: 26, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: LH.body }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name={ic} size={12} color={color} /></button>;
+    // Deterministic per-lead contact availability + notes count (seed carries neither).
+    const hsh = s => { s = String(s || ''); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
+    const nc = (hsh(lead.id + 'nn') % 5 < 2) ? 1 + (hsh(lead.id + 'n') % 4) : 0;
+    const phone = lead.phone || ((hsh(lead.id + 'ph') % 10 < 8) ? '(469) 555-01' + String(10 + hsh(lead.id + 'p') % 89) : null);
+    const email = lead.email || ((hsh(lead.id + 'em') % 10 < 7) ? (lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com') : null);
+    const openLead = e => { e.stopPropagation(); onAction ? onAction(lead, 'open') : onClick(lead.id); };
     return <div draggable onClick={() => onClick(lead.id)}
       onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; onDragStart(lead.id); }}
       onDragEnd={onDragEnd}
-      style={{ background: '#fff', border: '1px solid ' + (selected ? LH.primary : LH.border), borderRadius: 10, padding: '8px 10px', boxShadow: selected ? '0 0 0 3px rgba(31,31,29,0.10)' : '0 1px 2px rgba(0,0,0,.05)', cursor: 'grab', opacity: dragging ? 0.4 : 1, transform: dragging ? 'scale(.98) rotate(-1deg)' : 'none', transition: 'opacity 150ms, box-shadow 150ms, border-color 150ms, transform 120ms' }}
+      style={{ background: '#fff', border: '1px solid ' + (selected ? LH.primary : LH.border), borderRadius: 10, padding: '9px 11px', boxShadow: selected ? '0 0 0 3px rgba(31,31,29,0.10)' : '0 1px 2px rgba(0,0,0,.05)', cursor: 'grab', opacity: dragging ? 0.4 : 1, transform: dragging ? 'scale(.98) rotate(-1deg)' : 'none', transition: 'opacity 150ms, box-shadow 150ms, border-color 150ms, transform 120ms' }}
       onMouseEnter={e => { setHov(true); if (!dragging && !selected) { e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,.10)'; e.currentTarget.style.borderColor = '#cbd5e1'; } }}
       onMouseLeave={e => { setHov(false); if (!selected) { e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,.05)'; e.currentTarget.style.borderColor = LH.border; } }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-        <LeadAvatar name={lead.name} size={24} style={{ flexShrink: 0, marginTop: 1 }} />
-        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.name}</div>{cfg.note && lead.note && <div style={{ fontSize: 10.5, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.note}</div>}</div>
-        {cfg.score && <span title={'Lead score ' + lead.score} style={{ flexShrink: 0, fontSize: 10.5, fontWeight: 700, color: scoreColor, background: lead.score >= 80 ? LH.tint : '#f3f4f6', borderRadius: 999, padding: '2px 7px' }}>{lead.score}</span>}
+        <LeadAvatar name={lead.name} size={26} style={{ flexShrink: 0, marginTop: 1 }} />
+        <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.name}</div>{cfg.note && lead.note && <div style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{lead.note}</div>}</div>
+        <button className="lh-press" onClick={openLead} title="Open lead" style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 7, border: '1px solid ' + (hov ? LH.primary : 'transparent'), background: hov ? LH.tint : 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: 'background 120ms, border-color 120ms' }}><Ic name="external-link" size={14} color={hov ? LH.primary : LH.muted} /></button>
       </div>
-      {metaRow && <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-        {cfg.source && <Pill label={lead.src} tone="New" />}
+      {cfg.source && <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+        <Pill label={lead.src} tone="New" />
         {cfg.status && <Pill label={lead.status || lead.col} />}
       </div>}
-      {(cfg.phone || cfg.email) && <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {cfg.phone && <span style={{ fontSize: 10.5, color: LH.sub, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="phone" size={11} color={LH.muted} />{lead.phone || '469-555-0172'}</span>}
-        {cfg.email && <span style={{ fontSize: 10.5, color: LH.sub, display: 'inline-flex', alignItems: 'center', gap: 5, minWidth: 0 }}><Ic name="mail" size={11} color={LH.muted} /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.email || (lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com')}</span></span>}
+      <div style={{ borderTop: '1px solid ' + LH.borderSoft, marginTop: 9 }} />
+      {(phone || email) && <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {phone && <span style={{ fontSize: 11, color: LH.sub, display: 'inline-flex', alignItems: 'center', gap: 6 }}><Ic name="phone" size={12} color={LH.muted} />{phone}</span>}
+        {email && <span style={{ fontSize: 11, color: LH.sub, display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}><Ic name="mail" size={12} color={LH.muted} /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</span></span>}
       </div>}
-      {footRow && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>{cfg.fields ? <span style={{ fontSize: 10.5, color: LH.sub }}>{lead.fields} fields</span> : <span />}{cfg.age && <span style={{ fontSize: 10.5, color: LH.muted }}>{lead.age}</span>}</div>}
-      {hov && !dragging && <div className="lh-fade" style={{ display: 'flex', gap: 5, marginTop: 8, paddingTop: 7, borderTop: '1px solid ' + LH.borderSoft }}>{qbtn('phone', 'call', LH.green)}{qbtn('message-square', 'sms', LH.blue)}{qbtn('external-link', 'open', LH.sub)}</div>}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 9 }}>
+        <span title="Time in this stage" style={{ fontSize: 11, color: LH.muted, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="clock" size={12} color={LH.muted} />{lead.age}</span>
+        <span title={nc + ' note' + (nc === 1 ? '' : 's')} style={{ fontSize: 11, color: nc > 0 ? LH.sub : LH.muted, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Ic name="sticky-note" size={12} color={LH.muted} />{nc}</span>
+      </div>
     </div>;
   }
 
@@ -32177,7 +32185,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               </div></td></tr>; })()}</tbody>
           </table>
         </Card>}
-      {custOpen && (() => { const CARD_ATTRS = [['source', 'Source', 'tag'], ['status', 'Status', 'activity'], ['score', 'Lead score', 'star'], ['age', 'Age', 'clock'], ['fields', 'Field progress', 'list-checks'], ['phone', 'Phone', 'phone'], ['email', 'Email', 'mail'], ['note', 'Service interest', 'wrench']]; const sample = filtered[0] || { id: 'sample', name: 'Jordan Blake', note: 'Roof inspection', src: 'Angi', age: '2h', score: 82, col: 'Engaged', status: 'Working', fields: 6, phone: '469-555-0172', email: 'jordan.blake@gmail.com' }; const onN = CARD_ATTRS.filter(a => cardCfg[a[0]]).length; return <div style={{ position: 'fixed', top: (custPos && custPos.top) || 120, right: 20, bottom: PB_DOCK_H + 10, width: 'min(380px,96vw)', zIndex: 3000, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 14, boxShadow: '0 20px 48px rgba(0,0,0,.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
+      {custOpen && (() => { const CARD_ATTRS = [['source', 'Source', 'tag'], ['status', 'Status', 'activity'], ['note', 'Service interest', 'wrench']]; const sample = filtered[0] || { id: 'sample', name: 'Jordan Blake', note: 'Roof inspection', src: 'Angi', age: '2h', score: 82, col: 'Engaged', status: 'Working', fields: 6, phone: '469-555-0172', email: 'jordan.blake@gmail.com' }; const onN = CARD_ATTRS.filter(a => cardCfg[a[0]]).length; return <div style={{ position: 'fixed', top: (custPos && custPos.top) || 120, right: 20, bottom: PB_DOCK_H + 10, width: 'min(380px,96vw)', zIndex: 3000, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 14, boxShadow: '0 20px 48px rgba(0,0,0,.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'Inter',ui-sans-serif,system-ui" }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
           <div><div style={{ fontSize: 15, fontWeight: 700, color: LH.ink }}>Customize card</div><div style={{ fontSize: 12.5, color: LH.sub, marginTop: 2 }}>Pick which attributes show on board cards.</div></div>
           <button onClick={() => setCustOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}><Ic name="x" size={18} color={LH.sub} /></button>
