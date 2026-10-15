@@ -29367,6 +29367,51 @@ const LeadPlaybookStore={
 };
 try{window.LeadPlaybookStore=LeadPlaybookStore;}catch(e){}
 const usePlaybooks=()=>{const [items,setItems]=useState(LeadPlaybookStore.items);useEffect(()=>LeadPlaybookStore.sub(setItems),[]);return items;};
+// AI-first "Create a playbook" landing (mirrors the campaign create entry). Each path creates the
+// playbook then opens the full editor for it — the editor is never shown blank upfront.
+function LeadPlaybookCreate({setActiveId}){
+  const [prompt,setPrompt]=useState('');
+  const [busy,setBusy]=useState(false);
+  const items=(LeadPlaybookStore.items||[]);
+  const open=p=>setActiveId('modules/Leads/playbook/'+p.id);
+  const defaultQs=()=>[{q:'What type of work does the lead need?',t:'text',req:true},{q:'Is the property owner-occupied?',t:'yesno',req:true},{q:'What is the expected timeline?',t:'text',req:false}];
+  const cloneFrom=t=>({name:t.name,agent:t.agent,tone:t.tone,handoff:t.handoff,instructions:t.instructions,qs:(t.qs||[]).map(q=>({...q})),rules:(t.rules||[]).map(r=>({...r})),ruleJoin:t.ruleJoin,isFallback:false});
+  const fromScratch=()=>open(LeadPlaybookStore.create({name:'Untitled playbook',instructions:'',qs:[]}));
+  const fromTemplate=tid=>{const t=LeadPlaybookStore.get(tid);open(LeadPlaybookStore.create(t?cloneFrom(t):{}));};
+  const clone=srcId=>{const t=LeadPlaybookStore.get(srcId);if(!t)return;const d=cloneFrom(t);d.name=t.name+' (copy)';open(LeadPlaybookStore.create(d));};
+  const generate=()=>{if(!prompt.trim()||busy)return;setBusy(true);setTimeout(()=>{const words=prompt.trim().split(/\s+/).slice(0,5).join(' ');const nm=words.charAt(0).toUpperCase()+words.slice(1);open(LeadPlaybookStore.create({name:nm||'New playbook',instructions:prompt.trim(),qs:defaultQs()}));},650);};
+  const TEMPLATES=[['storm','Storm Response','Storm-damage intake — territory, damage & insurance.'],['insurance','Insurance Claim','Claim-ready qualification with carrier & adjuster details.'],['estimate','Estimate Follow-up','Re-engage after an estimate and move to a decision.'],['lead-qual','Lead Qualification','General inbound intake — the default checklist.']];
+  const sectLbl=t=>RCE("div",{style:{fontSize:11,fontWeight:700,letterSpacing:'.05em',color:'#9c9b96',margin:'26px 0 12px'}},t);
+  const tplCard=([tid,title,desc])=>RCE("button",{key:tid,onClick:()=>fromTemplate(tid),className:"hover-lift",style:{textAlign:'left',border:'1px solid #e8e7e2',borderRadius:12,background:'#fff',padding:16,cursor:'pointer'}},
+    RCE("div",{style:{display:'flex',alignItems:'center',gap:10,marginBottom:6}},
+      RCE("span",{style:{width:30,height:30,borderRadius:8,background:'#efe7fb',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},RCE(TiClipboardText,{size:16,color:"#7c3aed"})),
+      RCE("span",{style:{fontSize:13.5,fontWeight:700,color:'#1f1f1d'}},title)),
+    RCE("div",{style:{fontSize:12,color:'#6b6a66',lineHeight:1.45}},desc));
+  const orCard=(icon,title,desc,onClick,child)=>RCE("div",{key:title,onClick:onClick,className:onClick?"hover-lift":"",style:{border:'1px solid #e8e7e2',borderRadius:12,background:'#fff',padding:16,cursor:onClick?'pointer':'default'}},
+    RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}},RCE("div",{style:{fontSize:13.5,fontWeight:700,color:'#1f1f1d'}},title),RCE(icon,{size:17,color:"#9c9b96"})),
+    RCE("div",{style:{fontSize:12,color:'#6b6a66',marginTop:5}},desc),child||null);
+  return RCE(React.Fragment,null,
+    RCE(LeadPageHeader,{setActiveId:setActiveId,Icon:TiClipboardText,backTo:'modules/Leads/playbook',backTitle:'Back to Playbooks',title:'Create a playbook',sub:'Qualification playbook'}),
+    leadScroll(RCE(React.Fragment,null,
+      RCE("h1",{style:{fontSize:26,fontWeight:800,color:'#1f1f1d',letterSpacing:'-0.02em',margin:'8px 0 10px'}},"Create a playbook."),
+      RCE("p",{style:{fontSize:14,color:'#6b6a66',lineHeight:1.55,maxWidth:680,marginBottom:22}},"Describe what you want to qualify in plain language — Nova drafts the questions, triggers and outcome. Or start from a template, clone an existing playbook, or a blank canvas."),
+      RCE("div",{style:{border:'1px solid #e5e2db',borderRadius:14,background:'#fff',padding:14,boxShadow:'0 1px 2px rgba(0,0,0,.04)'}},
+        RCE("textarea",{value:prompt,onChange:e=>setPrompt(e.target.value),placeholder:"e.g. Residential roofing in North Texas. Most leads from Angi and Google LSA — hail and storm damage with insurance claims. We close full roof replacements.",style:{width:'100%',height:92,border:'none',outline:'none',resize:'vertical',fontSize:13.5,color:'#1f1f1d',fontFamily:'inherit',lineHeight:1.55,background:'transparent'}}),
+        RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'flex-end',marginTop:6}},
+          RCE("button",{onClick:generate,disabled:!prompt.trim()||busy,style:{display:'inline-flex',alignItems:'center',gap:7,height:38,padding:'0 18px',borderRadius:9,border:'none',background:(!prompt.trim()||busy)?'#c3c2bd':'#1f1f1d',color:'#fff',fontSize:13,fontWeight:600,cursor:(!prompt.trim()||busy)?'default':'pointer'}},sparkle(15,"#fff"),busy?"Generating…":"Generate"))),
+      sectLbl("START FROM A TEMPLATE"),
+      RCE("div",{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},TEMPLATES.map(tplCard)),
+      sectLbl("OR"),
+      RCE("div",{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+        orCard(TiFilePlus,'From scratch','Start on a blank playbook.',fromScratch),
+        orCard(TiFileImport,'Clone','Copy an existing playbook.',null,
+          RCE("div",{style:{position:'relative',marginTop:10}},
+            RCE("select",{defaultValue:'',onChange:e=>e.target.value&&clone(e.target.value),style:{...leadSelectStyle,width:'100%',maxWidth:'none',paddingRight:30,appearance:'none',WebkitAppearance:'none',MozAppearance:'none',cursor:'pointer'}},
+              RCE("option",{value:'',disabled:true},"Pick a playbook to clone…"),
+              items.map(p=>RCE("option",{key:p.id,value:p.id},p.name))),
+            RCE("span",{style:{position:'absolute',right:11,top:'50%',transform:'translateY(-50%)',pointerEvents:'none',display:'flex'}},RCE(TiChevronDown,{size:14,color:"#9c9b96"})))))
+    )));
+}
 function LeadPlaybookDetail({setActiveId,id}){
   const isNew=id==='new';
   const base=isNew?{name:'',tag:'Custom',agent:'csr',outcome:'qualified / not_qualified',tone:'Friendly and concise',handoff:'Route low-confidence replies to CSR',instructions:'',qs:[]}:(LeadPlaybookStore.get(id)||LeadPlaybookStore.items[0]);
@@ -29705,6 +29750,7 @@ function SettingsLeadsRouter({activeId,setActiveId}){
   if(sub==='fields')return RCE(LeadCustomFields,{setActiveId:setActiveId});
   if(sub==='notifications')return RCE(LeadNotifSettings,{setActiveId:setActiveId});
   if(sub==='scoring')return RCE(LeadScoringSettings,{setActiveId:setActiveId});
+  if(sub==='playbook/new')return RCE(LeadPlaybookCreate,{setActiveId:setActiveId});
   if(sub.indexOf('playbook/')===0)return RCE(LeadPlaybookDetail,{setActiveId:setActiveId,id:sub.slice('playbook/'.length)});
   if(sub==='playbook')return RCE(LeadPlaybookSettings,{setActiveId:setActiveId});
   if(sub.indexOf('agents/')===0)return RCE(LeadAgentDetail,{setActiveId:setActiveId,id:sub.slice('agents/'.length)});
