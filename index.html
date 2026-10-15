@@ -29402,7 +29402,10 @@ function PlaybookAIBuilder({prompt,onBack,onCreate}){
     timers.push(setTimeout(()=>{setThinking(false);setPhase('ready');setMessages(m=>m.filter(x=>!x.typing).concat({role:'assistant',text:'Here’s a first draft — “'+built.name+'” with '+built.qs.length+' questions'+(built.rules.length?' and an auto-select trigger':'')+'. Tell me what to change, or edit it directly on the right.'}));},980+built.qs.length*230+350));
     return ()=>timers.forEach(clearTimeout);
   },[]);
-  const setQ=(i,patch)=>setDraft(d=>({...d,qs:d.qs.map((q,j)=>j===i?{...q,...patch}:q)}));
+  const setQ=(i,patch)=>setDraft(d=>({...d,qs:d.qs.map((q,j)=>{if(j!==i)return q;const nq={...q,...patch};if((nq.t==='select'||nq.t==='multiselect')&&(!nq.options||!nq.options.length))nq.options=['Option 1','Option 2'];return nq;})}));
+  const setOpt=(i,oi,val)=>setDraft(d=>({...d,qs:d.qs.map((q,j)=>j===i?{...q,options:(q.options||[]).map((o,k)=>k===oi?val:o)}:q)}));
+  const addOpt=i=>setDraft(d=>({...d,qs:d.qs.map((q,j)=>j===i?{...q,options:[...(q.options||[]),'New option']}:q)}));
+  const delOpt=(i,oi)=>setDraft(d=>({...d,qs:d.qs.map((q,j)=>j===i?{...q,options:(q.options||[]).filter((o,k)=>k!==oi)}:q)}));
   const delQ=i=>setDraft(d=>({...d,qs:d.qs.filter((q,j)=>j!==i)}));
   const addQ=q=>setDraft(d=>{const qs=[...d.qs,q];const ni=qs.length-1;setFlash(ni);setTimeout(()=>setFlash(-1),1300);return{...d,qs};});
   const setRule=(i,patch)=>setDraft(d=>({...d,rules:d.rules.map((r,j)=>j===i?{...r,...patch}:r)}));
@@ -29469,27 +29472,38 @@ function PlaybookAIBuilder({prompt,onBack,onCreate}){
     ]),
     RCE("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'4px 2px 12px'}},RCE("div",{style:{fontSize:15,fontWeight:800,color:'#1f1f1d'}},"Questions ("+draft.qs.length+")"),RCE("button",{onClick:()=>addQ({q:'New question',t:'text',req:false}),style:{height:32,padding:'0 13px',borderRadius:8,border:'none',background:'#1f1f1d',color:'#fff',fontSize:12.5,fontWeight:600,cursor:'pointer'}},"+ Add question")),
     (thinking&&draft.qs.length===0)?RCE("div",null,[0,1,2].map(skelRow)):null,
-    draft.qs.map((q,i)=>RCE("div",{key:i,style:{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',border:'1px solid #ececea',borderRadius:10,marginBottom:8,background:'#fff',animation:i===flash?'pbflash 1.3s ease':undefined}},
-      RCE("span",{style:{color:'#cfccc5',display:'flex',cursor:'grab',flexShrink:0,fontSize:13,letterSpacing:'-2px'}},"⋮⋮"),
-      RCE("span",{style:{width:22,height:22,borderRadius:999,background:'#f1f0ec',color:'#6b6a66',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},i+1),
-      RCE("input",{value:q.q,onChange:e=>setQ(i,{q:e.target.value}),style:{flex:1,minWidth:0,border:'none',outline:'none',fontSize:13,color:'#1f1f1d',background:'transparent'}}),
-      RCE("div",{style:{width:122,flexShrink:0}},fsel(q.t,v=>setQ(i,{t:v}),PB_QTYPES)),
-      RCE("div",{style:{display:'flex',alignItems:'center',gap:6,flexShrink:0}},RCE("span",{style:{fontSize:11,color:'#6b6a66'}},"Required"),sw(q.req,()=>setQ(i,{req:!q.req}))),
-      RCE("button",{onClick:()=>delQ(i),title:"Delete",style:{border:'none',background:'none',cursor:'pointer',padding:3,display:'flex',flexShrink:0}},RCE(TiX,{size:15,color:"#9c9b96"})))),
+    draft.qs.map((q,i)=>{const hasOpts=(q.t==='select'||q.t==='multiselect');return RCE("div",{key:i,style:{border:'1px solid #ececea',borderRadius:10,marginBottom:8,background:'#fff',overflow:'hidden',animation:i===flash?'pbflash 1.3s ease':undefined}},
+      RCE("div",{style:{display:'flex',alignItems:'center',gap:10,padding:'10px 12px'}},
+        RCE("span",{style:{color:'#cfccc5',display:'flex',cursor:'grab',flexShrink:0,fontSize:13,letterSpacing:'-2px'}},"⋮⋮"),
+        RCE("span",{style:{width:22,height:22,borderRadius:999,background:'#f1f0ec',color:'#6b6a66',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},i+1),
+        RCE("input",{value:q.q,onChange:e=>setQ(i,{q:e.target.value}),style:{flex:1,minWidth:0,border:'none',outline:'none',fontSize:13,color:'#1f1f1d',background:'transparent'}}),
+        RCE("div",{style:{width:122,flexShrink:0}},fsel(q.t,v=>setQ(i,{t:v}),PB_QTYPES)),
+        RCE("div",{style:{display:'flex',alignItems:'center',gap:6,flexShrink:0}},RCE("span",{style:{fontSize:11,color:'#6b6a66'}},"Required"),sw(q.req,()=>setQ(i,{req:!q.req}))),
+        RCE("button",{onClick:()=>delQ(i),title:"Delete",style:{border:'none',background:'none',cursor:'pointer',padding:3,display:'flex',flexShrink:0}},RCE(TiX,{size:15,color:"#9c9b96"}))),
+      hasOpts?RCE("div",{style:{borderTop:'1px solid #f3f1ec',background:'#fbfaf8',padding:'10px 12px 10px 54px'}},
+        RCE("div",{style:{fontSize:10,fontWeight:700,letterSpacing:'.05em',color:'#9c9b96',marginBottom:8}},q.t==='multiselect'?'MULTI-SELECT OPTIONS':'OPTIONS'),
+        (q.options||[]).map((o,oi)=>RCE("div",{key:oi,style:{display:'flex',alignItems:'center',gap:8,marginBottom:6}},
+          RCE("span",{style:{width:14,height:14,borderRadius:q.t==='multiselect'?4:999,border:'1.5px solid #cfccc5',flexShrink:0}}),
+          RCE("input",{value:o,onChange:e=>setOpt(i,oi,e.target.value),style:{...leadInput,height:30,flex:1,maxWidth:300}}),
+          RCE("button",{onClick:()=>delOpt(i,oi),title:"Remove option",style:{border:'none',background:'none',cursor:'pointer',padding:3,display:'flex'}},RCE(TiX,{size:13,color:"#9c9b96"})))),
+        RCE("button",{onClick:()=>addOpt(i),style:{display:'inline-flex',alignItems:'center',gap:5,height:28,padding:'0 11px',borderRadius:7,border:'1px dashed #d8d3c8',background:'#fff',fontSize:11.5,fontWeight:600,color:'#6b6a66',cursor:'pointer',marginTop:2}},"+ Add option")):null);}),
     draft.qs.length===0&&!thinking?RCE("div",{style:{padding:'24px 0',textAlign:'center',fontSize:12.5,color:'#9c9b96'}},"No questions yet — add one or ask Nova."):null,
     RCE("div",{style:{display:'flex',justifyContent:'flex-end',gap:10,marginTop:18}},
       RCE("button",{onClick:onBack,style:{height:36,padding:'0 16px',borderRadius:8,border:'1px solid #e2ddd2',background:'#fff',fontSize:12.5,fontWeight:600,color:'#3f3f46',cursor:'pointer'}},"Discard"),
       RCE("button",{onClick:()=>onCreate(draft),disabled:!draft.name.trim()||thinking,style:{height:36,padding:'0 18px',borderRadius:8,border:'none',background:(!draft.name.trim()||thinking)?'#c3c2bd':'#1f1f1d',color:'#fff',fontSize:12.5,fontWeight:600,cursor:(!draft.name.trim()||thinking)?'default':'pointer'}},"Create playbook")));
-  return RCE("div",{style:{flex:1,minHeight:0,display:'flex',background:'#faf9f7'}},
-    RCE("div",{style:{width:372,flexShrink:0,borderRight:'1px solid #e8e7e2',background:'#fff',display:'flex',flexDirection:'column',minHeight:0}},
+  // Chat pane hidden for now — the right canvas + initial AI generation carry the flow.
+  const SHOW_CHAT=false;
+  const chatPane=SHOW_CHAT?RCE("div",{key:'chat',style:{width:372,flexShrink:0,borderRight:'1px solid #e8e7e2',background:'#fff',display:'flex',flexDirection:'column',minHeight:0}},
       RCE("div",{style:{padding:'12px 16px',borderBottom:'1px solid #f0eeea',display:'flex',alignItems:'center',gap:8,flexShrink:0}},avatar(),RCE("div",null,RCE("div",{style:{fontSize:13,fontWeight:700,color:'#1f1f1d'}},"Nova"),RCE("div",{style:{fontSize:11,color:'#9c9b96'}},thinking?'Working…':'Playbook assistant'))),
       RCE("div",{ref:bodyRef,style:{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:12,minHeight:0}},messages.map(bubble)),
       phase==='ready'?RCE("div",{style:{display:'flex',gap:6,flexWrap:'wrap',padding:'0 16px 10px'}},['Add a budget question','Make the tone formal','Add a timeline question'].map(c=>RCE("button",{key:c,onClick:()=>setInput(c),style:{padding:'5px 10px',borderRadius:999,border:'1px solid #e2ddd2',background:'#fff',fontSize:11.5,fontWeight:500,color:'#6b6a66',cursor:'pointer',whiteSpace:'nowrap'}},c))):null,
       RCE("div",{style:{padding:12,borderTop:'1px solid #f0eeea',flexShrink:0}},
         RCE("div",{style:{display:'flex',gap:8,alignItems:'flex-end',border:'1px solid #e2ddd2',borderRadius:12,padding:'8px 8px 8px 12px',background:'#fff'}},
           RCE("textarea",{value:input,onChange:e=>setInput(e.target.value),onKeyDown:e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}},placeholder:"Ask Nova to change the playbook…",rows:1,style:{flex:1,border:'none',outline:'none',resize:'none',fontSize:12.5,color:'#1f1f1d',fontFamily:'inherit',lineHeight:1.5,maxHeight:90,background:'transparent'}}),
-          RCE("button",{onClick:send,disabled:sendDisabled,style:{width:32,height:32,borderRadius:8,border:'none',background:sendDisabled?'#d6d3cc':'#1f1f1d',cursor:sendDisabled?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},sendIcon)))),
-    RCE("div",{className:"pb-pane",style:{flex:1,minWidth:0,overflowY:'auto',padding:'22px 26px 30px'}},RCE("div",{style:{maxWidth:760}},rightCanvas())));
+          RCE("button",{onClick:send,disabled:sendDisabled,style:{width:32,height:32,borderRadius:8,border:'none',background:sendDisabled?'#d6d3cc':'#1f1f1d',cursor:sendDisabled?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},sendIcon)))):null;
+  return RCE("div",{style:{flex:1,minHeight:0,display:'flex',background:'#faf9f7'}},
+    chatPane,
+    RCE("div",{className:"pb-pane",style:{flex:1,minWidth:0,overflowY:'auto',padding:'22px 26px 30px'}},RCE("div",{style:{maxWidth:820,margin:SHOW_CHAT?undefined:'0 auto'}},rightCanvas())));
 }
 // AI-first "Create a playbook" landing (centered, mirrors the campaign create entry).
 function LeadPlaybookCreate({setActiveId}){
