@@ -31280,7 +31280,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.name}</div>{cfg.note && lead.note && <div style={{ fontSize: 11, color: LH.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>{lead.note}</div>}</div>
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: 26 }}>
           {hov
-            ? <button className="lh-press" onClick={openLead} title="Open lead" style={{ width: 26, height: 26, borderRadius: 7, border: '1px solid ' + LH.primary, background: LH.tint, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="external-link" size={14} color={LH.primary} /></button>
+            ? <button className="lh-press" onClick={openLead} title="Open lead" style={{ width: 26, height: 26, borderRadius: 7, border: '1px solid ' + LH.border, background: '#f6f4ef', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="external-link" size={14} color={LH.sub} /></button>
             : <span title="Potential value" style={{ fontSize: 12, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap' }}>{value}</span>}
         </div>
       </div>
@@ -31402,10 +31402,11 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   // Stages past "Converted" (index > 5) are terminal — grouped into one collapsed "Closed" lane.
   const TERMINAL_COLS = LEAD_COLS.filter(c => COL_STAGE[c.key] > 5);
   const ACTIVE_COLS = LEAD_COLS.filter(c => COL_STAGE[c.key] <= 5);
-  function LeadsKanban({ leads, onMove, onCardClick, selId, cardCfg, onAction, onAddCol }) {
+  function LeadsKanban({ leads, onMove, onCardClick, selId, cardCfg, onAction, onAddCol, showKpi }) {
     const [dragId, setDragId] = useState(null);
     const [overCol, setOverCol] = useState(null);
     const [termOpen, setTermOpen] = useState({});
+    const COL_H = showKpi ? 'calc(100vh - 340px)' : 'calc(100vh - 242px)';
     const drop = key => { if (dragId) onMove(dragId, key); setDragId(null); setOverCol(null); };
     const card = l => <LeadKanbanCard key={l.id} lead={l} cfg={cardCfg} selected={selId === l.id} dragging={dragId === l.id} onClick={onCardClick} onAction={onAction} onDragStart={setDragId} onDragEnd={() => { setDragId(null); setOverCol(null); }} />;
     const termTotal = leads.filter(l => COL_STAGE[l.col] > 5).length;
@@ -31417,7 +31418,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setOverCol(col.key); }}
           onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setOverCol(null); }}
           onDrop={e => { e.preventDefault(); drop(col.key); }}
-          style={{ width: 248, flexShrink: 0, borderRadius: 12, background: over ? '#e5e7eb' : '#f3f4f6', padding: '10px 10px 12px', transition: 'background 150ms', outline: over ? '2px dashed #cbd5e1' : '2px solid transparent', outlineOffset: '-2px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 250px)' }}>
+          style={{ width: 248, flexShrink: 0, borderRadius: 12, background: over ? '#e5e7eb' : '#f3f4f6', padding: '10px 10px 12px', transition: 'background 150ms', outline: over ? '2px dashed #cbd5e1' : '2px solid transparent', outlineOffset: '-2px', display: 'flex', flexDirection: 'column', height: COL_H }}>
           <div style={{ marginBottom: 10, padding: '0 2px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ width: 8, height: 8, borderRadius: 999, background: col.dot }} /><span style={{ fontSize: 12.5, fontWeight: 700, color: '#374151' }}>{col.key}</span><span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 17, height: 17, borderRadius: 999, fontSize: 10.5, fontWeight: 600, color: LH.sub, background: 'rgba(0,0,0,.06)', padding: '0 5px' }}>{cj.length}</span></div>
@@ -31431,7 +31432,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         </div>;
       })}
       {/* Closed lane — terminal stages grouped, each an independent drop target + collapsible section */}
-      <div style={{ width: 248, flexShrink: 0, borderRadius: 12, background: '#eef0f2', padding: '10px 10px 12px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 250px)', border: '1px dashed #d5d9df' }}>
+      <div style={{ width: 248, flexShrink: 0, borderRadius: 12, background: '#eef0f2', padding: '10px 10px 12px', display: 'flex', flexDirection: 'column', height: COL_H, border: '1px dashed #d5d9df' }}>
         <div style={{ marginBottom: 10, padding: '0 2px', display: 'flex', alignItems: 'center', gap: 7 }}>
           <Ic name="archive" size={13} color={LH.sub} /><span style={{ fontSize: 12.5, fontWeight: 700, color: '#374151' }}>Closed</span><span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 17, height: 17, borderRadius: 999, fontSize: 10.5, fontWeight: 600, color: LH.sub, background: 'rgba(0,0,0,.06)', padding: '0 5px' }}>{termTotal}</span>
         </div>
@@ -32243,7 +32244,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {loading
         ? (view === 'kanban' ? <KanbanSkeleton /> : <ListSkeleton />)
         : view === 'kanban'
-        ? <LeadsKanban leads={filtered} onMove={requestMove} onCardClick={setSelId} selId={selId} cardCfg={cardCfg} onAction={onCardAction} onAddCol={() => setFlow('new')} />
+        ? <LeadsKanban leads={filtered} onMove={requestMove} onCardClick={setSelId} selId={selId} cardCfg={cardCfg} onAction={onCardAction} onAddCol={() => setFlow('new')} showKpi={showKpi} />
         : <Card style={{ padding: 0, overflowX: 'auto', overflowY: 'hidden' }}>
           <table style={{ width: '100%', minWidth: 2180, borderCollapse: 'collapse' }}>
             <thead><tr>
