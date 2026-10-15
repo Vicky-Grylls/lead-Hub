@@ -30034,7 +30034,79 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   };
   const LEAD_SRC_ALIAS = { 'Meta': 'Meta Ads', 'Google': 'Google LSA', 'LSA': 'Google LSA' };
   const leadSourceSchema = src => LEAD_SOURCE_SCHEMA[src] || LEAD_SOURCE_SCHEMA[LEAD_SRC_ALIAS[src]] || null;
-  function LeadPrimaryDetails({ lead, onToast, onMove }) {
+  // Raw source payload — every field the lead source sent. Zuper maps 5-6 to first-class Primary Details;
+  // the full set lives here, reachable from the right rail. Angi/Thumbtack modelled from the real field map.
+  function leadSourceFieldDefs(lead) {
+    const src = lead.src;
+    const nm = lead.name; const parts = nm.split(' '); const fn = parts[0]; const ln = parts.slice(1).join(' ');
+    const email = lead.email || (nm.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com');
+    const phone = lead.phone || '4698994443';
+    if (src === 'Angi' || src === 'AngiesList') return [
+      ['Name', nm], ['First Name', fn], ['Last Name', ln],
+      ['Address', '1998 Maple Cir'], ['City', 'DALLAS'], ['State / Province', 'TX'], ['Postal Code', '75230'],
+      ['Primary Phone', phone], ['Secondary Phone', '4698994232'], ['Email', email],
+      ['Service Request ID', '975382910'], ['Lead OID', '753238700'], ['Fee', '$43.10'],
+      ['Task Name', 'Asphalt Shingle Roofing - Repair'], ['Comments', 'Test comments'],
+      ['Lead Description', lead.note || 'Tree branch came down during the windstorm and damaged about a 6x4 section of roof. Tarped temporarily but need permanent repair.'],
+      ['SP Entity ID', '418781990'], ['SP Company Name', 'Maven Roofing'],
+      ['Lead Source', 'AngiesList'], ['Channel', 'ANGI'],
+      ['Trusted Form URL', 'https://cert.trustedform.com/1349609b41774b244d7b0d7b4e8f202a780726ea'],
+      ['Primary Phone Masked', 'false'], ['Match Type', 'Lead']
+    ];
+    if (src === 'Thumbtack') return [
+      ['Customer First Name', fn], ['Customer Last Name', ln], ['Customer Full Name', nm],
+      ['Customer Phone', phone], ['Customer Email', email],
+      ['City', 'Dallas'], ['State', 'TX'], ['Zip Code', '75219'], ['Street', '—'],
+      ['Description', lead.note || 'Soffit and fascia replacement. Squirrel damage to the existing soffit on one corner. Wood rot in fascia visible in two spots.'],
+      ['Category', 'Gutter Installation or Replacement'], ['Category ID', '122681972283199244'],
+      ['Details (Q&A)', '14 question-answer objects'], ['Proposed Times', '3 time windows'],
+      ['Travel Preferences', 'ProviderTravelToCustomer; RemoteService'],
+      ['Status', 'Booked'], ['Request ID', '337521289040244797'], ['Customer ID', '168745641786028456'],
+      ['Business ID', '274460744698872895'], ['Business Name', 'Summit Roofing Partners'],
+      ['Business Image URL', 'https://production-next-images-cdn.thumbtack.com/i/499637775887062215/desktop/standard/fullscreen'],
+      ['Negotiation ID', '363033634013816662'], ['Estimate Type', 'Fixed'], ['Estimate Total', '$4,260'],
+      ['Estimate Price / Unit', '4260.00'], ['Estimate Unit Qty', '0'], ['Charge State', 'Pending'],
+      ['Event Type', 'NegotiationCreatedV4'], ['Webhook ID', '276285601038790930'],
+      ['Triggered At', '2026-10-13T17:59:41Z'], ['Created At', '2026-10-13T17:58:32Z']
+    ];
+    // Generic fallback for other sources — common envelope + whatever the source schema defines.
+    const sch = leadSourceSchema(src);
+    const base = [['Name', nm], ['First Name', fn], ['Last Name', ln], ['Email', email], ['Phone', phone],
+      ['Lead Source', src], ['Status', lead.status || lead.col], ['Created At', 'Jul 20, 2026 · 1:19 PM']];
+    return base.concat(sch ? sch.primary.concat(sch.custom) : []);
+  }
+  // Right-rail pane: searchable raw source fields with copy + favourite (mirrors the CRM "Most Recent Opportunity" view).
+  function SourceFieldsPanel({ lead, onToast }) {
+    const defs = leadSourceFieldDefs(lead);
+    const [q, setQ] = useState('');
+    const [fav, setFav] = useState({});
+    const toast = m => onToast && onToast(m);
+    const copy = t => { try { navigator.clipboard && navigator.clipboard.writeText(String(t)); } catch (e) {} toast('Copied to clipboard'); };
+    const ql = q.trim().toLowerCase();
+    const filtered = ql.length >= 3 ? defs.filter(([k, v]) => (k + ' ' + v).toLowerCase().includes(ql)) : defs;
+    const rows = filtered.map((d, i) => [d, i]).sort((a, b) => ((fav[b[0][0]] ? 1 : 0) - (fav[a[0][0]] ? 1 : 0)) || (a[1] - b[1])).map(x => x[0]);
+    const favCount = Object.values(fav).filter(Boolean).length;
+    const copyIc = t => <button onClick={() => copy(t)} title="Copy" style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 2, display: 'inline-flex', opacity: 0.55 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.55}><Ic name="copy" size={12} color={LH.muted} /></button>;
+    return <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 15, fontWeight: 700, color: LH.ink, flex: 1 }}>Source fields</span><span style={{ fontSize: 11, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '2px 8px' }}>{defs.length}</span></div>
+        <div style={{ fontSize: 11.5, color: LH.muted, marginTop: 2 }}>Everything {lead.src} sent for this lead</div>
+        <div style={{ position: 'relative', marginTop: 10 }}><Ic name="search" size={14} color={LH.muted} style={{ position: 'absolute', left: 10, top: 9 }} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search fields (min. 3 characters)…" style={{ width: '100%', height: 32, borderRadius: 8, border: '1px solid ' + LH.border, padding: '0 10px 0 30px', fontSize: 12.5, color: LH.ink, outline: 'none', boxSizing: 'border-box' }} /></div>
+        {favCount > 0 && <div style={{ fontSize: 11, color: LH.muted, marginTop: 6 }}>{favCount} pinned to top</div>}
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
+        {rows.length === 0 && <div style={{ padding: '30px 16px', textAlign: 'center', fontSize: 12.5, color: LH.muted }}>No fields match “{q}”.</div>}
+        {rows.map(([k, v], i) => { const on = !!fav[k]; const val = (v === '' || v == null) ? '—' : v; return <div key={k + i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 16px', borderBottom: i < rows.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }} onMouseEnter={e => e.currentTarget.style.background = '#faf9f6'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k}</span>{copyIc(k)}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}><span style={{ fontSize: 12, color: LH.sub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', wordBreak: 'break-all' }}>{val}</span>{val !== '—' && copyIc(val)}</div>
+          </div>
+          <button onClick={() => setFav(f => ({ ...f, [k]: !f[k] }))} title={on ? 'Unpin' : 'Pin to top'} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 3, display: 'inline-flex', flexShrink: 0 }}><Ic name="star" size={15} color={on ? '#e8b923' : '#cbccc9'} sw={on ? 2.4 : 2} /></button>
+        </div>; })}
+      </div>
+    </div>;
+  }
+  function LeadPrimaryDetails({ lead, onToast, onMove, onViewSourceFields }) {
     const [pd, setPd] = useState(true);
     const [cf, setCf] = useState(true);
     const [md, setMd] = useState(false); // "More details from lead source" — collapsed by default
@@ -30095,6 +30167,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {md && <div style={{ marginTop: 6, fontSize: 12, color: LH.body, lineHeight: 1.55 }}>{blob}</div>}
         </div>;
       })()}
+      {onViewSourceFields && <button onClick={onViewSourceFields} className="lh-press" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 14, padding: '7px 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.primary, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = LH.tint} onMouseLeave={e => e.currentTarget.style.background = '#fff'}><Ic name="braces" size={14} color={LH.primary} />View source fields<Ic name="arrow-right" size={13} color={LH.primary} /></button>}
     </div>;
   }
   // Shared lead header — avatar, name, address, CTA row. Used at the top of both the
@@ -31801,7 +31874,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {/* Left column */}
         <div style={{ width: 316, flexShrink: 0, padding: '18px 18px', borderRight: '1px solid ' + LH.borderSoft, overflowY: 'auto' }}>
           <div style={{ marginBottom: 16 }}><LeadHeaderBlock lead={{ ...lead, jobId }} onToast={onToast} slim onConvert={doConvert} onMove={(id, s) => onToast && onToast(lead.name + ' → ' + s)} onDisqualify={(lid, reason) => { setLocalDisq(reason); onDisqualify && onDisqualify(lid, reason); }} /></div>
-          <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}><LeadPrimaryDetails lead={lead} onToast={onToast} /></div>
+          <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}><LeadPrimaryDetails lead={lead} onToast={onToast} onViewSourceFields={() => { setPanel('source'); toast('Showing all source fields'); }} /></div>
         </div>
         {/* Center column */}
         <div style={{ flex: 1, minWidth: 0, borderRight: '1px solid ' + LH.borderSoft, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -31928,13 +32001,14 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             {panel === 'comm' && <LeadCommHistoryPanel lead={lead} onToast={onToast} onOpen={x => { setPanel('connect'); onToast && onToast('Opening ' + (x.ch === 'call' ? 'call' : x.ch === 'sms' ? 'SMS' : 'email') + ' in Zuper Connect…'); }} />}
             {panel === 'history' && <LeadStatusHistoryPanel lead={lead} onToast={onToast} />}
             {panel === 'assoc' && <LeadAssociationsPanel lead={lead} onToast={onToast} />}
+            {panel === 'source' && <SourceFieldsPanel lead={lead} onToast={onToast} />}
             {panel === 'chats' && <LeadChatsPanel />}
             {panel === 'sense' && <LeadSensePanel onToast={onToast} />}
         </div>
         {/* Mini sidebar */}
         <div style={{ width: 46, flexShrink: 0, borderLeft: '1px solid ' + LH.borderSoft, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {[['link', 'assoc', 'Associations']].map(([ic, key, lbl], i) => <Fragment key={key}>
+            {[['link', 'assoc', 'Associations'], ['braces', 'source', 'Source fields']].map(([ic, key, lbl], i) => <Fragment key={key}>
               <button onClick={() => setPanel(key)} title={lbl} style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: panel === key ? '#f8f5f0' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '2px 0' }} onMouseEnter={e => { if (panel !== key) e.currentTarget.style.background = '#f5f2ec'; }} onMouseLeave={e => { if (panel !== key) e.currentTarget.style.background = 'transparent'; }}><Ic name={ic} size={16} color={panel === key ? '#262626' : '#a3a3a3'} /></button>
             </Fragment>)}
           </div>
