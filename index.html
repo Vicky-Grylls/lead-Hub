@@ -30278,11 +30278,12 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   // One source-data row — copy icons + pin reveal only on hover (pinned rows keep the pin visible).
   function SourceFieldRow({ k, val, on, onPin, onCopy, last }) {
     const [hov, setHov] = useState(false);
-    const copyIc = t => <button onClick={e => { e.stopPropagation(); onCopy(t); }} title="Copy" style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 2, display: 'inline-flex', opacity: hov ? 0.6 : 0, transition: 'opacity .12s' }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = hov ? 0.6 : 0}><Ic name="copy" size={12} color={LH.muted} /></button>;
-    return <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 16px', borderBottom: last ? 'none' : '1px solid ' + LH.borderSoft, background: hov ? '#faf9f6' : 'transparent', transition: 'background .12s' }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k}</span>{copyIc(k)}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}><span style={{ fontSize: 12, color: LH.sub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', wordBreak: 'break-all' }}>{val}</span>{val !== '—' && copyIc(val)}</div>
+    // Mirrors the Primary Details rhythm: subtle label left, bolder value right. Copy on the value only.
+    return <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 16px', borderBottom: last ? 'none' : '1px solid ' + LH.borderSoft, background: hov ? '#faf9f6' : 'transparent', transition: 'background .12s' }}>
+      <span style={{ fontSize: 11, color: LH.muted, width: 116, flexShrink: 0, lineHeight: 1.45, paddingTop: 1 }}>{k}</span>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'flex-start', gap: 4 }}>
+        <span style={{ fontSize: 12, color: LH.body, fontWeight: 500, lineHeight: 1.45, minWidth: 0, wordBreak: 'break-word' }}>{val}</span>
+        {val !== '—' && <button onClick={e => { e.stopPropagation(); onCopy(val); }} title="Copy" style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 2, display: 'inline-flex', flexShrink: 0, opacity: hov ? 0.6 : 0, transition: 'opacity .12s' }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = hov ? 0.6 : 0}><Ic name="copy" size={12} color={LH.muted} /></button>}
       </div>
       <button onClick={onPin} title={on ? 'Unpin' : 'Pin to top'} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 3, display: 'inline-flex', flexShrink: 0, opacity: on || hov ? 1 : 0, transition: 'opacity .12s' }}><Ic name={on ? 'pin-off' : 'pin'} size={15} color={on ? LH.primary : LH.muted} /></button>
     </div>;
