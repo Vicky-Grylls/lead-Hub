@@ -32274,7 +32274,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [viewName, setViewName] = useState('');
     const [custOpen, setCustOpen] = useState(false);
     const [custPos, setCustPos] = useState(null); // {right, top} anchor below the customize icon
-    const CARD_CFG_DEFAULT = { source: true, note: true, phone: true, email: true, value: true, assignee: true, status: false, age: true, notes: true };
+    const CARD_CFG_DEFAULT = { source: true, note: true, phone: false, email: false, value: true, assignee: true, status: false, age: true, notes: true };
     const [cardCfg, setCardCfg] = useState({ ...CARD_CFG_DEFAULT });
     const [custAdd, setCustAdd] = useState(false); // "add attribute" dropdown open
     const [custQ, setCustQ] = useState('');        // attribute search query
