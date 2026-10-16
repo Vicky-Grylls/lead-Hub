@@ -30358,6 +30358,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {kv('Lead created at', <span><span style={{ color: LH.ink, fontWeight: 600 }}>Sep 21, 2026</span><br /><span style={{ fontSize: 11, color: LH.muted }}>9:42 AM · lead local time</span></span>)}
           {kv('Potential value', '$' + (6 + (lead.score % 9)) + ',500 potential')}
           {kv('Lead category', lead.score >= 70 ? 'Roof replacement' : 'Roof repair')}
+          {onViewSourceFields && kv('Source data', <button onClick={onViewSourceFields} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: 0, border: 'none', background: 'none', fontSize: 12, fontWeight: 600, color: LH.primary, cursor: 'pointer' }}>Use source data<Ic name="arrow-right" size={12} color={LH.primary} /></button>)}
         </div>}
       </div>
       {(() => {
@@ -30372,7 +30373,6 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {md && <div style={{ marginTop: 6, fontSize: 12, color: LH.body, lineHeight: 1.55 }}>{blob}</div>}
         </div>;
       })()}
-      {onViewSourceFields && <button onClick={onViewSourceFields} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 14, padding: 0, border: 'none', background: 'none', fontSize: 12.5, fontWeight: 600, color: LH.primary, cursor: 'pointer' }}>View source data<Ic name="arrow-right" size={13} color={LH.primary} /></button>}
     </div>;
   }
   // Shared lead header — avatar, name, address, CTA row. Used at the top of both the
@@ -32099,7 +32099,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
         {/* Left column */}
         <div style={{ width: 316, flexShrink: 0, padding: '18px 18px', borderRight: '1px solid ' + LH.borderSoft, overflowY: 'auto' }}>
           <div style={{ marginBottom: 16 }}><LeadHeaderBlock lead={{ ...lead, jobId }} onToast={onToast} slim onConvert={doConvert} onMove={(id, s) => onToast && onToast(lead.name + ' → ' + s)} onDisqualify={(lid, reason) => { setLocalDisq(reason); onDisqualify && onDisqualify(lid, reason); }} /></div>
-          <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}><LeadPrimaryDetails lead={lead} onToast={onToast} onViewSourceFields={() => { setPanel('source'); toast('Showing all source data'); }} /></div>
+          <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}><LeadPrimaryDetails lead={lead} onToast={onToast} onViewSourceFields={() => setPanel('source')} /></div>
         </div>
         {/* Center column */}
         <div style={{ flex: 1, minWidth: 0, borderRight: '1px solid ' + LH.borderSoft, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
