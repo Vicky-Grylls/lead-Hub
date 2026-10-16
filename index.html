@@ -30358,7 +30358,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {kv('Lead created at', <span><span style={{ color: LH.ink, fontWeight: 600 }}>Sep 21, 2026</span><br /><span style={{ fontSize: 11, color: LH.muted }}>9:42 AM · lead local time</span></span>)}
           {kv('Potential value', '$' + (6 + (lead.score % 9)) + ',500 potential')}
           {kv('Lead category', lead.score >= 70 ? 'Roof replacement' : 'Roof repair')}
-          {onViewSourceFields && kv('Source data', <button onClick={onViewSourceFields} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: 0, border: 'none', background: 'none', fontSize: 12, fontWeight: 600, color: LH.primary, cursor: 'pointer' }}>Use source data<Ic name="arrow-right" size={12} color={LH.primary} /></button>)}
+          {onViewSourceFields && <div style={{ display: 'flex', gap: 12, padding: '6px 0' }}><button onClick={onViewSourceFields} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: 0, border: 'none', background: 'none', fontSize: 12, fontWeight: 600, color: LH.primary, cursor: 'pointer' }}>View source data<Ic name="arrow-right" size={12} color={LH.primary} /></button></div>}
         </div>}
       </div>
       {(() => {
