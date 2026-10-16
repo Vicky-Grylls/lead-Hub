@@ -30279,7 +30279,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   function SourceFieldRow({ k, val, on, onPin, onCopy, last }) {
     const [hov, setHov] = useState(false);
     // Mirrors the Primary Details rhythm: subtle label left, bolder value right. Copy on the value only.
-    return <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 16px', borderBottom: last ? 'none' : '1px solid ' + LH.borderSoft, background: hov ? '#faf9f6' : 'transparent', transition: 'background .12s' }}>
+    return <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 16px', background: hov ? '#faf9f6' : 'transparent', transition: 'background .12s' }}>
       <span style={{ fontSize: 11, color: LH.muted, width: 116, flexShrink: 0, lineHeight: 1.45, paddingTop: 1 }}>{k}</span>
       <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'flex-start', gap: 4 }}>
         <span style={{ fontSize: 12, color: LH.body, fontWeight: 500, lineHeight: 1.45, minWidth: 0, wordBreak: 'break-word' }}>{val}</span>
