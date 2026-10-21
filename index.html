@@ -30393,17 +30393,36 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       { k: 'Inspection Job', ic: 'briefcase', cap: jobId ? '#' + jobId : 'Scheduled' }
     ];
     const reached = jobId ? 4 : ({ 'New': 0, 'Contacted': 1, 'Engaged': 1, 'Qualifying': 1, 'Qualified': 2, 'Converted': 4, 'Disqualified': 1, 'Lost': 1, 'Rejected': 0, 'Duplicate': 0 }[lead.col] ?? 0);
-    const P = 14; // chevron point depth
+    // Chevron strip ported from zuper-web `QuoteStatusTimeline` (strip variant, readOnly + stripFit)
+    // — same geometry (segmentShape positional clip/radius/padding, -CHEVRON overlap) and the
+    // STAGE_TIMELINE_COLORS palette. Read-only here: a lead's stage is driven by the pipeline column.
+    const CHEVRON = 14, PILL_H = 28, PILL_X_PAD = 14, PILL_LEAD_PAD = CHEVRON + 6;
+    const SC = { lastActive: { bg: '#1C6C66', color: '#FFFFFF' }, active: { bg: '#BFE8D9', color: '#262626' }, inactive: { bg: '#E6E4D9', color: '#6F6E69' } };
     return <Card style={{ padding: '16px 14px', marginBottom: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14, padding: '0 2px' }}><Ic name="route" size={15} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Lead lifecycle</span></div>
-      <div style={{ display: 'flex', borderRadius: 999, overflow: 'hidden', background: '#fff' }}>
-        {STAGES.map((s, i) => { const done = i < reached; const cur = i === reached; const on = done || cur; const first = i === 0; const last = i === STAGES.length - 1;
-          const bg = done ? LH.green : cur ? LH.primary : LH.tint; const fg = on ? '#fff' : LH.sub;
-          // Continuous bar: each segment flat-left + right chevron point; the next segment nests under it (overlap), a hairline gap reads as a ">" divider.
-          const clip = last ? 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' : 'polygon(0 0, calc(100% - ' + P + 'px) 0, 100% 50%, calc(100% - ' + P + 'px) 100%, 0 100%)';
-          return <div key={s.k} title={s.cap} style={{ position: 'relative', flex: 1, minWidth: 0, height: 38, background: bg, clipPath: clip, marginLeft: first ? 0 : -P + 1.5, paddingLeft: first ? 0 : P + 4, zIndex: STAGES.length - i, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: fg, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 6px' }}>{s.k}</span>
-          </div>; })}
+      <div style={{ display: 'flex', width: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', minWidth: 0, flex: '1 1 auto' }}>
+          {STAGES.map((s, i) => {
+            const isLastActive = i === reached, isPrevActive = i < reached;
+            const shape = STAGES.length <= 1 ? 'only' : i === 0 ? 'first' : i === STAGES.length - 1 ? 'last' : 'middle';
+            const isFirst = shape === 'first' || shape === 'only';
+            const isFinalStage = shape === 'last' || shape === 'only';
+            const sc = isLastActive ? SC.lastActive : isPrevActive ? SC.active : SC.inactive;
+            const clip = isFinalStage
+              ? (isFirst ? undefined : 'polygon(0 0, 100% 0, 100% 100%, 0 100%, ' + CHEVRON + 'px 50%)')
+              : (isFirst ? 'polygon(0 0, calc(100% - ' + CHEVRON + 'px) 0, 100% 50%, calc(100% - ' + CHEVRON + 'px) 100%, 0 100%)'
+                         : 'polygon(0 0, calc(100% - ' + CHEVRON + 'px) 0, 100% 50%, calc(100% - ' + CHEVRON + 'px) 100%, 0 100%, ' + CHEVRON + 'px 50%)');
+            const radius = isFirst && isFinalStage ? PILL_H / 2 : isFirst ? (PILL_H / 2) + 'px 0 0 ' + (PILL_H / 2) + 'px' : isFinalStage ? '0 ' + (PILL_H / 2) + 'px ' + (PILL_H / 2) + 'px 0' : 0;
+            const padding = isFinalStage
+              ? (isFirst ? '0 ' + PILL_X_PAD + 'px 0 18px' : '0 ' + PILL_X_PAD + 'px 0 ' + PILL_LEAD_PAD + 'px')
+              : (isFirst ? '0 ' + PILL_LEAD_PAD + 'px 0 18px' : '0 ' + PILL_LEAD_PAD + 'px 0 ' + PILL_LEAD_PAD + 'px');
+            return <div key={s.k} aria-current={isLastActive ? 'step' : undefined} data-stage-shape={shape}
+              title={s.k + (isLastActive ? ' (current)' : isPrevActive ? ' (done · ' + s.cap + ')' : '')}
+              style={{ height: PILL_H, display: 'flex', alignItems: 'center', justifyContent: 'center', padding, background: sc.bg, color: sc.color, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', clipPath: clip, borderRadius: radius, minWidth: 0, boxSizing: 'border-box', marginRight: isFinalStage ? 0 : -CHEVRON + 2, flex: '1 1 0', flexShrink: 1, position: 'relative', zIndex: isLastActive ? 3 : 1, transition: 'background 200ms cubic-bezier(0.23, 1, 0.32, 1), color 200ms cubic-bezier(0.23, 1, 0.32, 1)' }}>
+              {s.k}
+            </div>;
+          })}
+        </div>
       </div>
     </Card>;
   }
