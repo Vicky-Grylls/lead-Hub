@@ -30384,7 +30384,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   // Lead → job uses the Lead Hub convert wizard (category required, due date optional, playbook-outcome gated).
   const startLeadConvert = (lead, onCreated, fallback) => { if (fallback) { fallback(); } else if (typeof window !== 'undefined' && window.__leadHubCreateJob) { const jobId = genJobId(lead); window.__leadHubCreateJob(leadJobPrefill(lead, jobId), () => onCreated(jobId)); } };
   // Full lead lifecycle: Angi/source capture → speed-to-lead → qualified → converted → inspection job.
-  function LeadLifecycle({ lead, jobId }) {
+  function LeadLifecycle({ lead, jobId, hideHeader }) {
     const STAGES = [
       { k: 'Captured', ic: 'download', cap: 'via ' + (lead.src || 'source') },
       { k: 'Contacted', ic: 'zap', cap: 'Speed-to-lead' },
@@ -30398,8 +30398,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     // STAGE_TIMELINE_COLORS palette. Read-only here: a lead's stage is driven by the pipeline column.
     const CHEVRON = 14, PILL_H = 28, PILL_X_PAD = 14, PILL_LEAD_PAD = CHEVRON + 6;
     const SC = { lastActive: { bg: '#1C6C66', color: '#FFFFFF' }, active: { bg: '#BFE8D9', color: '#262626' }, inactive: { bg: '#E6E4D9', color: '#6F6E69' } };
-    return <Card style={{ padding: '16px 14px', marginBottom: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14, padding: '0 2px' }}><Ic name="route" size={15} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Lead lifecycle</span></div>
+    return <Card style={{ padding: '16px 14px', marginBottom: hideHeader ? 0 : 20 }}>
+      {!hideHeader && <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14, padding: '0 2px' }}><Ic name="route" size={15} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Lead lifecycle</span></div>}
       <div style={{ display: 'flex', width: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', minWidth: 0, flex: '1 1 auto' }}>
           {STAGES.map((s, i) => {
@@ -30728,16 +30728,16 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     ];
   }
   // Compact "Recent communication" block for the lead overview (latest 3) — sits under the AI summary.
-  function LeadCommOverview({ lead, onOpen }) {
+  function LeadCommOverview({ lead, onOpen, hideHeader }) {
     if (!lead) return null;
     const CH = { call: { ic: 'phone', fg: LH.green, bg: LH.greenBg, label: 'Call' }, sms: { ic: 'message-square', fg: LH.blue, bg: LH.blueBg, label: 'SMS' }, email: { ic: 'mail', fg: LH.amber, bg: LH.amberBg, label: 'Email' } };
     const items = leadCommItems(lead).slice(0, 3);
     return <div style={{ borderRadius: 12, border: '1px solid ' + LH.borderSoft, background: '#fff', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
+      {!hideHeader && <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 12px', borderBottom: '1px solid ' + LH.borderSoft }}>
         <Ic name="messages-square" size={14} color={LH.primary} />
         <span style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink }}>Recent communication</span>
         {onOpen && <button onClick={onOpen} style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>View all</button>}
-      </div>
+      </div>}
       <div style={{ padding: '10px 12px 2px' }}>{items.map((x, i) => { const m = CH[x.ch] || CH.sms; const isLast = i === items.length - 1; return <div key={i} style={{ display: 'flex', gap: 9 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 24 }}>
           <div style={{ width: 24, height: 24, borderRadius: 7, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={x.dir === 'in' && x.ch === 'call' ? 'phone-incoming' : m.ic} size={12} color={m.fg} /></div>
@@ -30753,7 +30753,42 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>; })}</div>
     </div>;
   }
-  function LeadAISummary({ lead }) {
+  // Default Overview widget order/visibility for the lead details page.
+  const LEAD_SECTIONS = [
+    { id: 'ai', label: 'AI summary', icon: 'sparkles', visible: true },
+    { id: 'comms', label: 'Recent communication', icon: 'messages-square', visible: true },
+    { id: 'lifecycle', label: 'Lead lifecycle', icon: 'route', visible: true },
+    { id: 'highlights', label: 'Highlights', icon: 'sparkles', visible: true, chevron: true },
+    { id: 'property', label: 'Property intelligence', icon: 'house', visible: true },
+    { id: 'activity', label: 'Activity', icon: 'activity', visible: true, chevron: true },
+    { id: 'tasks', label: 'Tasks', icon: 'calendar-clock', visible: true }
+  ];
+  /* Section wrapper ported from IKEA-enhancements@layout-customization (`Section`):
+     icon + title sit ABOVE the card, never inside it, so every Overview block reads the same.
+     Edit mode swaps the icon for a drag grip and reveals the show/hide eye. */
+  function LeadSection({ icon, title, chevron, extra, count, isEditMode, isHidden, onToggleVis, dragProps, children }) {
+    const [hov, setHov] = useState(false);
+    return <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20, borderRadius: 12, border: isEditMode ? '1px dashed #c4c9d4' : '1px solid transparent', background: isEditMode ? '#fff' : 'transparent', padding: isEditMode ? 10 : 0, opacity: isHidden ? 0.5 : 1, transition: 'opacity .12s' }}
+      {...(dragProps || {})}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+          {isEditMode && hov
+            ? <span style={{ display: 'inline-flex', cursor: 'grab' }} title="Drag to reorder"><Ic name="grip-vertical" size={15} color="#9ca3af" /></span>
+            : <Ic name={icon} size={16} color={LH.ink} />}
+          <span style={{ fontSize: 13, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap' }}>{title}</span>
+          {count != null && <span style={{ fontSize: 11, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 8px' }}>{count}</span>}
+          {chevron && <Ic name="chevron-right" size={14} color={LH.muted} />}
+        </span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {extra}
+          {isEditMode && <span onClick={e => { e.stopPropagation(); onToggleVis && onToggleVis(); }} title={isHidden ? 'Show widget' : 'Hide widget'} style={{ width: 24, height: 24, borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: hov ? 1 : 0.35, transition: 'opacity .12s' }}><Ic name={isHidden ? 'eye-off' : 'eye'} size={14} color="#9ca3af" /></span>}
+        </span>
+      </div>
+      {!isHidden && children}
+    </div>;
+  }
+  function LeadAISummary({ lead, hideHeader }) {
     const [open, setOpen] = useState(true);
     if (!lead) return null;
     const first = (lead.name || 'This lead').split(' ')[0];
@@ -30767,14 +30802,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       'Confirmed storm damage — roof ~15 yrs',
       'Next: book the free inspection'
     ];
+    const shownAi = hideHeader ? true : open;
     return <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #e9d4ff', background: 'linear-gradient(169deg,#faf5ff,#eef4ff)' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+      {!hideHeader && <button onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
         <Ic name="sparkles" size={15} color="#7c3aed" />
         <span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>AI summary</span>
         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.05em', color: '#7c3aed', background: '#fff', border: '1px solid #e9d4ff', borderRadius: 999, padding: '1px 7px' }}>NOVA</span>
         <Ic name={open ? 'chevron-up' : 'chevron-down'} size={16} color="#7c3aed" style={{ marginLeft: 'auto' }} />
-      </button>
-      {open && <div style={{ padding: '0 14px 13px' }}>
+      </button>}
+      {shownAi && <div style={{ padding: hideHeader ? '13px 14px' : '0 14px 13px' }}>
         <div style={{ fontSize: 12.5, color: LH.body, lineHeight: 1.55 }}>{summary}</div>
         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>{highlights.map((h, i) => <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12, color: LH.sub, lineHeight: 1.45 }}><span style={{ width: 5, height: 5, borderRadius: 999, background: '#7c3aed', marginTop: 6, flexShrink: 0 }} />{h}</div>)}</div>
       </div>}
@@ -30849,7 +30885,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
     </div>;
   }
-  function LeadHeaderBlock({ lead, onToast, slim, onConvert, onMove, onDisqualify }) {
+  function LeadHeaderBlock({ lead, onToast, slim, onConvert, onMove, onDisqualify, onCustomizeLayout }) {
     const [flagged, setFlagged] = useState(false);
     const [kebabOpen, setKebabOpen] = useState(false);
     const [contactOpen, setContactOpen] = useState(false);
@@ -30892,6 +30928,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
                 {kebabOpen && <div onMouseLeave={() => setKebabOpen(false)} style={{ position: 'absolute', top: 40, right: 0, zIndex: 50, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,.14)', padding: 5, width: 210 }}>
                   {!lead.jobId && <div onClick={() => { setKebabOpen(false); if (onConvert) onConvert(lead); else toast('Creating job for ' + lead.name + '…'); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, fontWeight: 600, color: LH.ink, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name="briefcase" size={14} color={LH.primary} />Create new job</div>}
                   {!lead.jobId && <div style={{ height: 1, background: LH.borderSoft, margin: '5px 0' }} />}
+                  {onCustomizeLayout && <div onClick={() => { setKebabOpen(false); onCustomizeLayout(); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, fontWeight: 600, color: LH.ink, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name="layout-dashboard" size={14} color={LH.sub} />Customize layout</div>}
+                  {onCustomizeLayout && <div style={{ height: 1, background: LH.borderSoft, margin: '5px 0' }} />}
                   {KEBAB_ITEMS.map((it, k) => it[0] === 'div'
                     ? <div key={'d' + k} style={{ height: 1, background: LH.borderSoft, margin: '5px 0' }} />
                     : <div key={it[1]} onClick={() => { setKebabOpen(false); if (it[1] === 'Create contact') setContactOpen(true); else if (it[1] === 'Disqualify lead') { setDisqReason(''); setDisqOpen(true); } else toast(kebabMsg(it[1])); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 13, color: kebabColor(it[1]), cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={it[0]} size={14} color={kebabIcColor(it[1])} />{it[1]}</div>)}
@@ -32014,6 +32052,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [playing, setPlaying] = useState(false);
     const [prog, setProg] = useState(18);
     const [moreOpen, setMoreOpen] = useState(false);
+    const [editLayout, setEditLayout] = useState(false);
+    const [secLayout, setSecLayout] = useState(() => LEAD_SECTIONS.map(x => ({ ...x })));
+    const [dragSec, setDragSec] = useState(null);
     const [panel, setPanel] = useState('assoc');
     const [jobId, setJobId] = useState(lead.jobId || null);
     const [convOpen, setConvOpen] = useState(false);
@@ -32118,7 +32159,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, minHeight: 0 }}>
         {/* Left column */}
         <div style={{ width: 316, flexShrink: 0, padding: '18px 18px', borderRight: '1px solid ' + LH.borderSoft, overflowY: 'auto' }}>
-          <div style={{ marginBottom: 16 }}><LeadHeaderBlock lead={{ ...lead, jobId }} onToast={onToast} slim onConvert={doConvert} onMove={(id, s) => onToast && onToast(lead.name + ' → ' + s)} onDisqualify={(lid, reason) => { setLocalDisq(reason); onDisqualify && onDisqualify(lid, reason); }} /></div>
+          <div style={{ marginBottom: 16 }}><LeadHeaderBlock lead={{ ...lead, jobId }} onToast={onToast} slim onCustomizeLayout={() => { setTab('details'); setEditLayout(true); }} onConvert={doConvert} onMove={(id, s) => onToast && onToast(lead.name + ' → ' + s)} onDisqualify={(lid, reason) => { setLocalDisq(reason); onDisqualify && onDisqualify(lid, reason); }} /></div>
           <div style={{ borderTop: '1px solid ' + LH.borderSoft, paddingTop: 14 }}><LeadPrimaryDetails lead={lead} onToast={onToast} onViewSourceFields={() => setPanel('source')} /></div>
         </div>
         {/* Center column */}
@@ -32183,35 +32224,64 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>}
           {tab === 'communication' && <Card style={{ padding: 0, overflow: 'hidden', height: 'calc(100vh - 240px)', minHeight: 480 }}><LeadCommsTab lead={lead} onToast={onToast} /></Card>}
           {tab === 'files' && <div style={{ padding: '40px 0', textAlign: 'center' }}><Ic name="folder" size={30} color="#d8cdb8" style={{ margin: '0 auto 10px', width: 30, height: 30 }} /><div style={{ fontSize: 13, color: LH.sub }}>No attachments yet</div></div>}
-          {tab === 'details' && <>
-          <div style={{ marginBottom: 16 }}><LeadAISummary lead={lead} /></div>
-          <div style={{ marginBottom: 16 }}><LeadCommOverview lead={lead} onOpen={() => setTab('communication')} /></div>
-          <LeadLifecycle lead={lead} jobId={jobId} />
-          {jobId
-            ? <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 11, padding: '12px 14px', marginBottom: 20 }}><span style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={16} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.green }}>Converted to inspection job #{jobId}</div><div style={{ fontSize: 12, color: LH.sub }}>An inspection is scheduled — this lead is now an active job.</div></div><Btn icon="external-link" onClick={() => toast('Opening Job #' + jobId + '…')}>View job</Btn></div>
-            : canConvert && <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: LH.tint, border: '1px solid ' + LH.border, borderRadius: 11, padding: '12px 14px', marginBottom: 20 }}><span style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="git-merge" size={16} color={LH.primary} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Qualified and ready</div><div style={{ fontSize: 12, color: LH.sub }}>Convert this lead into a scheduled inspection job.</div></div><Btn kind="primary" icon="git-merge" onClick={doConvert}>Convert to job</Btn></div>}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><Ic name="sparkles" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Highlights</span><Ic name="chevron-right" size={14} color={LH.muted} /></span><Ic name="sliders" size={15} color={LH.sub} /></div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, marginBottom: 20 }}>{highlights.map(hi => <Card key={hi.label} style={{ padding: 11, display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: hi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={hi.ic} size={15} color={hi.fg} /></div><div><div style={{ fontSize: 11, color: LH.muted }}>{hi.label}</div><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginTop: 1 }}>{hi.val}</div></div></Card>)}</div>
-          {(() => { const d = intakeIntel(lead); const pk = (k, v) => <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><span style={{ fontSize: 12, color: LH.muted, width: 150, flexShrink: 0 }}>{k}</span><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 500, flex: 1, minWidth: 0 }}>{v}</span></div>; return <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="house" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Property intelligence</span><span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: LH.green, background: LH.greenBg, borderRadius: 6, padding: '2px 7px' }}>ENRICHED</span></div>
-            <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 22 }}>
+          {tab === 'details' && (() => {
+            /* Overview widgets render from `secLayout` — order + visibility are user-editable
+               (layout customization ported from IKEA-enhancements@layout-customization). */
+            const jobBanner = jobId
+              ? <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: LH.greenBg, border: '1px solid ' + LH.greenBd, borderRadius: 11, padding: '12px 14px', marginTop: 12 }}><span style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="briefcase" size={16} color={LH.green} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.green }}>Converted to inspection job #{jobId}</div><div style={{ fontSize: 12, color: LH.sub }}>An inspection is scheduled — this lead is now an active job.</div></div><Btn icon="external-link" onClick={() => toast('Opening Job #' + jobId + '…')}>View job</Btn></div>
+              : canConvert ? <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: LH.tint, border: '1px solid ' + LH.border, borderRadius: 11, padding: '12px 14px', marginTop: 12 }}><span style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name="git-merge" size={16} color={LH.primary} /></span><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Qualified and ready</div><div style={{ fontSize: 12, color: LH.sub }}>Convert this lead into a scheduled inspection job.</div></div><Btn kind="primary" icon="git-merge" onClick={doConvert}>Convert to job</Btn></div> : null;
+            const propBody = (() => { const d = intakeIntel(lead); const pk = (k, v) => <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: '1px solid ' + LH.borderSoft }}><span style={{ fontSize: 12, color: LH.muted, width: 150, flexShrink: 0 }}>{k}</span><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 500, flex: 1, minWidth: 0 }}>{v}</span></div>; return <Card style={{ padding: 0, overflow: 'hidden' }}>
               {pk('Roof', d.material + ' · ' + d.condition)}
               {pk('Roof age', '~' + d.roofAge + ' yrs (aerial estimate)')}
               {pk('Square footage', d.sqft.toLocaleString() + ' sq ft')}
               {pk('Permit history', d.permits)}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px' }}><span style={{ fontSize: 12, color: LH.muted, width: 150, flexShrink: 0 }}>Carrier scope norm</span><span style={{ fontSize: 12.5, color: LH.body, fontWeight: 500, flex: 1, minWidth: 0 }}>{(d.carrier || 'Typical local') + ' · full replacement common for hail'}</span></div>
-            </Card>
-          </>; })()}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="activity" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Activity</span><Ic name="chevron-right" size={14} color={LH.muted} /></div>
-          <Card style={{ padding: 14, marginBottom: 22 }}>{timelineBody}</Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}><Ic name="calendar-clock" size={16} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Tasks</span><span style={{ fontSize: 11, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 8px' }}>{leadFups.length}</span><div style={{ flex: 1 }} /><button onClick={() => setTaskOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="plus" size={14} color={LH.primary} />Add task</button></div>
-          <Card style={{ padding: 0, overflow: 'hidden' }}>{leadFups.map((f, i) => { const ch = FU_CHANNEL[f.channel] || FU_CHANNEL.call; return <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < leadFups.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
-            <span style={{ width: 30, height: 30, borderRadius: 8, background: ch.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={ch.ic} size={15} color={ch.fg} /></span>
-            <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{f.task}</div><div style={{ fontSize: 12, color: LH.muted }}>{f.due}</div></div>
-            <button onClick={() => toast(ch.label + ' ' + lead.name.split(' ')[0])} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', color: LH.body, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><Ic name={ch.ic} size={13} color={LH.sub} />{ch.label}</button>
-            <button onClick={() => toast('Task marked done')} title="Mark done" style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}><Ic name="check" size={15} color={LH.sub} /></button>
-          </div>; })}</Card>
-          </>}
+            </Card>; })();
+            const BODIES = {
+              ai: <LeadAISummary lead={lead} hideHeader />,
+              comms: <LeadCommOverview lead={lead} onOpen={() => setTab('communication')} hideHeader />,
+              lifecycle: <LeadLifecycle lead={lead} jobId={jobId} hideHeader />,
+              highlights: <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>{highlights.map(hi => <Card key={hi.label} style={{ padding: 11, display: 'flex', alignItems: 'center', gap: 10 }}><div style={{ width: 30, height: 30, borderRadius: 8, background: hi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={hi.ic} size={15} color={hi.fg} /></div><div><div style={{ fontSize: 11, color: LH.muted }}>{hi.label}</div><div style={{ fontSize: 12.5, fontWeight: 700, color: LH.ink, marginTop: 1 }}>{hi.val}</div></div></Card>)}</div>,
+              property: propBody,
+              activity: <Card style={{ padding: 14 }}>{timelineBody}</Card>,
+              tasks: <Card style={{ padding: 0, overflow: 'hidden' }}>{leadFups.map((f, i) => { const ch = FU_CHANNEL[f.channel] || FU_CHANNEL.call; return <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < leadFups.length - 1 ? '1px solid ' + LH.borderSoft : 'none' }}>
+                <span style={{ width: 30, height: 30, borderRadius: 8, background: ch.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic name={ch.ic} size={15} color={ch.fg} /></span>
+                <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 600, color: LH.ink }}>{f.task}</div><div style={{ fontSize: 12, color: LH.muted }}>{f.due}</div></div>
+                <button onClick={() => toast(ch.label + ' ' + lead.name.split(' ')[0])} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 11px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', color: LH.body, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><Ic name={ch.ic} size={13} color={LH.sub} />{ch.label}</button>
+                <button onClick={() => toast('Task marked done')} title="Mark done" style={{ width: 28, height: 28, borderRadius: 7, border: '1px solid ' + LH.border, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}><Ic name="check" size={15} color={LH.sub} /></button>
+              </div>; })}</Card>
+            };
+            const EXTRAS = {
+              comms: <button onClick={() => setTab('communication')} style={{ fontSize: 11.5, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}>View all</button>,
+              highlights: <Ic name="sliders" size={15} color={LH.sub} />,
+              property: <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: LH.green, background: LH.greenBg, borderRadius: 6, padding: '2px 7px' }}>ENRICHED</span>,
+              tasks: <button onClick={() => setTaskOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="plus" size={14} color={LH.primary} />Add task</button>
+            };
+            const COUNTS = { tasks: leadFups.length };
+            const shownSecs = secLayout.filter(x => editLayout || x.visible);
+            return <div>
+              {editLayout && <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', marginBottom: 16, borderRadius: 10, background: LH.tint, border: '1px solid ' + LH.border }}>
+                <Ic name="layout-dashboard" size={15} color={LH.primary} />
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>Customizing layout</span>
+                <span style={{ fontSize: 11.5, color: LH.sub }}>Drag to reorder · eye to show or hide</span>
+                <div style={{ flex: 1 }} />
+                <button onClick={() => setSecLayout(LEAD_SECTIONS.map(x => ({ ...x })))} style={{ fontSize: 12, fontWeight: 600, color: LH.sub, background: 'none', border: 'none', cursor: 'pointer' }}>Reset</button>
+                <Btn kind="primary" icon="check" onClick={() => { setEditLayout(false); toast('Layout saved'); }}>Done</Btn>
+              </div>}
+              {shownSecs.map(sec => <LeadSection key={sec.id} icon={sec.icon} title={sec.label} chevron={sec.chevron}
+                extra={editLayout ? null : EXTRAS[sec.id]} count={COUNTS[sec.id]}
+                isEditMode={editLayout} isHidden={!sec.visible}
+                onToggleVis={() => setSecLayout(l => l.map(x => x.id === sec.id ? { ...x, visible: !x.visible } : x))}
+                dragProps={editLayout ? { draggable: true,
+                  onDragStart: () => setDragSec(sec.id),
+                  onDragOver: e => e.preventDefault(),
+                  onDrop: e => { e.preventDefault(); const from = secLayout.findIndex(x => x.id === dragSec); const to = secLayout.findIndex(x => x.id === sec.id); if (dragSec && dragSec !== sec.id && from >= 0 && to >= 0) { const n = [...secLayout]; const [m] = n.splice(from, 1); n.splice(to, 0, m); setSecLayout(n); } setDragSec(null); },
+                  onDragEnd: () => setDragSec(null) } : null}>
+                {BODIES[sec.id]}
+                {sec.id === 'lifecycle' && !editLayout && jobBanner}
+              </LeadSection>)}
+            </div>;
+          })()}
           </div>
         </div>
         {/* Right pane — job-details style (panel + mini sidebar) */}
