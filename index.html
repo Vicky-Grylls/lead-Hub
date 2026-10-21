@@ -30766,28 +30766,38 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   /* Section wrapper ported from IKEA-enhancements@layout-customization (`Section`):
      icon + title sit ABOVE the card, never inside it, so every Overview block reads the same.
      Edit mode swaps the icon for a drag grip and reveals the show/hide eye. */
-  function LeadSection({ icon, title, chevron, extra, count, isEditMode, isHidden, onToggleVis, dragProps, children }) {
+  function LeadSection({ icon, title, chevron, extra, count, isEditMode, isHidden, onToggleVis, children }) {
     const [hov, setHov] = useState(false);
     return <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20, borderRadius: 12, border: isEditMode ? '1px dashed #c4c9d4' : '1px solid transparent', background: isEditMode ? '#fff' : 'transparent', padding: isEditMode ? 10 : 0, opacity: isHidden ? 0.5 : 1, transition: 'opacity .12s' }}
-      {...(dragProps || {})}>
+      style={{ display: 'flex', flexDirection: 'column', gap: 8, borderRadius: 12, border: isEditMode ? '1px dashed #c4c9d4' : '1px solid transparent', background: isEditMode ? '#fff' : 'transparent', padding: isEditMode ? 12 : 0, opacity: isHidden ? 0.38 : 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           {isEditMode && hov
-            ? <span style={{ display: 'inline-flex', cursor: 'grab' }} title="Drag to reorder"><Ic name="grip-vertical" size={15} color="#9ca3af" /></span>
-            : <Ic name={icon} size={16} color={LH.ink} />}
-          <span style={{ fontSize: 13, fontWeight: 700, color: LH.ink, whiteSpace: 'nowrap' }}>{title}</span>
-          {count != null && <span style={{ fontSize: 11, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 8px' }}>{count}</span>}
-          {chevron && <Ic name="chevron-right" size={14} color={LH.muted} />}
+            ? <span style={{ display: 'inline-flex', cursor: 'grab' }}><Ic name="grip-vertical" size={14} color="#9ca3af" /></span>
+            : <Ic name={icon} size={14} color={isEditMode ? '#737373' : LH.ink} />}
+          <span style={{ fontSize: 13, fontWeight: isEditMode ? 500 : 700, color: '#262626', letterSpacing: '-0.23px', whiteSpace: 'nowrap' }}>{title}</span>
+          {count != null && !isEditMode && <span style={{ fontSize: 11, fontWeight: 600, color: LH.sub, background: '#f1f0ec', borderRadius: 999, padding: '1px 8px' }}>{count}</span>}
+          {chevron && <Ic name="chevron-right" size={16} color="#a3a3a3" />}
         </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
           {extra}
-          {isEditMode && <span onClick={e => { e.stopPropagation(); onToggleVis && onToggleVis(); }} title={isHidden ? 'Show widget' : 'Hide widget'} style={{ width: 24, height: 24, borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: hov ? 1 : 0.35, transition: 'opacity .12s' }}><Ic name={isHidden ? 'eye-off' : 'eye'} size={14} color="#9ca3af" /></span>}
+          {isEditMode && <span onClick={e => { e.stopPropagation(); onToggleVis && onToggleVis(); }} title={isHidden ? 'Show widget' : 'Hide widget'} style={{ width: 24, height: 24, borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: hov ? 1 : 0, transition: 'opacity .15s' }}><Ic name={isHidden ? 'eye-off' : 'eye'} size={14} color="#9ca3af" /></span>}
         </span>
       </div>
       {!isHidden && children}
     </div>;
   }
+  // Grey placeholder bars — edit mode shows layout, never data (matches the job-details customizer).
+  function LSkel({ w = '100%', h = 10, r = 6, style }) { return <div style={{ width: w, height: h, borderRadius: r, background: '#e9e5dd', ...(style || {}) }} />; }
+  const LEAD_SKELS = {
+    ai: <div style={{ borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 8, background: 'linear-gradient(169deg,#faf5ff,#eff6ff)', border: '1px solid #e9d4ff' }}><LSkel w="78%" /><LSkel w="92%" /><LSkel w="54%" /></div>,
+    comms: <div style={{ border: '1px solid #e5e5e5', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>{[0, 1, 2].map(i => <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center' }}><LSkel w={26} h={26} r={8} /><div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}><LSkel w="44%" /><LSkel w="68%" h={8} /></div></div>)}</div>,
+    lifecycle: <div style={{ border: '1px solid #e5e5e5', borderRadius: 12, padding: 14 }}><LSkel h={28} r={14} /></div>,
+    highlights: <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>{[0, 1, 2, 3].map(i => <div key={i} style={{ border: '1px solid #e5e5e5', borderRadius: 12, padding: 12, height: 62, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}><LSkel w="58%" h={8} /><LSkel w="40%" /></div>)}</div>,
+    property: <div style={{ border: '1px solid #e5e5e5', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>{[0, 1, 2, 3].map(i => <div key={i} style={{ display: 'flex', gap: 14 }}><LSkel w={110} h={9} /><LSkel w="46%" h={9} /></div>)}</div>,
+    activity: <div style={{ border: '1px solid #e5e5e5', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>{[0, 1, 2].map(i => <div key={i} style={{ display: 'flex', gap: 10 }}><LSkel w={24} h={24} r={99} /><div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}><LSkel w="62%" /><LSkel w="30%" h={8} /></div></div>)}</div>,
+    tasks: <div style={{ border: '1px solid #e5e5e5', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>{[0, 1, 2].map(i => <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center' }}><LSkel w={28} h={28} r={8} /><div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}><LSkel w="40%" /><LSkel w="26%" h={8} /></div><LSkel w={64} h={24} r={8} /></div>)}</div>
+  };
   function LeadAISummary({ lead, hideHeader }) {
     const [open, setOpen] = useState(true);
     if (!lead) return null;
@@ -32053,8 +32063,15 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [prog, setProg] = useState(18);
     const [moreOpen, setMoreOpen] = useState(false);
     const [editLayout, setEditLayout] = useState(false);
+    const [previewing, setPreviewing] = useState(false);
     const [secLayout, setSecLayout] = useState(() => LEAD_SECTIONS.map(x => ({ ...x })));
-    const [dragSec, setDragSec] = useState(null);
+    const [savedLayout, setSavedLayout] = useState(() => LEAD_SECTIONS.map(x => ({ ...x })));
+    const [addWidgetOpen, setAddWidgetOpen] = useState(false);
+    const ovDragRef = useRef(null);
+    const [ovDropIdx, setOvDropIdx] = useState(null);
+    // Same change accounting the job customizer uses: reorders + visibility flips.
+    const changeCount = (() => { let n = 0; savedLayout.forEach((x, i) => { const c = secLayout[i]; if (!c || c.id !== x.id) n++; }); secLayout.forEach(x => { const o = savedLayout.find(y => y.id === x.id); if (o && !!o.visible !== !!x.visible) n++; }); return n; })();
+    const editing = editLayout && !previewing;
     const [panel, setPanel] = useState('assoc');
     const [jobId, setJobId] = useState(lead.jobId || null);
     const [convOpen, setConvOpen] = useState(false);
@@ -32140,11 +32157,26 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       setTimeout(() => setChatMsgs(m => [...m, { who: 'in', name: lead.name.split(' ')[0], t: nowTime(), text: 'Thanks, got it — talk soon!' }]), 900);
     };
     const react = (i, e) => setReacts(r => ({ ...r, [i]: r[i] === e ? null : e }));
-    return <div style={{ fontFamily: "'Inter',ui-sans-serif,system-ui", margin: '-20px -26px -34px', height: 'calc(100% + 54px)', overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+    /* Edit chrome ported from the job-details customizer: grey surround, blue ring on the page,
+       and a 44px bar in place of the breadcrumb (Cancel · Customizing · Preview · Save layout). */
+    const editBar = <div style={{ height: 44, borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px', flexShrink: 0, background: previewing ? '#f3fbf5' : '#f8faff' }}>
+      <button onClick={() => { if (previewing) { setPreviewing(false); return; } setSecLayout(savedLayout.map(x => ({ ...x }))); setEditLayout(false); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: 'none', background: 'none', fontSize: 12, color: '#6b7280', fontWeight: 500, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,.05)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name={previewing ? 'arrow-left' : 'x'} size={13} color="#6b7280" />{previewing ? 'Back to editing' : 'Cancel'}</button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Ic name="layout-panel-left" size={13} color={previewing ? '#16a34a' : '#3b82f6'} />
+        <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{previewing ? 'Previewing layout · ' + lead.name : 'Customizing Lead layout' + (changeCount > 0 ? ' · ' + changeCount + ' change' + (changeCount > 1 ? 's' : '') : '')}</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {!previewing && <button onClick={() => setPreviewing(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, color: '#374151', fontWeight: 600, cursor: 'pointer' }}><Ic name="eye" size={13} color="#6b7280" />Preview</button>}
+        <button onClick={() => { setSavedLayout(secLayout.map(x => ({ ...x }))); setPreviewing(false); setEditLayout(false); toast('Layout saved for all leads'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: 'none', background: '#3b82f6', fontSize: 12, color: '#fff', fontWeight: 600, cursor: 'pointer' }}><Ic name="check" size={13} color="#fff" />Save layout</button>
+      </div>
+    </div>;
+    return <div style={{ fontFamily: "'Inter',ui-sans-serif,system-ui", margin: '-20px -26px -34px', height: 'calc(100% + 54px)', overflow: 'hidden', background: editLayout ? '#e8edf2' : '#fff', padding: editLayout ? '10px 12px 12px' : 0, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <LHPolishStyles />
       {pageLoading && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, zIndex: 60, overflow: 'hidden', background: LH.borderSoft }}><div style={{ height: '100%', width: '38%', background: LH.primary, borderRadius: 2, animation: 'lhIndet 1.05s ease-in-out infinite' }} /></div>}
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: editLayout ? 12 : 0, overflow: 'hidden', boxShadow: editLayout ? '0 0 0 2px #93c5fd, 0 4px 24px rgba(0,0,0,0.10)' : 'none' }}>
+      {editLayout && editBar}
       {/* Top bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '15px 24px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
+      {!editLayout && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '15px 24px', borderBottom: '1px solid ' + LH.borderSoft, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}><button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: LH.sub, fontWeight: 600, padding: 0 }}>Pipeline</button><Ic name="chevron-right" size={14} color={LH.muted} /><span style={{ fontWeight: 700, color: LH.ink }}>{lead.name}</span><button onClick={() => { setFav(f => !f); toast(fav ? 'Removed from favourites' : 'Added to favourites'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}><Ic name="star" size={15} color={fav ? '#e8b923' : LH.muted} /></button></div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {onNav && <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -32155,7 +32187,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
             </div>
           </div>}
         </div>
-      </div>
+      </div>}
       <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, minHeight: 0 }}>
         {/* Left column */}
         <div style={{ width: 316, flexShrink: 0, padding: '18px 18px', borderRight: '1px solid ' + LH.borderSoft, overflowY: 'auto' }}>
@@ -32258,28 +32290,35 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
               tasks: <button onClick={() => setTaskOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: LH.primary, background: 'none', border: 'none', cursor: 'pointer' }}><Ic name="plus" size={14} color={LH.primary} />Add task</button>
             };
             const COUNTS = { tasks: leadFups.length };
-            const shownSecs = secLayout.filter(x => editLayout || x.visible);
-            return <div>
-              {editLayout && <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', marginBottom: 16, borderRadius: 10, background: LH.tint, border: '1px solid ' + LH.border }}>
-                <Ic name="layout-dashboard" size={15} color={LH.primary} />
-                <span style={{ fontSize: 12.5, fontWeight: 600, color: LH.ink }}>Customizing layout</span>
-                <span style={{ fontSize: 11.5, color: LH.sub }}>Drag to reorder · eye to show or hide</span>
-                <div style={{ flex: 1 }} />
-                <button onClick={() => setSecLayout(LEAD_SECTIONS.map(x => ({ ...x })))} style={{ fontSize: 12, fontWeight: 600, color: LH.sub, background: 'none', border: 'none', cursor: 'pointer' }}>Reset</button>
-                <Btn kind="primary" icon="check" onClick={() => { setEditLayout(false); toast('Layout saved'); }}>Done</Btn>
+            const shownSecs = editLayout ? secLayout : secLayout.filter(x => x.visible);
+            const hidden = secLayout.filter(x => !x.visible);
+            return <div style={{ display: 'flex', flexDirection: 'column', gap: editLayout ? 18 : 0 }}>
+              {shownSecs.map(sec => { const idx = secLayout.findIndex(x => x.id === sec.id); const isDrop = ovDropIdx === idx && ovDragRef.current != null && ovDragRef.current !== idx;
+                return <div key={sec.id}
+                  draggable={editing}
+                  onDragStart={editing ? e => { ovDragRef.current = idx; e.dataTransfer.effectAllowed = 'move'; } : undefined}
+                  onDragOver={editing ? e => { e.preventDefault(); setOvDropIdx(idx); } : undefined}
+                  onDragLeave={editing ? () => setOvDropIdx(null) : undefined}
+                  onDrop={editing ? e => { e.preventDefault(); const fi = ovDragRef.current; if (fi == null || fi === idx) { setOvDropIdx(null); return; } const next = [...secLayout]; const [m] = next.splice(fi, 1); next.splice(idx, 0, m); setSecLayout(next); ovDragRef.current = null; setOvDropIdx(null); } : undefined}
+                  onDragEnd={editing ? () => { ovDragRef.current = null; setOvDropIdx(null); } : undefined}
+                  style={{ marginBottom: editLayout ? 0 : 20, borderTop: isDrop ? '2px solid #6366f1' : '2px solid transparent', cursor: editing ? 'grab' : 'default' }}>
+                  <LeadSection icon={sec.icon} title={sec.label} chevron={sec.chevron}
+                    extra={editLayout ? null : EXTRAS[sec.id]} count={COUNTS[sec.id]}
+                    isEditMode={editing} isHidden={!sec.visible}
+                    onToggleVis={() => setSecLayout(l => l.map(x => x.id === sec.id ? { ...x, visible: !x.visible } : x))}>
+                    {editing ? LEAD_SKELS[sec.id] : BODIES[sec.id]}
+                    {sec.id === 'lifecycle' && !editLayout && jobBanner}
+                  </LeadSection>
+                </div>; })}
+              {editing && <div style={{ position: 'relative' }}>
+                <button onClick={() => setAddWidgetOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', borderRadius: 12, border: '1.5px dashed #c4c9d4', background: '#fff', fontSize: 12.5, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}><Ic name="plus" size={14} color="#6b7280" />Add widget</button>
+                {addWidgetOpen && <div onMouseLeave={() => setAddWidgetOpen(false)} style={{ position: 'absolute', bottom: 46, left: 0, zIndex: 60, width: 260, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 11, boxShadow: '0 14px 36px rgba(0,0,0,.16)', padding: 6 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, padding: '6px 8px 8px' }}>HIDDEN WIDGETS</div>
+                  {hidden.length === 0
+                    ? <div style={{ padding: '8px 10px 12px', fontSize: 12, color: LH.muted }}>Every widget is already on the layout.</div>
+                    : hidden.map(w => <div key={w.id} onClick={() => { setSecLayout(l => l.map(x => x.id === w.id ? { ...x, visible: true } : x)); setAddWidgetOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 7, fontSize: 12.5, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><Ic name={w.icon} size={14} color={LH.sub} />{w.label}<Ic name="plus" size={13} color={LH.muted} style={{ marginLeft: 'auto' }} /></div>)}
+                </div>}
               </div>}
-              {shownSecs.map(sec => <LeadSection key={sec.id} icon={sec.icon} title={sec.label} chevron={sec.chevron}
-                extra={editLayout ? null : EXTRAS[sec.id]} count={COUNTS[sec.id]}
-                isEditMode={editLayout} isHidden={!sec.visible}
-                onToggleVis={() => setSecLayout(l => l.map(x => x.id === sec.id ? { ...x, visible: !x.visible } : x))}
-                dragProps={editLayout ? { draggable: true,
-                  onDragStart: () => setDragSec(sec.id),
-                  onDragOver: e => e.preventDefault(),
-                  onDrop: e => { e.preventDefault(); const from = secLayout.findIndex(x => x.id === dragSec); const to = secLayout.findIndex(x => x.id === sec.id); if (dragSec && dragSec !== sec.id && from >= 0 && to >= 0) { const n = [...secLayout]; const [m] = n.splice(from, 1); n.splice(to, 0, m); setSecLayout(n); } setDragSec(null); },
-                  onDragEnd: () => setDragSec(null) } : null}>
-                {BODIES[sec.id]}
-                {sec.id === 'lifecycle' && !editLayout && jobBanner}
-              </LeadSection>)}
             </div>;
           })()}
           </div>
@@ -32329,6 +32368,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           </div>
           <button title="Collapse" style={{ width: 30, height: 30, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic name="panel-right-close" size={16} color="#a3a3a3" /></button>
         </div>
+      </div>
       </div>
       {convOpen && <ConvertToJobModal lead={lead} onClose={() => setConvOpen(false)} onToast={onToast} onConverted={jid => { setJobId(jid); onConvert && onConvert(lead.id, jid); }} />}
       {taskOpen && <CreateFollowupModal prefillName={lead.name} onClose={() => setTaskOpen(false)} onCreate={t => { setLeadFups(f => [{ task: t.task, channel: t.channel, due: t.due }, ...f]); try { LeadFollowups.add(t); } catch (e) {} setTaskOpen(false); toast('Task created'); }} />}
