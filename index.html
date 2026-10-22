@@ -32384,13 +32384,13 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [expanded, setExpanded] = useState(false);
     const [view, setView] = useState('kanban');
     const [pageLead, setPageLead] = useState(null);
-    const [fSource, setFSource] = useState('All');
-    const [fStatus, setFStatus] = useState('All');
-    const [fAssigned, setFAssigned] = useState('All');
+    const [fSource, setFSource] = useState([]);
+    const [fStatus, setFStatus] = useState([]);
+    const [fAssigned, setFAssigned] = useState([]);
     const [fScore, setFScore] = useState('Any');
-    const [fAge, setFAge] = useState('Any');
-    const [fCity, setFCity] = useState('All');
-    const [fNext, setFNext] = useState('Any');
+    const [fAge, setFAge] = useState([]);
+    const [fCity, setFCity] = useState([]);
+    const [fNext, setFNext] = useState([]);
     const [sortKey, setSortKey] = useState('created');
     const [sortDir, setSortDir] = useState('desc');
     const [sortOpen, setSortOpen] = useState(false);
@@ -32433,7 +32433,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const nextRaw = l => { const b = hashN(l.id + 'nx', 7); return b === 6 ? null : NOW + (b - 2) * DAYMS; }; // -2..+4 days, or null
     const nextLabel = l => { const t = nextRaw(l); if (t == null) return { txt: '—', tone: LH.muted }; const dd = Math.round((sod(t) - sod(NOW)) / DAYMS); if (dd < 0) return { txt: 'Overdue', tone: LH.red }; if (dd === 0) return { txt: 'Today', tone: LH.amber }; if (dd === 1) return { txt: 'Tomorrow', tone: LH.body }; if (dd <= 7) return { txt: 'In ' + dd + 'd', tone: LH.body }; return { txt: new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), tone: LH.body }; };
     const NEXT_OPTS = ['Any', 'Overdue', 'Today', 'This week', 'Later', 'No date'];
-    const matchNext = l => { if (fNext === 'Any') return true; const t = nextRaw(l); if (fNext === 'No date') return t == null; if (t == null) return false; const dd = Math.round((sod(t) - sod(NOW)) / DAYMS); if (fNext === 'Overdue') return dd < 0; if (fNext === 'Today') return dd === 0; if (fNext === 'This week') return dd >= 0 && dd <= 7; if (fNext === 'Later') return dd > 7; return true; };
+    const matchNext = l => { if (!fNext.length) return true; const t = nextRaw(l); const dd = t == null ? null : Math.round((sod(t) - sod(NOW)) / DAYMS); return fNext.some(f => f === 'No date' ? t == null : t == null ? false : f === 'Overdue' ? dd < 0 : f === 'Today' ? dd === 0 : f === 'This week' ? dd >= 0 && dd <= 7 : f === 'Later' ? dd > 7 : true); };
     const SORTS = [['created', 'Created at'], ['updated', 'Updated at'], ['received', 'Received at'], ['name', 'Name'], ['next', 'Next contact date']];
     const sortVal = l => sortKey === 'name' ? l.name.toLowerCase() : sortKey === 'updated' ? updatedAt(l) : sortKey === 'received' ? receivedAt(l) : sortKey === 'next' ? (nextRaw(l) == null ? (sortDir === 'asc' ? Infinity : -Infinity) : nextRaw(l)) : createdAt(l);
     const ageHours = a => { const n = parseInt(a) || 0; return a.indexOf('d') > -1 ? n * 24 : a.indexOf('h') > -1 ? n : a.indexOf('m') > -1 ? n / 60 : n; };
@@ -32443,14 +32443,31 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const SCORES = ['Any', '80+ (Hot)', '60–79 (Warm)', 'Below 60 (Cold)'];
     const AGES = ['Any', 'Under 1 day', '1–3 days', 'Over 3 days'];
     const CITY_OPTS = ['All'].concat(NA_CITIES.map(c => c.name).sort());
-    const anyF = fSource !== 'All' || fStatus !== 'All' || fAssigned !== 'All' || fScore !== 'Any' || fAge !== 'Any' || fCity !== 'All' || fNext !== 'Any' || !!kpi;
-    const clearF = () => { setFSource('All'); setFStatus('All'); setFAssigned('All'); setFScore('Any'); setFAge('Any'); setFCity('All'); setFNext('Any'); setKpi(null); };
+    const anyF = !!fSource.length || !!fStatus.length || !!fAssigned.length || fScore !== 'Any' || !!fAge.length || !!fCity.length || !!fNext.length || !!kpi;
+    const clearF = () => { setFSource([]); setFStatus([]); setFAssigned([]); setFScore('Any'); setFAge([]); setFCity([]); setFNext([]); setKpi(null); };
     const matchScore = s => fScore === 'Any' || (fScore[0] === '8' ? s >= 80 : fScore[0] === '6' ? s >= 60 && s < 80 : s < 60);
-    const matchAge = h => fAge === 'Any' || (fAge === 'Under 1 day' ? h < 24 : fAge === '1–3 days' ? h >= 24 && h <= 72 : h > 72);
-    const FilterDrop = ({ id, label, value, options, onChange }) => <div style={{ position: 'relative' }}>
-      <button onClick={() => setFOpen(o => o === id ? null : id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 8, border: '1px solid ' + ((value !== 'All' && value !== 'Any') ? LH.ink : LH.border), background: '#fff', fontSize: 12, color: LH.body, cursor: 'pointer' }}><span style={{ color: LH.muted }}>{label}</span><span style={{ fontWeight: 600 }}>{value}</span><Ic name="chevron-down" size={13} color={LH.muted} /></button>
-      {fOpen === id && <div onMouseLeave={() => setFOpen(null)} style={{ position: 'absolute', top: 36, left: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, minWidth: 170, maxHeight: 280, overflowY: 'auto' }}>{options.map(o => <div key={o} onClick={() => { onChange(o); setFOpen(null); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '7px 10px', borderRadius: 6, fontSize: 12.5, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{o}{value === o && <Ic name="check" size={13} color={LH.ink} />}</div>)}</div>}
-    </div>;
+    const matchAge = h => !fAge.length || fAge.some(f => f === 'Under 1 day' ? h < 24 : f === '1–3 days' ? h >= 24 && h <= 72 : h > 72);
+    /* Multi-select filter — same checkbox dropdown the playbook trigger values use.
+       Empty selection means the All/Any default; the menu stays open while you pick. */
+    const FilterDrop = ({ id, label, value, options, onChange }) => {
+      const allLabel = options[0];
+      const opts = options.slice(1);
+      const n = value.length;
+      const text = n === 0 ? allLabel : n === 1 ? value[0] : n + ' selected';
+      const toggle = o => onChange(value.includes(o) ? value.filter(x => x !== o) : value.concat(o));
+      const row = (on, label2, onClick) => <div key={label2} onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 9px', borderRadius: 6, fontSize: 12.5, color: LH.body, cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#f6f4ef'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+        <span style={{ width: 15, height: 15, borderRadius: 4, border: '1.5px solid ' + (on ? '#1f1f1d' : '#cfccc5'), background: on ? '#1f1f1d' : '#fff', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{on && <Ic name="check" size={11} color="#fff" />}</span>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label2}</span>
+      </div>;
+      return <div style={{ position: 'relative' }}>
+        <button onClick={() => setFOpen(o => o === id ? null : id)} title={n > 1 ? value.join(', ') : undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 8, border: '1px solid ' + (n ? LH.ink : LH.border), background: '#fff', fontSize: 12, color: LH.body, cursor: 'pointer' }}><span style={{ color: LH.muted }}>{label}</span><span style={{ fontWeight: 600 }}>{text}</span><Ic name="chevron-down" size={13} color={LH.muted} /></button>
+        {fOpen === id && <div onMouseLeave={() => setFOpen(null)} style={{ position: 'absolute', top: 36, left: 0, zIndex: 30, background: '#fff', border: '1px solid ' + LH.border, borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 5, minWidth: 190, maxHeight: 300, overflowY: 'auto' }}>
+          {row(n === 0, allLabel, () => onChange([]))}
+          <div style={{ height: 1, background: LH.borderSoft, margin: '4px 0' }} />
+          {opts.map(o => row(value.includes(o), o, () => toggle(o)))}
+        </div>}
+      </div>;
+    };
     const scoreColor = s => s >= 80 ? LH.primary : s >= 60 ? '#c9922e' : '#9c9b96';
     const openPage = l => { setSelId(null); setPageLead(l); onFull && onFull(true); };
     const closePage = () => { setPageLead(null); onFull && onFull(false); };
@@ -32495,7 +32512,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     const [bulkMenu, setBulkMenu] = useState(null); // open bulk-action submenu key
     const toggleSel = id => setSel2(s => s.includes(id) ? s.filter(x => x !== id) : s.concat(id));
     const clearSel = () => { setSel2([]); setBulkMenu(null); };
-    const filtered = leads.filter(l => !l.archived && (fSource === 'All' || l.src === fSource) && (fStatus === 'All' || l.status === fStatus) && (fAssigned === 'All' || assigneeOf(l) === fAssigned) && matchScore(l.score) && matchAge(ageHours(l.age)) && (fCity === 'All' || LEAD_CITY(l) === fCity) && matchNext(l) && matchKpi(l) && (!search.trim() || (l.name + ' ' + (l.note || '')).toLowerCase().includes(search.trim().toLowerCase()))).sort((a, b) => { const va = sortVal(a), vb = sortVal(b); if (va < vb) return sortDir === 'asc' ? -1 : 1; if (va > vb) return sortDir === 'asc' ? 1 : -1; return 0; });
+    const filtered = leads.filter(l => !l.archived && (!fSource.length || fSource.includes(l.src)) && (!fStatus.length || fStatus.includes(l.status)) && (!fAssigned.length || fAssigned.includes(assigneeOf(l))) && matchScore(l.score) && matchAge(ageHours(l.age)) && (!fCity.length || fCity.includes(LEAD_CITY(l))) && matchNext(l) && matchKpi(l) && (!search.trim() || (l.name + ' ' + (l.note || '')).toLowerCase().includes(search.trim().toLowerCase()))).sort((a, b) => { const va = sortVal(a), vb = sortVal(b); if (va < vb) return sortDir === 'asc' ? -1 : 1; if (va > vb) return sortDir === 'asc' ? 1 : -1; return 0; });
     useEffect(() => { const h = e => { if (e.key === 'Escape') setSelId(null); }; document.addEventListener('keydown', h); return () => document.removeEventListener('keydown', h); }, []);
     // If we arrived here from "Create lead from call", create the lead from the captured data and open its page.
     useEffect(() => { const d = window.__lhOpenLead; if (d && d.name) { window.__lhOpenLead = null; const lead = addLead({ name: d.name, phone: d.phone, email: d.email, src: d.src || 'Phone', note: d.service || d.note || '', stage: d.stage || 'New', score: d.score }); setPageLead(null); onFull && onFull(false); setSelId(lead.id); } }, []);
