@@ -30398,7 +30398,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     // STAGE_TIMELINE_COLORS palette. Read-only here: a lead's stage is driven by the pipeline column.
     const CHEVRON = 14, PILL_H = 28, PILL_X_PAD = 14, PILL_LEAD_PAD = CHEVRON + 6;
     const SC = { lastActive: { bg: '#1C6C66', color: '#FFFFFF' }, active: { bg: '#BFE8D9', color: '#262626' }, inactive: { bg: '#E6E4D9', color: '#6F6E69' } };
-    return <Card style={{ padding: '16px 14px', marginBottom: hideHeader ? 0 : 20 }}>
+    return <div style={{ marginBottom: hideHeader ? 0 : 20 }}>
       {!hideHeader && <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14, padding: '0 2px' }}><Ic name="route" size={15} color={LH.ink} /><span style={{ fontSize: 13, fontWeight: 700, color: LH.ink }}>Lead lifecycle</span></div>}
       <div style={{ display: 'flex', width: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', minWidth: 0, flex: '1 1 auto' }}>
@@ -30424,7 +30424,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           })}
         </div>
       </div>
-    </Card>;
+    </div>;
   }
   // Lead → Inspection Job conversion wizard. Carries lead data over, schedules the visit, mints a job #.
   function ConvertToJobModal({ lead, onClose, onToast, onConverted }) {
@@ -30792,7 +30792,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   const LEAD_SKELS = {
     ai: <div style={{ borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 8, background: 'linear-gradient(169deg,#faf5ff,#eff6ff)', border: '1px solid #e9d4ff' }}><LSkel w="78%" /><LSkel w="92%" /><LSkel w="54%" /></div>,
     comms: <div style={{ border: '1px solid #e5e5e5', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>{[0, 1, 2].map(i => <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center' }}><LSkel w={26} h={26} r={8} /><div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}><LSkel w="44%" /><LSkel w="68%" h={8} /></div></div>)}</div>,
-    lifecycle: <div style={{ border: '1px solid #e5e5e5', borderRadius: 12, padding: 14 }}><LSkel h={28} r={14} /></div>,
+    lifecycle: <LSkel h={28} r={14} />,
     highlights: <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>{[0, 1, 2, 3].map(i => <div key={i} style={{ border: '1px solid #e5e5e5', borderRadius: 12, padding: 12, height: 62, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}><LSkel w="58%" h={8} /><LSkel w="40%" /></div>)}</div>,
     property: <div style={{ border: '1px solid #e5e5e5', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>{[0, 1, 2, 3].map(i => <div key={i} style={{ display: 'flex', gap: 14 }}><LSkel w={110} h={9} /><LSkel w="46%" h={9} /></div>)}</div>,
     activity: <div style={{ border: '1px solid #e5e5e5', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>{[0, 1, 2].map(i => <div key={i} style={{ display: 'flex', gap: 10 }}><LSkel w={24} h={24} r={99} /><div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}><LSkel w="62%" /><LSkel w="30%" h={8} /></div></div>)}</div>,
