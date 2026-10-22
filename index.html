@@ -30354,8 +30354,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
           {kv('Phone', (lead.phone || '').trim() || '+1 469 555 0142')}
           {kv('Email', lead.email || email)}
           {kv('Description', (lead.note && lead.note !== 'Manual entry' ? lead.note : '') || 'Roof replacement after storm damage — wants an inspection this week.')}
-          {kv('Lead source', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 16, height: 16, borderRadius: 5, background: LH.blueBg, color: LH.blue, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>{lead.src[0]}</span>{lead.src}</span>)}
-          {kv('Lead owner', <span style={{ color: LH.primary, fontWeight: 600 }}>Maria Gonzalez</span>)}
+          {kv('Lead source', lead.src)}
+          {kv('Lead owner', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}><LeadAvatar name="Maria Gonzalez" size={18} style={{ flexShrink: 0 }} /><span style={{ color: LH.primary, fontWeight: 600 }}>Maria Gonzalez</span></span>)}
           {kv('Lead created at', <span><span style={{ color: LH.ink, fontWeight: 600 }}>Sep 21, 2026</span><br /><span style={{ fontSize: 11, color: LH.muted }}>9:42 AM · lead local time</span></span>)}
           {kv('Potential value', '$' + (6 + (lead.score % 9)) + ',500 potential')}
           {kv('Lead category', lead.score >= 70 ? 'Roof replacement' : 'Roof repair')}
