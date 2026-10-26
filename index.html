@@ -30382,7 +30382,9 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   const genJobId = lead => 'JN-2456' + String(78 + (lead.name.length * 7 + (lead.score || 50)) % 21).padStart(2, '0');
   const leadJobPrefill = (lead, jobId) => { const p = lead.name.split(' '); return { firstName: p[0], lastName: p.slice(1).join(' '), displayName: lead.name, email: lead.email || (lead.name.toLowerCase().replace(/[^a-z]+/g, '.') + '@gmail.com'), phone: '469-555-0172', address: '4821 Oakwood Dr', city: 'Plano', state: 'TX', zip: '75024', leadSource: lead.src, jobName: (lead.service || 'Roof') + ' Inspection — ' + lead.name, description: (lead.note ? lead.note + '. ' : '') + 'Converted from Lead Hub — free inspection for ' + lead.name + '.', _jobId: jobId, _tpl: 'Inspection' }; };
   // Lead → job uses the Lead Hub convert wizard (category required, due date optional, playbook-outcome gated).
-  const startLeadConvert = (lead, onCreated, fallback) => { if (fallback) { fallback(); } else if (typeof window !== 'undefined' && window.__leadHubCreateJob) { const jobId = genJobId(lead); window.__leadHubCreateJob(leadJobPrefill(lead, jobId), () => onCreated(jobId)); } };
+  // Open the real New Job form pre-filled from the lead. The local summary modal is only a
+  // fallback for when the FSM job form isn't mounted (Lead Hub rendered standalone).
+  const startLeadConvert = (lead, onCreated, fallback) => { if (typeof window !== 'undefined' && window.__leadHubCreateJob) { const jobId = genJobId(lead); window.__leadHubCreateJob(leadJobPrefill(lead, jobId), () => onCreated(jobId)); } else if (fallback) { fallback(); } };
   // Full lead lifecycle: Angi/source capture → speed-to-lead → qualified → converted → inspection job.
   function LeadLifecycle({ lead, jobId, hideHeader }) {
     const STAGES = [
