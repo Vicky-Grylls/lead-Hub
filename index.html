@@ -35124,7 +35124,19 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   const angiSetupMsg = biz => 'Hello Angi CRM Integrations Team,\n\nPlease connect Angi lead delivery to Zuper for the account below. Once the setup is complete, please send a test lead if possible and reply to confirm.\n\nThank you,\nZuper Integrations Team, on behalf of ' + (biz || 'our account');
   const angiFollowMsg = biz => 'Hello Angi CRM Integrations Team,\n\nFollowing up on our request to connect Angi lead delivery to Zuper. We have not received a lead at the webhook yet. Could you share the status, or let us know if you need anything else from us?\n\nThank you,\nZuper Integrations Team, on behalf of ' + (biz || 'our account');
   function StatusBadge({ label }) { const m = label === 'Connected' ? { bg: LH.greenBg, fg: LH.green, bd: LH.greenBd } : label === 'Waiting for test lead' ? { bg: LH.amberBg, fg: LH.amber, bd: LH.amberBd } : label === 'Inactive' ? { bg: '#f1f0ec', fg: LH.sub, bd: LH.border } : { bg: '#f1f0ec', fg: LH.sub, bd: LH.border }; return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 9px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: m.bg, color: m.fg, border: '1px solid ' + m.bd, whiteSpace: 'nowrap' }}>{label === 'Connected' && <span style={{ width: 6, height: 6, borderRadius: 999, background: LH.green }} />}{label}</span>; }
-  const lockedRow = (k, v, mono) => <div style={{ display: 'flex', gap: 10, padding: '7px 0', borderBottom: '1px solid ' + LH.borderSoft, alignItems: 'baseline' }}><span style={{ fontSize: 11.5, color: LH.muted, width: 110, flexShrink: 0 }}>{k}</span><span style={{ flex: 1, minWidth: 0, fontSize: 12, color: LH.ink, fontWeight: 600, fontFamily: mono ? 'ui-monospace,monospace' : 'inherit', wordBreak: 'break-all' }}>{v}</span></div>;
+  const lockedRow = (k, v, mono) => <div style={{ display: 'flex', gap: 10, padding: '7px 0', borderBottom: '1px solid ' + LH.borderSoft, alignItems: 'baseline' }}><span style={{ fontSize: 11.5, color: LH.muted, width: 110, flexShrink: 0 }}>{k}</span><span title={typeof v === 'string' ? v : undefined} style={{ flex: 1, minWidth: 0, fontSize: 12, color: LH.ink, fontWeight: 600, fontFamily: mono ? 'ui-monospace,monospace' : 'inherit', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v}</span></div>;
+  /* A long webhook URL must never wrap — it blew the card height out and broke the
+     locked-details block. One elided line + Copy; the full value lives in the tooltip. */
+  function UrlField({ url, onCopy, onReset, label }) {
+    return <div>
+      {label && <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: LH.muted, marginBottom: 5 }}>{label}</div>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid ' + LH.border, borderRadius: 8, background: LH.bg, padding: '0 4px 0 10px', height: 32 }}>
+        <span title={url} style={{ flex: 1, minWidth: 0, fontSize: 11.5, color: LH.sub, fontFamily: 'ui-monospace,monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: 'rtl', textAlign: 'left' }}>{url}</span>
+        <button onClick={onCopy} title="Copy webhook URL" style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 6, border: 'none', background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#ece9e1'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="copy" size={13} color={LH.sub} /></button>
+        {onReset && <button onClick={onReset} title="Reset URL" style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 6, border: 'none', background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => e.currentTarget.style.background = '#ece9e1'} onMouseLeave={e => e.currentTarget.style.background = 'none'}><Ic name="refresh-cw" size={13} color={LH.sub} /></button>}
+      </div>
+    </div>;
+  }
   function AngiEmailModal({ mode, form, onClose, onSend, onToast }) {
     const [msg, setMsg] = useState((mode === 'followup' ? angiFollowMsg : angiSetupMsg)(form.biz));
     const subject = (mode === 'followup' ? 'Re: ' : '') + 'CRM integration request – Zuper – SP ID ' + form.spid;
@@ -35141,7 +35153,8 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       </div>
       <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: LH.muted, marginBottom: 6 }}>ADDED AUTOMATICALLY · LOCKED</div>
       <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: '4px 12px', background: LH.bg }}>
-        {lockedRow('Angi SP ID', form.spid)}{lockedRow('Business name', form.biz)}{mode !== 'followup' && lockedRow('Email to connect', form.email)}{lockedRow('Webhook URL', ANGI_WEBHOOK, true)}{lockedRow('Method', 'POST')}{mode !== 'followup' && lockedRow('CRM', 'Zuper (JSON)')}{mode !== 'followup' && lockedRow('Authentication', 'No key')}
+        {lockedRow('Angi SP ID', form.spid)}{lockedRow('Business name', form.biz)}{mode !== 'followup' && lockedRow('Email to connect', form.email)}{lockedRow('Method', 'POST')}{mode !== 'followup' && lockedRow('CRM', 'Zuper (JSON)')}{mode !== 'followup' && lockedRow('Authentication', 'No key')}
+        <div style={{ padding: '9px 0 10px' }}><UrlField url={ANGI_WEBHOOK} label="WEBHOOK URL" onCopy={() => onToast && onToast('Webhook URL copied')} /></div>
       </div>
     </ChOverlay>;
   }
@@ -35208,6 +35221,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     return <AngiEmailModal mode="setup" form={{ spid, biz, email }} onClose={() => setStep(1)} onSend={() => onSent({ spid, biz, email })} />;
   }
   function AngiChannelCard({ onToast, onNavigate }) {
+    const [detOpen, setDetOpen] = useState(false);
     const [status, setStatus] = useState('none'); // none | waiting | connected | inactive
     const [form, setForm] = useState({ spid: '', biz: '', email: '' });
     const [modal, setModal] = useState(null); // connect | followup | log
@@ -35232,11 +35246,19 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
       {status === 'none' && <div style={{ marginTop: 12 }}><Btn kind="primary" icon="external-link" style={{ height: 30, fontSize: 12 }} onClick={() => setModal('connect')}>Connect</Btn></div>}
 
       {status === 'waiting' && <div style={{ marginTop: 12 }}>
-        <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: 12, marginBottom: 10 }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: LH.muted, marginBottom: 8 }}>SETUP PROGRESS</div>
-          {prog.map(([t, done], i) => <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 0' }}><Ic name={done ? 'check-circle' : 'circle'} size={15} color={done ? LH.green : LH.muted} /><span style={{ fontSize: 12, color: done ? LH.ink : LH.sub, fontWeight: done ? 600 : 400 }}>{t}</span>{i === 1 && <span style={{ fontSize: 10.5, color: LH.muted, marginLeft: 'auto' }}>Done by Angi's team</span>}</div>)}
+        {/* Compact: inline checklist + one-line URL + a details disclosure, so the card
+            stays near its siblings' height instead of running several hundred px tall. */}
+        <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: '10px 12px', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: LH.muted }}>SETUP PROGRESS</span>
+            <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: LH.sub }}>{prog.filter(x => x[1]).length} of {prog.length}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 4, marginBottom: 9 }}>{prog.map(([t, done]) => <span key={t} style={{ flex: 1, height: 3, borderRadius: 2, background: done ? LH.green : '#e8e5dd' }} />)}</div>
+          {prog.map(([t, done]) => <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '2px 0' }}><Ic name={done ? 'check-circle' : 'circle'} size={13} color={done ? LH.green : LH.muted} /><span style={{ fontSize: 11.5, color: done ? LH.body : LH.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t}</span></div>)}
         </div>
-        <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: '4px 12px', marginBottom: 10 }}>{lockedRow('Angi SP ID', form.spid)}{lockedRow('Business name', form.biz)}{lockedRow('Webhook URL', ANGI_WEBHOOK, true)}<div style={{ display: 'flex', gap: 6, padding: '8px 0' }}><Btn style={{ height: 28, fontSize: 11.5 }} icon="copy" onClick={() => onToast('Webhook URL copied')}>Copy</Btn><Btn kind="ghost" style={{ height: 28, fontSize: 11.5 }} onClick={resetUrl}>Reset URL</Btn></div></div>
+        <div style={{ marginBottom: 10 }}><UrlField url={ANGI_WEBHOOK} label="WEBHOOK URL" onCopy={() => onToast('Webhook URL copied')} onReset={resetUrl} /></div>
+        <button onClick={() => setDetOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0 8px', fontSize: 11.5, fontWeight: 600, color: LH.sub }}><Ic name={detOpen ? 'chevron-down' : 'chevron-right'} size={13} color={LH.muted} />Setup details</button>
+        {detOpen && <div style={{ border: '1px solid ' + LH.borderSoft, borderRadius: 10, padding: '2px 12px', marginBottom: 10 }}>{lockedRow('Angi SP ID', form.spid)}{lockedRow('Business name', form.biz)}{lockedRow('Email', form.email)}{lockedRow('Method', 'POST')}</div>}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}><Btn kind="ghost" style={{ height: 30, fontSize: 12 }} icon="mail" onClick={() => setModal('followup')}>Send follow-up</Btn><Btn kind="ghost" style={{ height: 30, fontSize: 12 }} onClick={() => setModal('log')}>Activity log</Btn><Btn style={{ height: 30, fontSize: 12 }} icon="zap" onClick={testLead}>Simulate test lead</Btn></div>
       </div>}
 
@@ -35282,7 +35304,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
   }
   function ChWebhookBox({ url, onToast }) {
     return <div><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}><span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: LH.muted }}>YOUR WEBHOOK URL</span><span style={{ fontSize: 10.5, color: LH.muted }}>Method: POST</span></div>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}><div style={{ flex: 1, minWidth: 0, fontSize: 11.5, color: LH.body, background: LH.bg, border: '1px solid ' + LH.border, borderRadius: 8, padding: '9px 11px', fontFamily: 'ui-monospace,monospace', wordBreak: 'break-all', lineHeight: 1.4 }}>{url}</div><button onClick={() => onToast('Webhook URL copied')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer', flexShrink: 0 }}><Ic name="copy" size={13} color={LH.sub} />Copy</button></div></div>;
+      <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}><div title={url} style={{ flex: 1, minWidth: 0, fontSize: 11.5, color: LH.body, background: LH.bg, border: '1px solid ' + LH.border, borderRadius: 8, padding: '9px 11px', fontFamily: 'ui-monospace,monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: 'rtl', textAlign: 'left', lineHeight: 1.4 }}>{url}</div><button onClick={() => onToast('Webhook URL copied')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0 12px', borderRadius: 8, border: '1px solid ' + LH.border, background: '#fff', fontSize: 12, fontWeight: 600, color: LH.body, cursor: 'pointer', flexShrink: 0 }}><Ic name="copy" size={13} color={LH.sub} />Copy</button></div></div>;
   }
 
   // ── Thumbtack: self-serve webhook (copy URL → add in Thumbtack → Activate). No email, no test-lead wait. ──
@@ -35502,7 +35524,7 @@ useEffect(()=>{const t=setTimeout(()=>{pushToast('New email arrived from Daniel 
     return <div>
       {srcs.map(grp => <div key={grp.g} style={{ marginBottom: 22 }}>
         <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.05em', color: LH.muted, marginBottom: 10 }}>{grp.g.toUpperCase()}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 12, alignItems: 'start' }}>
           {grp.items.map(it => it.n === 'Angi' ? <AngiChannelCard key={it.n} onToast={onToast} onNavigate={onNavigate} />
             : it.n === 'Thumbtack' ? <ThumbtackChannelCard key={it.n} onToast={onToast} onNavigate={onNavigate} />
             : it.n === 'Custom webhook' ? <CustomWebhookGroup key={it.n} onToast={onToast} onNavigate={onNavigate} />
